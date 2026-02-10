@@ -67,7 +67,7 @@ test.describe("account", () => {
   test("update name flow", async ({ page }) => {
     await createTestAccount({ page, callbackURL: "/account" });
 
-    await page.getByRole("heading", { name: "Settings", level: 2 }).waitFor({
+    await page.getByRole("textbox", { name: "Name" }).waitFor({
       timeout: 10000,
     });
 

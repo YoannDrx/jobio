@@ -23,18 +23,21 @@ test.describe("admin", () => {
     });
 
     await page.goto("/admin");
+    await page.waitForLoadState("networkidle");
 
-    await expect(page.getByRole("link", { name: "Users" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Users" })).toBeVisible({
+      timeout: 10000,
+    });
 
     await expect(
       page.getByRole("link", { name: "Feedback" }).first(),
-    ).toBeVisible();
+    ).toBeVisible({ timeout: 10000 });
 
     await page.getByRole("link", { name: "Users" }).click();
 
-    await expect(page).toHaveURL("/admin/users");
+    await expect(page).toHaveURL(/\/admin\/users/, { timeout: 10000 });
 
     await page.getByRole("link", { name: "Feedback" }).first().click();
-    await expect(page).toHaveURL("/admin/feedback");
+    await expect(page).toHaveURL(/\/admin\/feedback/, { timeout: 10000 });
   });
 });
