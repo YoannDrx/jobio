@@ -16,6 +16,7 @@ on:
       - "app/**"
       - "prisma/**"
       - "e2e/**"
+      - ".github/workflows/playwright.yml"
 
 # Cancel previous runs on the same PR/branch
 concurrency:
