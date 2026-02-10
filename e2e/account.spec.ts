@@ -15,8 +15,10 @@ test.describe("account", () => {
       callbackURL: "/account",
     });
 
-    await page.getByRole("link", { name: "Danger" }).click();
-    await page.waitForURL(/\/account\/danger/, { timeout: 10000 });
+    const dangerLink = page.getByRole("link", { name: "Danger" });
+    await dangerLink.waitFor({ timeout: 10000 });
+    await dangerLink.click();
+    await page.waitForURL(/\/account\/danger/, { timeout: 15000 });
     await page.getByRole("button", { name: "Delete" }).click();
 
     const deleteDialog = page.getByRole("alertdialog", {
@@ -70,14 +72,28 @@ test.describe("account", () => {
       callbackURL: "/account",
     });
 
-    await page.getByRole("textbox", { name: "Name" }).waitFor({
-      timeout: 10000,
-    });
+    const input = page.getByRole("textbox", { name: "Name" });
+    await input.waitFor({ timeout: 10000 });
 
     const newName = faker.person.fullName();
-    const input = page.getByRole("textbox", { name: "Name" });
-    await input.fill(newName);
+
+    // Clear and type character by character for reliable React controlled input
+    await input.clear();
+    await input.pressSequentially(newName, { delay: 30 });
+
+    // Verify the input value was set correctly before saving
+    await expect(input).toHaveValue(newName, { timeout: 5000 });
+
+    // Wait for the API response to confirm the update
+    const responsePromise = page.waitForResponse(
+      (response) =>
+        response.url().includes("/api/auth/update-user") && response.ok(),
+      { timeout: 15000 },
+    );
+
     await page.getByRole("button", { name: /save/i }).click();
+
+    await responsePromise;
 
     await expect(page.getByText("Profile updated")).toBeVisible({
       timeout: 10000,
