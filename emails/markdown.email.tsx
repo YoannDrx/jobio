@@ -10,8 +10,8 @@ export default function MarkdownEmail(props: {
   if (!props.disabledSignature) {
     props.markdown += `
 
-Best,\n
-${SiteConfig.team.name} from ${SiteConfig.title}
+À bientôt,\n
+L'équipe ${SiteConfig.title}
     `;
   }
 
@@ -35,7 +35,7 @@ ${SiteConfig.team.name} from ${SiteConfig.title}
             lineHeight: "1.5rem",
           },
           link: {
-            color: "#6366f1",
+            color: "#22D3EE",
           },
         }}
       >

@@ -8,6 +8,9 @@ import {
 import { getRequiredUser } from "@/lib/auth/auth-user";
 import { prisma } from "@/lib/prisma";
 import { TodayContent } from "@/features/missions/components/today/today-content";
+import type { Suggestion } from "@/features/missions/components/today/today-suggestions";
+import { resolveActionResult } from "@/lib/actions/actions-utils";
+import { getOnboardingStatusAction } from "@/features/onboarding/onboarding.action";
 
 export default async function TodayPage() {
   const user = await getRequiredUser();
@@ -39,6 +42,18 @@ export default async function TodayPage() {
   );
 
   const twoWeeksAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
+  const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+  const startOfPrevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+  const endOfPrevMonth = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    0,
+    23,
+    59,
+    59,
+    999,
+  );
 
   const [
     recentMissions,
@@ -48,6 +63,11 @@ export default async function TodayPage() {
     staleMissions,
     missionsAddedThisWeek,
     followUpsCompletedThisWeek,
+    missionsWithoutRecentFollowUp,
+    highScoreMissions,
+    missionsWithoutContactCount,
+    tjmThisMonth,
+    tjmPrevMonth,
   ] = await Promise.all([
     prisma.mission.findMany({
       where: { userId: user.id, deletedAt: null },
@@ -141,12 +161,136 @@ export default async function TodayPage() {
         },
       },
     }),
+    // Missions POSTULE/ENTRETIEN without recent follow-up (> 7 days)
+    prisma.mission.findMany({
+      where: {
+        userId: user.id,
+        status: { in: ["POSTULE", "ENTRETIEN"] },
+        deletedAt: null,
+        followUps: {
+          none: {
+            scheduledAt: { gte: sevenDaysAgo },
+          },
+        },
+      },
+      select: {
+        id: true,
+        title: true,
+        company: true,
+        updatedAt: true,
+      },
+      orderBy: { updatedAt: "asc" },
+      take: 3,
+    }),
+    // Missions A_POSTULER with high score
+    prisma.mission.findMany({
+      where: {
+        userId: user.id,
+        status: "A_POSTULER",
+        score: { gt: 75 },
+        deletedAt: null,
+      },
+      select: {
+        id: true,
+        title: true,
+        score: true,
+      },
+      orderBy: { score: "desc" },
+      take: 3,
+    }),
+    // Missions without contact
+    prisma.mission.count({
+      where: {
+        userId: user.id,
+        contactId: null,
+        status: { notIn: ["REFUSE", "ARCHIVE"] },
+        deletedAt: null,
+      },
+    }),
+    // Average TJM this month
+    prisma.mission.aggregate({
+      where: {
+        userId: user.id,
+        tjm: { not: null },
+        createdAt: { gte: startOfMonth },
+        deletedAt: null,
+      },
+      _avg: { tjm: true },
+    }),
+    // Average TJM previous month
+    prisma.mission.aggregate({
+      where: {
+        userId: user.id,
+        tjm: { not: null },
+        createdAt: { gte: startOfPrevMonth, lte: endOfPrevMonth },
+        deletedAt: null,
+      },
+      _avg: { tjm: true },
+    }),
   ]);
+
+  const onboardingStatus = await resolveActionResult(
+    getOnboardingStatusAction(),
+  );
+  const isOnboardingComplete =
+    onboardingStatus.hasProfile &&
+    onboardingStatus.hasPlatforms &&
+    onboardingStatus.hasMission;
 
   const counters = Object.fromEntries(
     statusCounts.map((s) => [s.status, s._count]),
   );
   const totalMissions = statusCounts.reduce((acc, s) => acc + s._count, 0);
+
+  // Build suggestions (max 3)
+  const suggestions: Suggestion[] = [];
+
+  for (const m of missionsWithoutRecentFollowUp) {
+    if (suggestions.length >= 3) break;
+    const daysSinceUpdate = Math.floor(
+      (now.getTime() - m.updatedAt.getTime()) / (1000 * 60 * 60 * 24),
+    );
+    suggestions.push({
+      id: `no-followup-${m.id}`,
+      type: "no_followup",
+      message: `Tu n'as pas relance ${m.company ?? m.title} depuis ${daysSinceUpdate} jours`,
+      link: "/app/pipeline",
+    });
+  }
+
+  for (const m of highScoreMissions) {
+    if (suggestions.length >= 3) break;
+    suggestions.push({
+      id: `high-score-${m.id}`,
+      type: "high_score",
+      message: `Mission "${m.title}" a un super score (${m.score}), postule !`,
+      link: "/app/pipeline",
+    });
+  }
+
+  if (suggestions.length < 3 && missionsWithoutContactCount > 0) {
+    suggestions.push({
+      id: "no-contact",
+      type: "no_contact",
+      message: `${missionsWithoutContactCount} mission${missionsWithoutContactCount > 1 ? "s" : ""} n'${missionsWithoutContactCount > 1 ? "ont" : "a"} pas de contact associe`,
+      link: "/app/contacts",
+    });
+  }
+
+  const avgTjmThisMonth = tjmThisMonth._avg.tjm;
+  const avgTjmPrevMonth = tjmPrevMonth._avg.tjm;
+  if (
+    suggestions.length < 3 &&
+    avgTjmThisMonth !== null &&
+    avgTjmPrevMonth !== null &&
+    avgTjmThisMonth > avgTjmPrevMonth
+  ) {
+    suggestions.push({
+      id: "tjm-trend",
+      type: "tjm_trend",
+      message: `Ton TJM moyen est en hausse ce mois-ci (${Math.round(avgTjmThisMonth)}€ vs ${Math.round(avgTjmPrevMonth)}€ le mois dernier)`,
+    });
+  }
 
   const hour = now.getHours();
   const greeting =
@@ -220,6 +364,16 @@ export default async function TodayPage() {
             missionsAdded: missionsAddedThisWeek,
             followUpsCompleted: followUpsCompletedThisWeek,
           }}
+          suggestions={suggestions}
+          onboardingStatus={
+            isOnboardingComplete
+              ? null
+              : {
+                  hasProfile: onboardingStatus.hasProfile,
+                  hasPlatforms: onboardingStatus.hasPlatforms,
+                  hasMission: onboardingStatus.hasMission,
+                }
+          }
         />
       </LayoutContent>
     </Layout>

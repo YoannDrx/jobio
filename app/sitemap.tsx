@@ -14,7 +14,27 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "monthly",
     },
     {
-      url: `${SiteConfig.prodUrl}/home`,
+      url: `${SiteConfig.prodUrl}/auth/signup`,
+      lastModified: new Date(),
+      changeFrequency: "monthly",
+    },
+    {
+      url: `${SiteConfig.prodUrl}/legal/terms`,
+      lastModified: new Date(),
+      changeFrequency: "yearly",
+    },
+    {
+      url: `${SiteConfig.prodUrl}/legal/privacy`,
+      lastModified: new Date(),
+      changeFrequency: "yearly",
+    },
+    {
+      url: `${SiteConfig.prodUrl}/about`,
+      lastModified: new Date(),
+      changeFrequency: "monthly",
+    },
+    {
+      url: `${SiteConfig.prodUrl}/contact`,
       lastModified: new Date(),
       changeFrequency: "monthly",
     },

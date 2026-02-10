@@ -39,7 +39,7 @@ export default function RootLayout({
   modal,
 }: LayoutParams & { modal?: ReactNode }) {
   return (
-    <html lang="en" className="h-full" suppressHydrationWarning>
+    <html lang="fr" className="h-full" suppressHydrationWarning>
       <body
         suppressHydrationWarning
         className={cn(

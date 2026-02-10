@@ -1,0 +1,30 @@
+model SentEmail {
+  id         String  @id @default(nanoid(11))
+  userId     String
+  missionId  String?
+  contactId  String?
+  templateId String?
+  to         String
+  subject    String
+  body       String
+  status     String  @default("sent")
+  isDraft    Boolean @default(false)
+  resendId   String? @unique
+
+  createdAt   DateTime @default(now())
+  sentAt      DateTime?
+  deliveredAt DateTime?
+  openedAt    DateTime?
+  clickedAt   DateTime?
+  bouncedAt   DateTime?
+
+  user     User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mission  Mission?          @relation(fields: [missionId], references: [id], onDelete: SetNull)
+  contact  Contact?          @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  template MessageTemplate?  @relation(fields: [templateId], references: [id], onDelete: SetNull)
+
+  @@index([userId, createdAt])
+  @@index([resendId])
+  @@index([userId, isDraft])
+  @@map("sent_email")
+}

@@ -18,6 +18,7 @@ export const env = createEnv({
     EMAIL_FROM: z.string().min(1),
     STRIPE_SECRET_KEY: z.string().min(1),
     NODE_ENV: z.enum(["development", "production", "test"]),
+    RESEND_WEBHOOK_SECRET: z.string().optional(),
     STRIPE_WEBHOOK_SECRET: z.string().optional(),
     CI: z.coerce.boolean().optional(),
   },

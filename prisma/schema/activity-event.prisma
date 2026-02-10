@@ -1,0 +1,28 @@
+enum ActivityEventType {
+  STATUS_CHANGE
+  NOTE_ADDED
+  CONTACT_LINKED
+  FOLLOW_UP_CREATED
+  FOLLOW_UP_COMPLETED
+  MISSION_CREATED
+  MISSION_UPDATED
+  EMAIL_SENT
+}
+
+model ActivityEvent {
+  id            String            @id @default(nanoid(11))
+  missionId     String
+  userId        String
+  type          ActivityEventType
+  description   String?
+  previousValue String?
+  newValue      String?
+
+  createdAt DateTime @default(now())
+
+  mission Mission @relation(fields: [missionId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([missionId, createdAt])
+  @@map("activity_event")
+}

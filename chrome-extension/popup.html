@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jobio Capture</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div id="app">
+    <div class="header">
+      <h1>Jobio</h1>
+      <p class="subtitle">Capture de mission</p>
+    </div>
+
+    <!-- Login state -->
+    <div id="login-section" class="section hidden">
+      <p>Connecte-toi à Jobio pour capturer des missions.</p>
+      <div class="form-group">
+        <label for="api-url">URL de l'app</label>
+        <input type="text" id="api-url" value="https://jobio.app" placeholder="https://jobio.app">
+      </div>
+      <button id="btn-open-app" class="btn btn-primary">Ouvrir Jobio</button>
+      <button id="btn-check-auth" class="btn btn-secondary">Vérifier la connexion</button>
+    </div>
+
+    <!-- Connected state -->
+    <div id="connected-section" class="section hidden">
+      <div id="user-info" class="user-badge"></div>
+
+      <!-- Capture options -->
+      <div class="capture-options">
+        <button id="btn-capture-url" class="btn btn-primary btn-full">
+          Capturer cette page
+        </button>
+        <div class="divider"><span>ou</span></div>
+        <textarea id="paste-content" placeholder="Colle le texte d'une annonce ici..." rows="4"></textarea>
+        <button id="btn-capture-text" class="btn btn-secondary btn-full" disabled>
+          Parser le texte
+        </button>
+      </div>
+
+      <!-- Loading -->
+      <div id="loading-section" class="section hidden">
+        <div class="spinner"></div>
+        <p>Analyse en cours...</p>
+      </div>
+
+      <!-- Preview -->
+      <div id="preview-section" class="section hidden">
+        <h3>Aperçu</h3>
+        <div id="preview-content" class="preview-card"></div>
+        <div class="preview-actions">
+          <button id="btn-save" class="btn btn-primary btn-full">
+            Ajouter au pipeline
+          </button>
+          <button id="btn-cancel" class="btn btn-secondary btn-full">
+            Annuler
+          </button>
+        </div>
+      </div>
+
+      <!-- Success -->
+      <div id="success-section" class="section hidden">
+        <div class="success-icon">✓</div>
+        <p>Mission ajoutée au pipeline !</p>
+        <button id="btn-open-pipeline" class="btn btn-secondary btn-full">
+          Voir dans Jobio
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

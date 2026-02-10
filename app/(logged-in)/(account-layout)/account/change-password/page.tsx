@@ -17,15 +17,17 @@ import { z } from "zod";
 
 const ChangePasswordFormSchema = z
   .object({
-    currentPassword: z.string().min(1, "Current password is required"),
-    newPassword: z.string().min(8, "Password must be at least 8 characters"),
+    currentPassword: z.string().min(1, "Le mot de passe actuel est requis"),
+    newPassword: z
+      .string()
+      .min(8, "Le mot de passe doit contenir au moins 8 caractères"),
     confirmPassword: z
       .string()
-      .min(8, "Password must be at least 8 characters"),
+      .min(8, "Le mot de passe doit contenir au moins 8 caractères"),
     revokeOtherSessions: z.boolean().default(true),
   })
   .refine((data) => data.newPassword === data.confirmPassword, {
-    message: "Passwords do not match",
+    message: "Les mots de passe ne correspondent pas",
     path: ["confirmPassword"],
   });
 
@@ -48,7 +50,7 @@ export default function ChangePasswordPage() {
       toast.error(error.message);
     },
     onSuccess: () => {
-      toast.success("Password changed successfully");
+      toast.success("Mot de passe modifié avec succès");
       router.push("/account");
     },
   });
@@ -69,9 +71,9 @@ export default function ChangePasswordPage() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Change Password</CardTitle>
+        <CardTitle>Changer le mot de passe</CardTitle>
         <CardDescription>
-          Update your password to keep your account secure.
+          Mettez à jour votre mot de passe pour sécuriser votre compte.
         </CardDescription>
       </CardHeader>
       <Form form={form}>
@@ -79,7 +81,7 @@ export default function ChangePasswordPage() {
           <form.AppField name="currentPassword">
             {(field) => (
               <field.Field>
-                <field.Label>Current Password</field.Label>
+                <field.Label>Mot de passe actuel</field.Label>
                 <field.Content>
                   <field.Input type="password" />
                   <field.Message />
@@ -90,7 +92,7 @@ export default function ChangePasswordPage() {
           <form.AppField name="newPassword">
             {(field) => (
               <field.Field>
-                <field.Label>New Password</field.Label>
+                <field.Label>Nouveau mot de passe</field.Label>
                 <field.Content>
                   <field.Input type="password" />
                   <field.Message />
@@ -101,7 +103,7 @@ export default function ChangePasswordPage() {
           <form.AppField name="confirmPassword">
             {(field) => (
               <field.Field>
-                <field.Label>Confirm New Password</field.Label>
+                <field.Label>Confirmer le nouveau mot de passe</field.Label>
                 <field.Content>
                   <field.Input type="password" />
                   <field.Message />
@@ -113,10 +115,10 @@ export default function ChangePasswordPage() {
             {(field) => (
               <div className="flex flex-row items-center justify-between rounded-lg border p-3 shadow-sm">
                 <div className="space-y-0.5">
-                  <field.Label>Sign out from other devices</field.Label>
+                  <field.Label>Déconnecter les autres appareils</field.Label>
                   <field.Description>
-                    This will sign you out from all other devices where you're
-                    currently logged in
+                    Cela vous déconnectera de tous les autres appareils où vous
+                    êtes actuellement connecté
                   </field.Description>
                 </div>
                 <field.Switch />
@@ -124,7 +126,7 @@ export default function ChangePasswordPage() {
             )}
           </form.AppField>
           <form.SubmitButton className="w-full">
-            Change Password
+            Changer le mot de passe
           </form.SubmitButton>
         </CardContent>
       </Form>

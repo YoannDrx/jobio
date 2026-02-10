@@ -11,12 +11,12 @@ import { z } from "zod";
 import { cancelSubscriptionAction } from "../billing.action";
 
 const CANCEL_REASONS = {
-  too_expensive: "Too expensive",
-  not_using: "Not using the product enough",
-  missing_features: "Missing features",
-  bugs: "Too many bugs/issues",
-  competitor: "Switching to a competitor",
-  other: "Other",
+  too_expensive: "Trop cher",
+  not_using: "Je n'utilise pas assez le produit",
+  missing_features: "Fonctionnalités manquantes",
+  bugs: "Trop de bugs/problèmes",
+  competitor: "Je passe à un concurrent",
+  other: "Autre",
 } as const;
 
 const CancelSchema = z.object({
@@ -30,7 +30,7 @@ const CancelSchema = z.object({
   ] as const),
   details: z
     .string()
-    .min(10, "Please provide more details (minimum 10 characters)"),
+    .min(10, "Merci de fournir plus de détails (minimum 10 caractères)"),
 });
 
 export function CancelSubscriptionForm() {
@@ -42,13 +42,16 @@ export function CancelSubscriptionForm() {
       onSuccess: (result) => {
         if (result.data.url) {
           toast.success(
-            "Redirecting to billing portal where you can cancel your subscription.",
+            "Redirection vers le portail de facturation pour annuler ton abonnement.",
           );
           window.location.href = result.data.url;
         }
       },
       onError: (error) => {
-        toast.error(error.error.serverError ?? "Failed to open billing portal");
+        toast.error(
+          error.error.serverError ??
+            "Impossible d'ouvrir le portail de facturation",
+        );
       },
     },
   );
@@ -69,7 +72,7 @@ export function CancelSubscriptionForm() {
   return (
     <Card className="w-full">
       <CardHeader>
-        <CardTitle>Cancel Subscription</CardTitle>
+        <CardTitle>Annuler l'abonnement</CardTitle>
       </CardHeader>
       <CardContent>
         <Form form={form}>
@@ -78,7 +81,7 @@ export function CancelSubscriptionForm() {
               {(field) => (
                 <field.Field>
                   <field.Label>
-                    What's your main reason for cancelling?
+                    Quelle est la raison principale de ton annulation ?
                   </field.Label>
                   <field.Content>
                     <RadioGroup
@@ -115,10 +118,10 @@ export function CancelSubscriptionForm() {
             <form.AppField name="details">
               {(field) => (
                 <field.Field>
-                  <field.Label>Additional details</field.Label>
+                  <field.Label>Détails supplémentaires</field.Label>
                   <field.Content>
                     <field.Textarea
-                      placeholder="Please provide more details to help us improve..."
+                      placeholder="Merci de fournir plus de détails pour nous aider à nous améliorer..."
                       className="min-h-[100px]"
                     />
                     <field.Message />
@@ -129,14 +132,14 @@ export function CancelSubscriptionForm() {
 
             <div className="flex gap-4">
               <form.SubmitButton variant="destructive" disabled={isPending}>
-                Confirm Cancellation
+                Confirmer l'annulation
               </form.SubmitButton>
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => router.push(`/account/billing`)}
               >
-                Go Back
+                Retour
               </Button>
             </div>
           </div>

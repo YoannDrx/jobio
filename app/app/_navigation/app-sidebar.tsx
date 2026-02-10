@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/sidebar";
 import { SidebarNavigationMenu } from "@/components/ui/sidebar-utils";
 import { ContactFeedbackPopover } from "@/features/contact/feedback/contact-feedback-popover";
+import { PlanUsageSidebar } from "@/features/plans/components/plan-usage-sidebar";
 import { SidebarUserButton } from "@/features/sidebar/sidebar-user-button";
 import { ChevronDown } from "lucide-react";
 import { usePathname } from "next/navigation";
@@ -55,6 +56,7 @@ export function AppSidebar() {
         ))}
       </SidebarContent>
       <SidebarFooter className="flex flex-col gap-2">
+        <PlanUsageSidebar />
         <UpgradeCard />
         <ContactFeedbackPopover />
         <SidebarUserButton />

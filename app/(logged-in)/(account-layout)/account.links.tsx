@@ -1,5 +1,11 @@
 import type { NavigationGroup } from "@/features/navigation/navigation.type";
-import { AlertCircle, LayoutDashboard, Mail, User2 } from "lucide-react";
+import {
+  AlertCircle,
+  CreditCard,
+  LayoutDashboard,
+  Mail,
+  User2,
+} from "lucide-react";
 
 export const getAccountNavigation = (): NavigationGroup[] => {
   return ACCOUNT_LINKS;
@@ -7,32 +13,37 @@ export const getAccountNavigation = (): NavigationGroup[] => {
 
 const ACCOUNT_LINKS: NavigationGroup[] = [
   {
-    title: "Your profile",
+    title: "Ton profil",
     links: [
       {
         href: "/account",
         Icon: User2,
-        label: "Profile",
+        label: "Profil",
       },
       {
         href: "/account/email",
         Icon: Mail,
-        label: "Mail",
+        label: "Email",
+      },
+      {
+        href: "/account/billing",
+        Icon: CreditCard,
+        label: "Facturation",
       },
       {
         href: "/account/danger",
         Icon: AlertCircle,
-        label: "Danger",
+        label: "Zone dangereuse",
       },
     ],
   },
   {
-    title: "App",
+    title: "Application",
     links: [
       {
         href: "/app",
         Icon: LayoutDashboard,
-        label: "Dashboard",
+        label: "Tableau de bord",
       },
     ],
   },

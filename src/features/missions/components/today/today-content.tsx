@@ -14,6 +14,11 @@ import { createMissionAction } from "@/features/missions/missions.action";
 import type { MissionParserOutput } from "@/features/ai/prompts/mission-parser.prompt";
 import { QuickCaptureInput } from "@/features/missions/components/capture/quick-capture-input";
 import { MissionPreview } from "@/features/missions/components/capture/mission-preview";
+import { OnboardingWizard } from "@/features/onboarding/components/onboarding-wizard";
+import {
+  TodaySuggestions,
+  type Suggestion,
+} from "@/features/missions/components/today/today-suggestions";
 import {
   AlertTriangle,
   ArrowRight,
@@ -80,6 +85,12 @@ type TodayContentProps = {
   todayFollowUps: TodayFollowUp[];
   staleMissions: StaleMission[];
   weekStats: WeekStats;
+  suggestions: Suggestion[];
+  onboardingStatus?: {
+    hasProfile: boolean;
+    hasPlatforms: boolean;
+    hasMission: boolean;
+  } | null;
 };
 
 export function TodayContent({
@@ -90,6 +101,8 @@ export function TodayContent({
   todayFollowUps,
   staleMissions,
   weekStats,
+  suggestions,
+  onboardingStatus,
 }: TodayContentProps) {
   const router = useRouter();
   const [isParsing, setIsParsing] = useState(false);
@@ -194,6 +207,17 @@ export function TodayContent({
         </CardContent>
       </Card>
 
+      {/* Onboarding wizard */}
+      {onboardingStatus && (
+        <OnboardingWizard
+          status={{
+            hasProfile: onboardingStatus.hasProfile,
+            hasPlatforms: onboardingStatus.hasPlatforms,
+            hasMission: onboardingStatus.hasMission,
+          }}
+        />
+      )}
+
       {/* Parsed preview */}
       {parsedData && (
         <MissionPreview
@@ -203,6 +227,9 @@ export function TodayContent({
           isLoading={isCreating}
         />
       )}
+
+      {/* Suggestions */}
+      <TodaySuggestions suggestions={suggestions} />
 
       {/* Urgent actions section */}
       {hasUrgencies && (

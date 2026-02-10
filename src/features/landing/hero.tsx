@@ -14,35 +14,45 @@ export const Hero = () => {
           <div className="mx-auto max-w-2xl text-center">
             <Typography
               variant="h1"
-              className="text-5xl font-semibold tracking-tight text-balance sm:text-7xl lg:text-7xl"
+              className="text-5xl font-bold tracking-tight text-balance sm:text-7xl lg:text-7xl"
             >
-              Write the best content and Grow your{" "}
+              Trouve des missions.
+              <br />
+              Relance au bon moment.
+              <br />
               <span className="relative inline-block">
-                <span>business</span>
+                <span>Signe plus</span>
                 <CircleSvg className="fill-primary absolute inset-0" />
               </span>
+              .
             </Typography>
             <Typography
               variant="large"
               className="text-muted-foreground mt-8 text-lg font-medium text-pretty sm:text-xl/8"
             >
-              Build for Thread, create, schedule and publish your content to
-              your account with AI.
+              Le cockpit commercial des freelances tech. Pipeline intelligent,
+              relances automatiques, scoring IA.
             </Typography>
             <div className="mt-10 flex items-center justify-center gap-x-6">
               <Link
-                href="/signin"
+                href="/auth/signup"
                 className={buttonVariants({ size: "lg", variant: "default" })}
               >
-                Get started
+                Commencer gratuitement
               </Link>
               <Link
                 href="#pricing"
                 className={buttonVariants({ size: "lg", variant: "link" })}
               >
-                Learn more <span aria-hidden="true">→</span>
+                Voir les plans <span aria-hidden="true">→</span>
               </Link>
             </div>
+            <Typography
+              variant="muted"
+              className="text-muted-foreground mt-6 text-sm font-medium"
+            >
+              Pas de CB · Setup en 5 min · 15 missions gratuites
+            </Typography>
           </div>
           <Image
             alt="App screenshot"

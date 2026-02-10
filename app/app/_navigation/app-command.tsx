@@ -13,7 +13,7 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { Input } from "@/components/ui/input";
-import { Search } from "lucide-react";
+import { Bell, Globe, Plus, Search, UserPlus } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
@@ -35,7 +35,7 @@ export function AppCommand() {
         <Search className="text-muted-foreground absolute top-2.5 left-2.5 size-4" />
         <Input
           type="search"
-          placeholder="Search..."
+          placeholder="Chercher..."
           className="bg-background w-full appearance-none pl-8 shadow-none"
           onClick={() => {
             setOpen(true);
@@ -50,9 +50,43 @@ export function AppCommand() {
         </div>
       </div>
       <CommandDialog open={open} onOpenChange={setOpen}>
-        <CommandInput placeholder="Type a command or search..." />
+        <CommandInput placeholder="Chercher ou lancer une action..." />
         <CommandList>
-          <CommandEmpty>No results found.</CommandEmpty>
+          <CommandEmpty>Aucun résultat.</CommandEmpty>
+          <CommandGroup heading="Actions rapides">
+            <CommandItem
+              onSelect={() => {
+                router.push("/app/pipeline");
+              }}
+            >
+              <Plus className="mr-2 size-4" />
+              <span>Ajouter une mission</span>
+            </CommandItem>
+            <CommandItem
+              onSelect={() => {
+                router.push("/app/contacts");
+              }}
+            >
+              <UserPlus className="mr-2 size-4" />
+              <span>Nouveau contact</span>
+            </CommandItem>
+            <CommandItem
+              onSelect={() => {
+                router.push("/app/pipeline");
+              }}
+            >
+              <Bell className="mr-2 size-4" />
+              <span>Nouvelle relance</span>
+            </CommandItem>
+            <CommandItem
+              onSelect={() => {
+                router.push("/app/platforms");
+              }}
+            >
+              <Globe className="mr-2 size-4" />
+              <span>Plateformes</span>
+            </CommandItem>
+          </CommandGroup>
           {APP_LINKS.map((link, index) => (
             <CommandGroup heading={link.title} key={index}>
               {link.links.map((link) => (

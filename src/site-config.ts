@@ -1,7 +1,7 @@
 export const SiteConfig = {
   title: "Jobio",
   description:
-    "Le CRM de prospection intelligent pour freelances tech. Gérez vos missions, contacts et candidatures en un seul endroit.",
+    "Le cockpit commercial des freelances tech. Trouve des missions, relance au bon moment, signe plus.",
   prodUrl: "https://jobio.app",
   appId: "jobio",
   domain: "jobio.app",
@@ -11,7 +11,7 @@ export const SiteConfig = {
     address: "",
   },
   brand: {
-    primary: "#6366f1",
+    primary: "#22D3EE",
   },
   team: {
     image: "",

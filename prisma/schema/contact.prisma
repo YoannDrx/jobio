@@ -1,0 +1,47 @@
+enum InteractionType {
+  EMAIL
+  CALL
+  MEETING
+  LINKEDIN
+  MESSAGE
+  OTHER
+}
+
+model Contact {
+  id          String  @id @default(nanoid(11))
+  userId      String
+  firstName   String
+  lastName    String
+  company     String?
+  email       String?
+  phone       String?
+  linkedinUrl String?
+  role        String?
+  notes       String?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  user         User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  missions     Mission[]
+  interactions ContactInteraction[]
+  sentEmails   SentEmail[]
+
+  @@index([userId, deletedAt])
+  @@map("contact")
+}
+
+model ContactInteraction {
+  id          String          @id @default(nanoid(11))
+  contactId   String
+  type        InteractionType
+  description String
+  date        DateTime
+
+  createdAt DateTime @default(now())
+
+  contact Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  @@map("contact_interaction")
+}

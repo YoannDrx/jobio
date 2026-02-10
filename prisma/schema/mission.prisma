@@ -1,0 +1,64 @@
+enum MissionStatus {
+  A_POSTULER
+  POSTULE
+  ENTRETIEN
+  PROPOSITION
+  ACCEPTE
+  REFUSE
+  EN_PAUSE
+  ABANDONNE
+  ARCHIVE
+}
+
+enum MissionPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum WorkType {
+  REMOTE
+  HYBRID
+  ONSITE
+}
+
+model Mission {
+  id          String          @id @default(nanoid(11))
+  userId      String
+  title       String
+  company     String?
+  description String?
+  status      MissionStatus   @default(A_POSTULER)
+  priority    MissionPriority @default(MEDIUM)
+  tjm         Int?
+  duration    String?
+  workType    WorkType?
+  location    String?
+  stack       String[]
+  sourceUrl   String?
+  score       Int             @default(0)
+  notes       String?
+  platformId  String?
+  contactId   String?
+  profileId   String?
+
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  archivedAt DateTime?
+  deletedAt  DateTime?
+
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  platform       Platform?        @relation(fields: [platformId], references: [id], onDelete: SetNull)
+  contact        Contact?         @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  profile        UserProfile?     @relation(fields: [profileId], references: [id], onDelete: SetNull)
+  followUps      FollowUp[]
+  activityEvents ActivityEvent[]
+  sentEmails     SentEmail[]
+
+  @@index([userId, status])
+  @@index([userId, createdAt])
+  @@index([userId, deletedAt])
+  @@index([userId, status, deletedAt])
+  @@map("mission")
+}

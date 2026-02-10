@@ -4,8 +4,8 @@ import { Suspense } from "react";
 import { EditProfileCardForm } from "./edit-profile-form";
 
 export const generateMetadata = combineWithParentMetadata({
-  title: "Settings",
-  description: "Update your profile.",
+  title: "Paramètres",
+  description: "Mettre à jour votre profil.",
 });
 
 export default function Page() {

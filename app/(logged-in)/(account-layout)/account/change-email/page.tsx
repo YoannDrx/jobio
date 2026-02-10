@@ -16,7 +16,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 
 const ChangeEmailFormSchema = z.object({
-  newEmail: z.string().email("Please enter a valid email address"),
+  newEmail: z.string().email("Veuillez entrer une adresse email valide"),
 });
 
 type ChangeEmailFormType = z.infer<typeof ChangeEmailFormSchema>;
@@ -37,7 +37,9 @@ export default function ChangeEmailPage() {
       toast.error(error.message);
     },
     onSuccess: () => {
-      toast.success("Verification email sent. Please check your inbox.");
+      toast.success(
+        "Email de vérification envoyé. Vérifiez votre boîte de réception.",
+      );
       router.push("/account");
     },
   });
@@ -55,10 +57,10 @@ export default function ChangeEmailPage() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Change Email</CardTitle>
+        <CardTitle>Changer l&apos;email</CardTitle>
         <CardDescription>
-          Enter your new email address. We'll send a verification link to
-          confirm the change.
+          Entrez votre nouvelle adresse email. Nous vous enverrons un lien de
+          vérification pour confirmer le changement.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -66,7 +68,7 @@ export default function ChangeEmailPage() {
           <form.AppField name="newEmail">
             {(field) => (
               <field.Field>
-                <field.Label>New Email</field.Label>
+                <field.Label>Nouvel email</field.Label>
                 <field.Content>
                   <field.Input
                     type="email"
@@ -77,7 +79,9 @@ export default function ChangeEmailPage() {
               </field.Field>
             )}
           </form.AppField>
-          <form.SubmitButton className="w-full">Change Email</form.SubmitButton>
+          <form.SubmitButton className="w-full">
+            Changer l&apos;email
+          </form.SubmitButton>
         </Form>
       </CardContent>
     </Card>

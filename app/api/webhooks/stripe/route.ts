@@ -23,11 +23,18 @@ export const POST = async (req: NextRequest) => {
 
   const stripeSignature = headerList.get("stripe-signature");
 
+  if (!stripeSignature) {
+    return NextResponse.json(
+      { error: "Missing stripe-signature header" },
+      { status: 400 },
+    );
+  }
+
   let event: Stripe.Event | null = null;
   try {
     event = stripe.webhooks.constructEvent(
       body,
-      stripeSignature ?? "",
+      stripeSignature,
       env.STRIPE_WEBHOOK_SECRET ?? "",
     );
   } catch (err: unknown) {

@@ -1,5 +1,10 @@
 import type { Subscription } from "@/generated/prisma";
 import { logger } from "@/lib/logger";
+import { sendEmail } from "@/lib/mail/send-email";
+import { SiteConfig } from "@/site-config";
+import { prisma } from "@/lib/prisma";
+import TrialEndingEmail from "@email/trial-ending.email";
+import TrialReminderEmail from "@email/trial-reminder.email";
 import {
   Bot,
   Briefcase,
@@ -14,11 +19,11 @@ import {
 } from "lucide-react";
 
 const DEFAULT_LIMIT = {
-  missions: 50,
-  profiles: 3,
-  contacts: 20,
+  missions: 15,
+  profiles: 2,
+  contacts: 30,
   platforms: 3,
-  aiRequestsPerMonth: 20,
+  aiRequestsPerMonth: 5,
   analyticsHistoryDays: 7,
 };
 
@@ -88,22 +93,51 @@ export const AUTH_PLANS: AppAuthPlan[] = [
     annualDiscountPriceId: process.env.STRIPE_PRO_YEARLY_PLAN_ID ?? "",
     limits: {
       missions: 999999,
-      profiles: 10,
-      contacts: 999999,
-      platforms: 999999,
-      aiRequestsPerMonth: 200,
+      profiles: 5,
+      contacts: 200,
+      platforms: 10,
+      aiRequestsPerMonth: 50,
       analyticsHistoryDays: 90,
     },
     freeTrial: {
       days: 14,
       onTrialStart: async (subscription) => {
-        logger.debug(`Welcome email sent to ${subscription}`);
+        logger.debug(`Trial started for ${subscription.referenceId}`);
+      },
+      onTrialEnd: async ({ subscription }) => {
+        const user = await prisma.user.findFirst({
+          where: { id: subscription.referenceId },
+        });
+        if (!user) return;
+        await sendEmail({
+          to: user.email,
+          subject: `Ton essai ${SiteConfig.title} se termine bientôt`,
+          html: TrialEndingEmail({
+            name: user.name || "Freelance",
+            daysLeft: 2,
+          }),
+        });
       },
       onTrialExpired: async (subscription) => {
-        logger.debug(`Trial expired for ${subscription}`);
-      },
-      onTrialEnd: async (subscription) => {
-        logger.debug(`Trial ended for ${subscription}`);
+        const user = await prisma.user.findFirst({
+          where: { id: subscription.referenceId },
+        });
+        if (!user) return;
+        const [missionsCount, followUpsCount] = await Promise.all([
+          prisma.mission.count({ where: { userId: user.id, deletedAt: null } }),
+          prisma.followUp.count({
+            where: { userId: user.id, completedAt: { not: null } },
+          }),
+        ]);
+        await sendEmail({
+          to: user.email,
+          subject: `Ton essai ${SiteConfig.title} est terminé`,
+          html: TrialReminderEmail({
+            name: user.name || "Freelance",
+            missionsCount,
+            followUpsCount,
+          }),
+        });
       },
     },
     price: 9.99,
@@ -170,9 +204,7 @@ export const LIMITS_CONFIG: Record<
   aiRequestsPerMonth: {
     icon: Bot,
     getLabel: (value: number) =>
-      value >= 999999
-        ? "Requetes IA illimitees"
-        : `${value} requetes IA/mois`,
+      value >= 999999 ? "Requetes IA illimitees" : `${value} requetes IA/mois`,
     description: "Assistants IA pour optimiser votre prospection",
   },
   analyticsHistoryDays: {

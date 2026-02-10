@@ -17,7 +17,19 @@ model User {
   accounts      Account[]
   feedbacks     Feedback[]
   subscription  Subscription?
-  
+
+  missions         Mission[]
+  followUps        FollowUp[]
+  activityEvents   ActivityEvent[]
+  contacts         Contact[]
+  profiles         UserProfile[]
+  userPlatforms    UserPlatform[]
+  messageTemplates MessageTemplate[]
+  aiUsages         AIUsage[]
+  aiMonthlyQuotas  AIMonthlyQuota[]
+  notifications    Notification[]
+  sentEmails       SentEmail[]
+
   // Stripe integration
   stripeCustomerId String?
 

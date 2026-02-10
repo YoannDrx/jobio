@@ -1,0 +1,39 @@
+enum AIFeature {
+  MISSION_PARSING
+  OFFER_SCORING
+  APPLICATION_MESSAGE
+  FOLLOW_UP_MESSAGE
+  PROFILE_IMPORT
+  EMAIL_WRITING
+}
+
+model AIUsage {
+  id           String    @id @default(nanoid(11))
+  userId       String
+  feature      AIFeature
+  inputTokens  Int
+  outputTokens Int
+
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("ai_usage")
+}
+
+model AIMonthlyQuota {
+  id            String @id @default(nanoid(11))
+  userId        String
+  month         Int
+  year          Int
+  requestsUsed  Int    @default(0)
+  requestsLimit Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, month, year])
+  @@map("ai_monthly_quota")
+}

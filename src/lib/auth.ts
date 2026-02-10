@@ -1,15 +1,16 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { nextCookies } from "better-auth/next-js";
-import {
-  admin,
-  emailOTP,
-  lastLoginMethod,
-} from "better-auth/plugins";
+import { admin, emailOTP, lastLoginMethod } from "better-auth/plugins";
 
 import { sendEmail } from "@/lib/mail/send-email";
 import { SiteConfig } from "@/site-config";
-import MarkdownEmail from "@email/markdown.email";
+import ChangeEmailEmail from "@email/change-email.email";
+import DeleteAccountEmail from "@email/delete-account.email";
+import OtpSigninEmail from "@email/otp-signin.email";
+import ResetPasswordEmail from "@email/reset-password.email";
+import VerifyEmailEmail from "@email/verify-email.email";
+import WelcomeEmail from "@email/welcome.email";
 import { setupResendCustomer } from "./auth/auth-config-setup";
 import { env } from "./env";
 import { logger } from "./logger";
@@ -50,12 +51,20 @@ export const auth = betterAuth({
     // Disable rate limiting in CI
     enabled: env.CI ? false : undefined,
   },
-  trustedOrigins: ["*"],
+  trustedOrigins: [
+    getServerUrl(),
+    ...(env.NODE_ENV === "development" ? ["http://localhost:3000"] : []),
+  ],
   databaseHooks: {
     user: {
       create: {
         after: async (user, _req) => {
           await setupResendCustomer(user);
+          await sendEmail({
+            to: user.email,
+            subject: `Bienvenue sur ${SiteConfig.title} !`,
+            html: WelcomeEmail({ name: user.name || "Freelance" }),
+          });
         },
       },
     },
@@ -68,17 +77,8 @@ export const auth = betterAuth({
     async sendResetPassword({ user, url }) {
       await sendEmail({
         to: user.email,
-        subject: "Reset your password",
-        html: MarkdownEmail({
-          preview: `Reset your password for ${SiteConfig.title}`,
-          markdown: `
-          Hello,
-
-          You requested to reset your password.
-
-          [Click here to reset your password](${url})
-          `,
-        }),
+        subject: "Réinitialise ton mot de passe",
+        html: ResetPasswordEmail({ url }),
       });
     },
   },
@@ -88,17 +88,8 @@ export const auth = betterAuth({
       sendChangeEmailVerification: async ({ newEmail, url }) => {
         await sendEmail({
           to: newEmail,
-          subject: "Change email address",
-          html: MarkdownEmail({
-            preview: `Change your email address for ${SiteConfig.title}`,
-            markdown: `
-            Hello,
-
-            You requested to change your email address.
-
-            [Click here to verify your new email address](${url})
-            `,
-          }),
+          subject: "Confirme ton changement d'adresse email",
+          html: ChangeEmailEmail({ url }),
         });
       },
     },
@@ -108,17 +99,8 @@ export const auth = betterAuth({
         const url = `${getServerUrl()}/auth/confirm-delete?token=${token}&callbackUrl=/auth/goodbye`;
         await sendEmail({
           to: user.email,
-          subject: "Delete your account",
-          html: MarkdownEmail({
-            preview: `Delete your account from ${SiteConfig.title}`,
-            markdown: `
-            Hello,
-
-            You requested to delete your account.
-
-            [Click here to confirm account deletion](${url})
-            `,
-          }),
+          subject: "Suppression de ton compte",
+          html: DeleteAccountEmail({ url }),
         });
       },
     },
@@ -127,17 +109,8 @@ export const auth = betterAuth({
     sendVerificationEmail: async ({ user, url }) => {
       await sendEmail({
         to: user.email,
-        subject: "Verify your email address",
-        html: MarkdownEmail({
-          preview: `Verify your email for ${SiteConfig.title}`,
-          markdown: `
-          Hello,
-
-          Welcome to ${SiteConfig.title}! Please verify your email address.
-
-          [Click here to verify your email](${url})
-          `,
-        }),
+        subject: "Vérifie ton adresse email",
+        html: VerifyEmailEmail({ url }),
       });
     },
   },
@@ -148,16 +121,10 @@ export const auth = betterAuth({
         logger.debug("Sending OTP", { email, otp });
         await sendEmail({
           to: email,
-          subject: `Your code to sign in to ${SiteConfig.title} ${otp}`,
-          html: MarkdownEmail({
-            preview: `Your code to sign in to ${SiteConfig.title}`,
-            markdown: `
-            Hello,
-
-            Your code to sign in: **${otp}**
-
-            [Or click here to sign in automatically](${getServerUrl()}/auth/signin/otp?email=${email}&otp=${otp})
-            `,
+          subject: `Ton code de connexion à ${SiteConfig.title} ${otp}`,
+          html: OtpSigninEmail({
+            otp,
+            autoLoginUrl: `${getServerUrl()}/auth/signin/otp?email=${email}&otp=${otp}`,
           }),
         });
       },
