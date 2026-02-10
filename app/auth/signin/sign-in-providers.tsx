@@ -2,6 +2,7 @@
 
 import { Divider } from "@/components/nowts/divider";
 import { Typography } from "@/components/nowts/typography";
+import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { ProviderButton } from "./provider-button";
@@ -24,7 +25,12 @@ export const SignInProviders = ({
       <SignInCredentialsAndMagicLinkForm callbackUrl={callbackUrl} />
       {providers.length > 0 && <Divider>or</Divider>}
 
-      <div className="grid grid-cols-1 gap-2 lg:grid-cols-2 lg:gap-4">
+      <div
+        className={cn(
+          "grid grid-cols-1 gap-2 lg:gap-4",
+          providers.length > 1 && "lg:grid-cols-2",
+        )}
+      >
         {/* ℹ️ Add provider you want to support here */}
         {providers.includes("github") && (
           <ProviderButton providerId="github" callbackUrl={callbackUrl} />
