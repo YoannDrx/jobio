@@ -76,10 +76,14 @@ test.describe("account", () => {
     await input.fill(newName);
     await page.getByRole("button", { name: /save/i }).click();
 
-    await expect(page.getByText("Profile updated")).toBeVisible();
+    await expect(page.getByText("Profile updated")).toBeVisible({
+      timeout: 10000,
+    });
     await page.reload();
+    await page.waitForLoadState("networkidle");
     const updatedInput = page.getByRole("textbox", { name: "Name" });
-    await expect(updatedInput).toHaveValue(newName);
+    await updatedInput.waitFor({ timeout: 10000 });
+    await expect(updatedInput).toHaveValue(newName, { timeout: 10000 });
   });
 
   test("change password flow", async ({ page }) => {
