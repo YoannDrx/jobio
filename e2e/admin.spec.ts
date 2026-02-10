@@ -22,7 +22,8 @@ test.describe("admin", () => {
       callbackURL: "/admin",
     });
 
-    await page.goto("/admin");
+    // signInAccount already navigated to /admin via callbackURL
+    await page.waitForURL(/\/admin/, { timeout: 15000 });
     await page.waitForLoadState("networkidle");
 
     await expect(page.getByRole("link", { name: "Users" })).toBeVisible({

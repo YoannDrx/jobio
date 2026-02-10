@@ -77,8 +77,9 @@ test.describe("account", () => {
 
     const newName = faker.person.fullName();
 
-    // Clear and type character by character for reliable React controlled input
-    await input.clear();
+    // Select all text then type to replace - reliable with React controlled inputs
+    await input.click();
+    await input.selectText();
     await input.pressSequentially(newName, { delay: 30 });
 
     // Verify the input value was set correctly before saving
