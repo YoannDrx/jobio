@@ -16,9 +16,9 @@ test("password reset flow", async ({ page }) => {
 
   await page.waitForURL(/\/account/, { timeout: 10000 });
 
-  // 2. Sign out
-
-  await page.getByRole("button", { name: /sign out/i }).click();
+  // 2. Sign out - open user dropdown then click logout
+  await page.getByTestId("sidebar-user-button").click();
+  await page.getByRole("menuitem", { name: /logout/i }).click();
   await page.waitForURL(/\/auth\/signin/, { timeout: 10000 });
 
   // 3. Go to forget password page

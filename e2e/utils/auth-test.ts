@@ -118,8 +118,11 @@ export async function signOutAccount(options: { page: Page }) {
   // Navigate to account page
   await page.goto(`/account`);
 
-  // Click the sign out button
-  await page.getByRole("button", { name: /sign out/i }).click();
+  // Open the user dropdown in the sidebar
+  await page.getByTestId("sidebar-user-button").click();
+
+  // Click the logout menu item
+  await page.getByRole("menuitem", { name: /logout/i }).click();
 
   await page.waitForURL(/\/auth\/signin/, { timeout: 10000 });
 }
