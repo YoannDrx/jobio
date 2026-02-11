@@ -18,9 +18,9 @@ export const UpgradeCard = () => {
   return (
     <Card className="">
       <CardHeader className="">
-        <CardTitle>Upgrade to PRO</CardTitle>
+        <CardTitle>Passe en PRO</CardTitle>
         <CardDescription>
-          Unlock all features and get unlimited access to our app.
+          Débloque les limites avancées et accélère ta prospection.
         </CardDescription>
       </CardHeader>
       <CardContent className="">
@@ -28,7 +28,7 @@ export const UpgradeCard = () => {
           href={BILLING_URL}
           className={buttonVariants({ className: "w-full" })}
         >
-          Upgrade
+          Voir les plans
         </Link>
       </CardContent>
     </Card>

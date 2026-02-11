@@ -50,8 +50,10 @@ export const FeedbackTable = async ({ searchParams }: FeedbackTableProps) => {
       <AutomaticPagination
         currentPage={currentPage}
         totalPages={totalPages}
-        searchParam={searchParams.search}
         paramName="page"
+        queryParams={{
+          search: searchParams.search,
+        }}
       />
     </>
   );

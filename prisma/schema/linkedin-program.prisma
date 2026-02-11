@@ -1,0 +1,61 @@
+model LinkedInProgram {
+  id              String   @id @default(nanoid(11))
+  slug            String   @unique
+  title           String
+  description     String
+  longDescription String?
+  authorName      String
+  authorImage     String?
+  price           Int      @default(0) // in cents, 0 = free
+  currency        String   @default("eur")
+  isFree          Boolean  @default(false)
+  templateCount   Int      @default(0)
+  coverImage      String?
+  order           Int      @default(0)
+  stripeProductId String?
+  stripePriceId   String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  templates LinkedInTemplate[]
+  purchases ProgramPurchase[]
+
+  @@map("linkedin_program")
+}
+
+model LinkedInTemplate {
+  id        String  @id @default(nanoid(11))
+  programId String
+  program   LinkedInProgram @relation(fields: [programId], references: [id], onDelete: Cascade)
+  title     String
+  hook      String  // visible even without purchase
+  body      String  // protected content
+  tips      String? // protected tips
+  category  String?
+  order     Int     @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("linkedin_template")
+}
+
+model ProgramPurchase {
+  id                     String   @id @default(nanoid(11))
+  userId                 String
+  user                   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  programId              String
+  program                LinkedInProgram @relation(fields: [programId], references: [id], onDelete: Cascade)
+  stripeSessionId        String?  @unique
+  stripePaymentIntentId  String?
+  status                 String   @default("pending") // pending, completed, failed
+  amount                 Int      @default(0) // in cents
+  currency               String   @default("eur")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, programId])
+  @@map("program_purchase")
+}

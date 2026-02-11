@@ -5,9 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
   CheckCircle2,
-  Circle,
   Briefcase,
   ListOrdered,
+  Mail,
+  MessageCircle,
+  UserRound,
   Settings,
   X,
   Zap,
@@ -23,6 +25,12 @@ type OnboardingWizardProps = {
     hasPlatforms: boolean;
     hasMission: boolean;
     hasSequence: boolean;
+    hasContact: boolean;
+    hasFollowUp: boolean;
+    hasSentEmail: boolean;
+    completedSteps: number;
+    totalSteps: number;
+    extendedChecklistEnabled?: boolean;
     isDismissed: boolean;
   };
 };
@@ -30,7 +38,7 @@ type OnboardingWizardProps = {
 export function OnboardingWizard({ status }: OnboardingWizardProps) {
   const [dismissed, setDismissed] = useState(status.isDismissed);
 
-  const steps = [
+  const foundationSteps = [
     {
       icon: Settings,
       title: "Crée ton profil",
@@ -39,7 +47,7 @@ export function OnboardingWizard({ status }: OnboardingWizardProps) {
       completed: status.hasProfile,
     },
     {
-      icon: Circle,
+      icon: Settings,
       title: "Sélectionne tes plateformes",
       description: "Ajoute les plateformes où tu prospèctes",
       href: "/app/platforms",
@@ -61,9 +69,38 @@ export function OnboardingWizard({ status }: OnboardingWizardProps) {
     },
   ];
 
-  const completedCount = steps.filter((s) => s.completed).length;
-  const totalSteps = steps.length;
+  const activationSteps = [
+    {
+      icon: UserRound,
+      title: "Associe un contact",
+      description: "Crée un contact lié à une mission active",
+      href: "/app/contacts",
+      completed: status.hasContact,
+    },
+    {
+      icon: MessageCircle,
+      title: "Planifie une relance",
+      description: "Ajoute une relance pour matérialiser ton process",
+      href: "/app/follow-ups",
+      completed: status.hasFollowUp,
+    },
+    {
+      icon: Mail,
+      title: "Envoie un premier email",
+      description: "Valide le cycle complet mission → action → envoi",
+      href: "/app/emails",
+      completed: status.hasSentEmail,
+    },
+  ];
+
+  const showActivation = status.extendedChecklistEnabled ?? true;
+  const steps = showActivation
+    ? [...foundationSteps, ...activationSteps]
+    : foundationSteps;
+  const completedCount = status.completedSteps;
+  const totalSteps = status.totalSteps;
   const isComplete = completedCount === totalSteps;
+  const nextStep = steps.find((step) => !step.completed);
 
   if (dismissed || isComplete) {
     return null;
@@ -103,34 +140,87 @@ export function OnboardingWizard({ status }: OnboardingWizardProps) {
         </div>
       </div>
 
-      <div className="flex flex-col gap-3">
-        {steps.map((step, index) => {
-          const Icon = step.icon;
-          return (
-            <Link key={index} href={step.href}>
-              <div className="hover:bg-muted/50 flex cursor-pointer gap-4 rounded-lg border p-4 transition-colors">
-                <div className="flex flex-shrink-0 items-center justify-center">
-                  {step.completed ? (
-                    <CheckCircle2 className="size-6 text-green-500" />
-                  ) : (
-                    <Icon className="text-muted-foreground size-6" />
-                  )}
-                </div>
-                <div className="flex-1">
-                  <h4 className="font-medium">{step.title}</h4>
-                  <p className="text-muted-foreground text-sm">
-                    {step.description}
-                  </p>
-                </div>
-                {step.completed ? (
-                  <Zap className="size-5 flex-shrink-0 text-green-500" />
-                ) : (
-                  <div className="text-muted-foreground flex-shrink-0">→</div>
-                )}
-              </div>
-            </Link>
-          );
-        })}
+      {nextStep ? (
+        <div className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50/50 p-3 dark:border-emerald-900 dark:bg-emerald-950/10">
+          <p className="text-sm font-medium">Prochaine priorité: {nextStep.title}</p>
+          <p className="text-muted-foreground mt-0.5 text-xs">
+            {nextStep.description}
+          </p>
+        </div>
+      ) : null}
+
+      <div className="space-y-4">
+        <div>
+          <p className="mb-2 text-xs font-semibold uppercase tracking-wide">
+            Fondations
+          </p>
+          <div className="flex flex-col gap-3">
+            {foundationSteps.map((step, index) => {
+              const Icon = step.icon;
+              return (
+                <Link key={`foundation-${index}`} href={step.href}>
+                  <div className="hover:bg-muted/50 flex cursor-pointer gap-4 rounded-lg border p-4 transition-colors">
+                    <div className="flex flex-shrink-0 items-center justify-center">
+                      {step.completed ? (
+                        <CheckCircle2 className="size-6 text-green-500" />
+                      ) : (
+                        <Icon className="text-muted-foreground size-6" />
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-medium">{step.title}</h4>
+                      <p className="text-muted-foreground text-sm">
+                        {step.description}
+                      </p>
+                    </div>
+                    {step.completed ? (
+                      <Zap className="size-5 flex-shrink-0 text-green-500" />
+                    ) : (
+                      <div className="text-muted-foreground flex-shrink-0">→</div>
+                    )}
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+
+        {showActivation ? (
+          <div>
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wide">
+              Activation commerciale
+            </p>
+            <div className="flex flex-col gap-3">
+              {activationSteps.map((step, index) => {
+                const Icon = step.icon;
+                return (
+                  <Link key={`activation-${index}`} href={step.href}>
+                    <div className="hover:bg-muted/50 flex cursor-pointer gap-4 rounded-lg border p-4 transition-colors">
+                      <div className="flex flex-shrink-0 items-center justify-center">
+                        {step.completed ? (
+                          <CheckCircle2 className="size-6 text-green-500" />
+                        ) : (
+                          <Icon className="text-muted-foreground size-6" />
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-medium">{step.title}</h4>
+                        <p className="text-muted-foreground text-sm">
+                          {step.description}
+                        </p>
+                      </div>
+                      {step.completed ? (
+                        <Zap className="size-5 flex-shrink-0 text-green-500" />
+                      ) : (
+                        <div className="text-muted-foreground flex-shrink-0">→</div>
+                      )}
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        ) : null}
       </div>
     </Card>
   );

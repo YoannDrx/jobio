@@ -25,22 +25,22 @@ const ReviewIcons = [
   {
     value: 1,
     icon: Angry,
-    tooltip: "Extremely Dissatisfied",
+    tooltip: "Très insatisfait",
   },
   {
     value: 2,
     icon: Frown,
-    tooltip: "Somewhat Dissatisfied",
+    tooltip: "Insatisfait",
   },
   {
     value: 3,
     icon: Meh,
-    tooltip: "Neutral",
+    tooltip: "Neutre",
   },
   {
     value: 4,
     icon: SmilePlus,
-    tooltip: "Satisfied",
+    tooltip: "Satisfait",
   },
 ];
 
@@ -71,9 +71,9 @@ async function FeedbackDetailPage(props: {
   return (
     <Layout size="lg">
       <LayoutHeader>
-        <LayoutTitle>Feedback</LayoutTitle>
+        <LayoutTitle>Détail feedback</LayoutTitle>
         <LayoutDescription>
-          Submitted {new Date(feedback.createdAt).toLocaleDateString()}
+          Soumis le {new Date(feedback.createdAt).toLocaleDateString()}
         </LayoutDescription>
       </LayoutHeader>
 
@@ -83,15 +83,15 @@ async function FeedbackDetailPage(props: {
         ) : (
           <Card>
             <CardHeader>
-              <CardTitle>Anonymous</CardTitle>
-              <CardDescription>Email {feedback.email}</CardDescription>
+              <CardTitle>Anonyme</CardTitle>
+              <CardDescription>Email: {feedback.email}</CardDescription>
             </CardHeader>
           </Card>
         )}
 
         <Card>
           <CardHeader>
-            <CardTitle>Review</CardTitle>
+            <CardTitle>Évaluation</CardTitle>
             <CardDescription>
               {reviewIcon && (
                 <div className="flex items-center gap-3">

@@ -47,9 +47,9 @@ async function RoutePage(props: PageProps<"/admin/users/[userId]">) {
   return (
     <Layout size="lg">
       <LayoutHeader>
-        <LayoutTitle>User Details</LayoutTitle>
+        <LayoutTitle>Détails utilisateur</LayoutTitle>
         <LayoutDescription>
-          View and manage user information and organization memberships
+          Informations du compte, providers, sessions et actions admin.
         </LayoutDescription>
       </LayoutHeader>
       <LayoutActions>

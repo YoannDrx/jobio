@@ -1,9 +1,9 @@
 import type { NavigationGroup } from "@/features/navigation/navigation.type";
 import {
   BarChart3,
+  BookOpen,
   CalendarCheck,
   CalendarClock,
-  FileText,
   Globe,
   Kanban,
   ListOrdered,
@@ -34,7 +34,7 @@ export const APP_LINKS: NavigationGroup[] = [
     links: [
       { href: `${APP_PATH}/profiles`, Icon: UserCircle, label: "Profils" },
       { href: `${APP_PATH}/platforms`, Icon: Globe, label: "Plateformes" },
-      { href: `${APP_PATH}/templates`, Icon: FileText, label: "Templates" },
+      { href: `${APP_PATH}/programmes`, Icon: BookOpen, label: "Programmes" },
       { href: `${APP_PATH}/sequences`, Icon: ListOrdered, label: "Séquences" },
       { href: `${APP_PATH}/emails`, Icon: Mail, label: "Emails" },
       { href: `${APP_PATH}/analytics`, Icon: BarChart3, label: "Analytics" },

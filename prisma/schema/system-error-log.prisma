@@ -1,0 +1,28 @@
+enum SystemErrorSeverity {
+  INFO
+  WARNING
+  ERROR
+  CRITICAL
+}
+
+model SystemErrorLog {
+  id String @id @default(nanoid(11))
+
+  source   String
+  message  String
+  stack    String?
+  severity SystemErrorSeverity @default(ERROR)
+  context  Json?
+
+  userId    String?
+  userEmail String?
+  route     String?
+
+  resolvedAt DateTime?
+  createdAt  DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([severity, createdAt])
+  @@index([resolvedAt])
+  @@map("system_error_log")
+}

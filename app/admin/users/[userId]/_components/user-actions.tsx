@@ -8,12 +8,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { resolveActionResult } from "@/lib/actions/actions-utils";
 import { authClient } from "@/lib/auth-client";
 import { unwrapSafePromise } from "@/lib/promises";
 import { useMutation } from "@tanstack/react-query";
 import { Ban, Crown, Eye, MoreHorizontal, UserCheck } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { createAdminAuditAction } from "@app/admin/_actions/admin-audit";
 
 type User = {
   id: string;
@@ -30,8 +32,24 @@ type UserActionsProps = {
 export function UserActions({ user }: UserActionsProps) {
   const router = useRouter();
 
+  const logAdminAction = async (action: string, metadata?: Record<string, unknown>) => {
+    try {
+      await resolveActionResult(
+        createAdminAuditAction({
+          action,
+          targetUserId: user.id,
+          targetEmail: user.email,
+          metadata,
+        }),
+      );
+    } catch {
+      // Keep primary action responsive even if logging fails
+    }
+  };
+
   const impersonateMutation = useMutation({
     mutationFn: async (userId: string) => {
+      await logAdminAction("USER_IMPERSONATED");
       return unwrapSafePromise(
         authClient.admin.impersonateUser({
           userId,
@@ -39,11 +57,11 @@ export function UserActions({ user }: UserActionsProps) {
       );
     },
     onSuccess: () => {
-      toast.success("Impersonation started");
+      toast.success("Impersonation démarrée");
       router.push("/app");
     },
     onError: (error: Error) => {
-      toast.error(`Failed to impersonate user: ${error.message}`);
+      toast.error(`Impossible d'impersonate l'utilisateur: ${error.message}`);
     },
   });
 
@@ -63,11 +81,12 @@ export function UserActions({ user }: UserActionsProps) {
       );
     },
     onSuccess: () => {
-      toast.success("User banned successfully");
+      toast.success("Utilisateur banni");
+      void logAdminAction("USER_BANNED");
       router.refresh();
     },
     onError: (error: Error) => {
-      toast.error(`Failed to ban user: ${error.message}`);
+      toast.error(`Impossible de bannir l'utilisateur: ${error.message}`);
     },
   });
 
@@ -80,11 +99,12 @@ export function UserActions({ user }: UserActionsProps) {
       );
     },
     onSuccess: () => {
-      toast.success("User unbanned successfully");
+      toast.success("Utilisateur débanni");
+      void logAdminAction("USER_UNBANNED");
       router.refresh();
     },
     onError: (error: Error) => {
-      toast.error(`Failed to unban user: ${error.message}`);
+      toast.error(`Impossible de débannir l'utilisateur: ${error.message}`);
     },
   });
 
@@ -104,11 +124,14 @@ export function UserActions({ user }: UserActionsProps) {
       );
     },
     onSuccess: () => {
-      toast.success("User role updated successfully");
+      toast.success("Rôle utilisateur mis à jour");
+      void logAdminAction("USER_ROLE_UPDATED", {
+        newRole: "admin",
+      });
       router.refresh();
     },
     onError: (error: Error) => {
-      toast.error(`Failed to update user role: ${error.message}`);
+      toast.error(`Impossible de modifier le rôle: ${error.message}`);
     },
   });
 
@@ -117,7 +140,7 @@ export function UserActions({ user }: UserActionsProps) {
       <DropdownMenuTrigger asChild>
         <Button variant="outline">
           <MoreHorizontal className="mr-2 size-4" />
-          Actions
+          Actions admin
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
@@ -127,7 +150,7 @@ export function UserActions({ user }: UserActionsProps) {
             disabled={impersonateMutation.isPending}
           >
             <Eye className="mr-2 size-4" />
-            Impersonate User
+            Impersonate
           </DropdownMenuItem>
         )}
 
@@ -142,7 +165,7 @@ export function UserActions({ user }: UserActionsProps) {
             disabled={setRoleMutation.isPending}
           >
             <Crown className="mr-2 size-4" />
-            Make Admin
+            Passer admin
           </DropdownMenuItem>
         )}
 
@@ -154,7 +177,7 @@ export function UserActions({ user }: UserActionsProps) {
             disabled={unbanUserMutation.isPending}
           >
             <UserCheck className="mr-2 size-4" />
-            Unban User
+            Débannir
           </DropdownMenuItem>
         ) : (
           <DropdownMenuItem
@@ -163,7 +186,7 @@ export function UserActions({ user }: UserActionsProps) {
             className="text-destructive focus:text-destructive"
           >
             <Ban className="mr-2 size-4" />
-            Ban User
+            Bannir
           </DropdownMenuItem>
         )}
       </DropdownMenuContent>

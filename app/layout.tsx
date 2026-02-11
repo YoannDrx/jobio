@@ -1,6 +1,5 @@
 import "@/lib/zod-error-map";
 import { TailwindIndicator } from "@/components/utils/tailwind-indicator";
-import { FloatingLegalFooter } from "@/features/legal/floating-legal-footer";
 import { NextTopLoader } from "@/features/page/next-top-loader";
 import { ServerToaster } from "@/features/server-sonner/server-toaster";
 import { getServerUrl } from "@/lib/server-url";
@@ -73,7 +72,6 @@ export default function RootLayout({
               {modal}
             </Suspense>
             <TailwindIndicator />
-            <FloatingLegalFooter />
             <Suspense>
               <ServerToaster />
             </Suspense>

@@ -41,9 +41,9 @@ async function AdminFeedbackPage({
   return (
     <Layout size="lg">
       <LayoutHeader>
-        <LayoutTitle>Feedback Management</LayoutTitle>
+        <LayoutTitle>Gestion des feedbacks</LayoutTitle>
         <LayoutDescription>
-          View and manage all user feedback submissions
+          Recherche et consultation des feedbacks envoyés par les utilisateurs.
         </LayoutDescription>
       </LayoutHeader>
 

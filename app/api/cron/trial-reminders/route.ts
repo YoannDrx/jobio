@@ -6,6 +6,7 @@ import TrialDay3Email from "@email/trial-day3.email";
 import TrialReminderEmail from "@email/trial-reminder.email";
 import TrialDay12Email from "@email/trial-day12.email";
 import { NextResponse } from "next/server";
+import { finishCronJobRun, startCronJobRun } from "@/lib/ops/cron-job-runs";
 
 type DripConfig = {
   daysAgo: number;
@@ -66,57 +67,82 @@ const DRIP_SCHEDULE: DripConfig[] = [
 ];
 
 export const GET = route.handler(async (req) => {
+  const run = await startCronJobRun({
+    jobName: "trial-reminders",
+    route: new URL(req.url).pathname,
+  });
+
   const authHeader = req.headers.get("authorization");
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    await finishCronJobRun(run?.id, {
+      status: "UNAUTHORIZED",
+      errorMessage: "Invalid authorization header",
+    });
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const results = await Promise.all(
-    DRIP_SCHEDULE.map(async (config) => {
-      const targetDate = new Date();
-      targetDate.setDate(targetDate.getDate() - config.daysAgo);
+  try {
+    const results = await Promise.all(
+      DRIP_SCHEDULE.map(async (config) => {
+        const targetDate = new Date();
+        targetDate.setDate(targetDate.getDate() - config.daysAgo);
 
-      const startOfDay = new Date(
-        targetDate.getFullYear(),
-        targetDate.getMonth(),
-        targetDate.getDate(),
-      );
-      const endOfDay = new Date(
-        targetDate.getFullYear(),
-        targetDate.getMonth(),
-        targetDate.getDate(),
-        23,
-        59,
-        59,
-        999,
-      );
+        const startOfDay = new Date(
+          targetDate.getFullYear(),
+          targetDate.getMonth(),
+          targetDate.getDate(),
+        );
+        const endOfDay = new Date(
+          targetDate.getFullYear(),
+          targetDate.getMonth(),
+          targetDate.getDate(),
+          23,
+          59,
+          59,
+          999,
+        );
 
-      const subscriptions = await prisma.subscription.findMany({
-        where: {
-          status: "trialing",
-          periodStart: {
-            gte: startOfDay,
-            lte: endOfDay,
+        const subscriptions = await prisma.subscription.findMany({
+          where: {
+            status: "trialing",
+            periodStart: {
+              gte: startOfDay,
+              lte: endOfDay,
+            },
           },
-        },
-      });
+        });
 
-      const users = await Promise.all(
-        subscriptions.map(async (sub) =>
-          prisma.user.findFirst({ where: { id: sub.referenceId } }),
-        ),
-      );
+        const users = await Promise.all(
+          subscriptions.map(async (sub) =>
+            prisma.user.findFirst({ where: { id: sub.referenceId } }),
+          ),
+        );
 
-      const validUsers = users.filter(
-        (user): user is Exclude<typeof user, null> => user !== null,
-      );
+        const validUsers = users.filter(
+          (user): user is Exclude<typeof user, null> => user !== null,
+        );
 
-      await Promise.all(validUsers.map(async (user) => config.sendFn(user)));
-      return validUsers.length;
-    }),
-  );
+        await Promise.all(validUsers.map(async (user) => config.sendFn(user)));
+        return validUsers.length;
+      }),
+    );
 
-  const totalSent = results.reduce((sum, count) => sum + count, 0);
+    const totalSent = results.reduce((sum, count) => sum + count, 0);
 
-  return NextResponse.json({ sent: totalSent });
+    await finishCronJobRun(run?.id, {
+      status: "SUCCESS",
+      processedCount: totalSent,
+      details: {
+        byStep: results,
+      },
+    });
+
+    return NextResponse.json({ sent: totalSent });
+  } catch (error) {
+    await finishCronJobRun(run?.id, {
+      status: "FAILED",
+      errorMessage: error instanceof Error ? error.message : "Unknown error",
+    });
+    return NextResponse.json({ error: "Cron failure" }, { status: 500 });
+  }
 });

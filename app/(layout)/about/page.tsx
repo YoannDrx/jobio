@@ -1,163 +1,171 @@
-import GridBackground from "@/components/nowts/grid-background";
-import { Typography } from "@/components/nowts/typography";
-import { SectionLayout } from "@/features/landing/section-layout";
+import { Badge } from "@/components/ui/badge";
 import { SiteConfig } from "@/site-config";
+import { PublicPageShell, PublicSection } from "@/features/layout/public-page-shell";
+import { Compass, Goal, ShieldCheck, Sparkles, Wrench } from "lucide-react";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: `About ${SiteConfig.title}`,
+  title: `About | ${SiteConfig.title}`,
   description:
-    "Learn about NOW.TS, our mission to empower content creators with powerful testimonial collection, and meet the founder behind the platform.",
-  keywords: ["about", "testimonials", "content creation", "founder", "mission"],
+    "Découvrez la mission de Jobio: aider les freelances tech à piloter leur prospection avec méthode, clarté et vitesse.",
   openGraph: {
-    title: `About ${SiteConfig.title}`,
+    title: `About | ${SiteConfig.title}`,
     description:
-      "Learn about NOW.TS, our mission to empower content creators with powerful testimonial collection, and meet the founder behind the platform.",
+      "La vision, les principes produit et la feuille de route derrière Jobio.",
     url: `${SiteConfig.prodUrl}/about`,
     type: "website",
   },
 };
 
+const valueCards = [
+  {
+    icon: Goal,
+    title: "Focus résultat",
+    text: "Chaque écran doit aider à signer une mission, pas juste à stocker de l'information.",
+  },
+  {
+    icon: Compass,
+    title: "Clarté opérationnelle",
+    text: "Un freelance doit savoir quoi faire aujourd'hui sans ouvrir 12 onglets.",
+  },
+  {
+    icon: Wrench,
+    title: "Automation utile",
+    text: "L'IA et les séquences doivent gagner du temps sans dégrader la qualité des échanges.",
+  },
+  {
+    icon: ShieldCheck,
+    title: "Confiance et contrôle",
+    text: "Tes données t'appartiennent. Export, suppression et paramétrage restent simples et accessibles.",
+  },
+];
+
+const milestones = [
+  {
+    quarter: "Q1 2026",
+    title: "Noyau CRM freelance",
+    details:
+      "Pipeline, contacts, relances, profils et scoring IA pour structurer la prospection de base.",
+  },
+  {
+    quarter: "Q2 2026",
+    title: "Cockpit de performance",
+    details:
+      "Analytics métier, notifications actionnables et optimisation du cycle mission -> proposition -> accepté.",
+  },
+  {
+    quarter: "Q3 2026",
+    title: "Collaboration et opérations",
+    details:
+      "Partage, routines d'équipe freelance et pilotage admin renforcé pour monitorer le produit en continu.",
+  },
+];
+
 export default function AboutPage() {
   return (
-    <div className="relative">
-      <GridBackground
-        color="color-mix(in srgb, var(--muted) 50%, transparent)"
-        size={20}
-      />
-      {/* Hero Section */}
-      <SectionLayout variant="transparent">
-        <div className="mx-auto max-w-2xl text-center">
-          <Typography
-            variant="p"
-            className="text-primary text-base/7 font-semibold"
-          >
-            About us
-          </Typography>
-          <Typography
-            variant="h1"
-            className="text-foreground mt-2 text-5xl font-semibold tracking-tight sm:text-7xl"
-          >
-            Building trust through authentic testimonials
-          </Typography>
-          <Typography
-            variant="p"
-            className="text-muted-foreground mt-8 text-lg font-medium text-pretty sm:text-xl/8"
-          >
-            A platform you can trust, built by a dedicated founder committed to
-            continuous innovation, regular updates, and transparent
-            communication with our community.
-          </Typography>
-        </div>
-      </SectionLayout>
-
-      {/* Main Content */}
-      <SectionLayout size="lg" variant="transparent">
-        <section className="mt-20 grid grid-cols-1 lg:grid-cols-2 lg:gap-x-8 lg:gap-y-16">
-          <div className="lg:pr-8">
-            <Typography
-              variant="h2"
-              className="text-foreground text-2xl font-semibold tracking-tight text-pretty"
-            >
-              Our commitment to you
-            </Typography>
-            <Typography
-              variant="p"
-              className="text-muted-foreground mt-6 text-base/7"
-            >
-              NOW.TS is built with a long-term vision and unwavering commitment
-              to our users. We understand that choosing a platform means
-              trusting us with your most valuable asset - your reputation and
-              relationships with clients.
-            </Typography>
-            <Typography
-              variant="p"
-              className="text-muted-foreground mt-8 text-base/7"
-            >
-              That's why we guarantee regular updates, continuous feature
-              improvements, and transparent communication about every change.
-              You'll never be left wondering about the future of your
-              testimonials or our platform. We're here to grow with you, not
-              abandon you.
-            </Typography>
-          </div>
-          <div className="pt-16 lg:row-span-2 lg:-mr-16 xl:mr-auto">
-            <div className="-mx-8 grid grid-cols-2 gap-4 sm:-mx-16 sm:grid-cols-4 lg:mx-0 lg:grid-cols-2 xl:gap-8">
-              <div className="outline-border aspect-square overflow-hidden rounded-xl shadow-xl outline-1 -outline-offset-1">
-                <img
-                  alt="Content creator recording testimonial"
-                  src="https://codelynx.mlvcdn.com/images/2025-08-22/IMG_6608.jpeg"
-                  className="block size-full object-cover"
-                />
-              </div>
-              <div className="outline-border -mt-8 aspect-square overflow-hidden rounded-xl shadow-xl outline-1 -outline-offset-1 lg:-mt-40">
-                <img
-                  alt="Team collaboration on testimonials"
-                  src="https://codelynx.mlvcdn.com/images/2025-08-22/IMG_7415.jpeg"
-                  className="block size-full object-cover"
-                />
-              </div>
-              <div className="outline-border aspect-square overflow-hidden rounded-xl shadow-xl outline-1 -outline-offset-1">
-                <img
-                  alt="Digital testimonial showcase"
-                  src="https://codelynx.mlvcdn.com/images/2025-08-22/IMG_9392.jpeg"
-                  className="block size-full object-cover"
-                />
-              </div>
-              <div className="outline-border -mt-8 aspect-square overflow-hidden rounded-xl shadow-xl outline-1 -outline-offset-1 lg:-mt-40">
-                <img
-                  alt="Creator success story"
-                  src="https://codelynx.mlvcdn.com/images/2025-08-22/IMG_9896 2.jpeg"
-                  className="block size-full object-cover"
-                />
-              </div>
+    <PublicPageShell
+      badge="À propos de Jobio"
+      title="Un cockpit commercial construit pour les freelances tech."
+      description="Jobio est né d'un constat simple: la prospection freelance est souvent gérée entre Notion, mails, rappels, feuilles de calcul et mémoire personnelle. On construit un outil unique qui remet de l'ordre et accélère la conversion."
+      highlights={["Produit orienté action", "Roadmap active", "Approche pragmatique"]}
+    >
+      <div className="grid w-full gap-4 lg:grid-cols-3">
+        <PublicSection
+          title="Notre mission"
+          description="Rendre la prospection prévisible, mesurable et plus sereine."
+          className="lg:col-span-2"
+        >
+          <p className="text-muted-foreground leading-relaxed">
+            Nous aidons les freelances à passer d&apos;une prospection
+            opportuniste à un système commercial reproductible. La priorité
+            n&apos;est pas d&apos;ajouter des fonctionnalités décoratives, mais de
+            donner une vision claire: où en sont les missions, quelles relances
+            faire, et comment améliorer le taux de conversion.
+          </p>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <div className="rounded-xl border p-4">
+              <p className="text-sm font-medium">Pour l&apos;utilisateur</p>
+              <p className="text-muted-foreground mt-1 text-sm">
+                Moins de friction opérationnelle, plus de temps sur les actions
+                à forte valeur.
+              </p>
+            </div>
+            <div className="rounded-xl border p-4">
+              <p className="text-sm font-medium">Pour le business</p>
+              <p className="text-muted-foreground mt-1 text-sm">
+                Un meilleur pilotage du pipeline, des relances plus régulières
+                et une meilleure vitesse de conversion.
+              </p>
             </div>
           </div>
-          <div className="max-lg:mt-16 lg:col-span-1">
-            <Typography
-              variant="p"
-              className="text-muted-foreground text-base/7 font-semibold"
+        </PublicSection>
+
+        <PublicSection title="Ce qu&apos;on optimise" description="Au quotidien">
+          <ul className="space-y-2 text-sm">
+            <li className="rounded-lg border p-3">Priorisation des missions</li>
+            <li className="rounded-lg border p-3">Qualité et régularité des relances</li>
+            <li className="rounded-lg border p-3">Visibilité sur les performances</li>
+            <li className="rounded-lg border p-3">Capacité à apprendre de ses données</li>
+          </ul>
+        </PublicSection>
+      </div>
+
+      <PublicSection
+        title="Nos principes produit"
+        description="Des décisions guidées par l'impact utilisateur."
+      >
+        <div className="grid gap-3 sm:grid-cols-2">
+          {valueCards.map((item) => (
+            <div key={item.title} className="rounded-xl border p-4">
+              <div className="mb-2 flex items-center gap-2">
+                <item.icon className="text-primary size-4" />
+                <p className="font-medium">{item.title}</p>
+              </div>
+              <p className="text-muted-foreground text-sm">{item.text}</p>
+            </div>
+          ))}
+        </div>
+      </PublicSection>
+
+      <PublicSection
+        title="Roadmap produit"
+        description="Une trajectoire orientée exécution."
+      >
+        <div className="space-y-3">
+          {milestones.map((item) => (
+            <div
+              key={item.title}
+              className="flex flex-col gap-2 rounded-xl border p-4 sm:flex-row sm:items-center sm:justify-between"
             >
-              Our reliability promise
-            </Typography>
-            <hr className="border-border mt-6 border-t" />
-            <dl className="mt-6 grid grid-cols-1 gap-x-8 gap-y-4 sm:grid-cols-2">
-              <div className="border-border flex flex-col gap-y-2 border-b border-dotted pb-4">
-                <dt className="text-muted-foreground text-sm/6">
-                  Weekly Updates
-                </dt>
-                <dd className="text-foreground order-first text-6xl font-semibold tracking-tight">
-                  <span>100</span>%
-                </dd>
+              <div>
+                <p className="font-medium">{item.title}</p>
+                <p className="text-muted-foreground text-sm">{item.details}</p>
               </div>
-              <div className="border-border flex flex-col gap-y-2 border-b border-dotted pb-4">
-                <dt className="text-muted-foreground text-sm/6">
-                  Uptime Guarantee
-                </dt>
-                <dd className="text-foreground order-first text-6xl font-semibold tracking-tight">
-                  <span>99.9</span>%
-                </dd>
-              </div>
-              <div className="max-sm:border-border flex flex-col gap-y-2 max-sm:border-b max-sm:border-dotted max-sm:pb-4">
-                <dt className="text-muted-foreground text-sm/6">
-                  Response Time
-                </dt>
-                <dd className="text-foreground order-first text-6xl font-semibold tracking-tight">
-                  <span>&lt;24</span>h
-                </dd>
-              </div>
-              <div className="flex flex-col gap-y-2">
-                <dt className="text-muted-foreground text-sm/6">
-                  Years Committed
-                </dt>
-                <dd className="text-foreground order-first text-6xl font-semibold tracking-tight">
-                  <span>10</span>+
-                </dd>
-              </div>
-            </dl>
-          </div>
-        </section>
-      </SectionLayout>
-    </div>
+              <Badge variant="secondary" className="w-fit">
+                {item.quarter}
+              </Badge>
+            </div>
+          ))}
+        </div>
+      </PublicSection>
+
+      <PublicSection
+        title="Contact équipe"
+        description="Tu veux contribuer avec des retours terrain ?"
+      >
+        <div className="flex flex-wrap items-center gap-3">
+          <a
+            href="mailto:contact@jobio.app"
+            className="hover:text-primary text-sm font-medium transition-colors"
+          >
+            contact@jobio.app
+          </a>
+          <span className="text-muted-foreground text-sm">
+            • Réponse en général sous 24h ouvrées
+          </span>
+          <Sparkles className="text-primary size-4" />
+        </div>
+      </PublicSection>
+    </PublicPageShell>
   );
 }

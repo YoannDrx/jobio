@@ -370,6 +370,18 @@ export default async function TodayPage() {
             followUpsCompleted: followUpsCompletedThisWeek,
           }}
           suggestions={suggestions}
+          batchFollowUpCandidates={missionsWithoutRecentFollowUp.map((mission) => ({
+            id: mission.id,
+            title: mission.title,
+            company: mission.company,
+            daysWithoutFollowUp: Math.max(
+              1,
+              Math.floor(
+                (now.getTime() - mission.updatedAt.getTime()) /
+                  (1000 * 60 * 60 * 24),
+              ),
+            ),
+          }))}
           onboardingStatus={
             isOnboardingComplete
               ? null
@@ -378,6 +390,13 @@ export default async function TodayPage() {
                   hasPlatforms: onboardingStatus.hasPlatforms,
                   hasMission: onboardingStatus.hasMission,
                   hasSequence: onboardingStatus.hasSequence,
+                  hasContact: onboardingStatus.hasContact,
+                  hasFollowUp: onboardingStatus.hasFollowUp,
+                  hasSentEmail: onboardingStatus.hasSentEmail,
+                  completedSteps: onboardingStatus.completedSteps,
+                  totalSteps: onboardingStatus.totalSteps,
+                  extendedChecklistEnabled:
+                    onboardingStatus.extendedChecklistEnabled,
                   isDismissed: onboardingStatus.isDismissed,
                 }
           }

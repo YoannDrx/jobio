@@ -5,16 +5,27 @@ import {
   parseAsStringLiteral,
 } from "nuqs/server";
 
-const sortOptions = ["createdAt", "bookmarks", "clicks"] as const;
+const roleOptions = ["all", "admin", "user"] as const;
+const statusOptions = ["all", "active", "banned", "unverified"] as const;
+const planOptions = ["all", "free", "pro", "ultra"] as const;
+const sortOptions = [
+  "createdAt",
+  "name",
+  "email",
+  "missions",
+  "sessions",
+  "lastActivity",
+] as const;
 const orderOptions = ["asc", "desc"] as const;
-const filterOptions = ["all", "premium", "regular"] as const;
 
 export const adminSearchParams = {
   page: parseAsInteger.withDefault(1),
   search: parseAsString.withDefault(""),
+  role: parseAsStringLiteral(roleOptions).withDefault("all"),
+  status: parseAsStringLiteral(statusOptions).withDefault("all"),
+  plan: parseAsStringLiteral(planOptions).withDefault("all"),
   sortBy: parseAsStringLiteral(sortOptions).withDefault("createdAt"),
   order: parseAsStringLiteral(orderOptions).withDefault("desc"),
-  filter: parseAsStringLiteral(filterOptions).withDefault("all"),
 };
 
 export const searchParamsCache = createSearchParamsCache(adminSearchParams);

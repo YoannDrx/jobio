@@ -22,11 +22,12 @@ export default async function AdminUsersPage({ searchParams }: PageProps) {
   const params = await searchParamsCache.parse(searchParams);
 
   return (
-    <Layout size="lg">
+    <Layout size="xl">
       <LayoutHeader>
-        <LayoutTitle>User Management</LayoutTitle>
+        <LayoutTitle>Gestion utilisateurs</LayoutTitle>
         <LayoutDescription>
-          View and manage all users in the system
+          Filtre, trie et exporte les comptes utilisateurs avec des signaux
+          d&apos;activité exploitables.
         </LayoutDescription>
       </LayoutHeader>
 

@@ -59,13 +59,13 @@ export const UserDropdown = ({ children }: PropsWithChildren) => {
         <DropdownMenuItem asChild>
           <Link href="/app">
             <LayoutDashboard className="mr-2 size-4" />
-            Dashboard
+            Tableau de bord
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <Link href="/account">
             <Settings className="mr-2 size-4" />
-            Account Settings
+            Paramètres du compte
           </Link>
         </DropdownMenuItem>
         {session.data.user.role === "admin" && (
@@ -80,22 +80,22 @@ export const UserDropdown = ({ children }: PropsWithChildren) => {
         <DropdownMenuSub>
           <DropdownMenuSubTrigger>
             <SunMoon className="text-muted-foreground mr-4 size-4" />
-            <span>Theme</span>
+            <span>Thème</span>
           </DropdownMenuSubTrigger>
           <DropdownMenuPortal>
             <DropdownMenuSubContent>
               <DropdownMenuItem onClick={() => theme.setTheme("dark")}>
                 <SunMedium className="mr-2 size-4" />
-                <span>Dark</span>
+                <span>Sombre</span>
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => theme.setTheme("light")}>
                 <Moon className="mr-2 size-4" />
-                <span>Light</span>
+                <span>Clair</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => theme.setTheme("system")}>
                 <Monitor className="mr-2 size-4" />
-                <span>System</span>
+                <span>Système</span>
               </DropdownMenuItem>
             </DropdownMenuSubContent>
           </DropdownMenuPortal>

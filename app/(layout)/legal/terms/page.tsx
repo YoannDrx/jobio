@@ -1,113 +1,225 @@
-import { Typography } from "@/components/nowts/typography";
-import { Layout, LayoutContent } from "@/features/page/layout";
+import { Badge } from "@/components/ui/badge";
+import { PublicPageShell, PublicSection } from "@/features/layout/public-page-shell";
 import { SiteConfig } from "@/site-config";
 import type { Metadata } from "next";
-import { MDXRemote } from "next-mdx-remote-client/rsc";
-
-const markdown = `
-# Conditions Générales d'Utilisation
-
-**Dernière mise à jour** : 10 février 2026
-
-## 1. Objet
-
-Les présentes Conditions Générales d'Utilisation (CGU) régissent l'accès et l'utilisation de la plateforme ${SiteConfig.title} (ci-après "le Service"), éditée par la société Jobio.
-
-${SiteConfig.title} est un outil SaaS de gestion de prospection commerciale pour freelances tech. Il permet de suivre des missions, gérer des relances, organiser des contacts et analyser ses performances de prospection.
-
-## 2. Inscription et compte utilisateur
-
-Pour utiliser le Service, l'utilisateur doit créer un compte en fournissant :
-- Un nom
-- Une adresse email valide
-- Un mot de passe sécurisé
-
-L'utilisateur s'engage à fournir des informations exactes et à maintenir la confidentialité de ses identifiants. Toute activité effectuée depuis son compte est sous sa responsabilité.
-
-## 3. Description du service
-
-Le Service propose les fonctionnalités suivantes selon le plan souscrit :
-
-- **Suivi de missions** : création, gestion et suivi de missions freelance
-- **Relances automatisées** : planification et suivi des relances
-- **Gestion de contacts** : carnet d'adresses professionnel
-- **Profils freelance** : création de profils avec compétences et TJM
-- **Analyse de performance** : statistiques et analytics de prospection
-- **Assistance IA** : parsing de missions et suggestions automatiques
-
-## 4. Plans et tarification
-
-Le Service est proposé sous plusieurs plans :
-- **Free** : accès limité et gratuit
-- **Pro** : accès étendu avec essai gratuit de 14 jours
-- **Ultra** : accès illimité
-
-Les prix sont indiqués en euros TTC. Le paiement est géré via Stripe. Les abonnements sont renouvelés automatiquement sauf résiliation.
-
-## 5. Données utilisateur
-
-L'utilisateur conserve la propriété intégrale de ses données (missions, contacts, profils, etc.). Le Service ne revendique aucun droit de propriété sur les contenus créés par l'utilisateur.
-
-L'utilisateur peut à tout moment exporter ou supprimer ses données.
-
-## 6. Propriété intellectuelle
-
-L'ensemble des éléments du Service (code, design, marques, logos) est la propriété exclusive de Jobio. Toute reproduction ou utilisation non autorisée est interdite.
-
-## 7. Responsabilités
-
-### 7.1 Responsabilité de l'éditeur
-Le Service est fourni "en l'état". Jobio s'efforce d'assurer la disponibilité et la sécurité du Service mais ne garantit pas une disponibilité ininterrompue.
-
-Jobio ne saurait être tenu responsable :
-- Des dommages indirects liés à l'utilisation du Service
-- De la perte de données en cas de force majeure
-- Du contenu saisi par les utilisateurs
-
-### 7.2 Responsabilité de l'utilisateur
-L'utilisateur s'engage à utiliser le Service de manière conforme à la loi et aux présentes CGU. Il s'interdit notamment :
-- Toute utilisation frauduleuse ou abusive
-- La transmission de contenus illicites
-- Toute tentative de contourner les mesures de sécurité
-
-## 8. Résiliation
-
-L'utilisateur peut résilier son compte à tout moment depuis les paramètres de son compte. La résiliation entraîne la suppression définitive de toutes les données après un délai de grâce de 30 jours.
-
-Jobio se réserve le droit de suspendre ou supprimer un compte en cas de violation des présentes CGU.
-
-## 9. Modification des CGU
-
-Jobio se réserve le droit de modifier les présentes CGU. Les utilisateurs seront informés par email de toute modification substantielle. L'utilisation continue du Service après modification vaut acceptation des nouvelles CGU.
-
-## 10. Loi applicable et juridiction
-
-Les présentes CGU sont soumises au droit français. En cas de litige, les parties s'engagent à rechercher une solution amiable. À défaut, les tribunaux compétents seront ceux du ressort du siège social de Jobio.
-
-## 11. Contact
-
-Pour toute question relative aux présentes CGU, contactez-nous à l'adresse indiquée sur la page Contact.
-`;
 
 export const metadata: Metadata = {
-  title: `${SiteConfig.title} - Conditions Générales d'Utilisation`,
+  title: `Conditions générales d'utilisation | ${SiteConfig.title}`,
   description:
-    "Conditions générales d'utilisation de Jobio, plateforme de gestion de prospection freelance.",
+    "CGU de Jobio: cadre contractuel, responsabilités, règles d'usage, facturation et résiliation.",
 };
 
-export default function page() {
+const keyRules = [
+  "Utilisation personnelle ou professionnelle conforme à la loi.",
+  "Protection de tes identifiants et responsabilité des actions sur ton compte.",
+  "Interdiction des usages abusifs, frauduleux ou d'extraction massive non autorisée.",
+  "Respect des limites de plan et des quotas techniques.",
+];
+
+const includedFeatures = [
+  "Pilotage des missions (pipeline, statuts, score)",
+  "Gestion de contacts et historiques d'interaction",
+  "Relances, séquences et templates",
+  "Analytics de performance commerciale",
+  "Fonctions IA de parsing et génération",
+];
+
+export default function TermsPage() {
   return (
-    <div>
-      <div className="bg-card flex w-full items-center justify-center p-8 lg:p-12">
-        <Typography variant="h1">
-          Conditions Générales d&apos;Utilisation
-        </Typography>
+    <PublicPageShell
+      badge="CGU"
+      title="Conditions générales d'utilisation de Jobio."
+      description="Ce document encadre l'utilisation de la plateforme Jobio. Objectif: poser un cadre clair, lisible et opérationnel pour l'éditeur et les utilisateurs."
+      lastUpdated="11 février 2026"
+      highlights={["Droit français", "Abonnements Stripe", "Résiliation à tout moment"]}
+    >
+      <div className="grid w-full gap-4 lg:grid-cols-3">
+        <PublicSection
+          title="1. Objet du service"
+          description="Jobio est un SaaS d'aide à la prospection pour freelances tech."
+          className="lg:col-span-2"
+        >
+          <p className="text-muted-foreground leading-relaxed">
+            Jobio permet de centraliser les missions, planifier les relances,
+            structurer la relation avec les contacts et suivre des indicateurs
+            de performance. Les fonctionnalités peuvent évoluer pour améliorer
+            la qualité du service.
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Badge variant="secondary">Éditeur: {SiteConfig.company.name}</Badge>
+            <Badge variant="secondary">Produit: {SiteConfig.title}</Badge>
+            <Badge variant="secondary">Accès: compte authentifié</Badge>
+          </div>
+        </PublicSection>
+
+        <PublicSection title="Entrée en vigueur" description="Version en cours">
+          <p className="text-sm font-medium">11 février 2026</p>
+          <p className="text-muted-foreground mt-2 text-sm">
+            L&apos;usage continu du service après modification des CGU vaut
+            acceptation de la version en vigueur.
+          </p>
+        </PublicSection>
       </div>
-      <Layout>
-        <LayoutContent className="typography m-auto mb-8">
-          <MDXRemote source={markdown} />
-        </LayoutContent>
-      </Layout>
-    </div>
+
+      <PublicSection
+        title="2. Création de compte et accès"
+        description="Conditions minimales d'ouverture d'un compte."
+      >
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="rounded-xl border p-4">
+            <p className="font-medium">Informations requises</p>
+            <p className="text-muted-foreground mt-1 text-sm">
+              Nom, email valide et méthode d&apos;authentification compatible.
+            </p>
+          </div>
+          <div className="rounded-xl border p-4">
+            <p className="font-medium">Sécurité du compte</p>
+            <p className="text-muted-foreground mt-1 text-sm">
+              L&apos;utilisateur est responsable de la confidentialité de ses accès.
+            </p>
+          </div>
+          <div className="rounded-xl border p-4">
+            <p className="font-medium">Rôle administrateur</p>
+            <p className="text-muted-foreground mt-1 text-sm">
+              Réservé au pilotage interne de la plateforme et à la modération.
+            </p>
+          </div>
+          <div className="rounded-xl border p-4">
+            <p className="font-medium">Suspension possible</p>
+            <p className="text-muted-foreground mt-1 text-sm">
+              En cas de violation manifeste des présentes conditions.
+            </p>
+          </div>
+        </div>
+      </PublicSection>
+
+      <PublicSection
+        title="3. Fonctionnalités couvertes"
+        description="Le service inclut notamment:"
+      >
+        <ul className="grid gap-2 text-sm sm:grid-cols-2">
+          {includedFeatures.map((item) => (
+            <li key={item} className="rounded-lg border p-3">
+              {item}
+            </li>
+          ))}
+        </ul>
+      </PublicSection>
+
+      <PublicSection
+        title="4. Plans, facturation et renouvellement"
+        description="Le modèle économique repose sur des plans Free, Pro et Ultra."
+      >
+        <div className="grid gap-3 sm:grid-cols-3">
+          <div className="rounded-xl border p-4">
+            <p className="font-medium">Free</p>
+            <p className="text-muted-foreground mt-1 text-sm">
+              Usage gratuit avec limites de volume.
+            </p>
+          </div>
+          <div className="rounded-xl border p-4">
+            <p className="font-medium">Pro</p>
+            <p className="text-muted-foreground mt-1 text-sm">
+              Capacité étendue + historique analytics augmenté.
+            </p>
+          </div>
+          <div className="rounded-xl border p-4">
+            <p className="font-medium">Ultra</p>
+            <p className="text-muted-foreground mt-1 text-sm">
+              Limites élevées et couverture avancée.
+            </p>
+          </div>
+        </div>
+        <div className="mt-3 rounded-xl border p-4 text-sm">
+          <p className="font-medium">Règles de paiement</p>
+          <p className="text-muted-foreground mt-1">
+            Les paiements sont traités via Stripe. Les abonnements sont
+            renouvelés automatiquement sauf résiliation effectuée avant la
+            prochaine échéance.
+          </p>
+        </div>
+      </PublicSection>
+
+      <PublicSection
+        title="5. Obligations d'usage"
+        description="Règles de comportement pour préserver le service."
+      >
+        <ul className="space-y-2 text-sm">
+          {keyRules.map((rule) => (
+            <li key={rule} className="rounded-lg border p-3">
+              {rule}
+            </li>
+          ))}
+        </ul>
+      </PublicSection>
+
+      <PublicSection
+        title="6. Données et propriété intellectuelle"
+        description="Répartition claire des droits."
+      >
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="rounded-xl border p-4">
+            <p className="font-medium">Données utilisateur</p>
+            <p className="text-muted-foreground mt-1 text-sm">
+              L&apos;utilisateur reste propriétaire de ses données métier
+              (missions, contacts, séquences, contenus saisis).
+            </p>
+          </div>
+          <div className="rounded-xl border p-4">
+            <p className="font-medium">Propriété Jobio</p>
+            <p className="text-muted-foreground mt-1 text-sm">
+              Code source, marque, design, composants produit et documentation
+              relèvent de la propriété de Jobio.
+            </p>
+          </div>
+        </div>
+      </PublicSection>
+
+      <PublicSection
+        title="7. Responsabilité et disponibilité"
+        description="Cadre de limitation de responsabilité."
+      >
+        <p className="text-muted-foreground text-sm leading-relaxed">
+          Jobio s&apos;efforce d&apos;assurer un service fiable, mais ne garantit pas
+          une disponibilité ininterrompue. Le service est fourni &quot;en l&apos;état&quot;.
+          Jobio ne peut être tenu responsable des pertes indirectes, ni des
+          conséquences liées à une mauvaise utilisation du service par
+          l&apos;utilisateur.
+        </p>
+      </PublicSection>
+
+      <PublicSection
+        title="8. Résiliation"
+        description="Fermeture compte et fin d'accès."
+      >
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="rounded-xl border p-4">
+            <p className="font-medium">Par l'utilisateur</p>
+            <p className="text-muted-foreground mt-1 text-sm">
+              Résiliation possible à tout moment depuis les paramètres du
+              compte.
+            </p>
+          </div>
+          <div className="rounded-xl border p-4">
+            <p className="font-medium">Par l'éditeur</p>
+            <p className="text-muted-foreground mt-1 text-sm">
+              Suspension ou suppression possible en cas de violation des CGU.
+            </p>
+          </div>
+        </div>
+      </PublicSection>
+
+      <PublicSection
+        title="9. Loi applicable et litiges"
+        description="Cadre juridique."
+      >
+        <p className="text-muted-foreground text-sm leading-relaxed">
+          Les présentes CGU sont soumises au droit français. En cas de litige,
+          les parties rechercheront d&apos;abord une résolution amiable.
+          À défaut, compétence est attribuée aux juridictions françaises
+          compétentes.
+        </p>
+      </PublicSection>
+    </PublicPageShell>
   );
 }

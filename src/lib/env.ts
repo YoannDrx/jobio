@@ -27,6 +27,9 @@ export const env = createEnv({
     STRIPE_ULTRA_PLAN_ID: z.string().min(1),
     STRIPE_ULTRA_YEARLY_PLAN_ID: z.string().min(1),
     CI: z.coerce.boolean().optional(),
+    STRIPE_PROGRAM_ATTIRER_PRICE_ID: z.string().optional(),
+    STRIPE_PROGRAM_BRANDING_PRICE_ID: z.string().optional(),
+    STRIPE_PROGRAM_CROISSANCE_PRICE_ID: z.string().optional(),
   },
   /**
    * If you add `client` environment variables, you need to add them to

@@ -2,6 +2,7 @@ import { logger } from "@/lib/logger";
 import { faker } from "@faker-js/faker";
 import { nanoid } from "nanoid";
 import { prisma } from "../src/lib/prisma";
+import { LINKEDIN_PROGRAMS_DATA } from "./data/linkedin-programs-data";
 
 // Set seed for reproducibility
 faker.seed(123);
@@ -586,15 +587,16 @@ async function main() {
 
   // Create some regular users
   const users = await Promise.all(
-    Array.from({ length: 5 }, async (_, index) =>
-      prisma.user
+    Array.from({ length: 5 }, async (_, index) => {
+      const email = faker.internet.email();
+      return prisma.user
         .upsert({
-          where: { email: faker.internet.email() },
+          where: { email },
           update: {},
           create: {
             id: nanoid(11),
             name: faker.person.fullName(),
-            email: faker.internet.email(),
+            email,
             emailVerified: faker.datatype.boolean(0.8),
             image: faker.image.avatar(),
             createdAt: faker.date.past(),
@@ -623,10 +625,77 @@ async function main() {
             });
           }
           return user;
-        }),
-    ),
+        });
+    }),
   );
   logger.info(`Created ${users.length} additional users`);
+
+  // Seed LinkedIn programs and templates
+  for (const programData of LINKEDIN_PROGRAMS_DATA) {
+    const { templates, ...programFields } = programData;
+
+    const authorImage =
+      "authorImage" in programFields
+        ? (programFields as { authorImage?: string }).authorImage
+        : undefined;
+
+    // eslint-disable-next-line no-await-in-loop
+    const program = await prisma.linkedInProgram.upsert({
+      where: { slug: programFields.slug },
+      update: {
+        title: programFields.title,
+        description: programFields.description,
+        longDescription: programFields.longDescription,
+        authorName: programFields.authorName,
+        authorImage,
+        price: programFields.price,
+        currency: programFields.currency,
+        isFree: programFields.isFree,
+        templateCount: programFields.templateCount,
+        order: programFields.order,
+      },
+      create: {
+        id: nanoid(11),
+        slug: programFields.slug,
+        title: programFields.title,
+        description: programFields.description,
+        longDescription: programFields.longDescription,
+        authorName: programFields.authorName,
+        authorImage,
+        price: programFields.price,
+        currency: programFields.currency,
+        isFree: programFields.isFree,
+        templateCount: programFields.templateCount,
+        order: programFields.order,
+      },
+    });
+
+    // Delete existing templates and recreate them
+    // eslint-disable-next-line no-await-in-loop
+    await prisma.linkedInTemplate.deleteMany({
+      where: { programId: program.id },
+    });
+
+    // eslint-disable-next-line no-await-in-loop
+    await prisma.linkedInTemplate.createMany({
+      data: templates.map((t) => ({
+        id: nanoid(11),
+        programId: program.id,
+        title: t.title,
+        hook: t.hook,
+        body: t.body,
+        tips: t.tips,
+        category:
+          "category" in t ? (t as { category?: string }).category : undefined,
+        order: t.order,
+      })),
+    });
+
+    logger.info(
+      `Seeded program "${program.title}" with ${templates.length} templates`,
+    );
+  }
+  logger.info(`Seeded ${LINKEDIN_PROGRAMS_DATA.length} LinkedIn programs`);
 
   logger.info("Database seeded successfully!");
   logger.info(`Admin login: ${adminEmail}`);

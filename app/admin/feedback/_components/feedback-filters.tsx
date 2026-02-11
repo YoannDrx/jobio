@@ -20,7 +20,7 @@ export const FeedbackFilters = () => {
       <div className="relative flex-1">
         <Search className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2 transform" />
         <Input
-          placeholder="Search feedback by message, email, or user..."
+          placeholder="Rechercher par message, email ou utilisateur..."
           value={filters.search}
           onChange={(e) => {
             void setFilters({

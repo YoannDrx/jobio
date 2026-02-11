@@ -16,6 +16,7 @@ import { TodayUrgent } from "@/features/missions/components/today/today-urgent";
 import { TodayFollowUps } from "@/features/missions/components/today/today-follow-ups";
 import { TodayStats } from "@/features/missions/components/today/today-stats";
 import { TodayMissions } from "@/features/missions/components/today/today-missions";
+import { TodayExecutionAssistant } from "@/features/missions/components/today/today-execution-assistant";
 import { ArrowRight, CheckCircle2, Kanban, Rocket } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -73,11 +74,23 @@ type TodayContentProps = {
   staleMissions: StaleMission[];
   weekStats: WeekStats;
   suggestions: Suggestion[];
+  batchFollowUpCandidates: {
+    id: string;
+    title: string;
+    company: string | null;
+    daysWithoutFollowUp: number;
+  }[];
   onboardingStatus?: {
     hasProfile: boolean;
     hasPlatforms: boolean;
     hasMission: boolean;
     hasSequence: boolean;
+    hasContact: boolean;
+    hasFollowUp: boolean;
+    hasSentEmail: boolean;
+    completedSteps: number;
+    totalSteps: number;
+    extendedChecklistEnabled: boolean;
     isDismissed: boolean;
   } | null;
 };
@@ -91,6 +104,7 @@ export function TodayContent({
   staleMissions,
   weekStats,
   suggestions,
+  batchFollowUpCandidates,
   onboardingStatus,
 }: TodayContentProps) {
   const router = useRouter();
@@ -202,6 +216,12 @@ export function TodayContent({
             hasPlatforms: onboardingStatus.hasPlatforms,
             hasMission: onboardingStatus.hasMission,
             hasSequence: onboardingStatus.hasSequence,
+            hasContact: onboardingStatus.hasContact,
+            hasFollowUp: onboardingStatus.hasFollowUp,
+            hasSentEmail: onboardingStatus.hasSentEmail,
+            completedSteps: onboardingStatus.completedSteps,
+            totalSteps: onboardingStatus.totalSteps,
+            extendedChecklistEnabled: onboardingStatus.extendedChecklistEnabled,
             isDismissed: onboardingStatus.isDismissed,
           }}
         />
@@ -219,6 +239,9 @@ export function TodayContent({
 
       {/* Suggestions */}
       <TodaySuggestions suggestions={suggestions} />
+
+      {/* Execution assistant */}
+      <TodayExecutionAssistant batchCandidates={batchFollowUpCandidates} />
 
       {/* Urgent actions section */}
       {hasUrgencies && (

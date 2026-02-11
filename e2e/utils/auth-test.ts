@@ -134,9 +134,22 @@ export async function signOutAccount(options: { page: Page }) {
     await sidebarUserButton.waitFor({ state: "visible", timeout: 10000 });
     await sidebarUserButton.click({ force: true });
 
-    const logoutMenuItem = page.getByRole("menuitem", { name: /logout/i });
+    const logoutMenuItem = page.getByRole("menuitem", {
+      name: /logout|log out|se déconnecter|deconnexion|déconnexion/i,
+    });
     await logoutMenuItem.waitFor({ state: "visible", timeout: 10000 });
     await logoutMenuItem.click({ force: true });
+
+    await page.waitForURL(
+      (url) => url.pathname === "/auth/signin" || url.pathname === "/",
+      {
+        timeout: 15000,
+      },
+    );
+
+    if (page.url().endsWith("/")) {
+      await page.goto("/auth/signin");
+    }
 
     await page.waitForURL((url) => url.pathname === "/auth/signin", {
       timeout: 15000,

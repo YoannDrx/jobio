@@ -64,13 +64,13 @@ export function UserSessions({ userId }: UserSessionsProps) {
       );
     },
     onSuccess: () => {
-      toast.success("Session revoked successfully");
+      toast.success("Session révoquée");
       void queryClient.invalidateQueries({
         queryKey: ["user-sessions", userId],
       });
     },
     onError: (error: Error) => {
-      toast.error(`Failed to revoke session: ${error.message}`);
+      toast.error(`Impossible de révoquer la session: ${error.message}`);
     },
   });
 
@@ -83,13 +83,13 @@ export function UserSessions({ userId }: UserSessionsProps) {
       );
     },
     onSuccess: () => {
-      toast.success("All sessions revoked successfully");
+      toast.success("Toutes les sessions ont été révoquées");
       void queryClient.invalidateQueries({
         queryKey: ["user-sessions", userId],
       });
     },
     onError: (error: Error) => {
-      toast.error(`Failed to revoke all sessions: ${error.message}`);
+      toast.error(`Impossible de révoquer les sessions: ${error.message}`);
     },
   });
 
@@ -111,12 +111,12 @@ export function UserSessions({ userId }: UserSessionsProps) {
   };
 
   const formatUserAgent = (userAgent?: string | null) => {
-    if (!userAgent) return "Unknown device";
+    if (!userAgent) return "Appareil inconnu";
 
     // Extract browser and OS info
     const ua = userAgent;
-    let browser = "Unknown";
-    let os = "Unknown";
+    let browser = "Inconnu";
+    let os = "Inconnu";
 
     // Detect browser
     if (ua.includes("Chrome")) browser = "Chrome";
@@ -131,7 +131,7 @@ export function UserSessions({ userId }: UserSessionsProps) {
     else if (ua.includes("Android")) os = "Android";
     else if (ua.includes("iOS")) os = "iOS";
 
-    return `${browser} on ${os}`;
+    return `${browser} sur ${os}`;
   };
 
   return (
@@ -139,9 +139,9 @@ export function UserSessions({ userId }: UserSessionsProps) {
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>
-            <CardTitle>Active Sessions</CardTitle>
+            <CardTitle>Sessions actives</CardTitle>
             <CardDescription>
-              View and manage user sessions for debugging
+              Sessions de l&apos;utilisateur pour investigation et support.
             </CardDescription>
           </div>
           {sessions.length > 0 && (
@@ -152,7 +152,7 @@ export function UserSessions({ userId }: UserSessionsProps) {
               disabled={revokeAllSessionsMutation.isPending}
             >
               <TrashIcon className="mr-2 size-4" />
-              Revoke All Sessions
+              Révoquer toutes les sessions
             </Button>
           )}
         </div>
@@ -161,27 +161,27 @@ export function UserSessions({ userId }: UserSessionsProps) {
         {isLoading ? (
           <div className="flex items-center justify-center py-8">
             <Loader2 className="size-6 animate-spin" />
-            <span className="ml-2">Loading sessions...</span>
+            <span className="ml-2">Chargement des sessions...</span>
           </div>
         ) : error ? (
           <div className="text-destructive py-4 text-center">
-            Failed to load sessions: {error.message}
+            Impossible de charger les sessions: {error.message}
           </div>
         ) : sessions.length === 0 ? (
           <div className="text-muted-foreground py-4 text-center">
-            No active sessions found
+            Aucune session active
           </div>
         ) : (
           <div className="rounded-md border">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Device</TableHead>
-                  <TableHead>IP Address</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Created</TableHead>
-                  <TableHead>Expires</TableHead>
-                  <TableHead className="w-[100px]">Actions</TableHead>
+                  <TableHead>Appareil</TableHead>
+                  <TableHead>Adresse IP</TableHead>
+                  <TableHead>Statut</TableHead>
+                  <TableHead>Créée le</TableHead>
+                  <TableHead>Expire le</TableHead>
+                  <TableHead className="w-[100px]">Action</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -204,7 +204,7 @@ export function UserSessions({ userId }: UserSessionsProps) {
                     </TableCell>
                     <TableCell>
                       <code className="text-sm">
-                        {session.ipAddress ?? "Unknown"}
+                        {session.ipAddress ?? "Inconnue"}
                       </code>
                     </TableCell>
                     <TableCell>
@@ -218,14 +218,14 @@ export function UserSessions({ userId }: UserSessionsProps) {
                         >
                           {new Date(session.expiresAt) > new Date()
                             ? "Active"
-                            : "Expired"}
+                            : "Expirée"}
                         </Badge>
                         {(
                           session as unknown as {
                             impersonatedBy: string | null;
                           }
                         ).impersonatedBy && (
-                          <Badge variant="outline">Impersonated</Badge>
+                          <Badge variant="outline">Impersonée</Badge>
                         )}
                       </div>
                     </TableCell>

@@ -11,6 +11,7 @@ import {
   updateFollowUpSchema,
 } from "./follow-ups.schema";
 import { createNotification } from "@/features/notifications/create-notification";
+import { isFeatureEnabled } from "@/lib/ops/feature-flags";
 
 export const createFollowUpAction = authAction
   .inputSchema(createFollowUpSchema)
@@ -57,6 +58,107 @@ export const createFollowUpAction = authAction
     }
 
     return followUp;
+  });
+
+const batchCreateFollowUpsSchema = z.object({
+  missionIds: z.array(z.string()).min(1).max(100),
+  type: z.enum(["EMAIL", "CALL", "MESSAGE", "MEETING"]),
+  title: z.string().min(2).max(160),
+  description: z.string().max(2000).optional(),
+  scheduledAt: z.date(),
+  skipIfPendingWithinDays: z.number().min(0).max(90).default(7),
+});
+
+export const batchCreateFollowUpsAction = authAction
+  .inputSchema(batchCreateFollowUpsSchema)
+  .action(async ({ parsedInput, ctx: { user } }) => {
+    const enabled = await isFeatureEnabled("assistant.batch_followups");
+    if (!enabled) {
+      throw new ApplicationError("La planification batch est désactivée");
+    }
+
+    const missions = await prisma.mission.findMany({
+      where: {
+        id: { in: parsedInput.missionIds },
+        userId: user.id,
+        deletedAt: null,
+      },
+      select: {
+        id: true,
+        title: true,
+      },
+    });
+
+    if (missions.length === 0) {
+      throw new ApplicationError("Aucune mission valide pour cette action");
+    }
+
+    const now = new Date();
+    const pendingLimitDate = new Date(now);
+    pendingLimitDate.setDate(
+      pendingLimitDate.getDate() + parsedInput.skipIfPendingWithinDays,
+    );
+
+    const pendingFollowUps = await prisma.followUp.findMany({
+      where: {
+        userId: user.id,
+        missionId: { in: missions.map((mission) => mission.id) },
+        completedAt: null,
+        scheduledAt: {
+          gte: now,
+          lte: pendingLimitDate,
+        },
+      },
+      select: {
+        missionId: true,
+      },
+    });
+
+    const missionWithPendingFollowUp = new Set(
+      pendingFollowUps.map((followUp) => followUp.missionId),
+    );
+
+    const eligibleMissions = missions.filter(
+      (mission) => !missionWithPendingFollowUp.has(mission.id),
+    );
+
+    if (eligibleMissions.length === 0) {
+      throw new ApplicationError(
+        "Toutes les missions ciblées ont déjà une relance proche",
+      );
+    }
+
+    await prisma.$transaction(async (tx) => {
+      await Promise.all(
+        eligibleMissions.map(async (mission) => {
+          await tx.followUp.create({
+            data: {
+              missionId: mission.id,
+              userId: user.id,
+              type: parsedInput.type,
+              title: parsedInput.title,
+              description: parsedInput.description,
+              scheduledAt: parsedInput.scheduledAt,
+            },
+          });
+
+          await tx.activityEvent.create({
+            data: {
+              missionId: mission.id,
+              userId: user.id,
+              type: "FOLLOW_UP_CREATED",
+              description: `Relance batch "${parsedInput.title}" planifiée`,
+            },
+          });
+        }),
+      );
+    });
+
+    return {
+      targetedCount: missions.length,
+      createdCount: eligibleMissions.length,
+      skippedCount: missions.length - eligibleMissions.length,
+    };
   });
 
 export const completeFollowUpAction = authAction

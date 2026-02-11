@@ -4,10 +4,20 @@ import { sendEmail } from "@/lib/mail/send-email";
 import { SiteConfig } from "@/site-config";
 import TrialEndingEmail from "@email/trial-ending.email";
 import { NextResponse } from "next/server";
+import { finishCronJobRun, startCronJobRun } from "@/lib/ops/cron-job-runs";
 
 export const GET = route.handler(async (req) => {
+  const run = await startCronJobRun({
+    jobName: "trial-ending",
+    route: new URL(req.url).pathname,
+  });
+
   const authHeader = req.headers.get("authorization");
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    await finishCronJobRun(run?.id, {
+      status: "UNAUTHORIZED",
+      errorMessage: "Invalid authorization header",
+    });
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -32,38 +42,54 @@ export const GET = route.handler(async (req) => {
     999,
   );
 
-  const subscriptions = await prisma.subscription.findMany({
-    where: {
-      status: "trialing",
-      periodStart: {
-        gte: startOfDay,
-        lte: endOfDay,
+  try {
+    const subscriptions = await prisma.subscription.findMany({
+      where: {
+        status: "trialing",
+        periodStart: {
+          gte: startOfDay,
+          lte: endOfDay,
+        },
       },
-    },
-  });
+    });
 
-  const users = await Promise.all(
-    subscriptions.map(async (sub) =>
-      prisma.user.findFirst({ where: { id: sub.referenceId } }),
-    ),
-  );
+    const users = await Promise.all(
+      subscriptions.map(async (sub) =>
+        prisma.user.findFirst({ where: { id: sub.referenceId } }),
+      ),
+    );
 
-  const validUsers = users.filter(
-    (user): user is Exclude<typeof user, null> => user !== null,
-  );
+    const validUsers = users.filter(
+      (user): user is Exclude<typeof user, null> => user !== null,
+    );
 
-  const results = await Promise.all(
-    validUsers.map(async (user) =>
-      sendEmail({
-        to: user.email,
-        subject: `Ton essai ${SiteConfig.title} se termine demain`,
-        html: TrialEndingEmail({
-          name: user.name || "Freelance",
-          daysLeft: 1,
+    const results = await Promise.all(
+      validUsers.map(async (user) =>
+        sendEmail({
+          to: user.email,
+          subject: `Ton essai ${SiteConfig.title} se termine demain`,
+          html: TrialEndingEmail({
+            name: user.name || "Freelance",
+            daysLeft: 1,
+          }),
         }),
-      }),
-    ),
-  );
+      ),
+    );
 
-  return NextResponse.json({ sent: results.length });
+    await finishCronJobRun(run?.id, {
+      status: "SUCCESS",
+      processedCount: results.length,
+      details: {
+        trialCandidates: subscriptions.length,
+      },
+    });
+
+    return NextResponse.json({ sent: results.length });
+  } catch (error) {
+    await finishCronJobRun(run?.id, {
+      status: "FAILED",
+      errorMessage: error instanceof Error ? error.message : "Unknown error",
+    });
+    return NextResponse.json({ error: "Cron failure" }, { status: 500 });
+  }
 });

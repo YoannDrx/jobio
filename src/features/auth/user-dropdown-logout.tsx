@@ -27,7 +27,7 @@ export const UserDropdownLogout = () => {
       ) : (
         <LogOut className="mr-2 size-4" />
       )}
-      <span>Logout</span>
+      <span>Se déconnecter</span>
     </DropdownMenuItem>
   );
 };

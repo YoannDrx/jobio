@@ -73,11 +73,62 @@ export const POST = async (req: NextRequest) => {
   });
 };
 
+const handleProgramPurchaseCompleted = async (
+  session: Stripe.Checkout.Session,
+) => {
+  const programId = session.metadata?.programId;
+  const userId = session.metadata?.userId;
+
+  if (!programId || !userId) {
+    logger.error("Missing programId or userId in program purchase metadata");
+    return;
+  }
+
+  await prisma.programPurchase.upsert({
+    where: {
+      userId_programId: { userId, programId },
+    },
+    update: {
+      status: "completed",
+      stripeSessionId: session.id,
+      stripePaymentIntentId:
+        typeof session.payment_intent === "string"
+          ? session.payment_intent
+          : (session.payment_intent?.id ?? null),
+    },
+    create: {
+      userId,
+      programId,
+      status: "completed",
+      stripeSessionId: session.id,
+      stripePaymentIntentId:
+        typeof session.payment_intent === "string"
+          ? session.payment_intent
+          : (session.payment_intent?.id ?? null),
+      amount: session.amount_total ?? 0,
+      currency: session.currency ?? "eur",
+    },
+  });
+
+  logger.info(
+    `Program purchase completed for user: ${userId}, program: ${programId}`,
+  );
+};
+
 const checkoutSessionCompleted = async (
   sessionData: Stripe.Checkout.Session,
   req: NextRequest,
 ) => {
   const session = sessionData;
+
+  // Handle LinkedIn program one-time purchases
+  if (
+    session.mode === "payment" &&
+    session.metadata?.type === "linkedin_program"
+  ) {
+    await handleProgramPurchaseCompleted(session);
+    return;
+  }
 
   if (!session.customer || !session.subscription) {
     logger.warn("Missing customer or subscription in checkout session");

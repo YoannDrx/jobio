@@ -28,8 +28,9 @@ model User {
   aiUsages         AIUsage[]
   aiMonthlyQuotas  AIMonthlyQuota[]
   notifications    Notification[]
-  sentEmails       SentEmail[]
-  sequences        Sequence[]
+  sentEmails         SentEmail[]
+  sequences          Sequence[]
+  programPurchases   ProgramPurchase[]
 
   // Stripe integration
   stripeCustomerId String?
