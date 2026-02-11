@@ -2,11 +2,54 @@
 
 import { authAction } from "@/lib/actions/safe-actions";
 import { prisma } from "@/lib/prisma";
+import {
+  MISSION_STATUS_LABELS,
+  PIPELINE_STATUS_VALUES,
+} from "@/features/missions/mission-status";
+import { exportMissionFilterSchema } from "./missions.schema";
 
-export const exportMissionsAction = authAction.action(
-  async ({ ctx: { user } }) => {
+export const exportMissionsAction = authAction
+  .inputSchema(exportMissionFilterSchema)
+  .action(async ({ parsedInput: filters, ctx: { user } }) => {
+    const where: Record<string, unknown> = {
+      userId: user.id,
+      deletedAt: null,
+    };
+
+    if (filters.status?.length) {
+      where.status = { in: filters.status };
+    } else {
+      where.status = { in: [...PIPELINE_STATUS_VALUES] };
+    }
+
+    if (filters.priority?.length) {
+      where.priority = { in: filters.priority };
+    }
+
+    if (filters.platformId) {
+      where.platformId = filters.platformId;
+    }
+
+    if (filters.search) {
+      where.OR = [
+        { title: { contains: filters.search, mode: "insensitive" } },
+        { company: { contains: filters.search, mode: "insensitive" } },
+        { description: { contains: filters.search, mode: "insensitive" } },
+      ];
+    }
+
+    if (filters.tjmMin !== undefined || filters.tjmMax !== undefined) {
+      where.tjm = {};
+      if (filters.tjmMin !== undefined) {
+        (where.tjm as Record<string, number>).gte = filters.tjmMin;
+      }
+      if (filters.tjmMax !== undefined) {
+        (where.tjm as Record<string, number>).lte = filters.tjmMax;
+      }
+    }
+
     const missions = await prisma.mission.findMany({
-      where: { userId: user.id, deletedAt: null },
+      where,
       include: {
         platform: { select: { name: true } },
         contact: { select: { firstName: true, lastName: true } },
@@ -17,7 +60,7 @@ export const exportMissionsAction = authAction.action(
     return missions.map((m) => ({
       title: m.title,
       company: m.company ?? "",
-      status: m.status,
+      status: MISSION_STATUS_LABELS[m.status],
       priority: m.priority,
       tjm: m.tjm ?? "",
       duration: m.duration ?? "",
@@ -30,5 +73,4 @@ export const exportMissionsAction = authAction.action(
       sourceUrl: m.sourceUrl ?? "",
       createdAt: m.createdAt.toISOString().split("T")[0],
     }));
-  },
-);
+  });

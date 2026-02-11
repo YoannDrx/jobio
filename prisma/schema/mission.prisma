@@ -37,8 +37,10 @@ model Mission {
   location    String?
   stack       String[]
   sourceUrl   String?
-  score       Int             @default(0)
-  notes       String?
+  score          Int             @default(0)
+  scoreBreakdown Json?
+  notes             String?
+  rejectionReason   String?
   platformId  String?
   contactId   String?
   profileId   String?

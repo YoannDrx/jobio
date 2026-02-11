@@ -10,7 +10,7 @@ export const UserDropdownLogout = () => {
   const logout = useMutation({
     mutationFn: async () => signOut(),
     onSuccess: () => {
-      window.location.href = "/auth/signin";
+      window.location.href = "/";
     },
   });
 

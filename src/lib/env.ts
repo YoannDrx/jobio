@@ -20,6 +20,12 @@ export const env = createEnv({
     NODE_ENV: z.enum(["development", "production", "test"]),
     RESEND_WEBHOOK_SECRET: z.string().optional(),
     STRIPE_WEBHOOK_SECRET: z.string().optional(),
+    OPENAI_API_KEY: z.string().min(1),
+    REDIS_URL: z.string().url(),
+    STRIPE_PRO_PLAN_ID: z.string().min(1),
+    STRIPE_PRO_YEARLY_PLAN_ID: z.string().min(1),
+    STRIPE_ULTRA_PLAN_ID: z.string().min(1),
+    STRIPE_ULTRA_YEARLY_PLAN_ID: z.string().min(1),
     CI: z.coerce.boolean().optional(),
   },
   /**

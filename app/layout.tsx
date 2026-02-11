@@ -1,3 +1,4 @@
+import "@/lib/zod-error-map";
 import { TailwindIndicator } from "@/components/utils/tailwind-indicator";
 import { FloatingLegalFooter } from "@/features/legal/floating-legal-footer";
 import { NextTopLoader } from "@/features/page/next-top-loader";
@@ -17,6 +18,17 @@ export const metadata: Metadata = {
   title: SiteConfig.title,
   description: SiteConfig.description,
   metadataBase: new URL(getServerUrl()),
+  openGraph: {
+    title: SiteConfig.title,
+    description: SiteConfig.description,
+    type: "website",
+    locale: "fr_FR",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: SiteConfig.title,
+    description: SiteConfig.description,
+  },
 };
 
 const CaptionFont = Space_Grotesk({

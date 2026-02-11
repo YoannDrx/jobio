@@ -1,5 +1,6 @@
 import { getPlanLimits } from "@/lib/auth/stripe/auth-plans";
 import { ApplicationError } from "@/lib/errors/application-error";
+import { STALE_ELIGIBLE_STATUS_VALUES } from "@/features/missions/mission-status";
 import { prisma } from "@/lib/prisma";
 
 type LimitFeature =
@@ -33,7 +34,11 @@ export async function checkPlanLimit(
   switch (feature) {
     case "missions":
       used = await prisma.mission.count({
-        where: { userId, deletedAt: null },
+        where: {
+          userId,
+          deletedAt: null,
+          status: { in: [...STALE_ELIGIBLE_STATUS_VALUES] },
+        },
       });
       break;
     case "profiles":
@@ -80,7 +85,7 @@ export async function enforcePlanLimit(
   const result = await checkPlanLimit(userId, feature);
   if (!result.allowed) {
     throw new ApplicationError(
-      `Limite atteinte : ${result.used}/${result.limit} ${feature}. Passez en Pro pour débloquer.`,
+      `Limite atteinte : ${result.used}/${result.limit} ${feature}. Passe en Pro pour débloquer.`,
     );
   }
 }

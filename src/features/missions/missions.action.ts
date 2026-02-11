@@ -8,39 +8,45 @@ import { z } from "zod";
 import {
   createMissionSchema,
   missionFilterSchema,
+  missionStatusSchema,
   updateMissionSchema,
   updateMissionStatusSchema,
 } from "./missions.schema";
 import { computeMissionScore } from "./mission-scoring";
 import { createNotification } from "@/features/notifications/create-notification";
+import { Prisma } from "@/generated/prisma";
 
 export const createMissionAction = authAction
   .inputSchema(createMissionSchema)
   .action(async ({ parsedInput, ctx: { user } }) => {
     await enforcePlanLimit(user.id, "missions");
 
-    const mission = await prisma.mission.create({
-      data: {
-        ...parsedInput,
-        userId: user.id,
-        sourceUrl: parsedInput.sourceUrl ?? null,
-      },
+    const mission = await prisma.$transaction(async (tx) => {
+      const created = await tx.mission.create({
+        data: {
+          ...parsedInput,
+          userId: user.id,
+          sourceUrl: parsedInput.sourceUrl ?? null,
+        },
+      });
+
+      await tx.activityEvent.create({
+        data: {
+          missionId: created.id,
+          userId: user.id,
+          type: "MISSION_CREATED",
+          description: `Mission "${created.title}" créée`,
+        },
+      });
+
+      return created;
     });
 
-    await prisma.activityEvent.create({
-      data: {
-        missionId: mission.id,
-        userId: user.id,
-        type: "MISSION_CREATED",
-        description: `Mission "${mission.title}" créée`,
-      },
-    });
-
-    const score = await computeMissionScore(mission.id, user.id);
-    if (score > 0) {
+    const result = await computeMissionScore(mission.id, user.id);
+    if (result.score > 0) {
       await prisma.mission.update({
         where: { id: mission.id },
-        data: { score },
+        data: { score: result.score, scoreBreakdown: result.breakdown },
       });
     }
 
@@ -58,27 +64,31 @@ export const updateMissionAction = authAction
       throw new ApplicationError("Mission introuvable");
     }
 
-    const updated = await prisma.mission.update({
-      where: { id },
-      data: {
-        ...data,
-        sourceUrl: data.sourceUrl === "" ? null : data.sourceUrl,
-      },
+    const updated = await prisma.$transaction(async (tx) => {
+      const result = await tx.mission.update({
+        where: { id },
+        data: {
+          ...data,
+          sourceUrl: data.sourceUrl === "" ? null : data.sourceUrl,
+        },
+      });
+
+      await tx.activityEvent.create({
+        data: {
+          missionId: id,
+          userId: user.id,
+          type: "MISSION_UPDATED",
+          description: `Mission "${result.title}" mise à jour`,
+        },
+      });
+
+      return result;
     });
 
-    await prisma.activityEvent.create({
-      data: {
-        missionId: id,
-        userId: user.id,
-        type: "MISSION_UPDATED",
-        description: `Mission "${updated.title}" mise à jour`,
-      },
-    });
-
-    const score = await computeMissionScore(id, user.id);
+    const result = await computeMissionScore(id, user.id);
     await prisma.mission.update({
       where: { id },
-      data: { score },
+      data: { score: result.score, scoreBreakdown: result.breakdown },
     });
 
     return updated;
@@ -116,7 +126,7 @@ export const updateMissionStatusAction = authAction
         userId: user.id,
         type: "SYSTEM",
         title: "Mission postulée !",
-        message: `Pensez à planifier des relances pour "${updated.title}"`,
+        message: `Pense à planifier des relances pour "${updated.title}"`,
         link: `/app/pipeline?missionId=${id}`,
       });
     }
@@ -225,13 +235,27 @@ export const getMissionsAction = authAction
     const [missions, total, statusCounts] = await Promise.all([
       prisma.mission.findMany({
         where,
-        include: {
-          platform: true,
-          contact: true,
+        select: {
+          id: true,
+          title: true,
+          company: true,
+          status: true,
+          priority: true,
+          tjm: true,
+          duration: true,
+          workType: true,
+          location: true,
+          score: true,
+          createdAt: true,
+          updatedAt: true,
+          stack: true,
+          platform: { select: { id: true, name: true } },
+          contact: { select: { id: true, firstName: true, lastName: true } },
           followUps: {
             where: { completedAt: null },
             orderBy: { scheduledAt: "asc" },
             take: 1,
+            select: { id: true, title: true, scheduledAt: true, type: true },
           },
         },
         orderBy: { [filters.sortBy]: filters.sortOrder },
@@ -297,11 +321,133 @@ export const recalculateScoreAction = authAction
       throw new ApplicationError("Mission introuvable");
     }
 
-    const score = await computeMissionScore(id, user.id);
+    const result = await computeMissionScore(id, user.id);
     await prisma.mission.update({
       where: { id },
-      data: { score },
+      data: { score: result.score, scoreBreakdown: result.breakdown },
     });
 
-    return { score };
+    return result;
+  });
+
+export const bulkUpdateStatusAction = authAction
+  .inputSchema(
+    z.object({
+      ids: z.array(z.string()).min(1),
+      status: missionStatusSchema,
+    }),
+  )
+  .action(async ({ parsedInput: { ids, status }, ctx: { user } }) => {
+    const result = await prisma.mission.updateMany({
+      where: { id: { in: ids }, userId: user.id, deletedAt: null },
+      data: { status },
+    });
+    return { updated: result.count };
+  });
+
+export const bulkDeleteAction = authAction
+  .inputSchema(z.object({ ids: z.array(z.string()).min(1) }))
+  .action(async ({ parsedInput: { ids }, ctx: { user } }) => {
+    const result = await prisma.mission.updateMany({
+      where: { id: { in: ids }, userId: user.id, deletedAt: null },
+      data: { deletedAt: new Date() },
+    });
+    return { deleted: result.count };
+  });
+
+export const duplicateMissionAction = authAction
+  .inputSchema(z.object({ id: z.string() }))
+  .action(async ({ parsedInput: { id }, ctx: { user } }) => {
+    const mission = await prisma.mission.findFirst({
+      where: { id, userId: user.id, deletedAt: null },
+    });
+
+    if (!mission) {
+      throw new ApplicationError("Mission introuvable");
+    }
+
+    const duplicated = await prisma.$transaction(async (tx) => {
+      const created = await tx.mission.create({
+        data: {
+          title: `Copie de ${mission.title}`,
+          company: mission.company,
+          description: mission.description,
+          status: "A_POSTULER",
+          priority: mission.priority,
+          tjm: mission.tjm,
+          duration: mission.duration,
+          workType: mission.workType,
+          location: mission.location,
+          stack: mission.stack,
+          sourceUrl: mission.sourceUrl,
+          platformId: mission.platformId,
+          contactId: mission.contactId,
+          profileId: mission.profileId,
+          userId: user.id,
+          score: 0,
+          scoreBreakdown: Prisma.DbNull,
+          notes: null,
+          archivedAt: null,
+          deletedAt: null,
+        },
+      });
+
+      await tx.activityEvent.create({
+        data: {
+          missionId: created.id,
+          userId: user.id,
+          type: "MISSION_CREATED",
+          description: `Mission dupliquée depuis "${mission.title}"`,
+        },
+      });
+
+      return created;
+    });
+
+    const result = await computeMissionScore(duplicated.id, user.id);
+    await prisma.mission.update({
+      where: { id: duplicated.id },
+      data: { score: result.score, scoreBreakdown: result.breakdown },
+    });
+
+    return duplicated;
+  });
+
+export const updateRejectionReasonAction = authAction
+  .inputSchema(
+    z.object({
+      id: z.string(),
+      rejectionReason: z.string().nullable(),
+    }),
+  )
+  .action(async ({ parsedInput: { id, rejectionReason }, ctx: { user } }) => {
+    const mission = await prisma.mission.findFirst({
+      where: { id, userId: user.id, deletedAt: null },
+    });
+
+    if (!mission) {
+      throw new ApplicationError("Mission introuvable");
+    }
+
+    if (mission.status !== "REFUSE") {
+      throw new ApplicationError(
+        "La mission doit être au statut REFUSE pour ajouter une raison de refus",
+      );
+    }
+
+    const updated = await prisma.mission.update({
+      where: { id },
+      data: { rejectionReason },
+    });
+
+    await prisma.activityEvent.create({
+      data: {
+        missionId: id,
+        userId: user.id,
+        type: "MISSION_UPDATED",
+        description: "Raison de refus ajoutée",
+      },
+    });
+
+    return updated;
   });

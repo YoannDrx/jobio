@@ -17,41 +17,59 @@ type ProfileData = {
   zone: string | null;
 };
 
+export type ScoreBreakdown = {
+  score: number;
+  breakdown: {
+    skills: { score: number; max: number; matched: string[] };
+    tjm: { score: number; max: number };
+    workType: { score: number; max: number };
+    location: { score: number; max: number };
+    completeness: { score: number; max: number };
+  };
+};
+
 export function scoreMission(
   mission: MissionData,
   profile: ProfileData,
-): number {
-  let score = 0;
+): ScoreBreakdown {
+  const breakdown: ScoreBreakdown["breakdown"] = {
+    skills: { score: 0, max: 40, matched: [] },
+    tjm: { score: 0, max: 20 },
+    workType: { score: 0, max: 15 },
+    location: { score: 0, max: 15 },
+    completeness: { score: 0, max: 10 },
+  };
 
   // Skills match: +40 max
   if (mission.stack.length > 0 && profile.skills.length > 0) {
     const profileSkillNames = profile.skills.map((s) => s.name.toLowerCase());
-    const matchCount = mission.stack.filter((tech) =>
+    const matched = mission.stack.filter((tech) =>
       profileSkillNames.includes(tech.toLowerCase()),
-    ).length;
-    const matchRatio = matchCount / mission.stack.length;
-    score += Math.round(matchRatio * 40);
+    );
+    const matchRatio = matched.length / mission.stack.length;
+    breakdown.skills.score = Math.round(matchRatio * 40);
+    breakdown.skills.matched = matched;
   }
 
   // TJM match: +20 if within ±20%
   if (mission.tjm && profile.tjmTarget) {
     const ratio = mission.tjm / profile.tjmTarget;
     if (ratio >= 0.8 && ratio <= 1.2) {
-      score += 20;
+      breakdown.tjm.score = 20;
     } else if (ratio >= 0.6 && ratio <= 1.4) {
-      score += 10;
+      breakdown.tjm.score = 10;
     }
   }
 
   // WorkType match: +15
   if (mission.workType && profile.workTypePreference) {
     if (mission.workType === profile.workTypePreference) {
-      score += 15;
+      breakdown.workType.score = 15;
     } else if (
       mission.workType === "HYBRID" ||
       profile.workTypePreference === "HYBRID"
     ) {
-      score += 7;
+      breakdown.workType.score = 7;
     }
   }
 
@@ -60,26 +78,36 @@ export function scoreMission(
     const missionLoc = mission.location.toLowerCase();
     const profileZone = profile.zone.toLowerCase();
     if (missionLoc.includes(profileZone) || profileZone.includes(missionLoc)) {
-      score += 15;
+      breakdown.location.score = 15;
     }
   }
 
   // Info completeness: +10
-  let completeness = 0;
-  if (mission.description) completeness++;
-  if (mission.company) completeness++;
-  if (mission.duration) completeness++;
-  if (mission.tjm) completeness++;
-  if (mission.workType) completeness++;
-  score += Math.round((completeness / 5) * 10);
+  let completenessCount = 0;
+  if (mission.description) completenessCount++;
+  if (mission.company) completenessCount++;
+  if (mission.duration) completenessCount++;
+  if (mission.tjm) completenessCount++;
+  if (mission.workType) completenessCount++;
+  breakdown.completeness.score = Math.round((completenessCount / 5) * 10);
 
-  return Math.min(100, score);
+  const totalScore =
+    breakdown.skills.score +
+    breakdown.tjm.score +
+    breakdown.workType.score +
+    breakdown.location.score +
+    breakdown.completeness.score;
+
+  return {
+    score: Math.min(100, totalScore),
+    breakdown,
+  };
 }
 
 export async function computeMissionScore(
   missionId: string,
   userId: string,
-): Promise<number> {
+): Promise<ScoreBreakdown> {
   const mission = await prisma.mission.findFirst({
     where: { id: missionId, userId, deletedAt: null },
     select: {
@@ -94,7 +122,18 @@ export async function computeMissionScore(
     },
   });
 
-  if (!mission) return 0;
+  if (!mission) {
+    return {
+      score: 0,
+      breakdown: {
+        skills: { score: 0, max: 40, matched: [] },
+        tjm: { score: 0, max: 20 },
+        workType: { score: 0, max: 15 },
+        location: { score: 0, max: 15 },
+        completeness: { score: 0, max: 10 },
+      },
+    };
+  }
 
   // Use linked profile if available, otherwise fall back to default profile
   const profile = mission.profileId
@@ -119,13 +158,23 @@ export async function computeMissionScore(
 
   if (!profile) {
     // Without a profile, score based on completeness only
-    let completeness = 0;
-    if (mission.description) completeness++;
-    if (mission.company) completeness++;
-    if (mission.duration) completeness++;
-    if (mission.tjm) completeness++;
-    if (mission.workType) completeness++;
-    return Math.round((completeness / 5) * 10);
+    let completenessCount = 0;
+    if (mission.description) completenessCount++;
+    if (mission.company) completenessCount++;
+    if (mission.duration) completenessCount++;
+    if (mission.tjm) completenessCount++;
+    if (mission.workType) completenessCount++;
+    const completenessScore = Math.round((completenessCount / 5) * 10);
+    return {
+      score: completenessScore,
+      breakdown: {
+        skills: { score: 0, max: 40, matched: [] },
+        tjm: { score: 0, max: 20 },
+        workType: { score: 0, max: 15 },
+        location: { score: 0, max: 15 },
+        completeness: { score: completenessScore, max: 10 },
+      },
+    };
   }
 
   const skills = Array.isArray(profile.skills)

@@ -1,12 +1,7 @@
 import Redis from "ioredis";
+import { env } from "@/lib/env";
 
-if (!process.env.REDIS_URL) {
-  throw new Error(
-    "REDIS_URL environment variable is required. Please set it in your .env file.",
-  );
-}
-
-export const redisClient = new Redis(process.env.REDIS_URL, {
+export const redisClient = new Redis(env.REDIS_URL, {
   maxRetriesPerRequest: 3,
   retryStrategy: (times) => {
     if (times > 3) {

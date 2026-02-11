@@ -35,8 +35,8 @@ export function PlanLimitBanner({
         )}
         <AlertDescription>
           {isExhausted
-            ? `Limite atteinte : ${used}/${limit} ${featureLabel}. Passez en Pro pour continuer.`
-            : `Il vous reste ${remaining} ${featureLabel} sur ${limit}. Passez en Pro pour en avoir plus.`}
+            ? `Limite atteinte : ${used}/${limit} ${featureLabel}. Passe en Pro pour continuer.`
+            : `Il te reste ${remaining} ${featureLabel} sur ${limit}. Passe en Pro pour en avoir plus.`}
         </AlertDescription>
       </div>
       <Button
@@ -44,7 +44,7 @@ export function PlanLimitBanner({
         variant={isExhausted ? "destructive" : "outline"}
         asChild
       >
-        <Link href="/account/billing">Passer en Pro</Link>
+        <Link href="/app/account/billing">Passer en Pro</Link>
       </Button>
     </Alert>
   );

@@ -28,19 +28,18 @@ import {
 import { getProfilesAction } from "@/features/profiles/profiles.action";
 import { resolveActionResult } from "@/lib/actions/actions-utils";
 import { ScoreRing } from "@/components/nowts/score-ring";
+import {
+  MISSION_STATUS_LABELS,
+  PIPELINE_STATUS_VALUES,
+  type MissionStatusValue,
+} from "@/features/missions/mission-status";
 import { X } from "lucide-react";
 import { useEffect, useState } from "react";
 
-const STATUS_OPTIONS = [
-  { value: "A_POSTULER", label: "À postuler" },
-  { value: "POSTULE", label: "Postulé" },
-  { value: "ENTRETIEN", label: "Entretien" },
-  { value: "PROPOSITION", label: "Proposition" },
-  { value: "ACCEPTE", label: "Accepté" },
-  { value: "REFUSE", label: "Refusé" },
-  { value: "EN_PAUSE", label: "En pause" },
-  { value: "ABANDONNE", label: "Abandonné" },
-];
+const STATUS_OPTIONS = PIPELINE_STATUS_VALUES.map((value) => ({
+  value,
+  label: MISSION_STATUS_LABELS[value],
+})) as { value: MissionStatusValue; label: string }[];
 
 const PRIORITY_OPTIONS = [
   { value: "LOW", label: "Basse" },

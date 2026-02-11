@@ -72,7 +72,9 @@ function Counter({
       ease: "easeInOut",
 
       onUpdate(value) {
-        node.textContent = value.toFixed(2);
+        node.textContent = Number.isInteger(to)
+          ? Math.round(value).toString()
+          : value.toFixed(2);
       },
     });
 

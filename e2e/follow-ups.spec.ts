@@ -23,7 +23,7 @@ test.describe("follow-ups", () => {
     });
 
     const now = new Date();
-    await prisma.followUp.create({
+    const followUp = await prisma.followUp.create({
       data: {
         title: "Relancer recruteur",
         type: "EMAIL",
@@ -38,9 +38,19 @@ test.describe("follow-ups", () => {
     await page.waitForLoadState("networkidle");
 
     // Verify the follow-up appears
-    await expect(page.getByText("Relancer recruteur")).toBeVisible({
+    await expect(page.getByText("Relancer recruteur").first()).toBeVisible({
       timeout: 10000,
     });
+
+    await page.getByRole("button", { name: "Compléter" }).first().click();
+    await expect
+      .poll(async () => {
+        const updatedFollowUp = await prisma.followUp.findUnique({
+          where: { id: followUp.id },
+        });
+        return updatedFollowUp?.completedAt !== null;
+      })
+      .toBe(true);
 
     // Clean up
     await prisma.followUp.deleteMany({ where: { userId: user.id } });

@@ -104,7 +104,7 @@ export function MissionListTable({
               />
             </TableHead>
           )}
-          <TableHead className="w-12">
+          <TableHead className="hidden w-12 md:table-cell">
             <button
               className="flex items-center gap-1"
               onClick={() => onSort("score")}
@@ -132,9 +132,11 @@ export function MissionListTable({
             </button>
           </TableHead>
           <TableHead>Statut</TableHead>
-          <TableHead>Plateforme</TableHead>
-          <TableHead>Prochaine action</TableHead>
-          <TableHead>
+          <TableHead className="hidden md:table-cell">Plateforme</TableHead>
+          <TableHead className="hidden md:table-cell">
+            Prochaine action
+          </TableHead>
+          <TableHead className="hidden md:table-cell">
             <button
               className="flex items-center gap-1"
               onClick={() => onSort("createdAt")}
@@ -161,7 +163,7 @@ export function MissionListTable({
                 />
               </TableCell>
             )}
-            <TableCell>
+            <TableCell className="hidden md:table-cell">
               <ScoreRing score={mission.score} size={28} />
             </TableCell>
             <TableCell className="font-medium">{mission.title}</TableCell>
@@ -178,7 +180,7 @@ export function MissionListTable({
             <TableCell>
               <StatusBadge status={mission.status} />
             </TableCell>
-            <TableCell>
+            <TableCell className="hidden md:table-cell">
               {mission.platform ? (
                 <Badge variant="secondary" className="text-xs">
                   {mission.platform.name}
@@ -187,7 +189,7 @@ export function MissionListTable({
                 <span className="text-muted-foreground">—</span>
               )}
             </TableCell>
-            <TableCell>
+            <TableCell className="hidden md:table-cell">
               {mission.followUps.length > 0 ? (
                 <span
                   className={cn(
@@ -205,7 +207,7 @@ export function MissionListTable({
                 <span className="text-muted-foreground text-xs">—</span>
               )}
             </TableCell>
-            <TableCell className="text-muted-foreground text-sm">
+            <TableCell className="text-muted-foreground hidden text-sm md:table-cell">
               {new Date(mission.createdAt).toLocaleDateString("fr-FR")}
             </TableCell>
           </TableRow>

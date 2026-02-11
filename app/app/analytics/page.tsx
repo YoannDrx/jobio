@@ -19,15 +19,24 @@ import {
   getFunnelDataAction,
   getResponseRateByPlatformAction,
   getWeeklyActivityAction,
+  getWinRateByPlatformAction,
+  getRevenueForecastAction,
+  getTimeToHireAction,
+  getComparisonDataAction,
 } from "@/features/analytics/analytics.action";
 import { resolveActionResult } from "@/lib/actions/actions-utils";
 import { BarChart3, Calendar, Euro, Info, TrendingUp } from "lucide-react";
 import { EarningsDashboard } from "@/features/analytics/components/earnings-dashboard";
+import { RevenueForecast } from "@/features/analytics/components/revenue-forecast";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/nowts/empty-state";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
+import { MISSION_STATUS_LABELS } from "@/features/missions/mission-status";
 import {
   Popover,
   PopoverContent,
@@ -49,13 +58,41 @@ type EarningsData = {
   totalEstimatedRevenue: number;
   monthlyProjection: number;
 };
-
-const statusLabels: Record<string, string> = {
-  A_POSTULER: "A postuler",
-  POSTULE: "Postule",
-  ENTRETIEN: "Entretien",
-  PROPOSITION: "Proposition",
-  ACCEPTE: "Accepte",
+type WinRateByPlatformData = {
+  platform: string;
+  total: number;
+  accepted: number;
+  winRate: number;
+  avgTjm: number;
+}[];
+type RevenueForecastData = {
+  status: string;
+  count: number;
+  totalValue: number;
+  probability: number;
+  weightedValue: number;
+}[];
+type TimeToHireData = {
+  avgDays: number;
+  minDays: number;
+  maxDays: number;
+  count: number;
+};
+type ComparisonMetricsData = {
+  totalMissions: number;
+  conversionRate: number;
+  avgTjm: number;
+  followUpsCompleted: number;
+};
+type ComparisonData = {
+  current: ComparisonMetricsData;
+  previous: ComparisonMetricsData;
+  deltas: {
+    missions: number;
+    conversionRate: number;
+    avgTjm: number;
+    followUps: number;
+  };
 };
 
 function formatDate(date: Date): string {
@@ -83,6 +120,19 @@ export default function AnalyticsPage() {
   const [tjmData, setTJMData] = useState<TJMData>([]);
   const [activityData, setActivityData] = useState<ActivityData>([]);
   const [earningsData, setEarningsData] = useState<EarningsData | null>(null);
+  const [winRateData, setWinRateData] = useState<WinRateByPlatformData>([]);
+  const [revenueForecastData, setRevenueForecastData] = useState<{
+    byStatus: RevenueForecastData;
+    totalPipeline: number;
+    weightedPipeline: number;
+  } | null>(null);
+  const [timeToHireData, setTimeToHireData] = useState<TimeToHireData | null>(
+    null,
+  );
+  const [comparisonData, setComparisonData] = useState<ComparisonData | null>(
+    null,
+  );
+  const [showComparison, setShowComparison] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [hasData, setHasData] = useState(true);
 
@@ -119,12 +169,28 @@ export default function AnalyticsPage() {
     setIsLoading(true);
     try {
       const params = { startDate: start, endDate: end };
-      const [funnel, platform, tjm, activity, earnings] = await Promise.all([
+      const [
+        funnel,
+        platform,
+        tjm,
+        activity,
+        earnings,
+        winRate,
+        revenueForecast,
+        timeToHire,
+        comparison,
+      ] = await Promise.all([
         resolveActionResult(getFunnelDataAction(params)),
         resolveActionResult(getResponseRateByPlatformAction(params)),
         resolveActionResult(getAverageTJMAction(params)),
         resolveActionResult(getWeeklyActivityAction(params)),
         resolveActionResult(getEarningsDataAction(params)),
+        resolveActionResult(getWinRateByPlatformAction(params)),
+        resolveActionResult(getRevenueForecastAction(params)),
+        resolveActionResult(getTimeToHireAction(params)),
+        resolveActionResult(
+          getComparisonDataAction({ startDate: start, endDate: end }),
+        ),
       ]);
 
       const totalMissions = (funnel as FunnelData).reduce(
@@ -140,6 +206,10 @@ export default function AnalyticsPage() {
         setTJMData(tjm as TJMData);
         setActivityData(activity as ActivityData);
         setEarningsData(earnings as EarningsData);
+        setWinRateData(winRate as WinRateByPlatformData);
+        setRevenueForecastData(revenueForecast as typeof revenueForecastData);
+        setTimeToHireData(timeToHire as TimeToHireData);
+        setComparisonData(comparison as ComparisonData);
       }
     } catch {
       toast.error("Erreur lors du chargement des analytics");
@@ -193,8 +263,17 @@ export default function AnalyticsPage() {
           <LayoutTitle>Analytics</LayoutTitle>
         </LayoutHeader>
         <LayoutContent>
-          <div className="text-muted-foreground py-12 text-center text-sm">
-            Chargement...
+          <div className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-4">
+            <Skeleton className="h-20 w-full rounded-xl" />
+            <Skeleton className="h-20 w-full rounded-xl" />
+            <Skeleton className="h-20 w-full rounded-xl" />
+            <Skeleton className="h-20 w-full rounded-xl" />
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            <Skeleton className="h-64 w-full rounded-xl" />
+            <Skeleton className="h-64 w-full rounded-xl" />
+            <Skeleton className="h-64 w-full rounded-xl" />
+            <Skeleton className="h-64 w-full rounded-xl" />
           </div>
         </LayoutContent>
       </Layout>
@@ -210,10 +289,10 @@ export default function AnalyticsPage() {
         <LayoutContent>
           <EmptyState
             icon={BarChart3}
-            title="Pas encore assez de donnees"
+            title="Pas encore assez de données"
             description="Ajoutez des missions pour voir vos statistiques."
             action={{
-              label: "Creer une mission",
+              label: "Créer une mission",
               onClick: () => {
                 window.location.href = "/app/pipeline";
               },
@@ -249,35 +328,35 @@ export default function AnalyticsPage() {
               <span className="hidden sm:inline">
                 {startDate && endDate
                   ? `${formatDisplayDate(startDate)} - ${formatDisplayDate(endDate)}`
-                  : "Periode"}
+                  : "Période"}
               </span>
-              <span className="sm:hidden">Periode</span>
+              <span className="sm:hidden">Période</span>
             </Button>
           </PopoverTrigger>
           <PopoverContent align="end" className="w-auto">
             <div className="flex flex-col gap-3">
-              <p className="text-sm font-medium">Periode d'analyse</p>
+              <p className="text-sm font-medium">Période d&apos;analyse</p>
               <div className="flex flex-col gap-2">
                 <label className="flex flex-col gap-1">
                   <span className="text-muted-foreground text-xs">Du</span>
-                  <input
+                  <Input
                     type="date"
                     value={startDate}
                     min={minDate}
                     max={endDate}
                     onChange={(e) => handleStartDateChange(e.target.value)}
-                    className="border-input bg-background rounded-md border px-3 py-1.5 text-sm"
+                    className="h-9"
                   />
                 </label>
                 <label className="flex flex-col gap-1">
                   <span className="text-muted-foreground text-xs">Au</span>
-                  <input
+                  <Input
                     type="date"
                     value={endDate}
                     min={startDate}
                     max={maxDate}
                     onChange={(e) => handleEndDateChange(e.target.value)}
-                    className="border-input bg-background rounded-md border px-3 py-1.5 text-sm"
+                    className="h-9"
                   />
                 </label>
               </div>
@@ -285,7 +364,7 @@ export default function AnalyticsPage() {
                 <div className="bg-muted flex items-start gap-2 rounded-md p-2">
                   <Info className="text-muted-foreground mt-0.5 size-3.5 shrink-0" />
                   <p className="text-muted-foreground text-xs">
-                    Historique limite a {historyDays} jours (plan{" "}
+                    Historique limité à {historyDays} jours (plan{" "}
                     {PLAN_LABELS[planName] ?? planName}).{" "}
                     <Link
                       href="/app/account/billing"
@@ -302,8 +381,19 @@ export default function AnalyticsPage() {
       </LayoutActions>
       <LayoutContent>
         {isLoading ? (
-          <div className="text-muted-foreground py-12 text-center text-sm">
-            Chargement...
+          <div className="flex flex-col gap-6">
+            <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+              <Skeleton className="h-20 w-full rounded-xl" />
+              <Skeleton className="h-20 w-full rounded-xl" />
+              <Skeleton className="h-20 w-full rounded-xl" />
+              <Skeleton className="h-20 w-full rounded-xl" />
+            </div>
+            <div className="grid gap-4 md:grid-cols-2">
+              <Skeleton className="h-64 w-full rounded-xl" />
+              <Skeleton className="h-64 w-full rounded-xl" />
+              <Skeleton className="h-64 w-full rounded-xl" />
+              <Skeleton className="h-64 w-full rounded-xl" />
+            </div>
           </div>
         ) : (
           <>
@@ -319,13 +409,13 @@ export default function AnalyticsPage() {
                 <p className="text-muted-foreground text-xs tracking-wide uppercase">
                   Taux de conversion
                 </p>
-                <p className="mt-1 text-2xl font-bold text-cyan-400">
+                <p className="mt-1 text-2xl font-bold text-brand-cyan">
                   {conversionRate}%
                 </p>
               </Card>
               <Card className="p-4">
                 <p className="text-muted-foreground text-xs tracking-wide uppercase">
-                  TJM moyen accepte
+                  TJM moyen accepté
                 </p>
                 <p className="mt-1 text-2xl font-bold">{avgAcceptedTjm}€/j</p>
               </Card>
@@ -341,13 +431,16 @@ export default function AnalyticsPage() {
             <div className="grid gap-4 md:grid-cols-2">
               <Card className="p-6">
                 <div className="mb-4 flex items-center gap-2">
-                  <TrendingUp className="h-5 w-5 text-cyan-400" />
+                  <TrendingUp className="h-5 w-5 text-brand-cyan" />
                   <h3 className="font-semibold">Entonnoir de conversion</h3>
                 </div>
                 <FunnelChart
                   data={funnelData.map((item) => ({
                     ...item,
-                    label: statusLabels[item.status] ?? item.status,
+                    label:
+                      MISSION_STATUS_LABELS[
+                        item.status as keyof typeof MISSION_STATUS_LABELS
+                      ],
                   }))}
                 />
               </Card>
@@ -361,14 +454,14 @@ export default function AnalyticsPage() {
                   <PlatformPerformance data={platformData} />
                 ) : (
                   <div className="text-muted-foreground py-12 text-center text-sm">
-                    Aucune plateforme ajoutee
+                    Aucune plateforme ajoutée
                   </div>
                 )}
               </Card>
 
               <Card className="p-6">
                 <div className="mb-4 flex items-center gap-2">
-                  <TrendingUp className="h-5 w-5 text-cyan-400" />
+                  <TrendingUp className="h-5 w-5 text-brand-cyan" />
                   <h3 className="font-semibold">TJM moyen</h3>
                 </div>
                 {tjmData.length > 0 ? (
@@ -376,16 +469,14 @@ export default function AnalyticsPage() {
                     data={tjmData.map((item) => ({
                       ...item,
                       label:
-                        item.status === "PROPOSITION"
-                          ? "Propose"
-                          : item.status === "ACCEPTE"
-                            ? "Accepte"
-                            : item.status,
+                        MISSION_STATUS_LABELS[
+                          item.status as keyof typeof MISSION_STATUS_LABELS
+                        ],
                     }))}
                   />
                 ) : (
                   <div className="text-muted-foreground py-12 text-center text-sm">
-                    Aucun TJM enregistre
+                    Aucun TJM enregistré
                   </div>
                 )}
               </Card>
@@ -393,13 +484,13 @@ export default function AnalyticsPage() {
               <Card className="p-6">
                 <div className="mb-4 flex items-center gap-2">
                   <BarChart3 className="h-5 w-5 text-emerald-400" />
-                  <h3 className="font-semibold">Activite hebdomadaire</h3>
+                  <h3 className="font-semibold">Activité hebdomadaire</h3>
                 </div>
                 {activityData.length > 0 ? (
                   <ActivityGraph data={activityData} />
                 ) : (
                   <div className="text-muted-foreground py-12 text-center text-sm">
-                    Aucune activite
+                    Aucune activité
                   </div>
                 )}
               </Card>
@@ -413,6 +504,212 @@ export default function AnalyticsPage() {
                   <h3 className="text-lg font-semibold">Revenus</h3>
                 </div>
                 <EarningsDashboard data={earningsData} />
+              </div>
+            )}
+
+            {/* Win Rate by Platform Section */}
+            {winRateData.length > 0 && (
+              <div className="mt-6">
+                <div className="mb-4 flex items-center gap-2">
+                  <BarChart3 className="h-5 w-5 text-emerald-400" />
+                  <h3 className="text-lg font-semibold">
+                    Performance par plateforme
+                  </h3>
+                </div>
+                <Card className="overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full">
+                      <thead>
+                        <tr className="border-border bg-muted/30 border-b">
+                          <th className="px-4 py-3 text-left text-sm font-semibold">
+                            Plateforme
+                          </th>
+                          <th className="px-4 py-3 text-right text-sm font-semibold">
+                            Missions
+                          </th>
+                          <th className="px-4 py-3 text-right text-sm font-semibold">
+                            Win rate
+                          </th>
+                          <th className="px-4 py-3 text-right text-sm font-semibold">
+                            TJM moyen
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {winRateData.map((row) => (
+                          <tr
+                            key={row.platform}
+                            className="border-border border-b last:border-0"
+                          >
+                            <td className="px-4 py-3 text-sm font-medium">
+                              {row.platform}
+                            </td>
+                            <td className="px-4 py-3 text-right text-sm">
+                              {row.total}
+                            </td>
+                            <td className="px-4 py-3 text-right text-sm font-semibold text-brand-cyan">
+                              {row.winRate}%
+                            </td>
+                            <td className="px-4 py-3 text-right text-sm">
+                              {row.avgTjm}€/j
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </Card>
+              </div>
+            )}
+
+            {/* Revenue Forecast Section */}
+            {revenueForecastData && revenueForecastData.byStatus.length > 0 && (
+              <div className="mt-6">
+                <div className="mb-4 flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5 text-brand-cyan" />
+                  <h3 className="text-lg font-semibold">
+                    Revenue prévisionnelle
+                  </h3>
+                </div>
+                <RevenueForecast
+                  data={revenueForecastData.byStatus}
+                  totalPipeline={revenueForecastData.totalPipeline}
+                  weightedPipeline={revenueForecastData.weightedPipeline}
+                />
+              </div>
+            )}
+
+            {/* Time to Hire Section */}
+            {timeToHireData && timeToHireData.count > 0 && (
+              <div className="mt-6">
+                <Card className="p-6">
+                  <div className="mb-4 flex items-center gap-2">
+                    <Calendar className="h-5 w-5 text-emerald-400" />
+                    <h3 className="font-semibold">
+                      Temps moyen d&apos;embauche
+                    </h3>
+                  </div>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div>
+                      <p className="text-muted-foreground text-xs tracking-wide uppercase">
+                        Moyen
+                      </p>
+                      <p className="mt-1 text-2xl font-bold">
+                        {timeToHireData.avgDays}j
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground text-xs tracking-wide uppercase">
+                        Min
+                      </p>
+                      <p className="mt-1 text-2xl font-bold">
+                        {timeToHireData.minDays}j
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-muted-foreground text-xs tracking-wide uppercase">
+                        Max
+                      </p>
+                      <p className="mt-1 text-2xl font-bold">
+                        {timeToHireData.maxDays}j
+                      </p>
+                    </div>
+                  </div>
+                </Card>
+              </div>
+            )}
+
+            {/* Comparison Section */}
+            {comparisonData && (
+              <div className="mt-6">
+                <div className="mb-4 flex items-center justify-between">
+                  <h3 className="text-lg font-semibold">Comparaison période</h3>
+                  <div className="flex items-center gap-2">
+                    <span className="text-muted-foreground text-sm">
+                      Comparer avec période précédente
+                    </span>
+                    <Switch
+                      checked={showComparison}
+                      onCheckedChange={setShowComparison}
+                    />
+                  </div>
+                </div>
+                {showComparison && (
+                  <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+                    <Card className="p-4">
+                      <p className="text-muted-foreground text-xs tracking-wide uppercase">
+                        Total missions
+                      </p>
+                      <p className="mt-1 text-2xl font-bold">
+                        {comparisonData.current.totalMissions}
+                      </p>
+                      <p
+                        className={`mt-2 text-sm font-semibold ${
+                          comparisonData.deltas.missions >= 0
+                            ? "text-emerald-500"
+                            : "text-red-500"
+                        }`}
+                      >
+                        {comparisonData.deltas.missions > 0 ? "+" : ""}
+                        {comparisonData.deltas.missions}%
+                      </p>
+                    </Card>
+                    <Card className="p-4">
+                      <p className="text-muted-foreground text-xs tracking-wide uppercase">
+                        Taux de conversion
+                      </p>
+                      <p className="mt-1 text-2xl font-bold text-brand-cyan">
+                        {comparisonData.current.conversionRate}%
+                      </p>
+                      <p
+                        className={`mt-2 text-sm font-semibold ${
+                          comparisonData.deltas.conversionRate >= 0
+                            ? "text-emerald-500"
+                            : "text-red-500"
+                        }`}
+                      >
+                        {comparisonData.deltas.conversionRate > 0 ? "+" : ""}
+                        {comparisonData.deltas.conversionRate}%
+                      </p>
+                    </Card>
+                    <Card className="p-4">
+                      <p className="text-muted-foreground text-xs tracking-wide uppercase">
+                        TJM moyen accepté
+                      </p>
+                      <p className="mt-1 text-2xl font-bold">
+                        {comparisonData.current.avgTjm}€/j
+                      </p>
+                      <p
+                        className={`mt-2 text-sm font-semibold ${
+                          comparisonData.deltas.avgTjm >= 0
+                            ? "text-emerald-500"
+                            : "text-red-500"
+                        }`}
+                      >
+                        {comparisonData.deltas.avgTjm > 0 ? "+" : ""}
+                        {comparisonData.deltas.avgTjm}%
+                      </p>
+                    </Card>
+                    <Card className="p-4">
+                      <p className="text-muted-foreground text-xs tracking-wide uppercase">
+                        Relances complétées
+                      </p>
+                      <p className="mt-1 text-2xl font-bold">
+                        {comparisonData.current.followUpsCompleted}
+                      </p>
+                      <p
+                        className={`mt-2 text-sm font-semibold ${
+                          comparisonData.deltas.followUps >= 0
+                            ? "text-emerald-500"
+                            : "text-red-500"
+                        }`}
+                      >
+                        {comparisonData.deltas.followUps > 0 ? "+" : ""}
+                        {comparisonData.deltas.followUps}%
+                      </p>
+                    </Card>
+                  </div>
+                )}
               </div>
             )}
           </>

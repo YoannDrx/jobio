@@ -22,10 +22,12 @@ type FunnelChartProps = {
 const FUNNEL_COLORS: Record<string, string> = {
   A_POSTULER: "#94a3b8",
   POSTULE: "#60a5fa",
-  ENTRETIEN: "#22d3ee",
+  ENTRETIEN: "var(--brand-cyan)",
   PROPOSITION: "#34d399",
+  EN_PAUSE: "#a78bfa",
   ACCEPTE: "#4ade80",
   REFUSE: "#f87171",
+  ABANDONNE: "#9ca3af",
   ARCHIVE: "#6b7280",
 };
 

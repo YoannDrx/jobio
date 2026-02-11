@@ -212,7 +212,13 @@ export default function PlatformsPage() {
           <EmptyState
             icon={Globe}
             title="Aucune plateforme disponible"
-            description="Les plateformes seront bientôt disponibles."
+            description="Les plateformes seront bientot disponibles."
+          />
+        ) : userPlatforms.length === 0 ? (
+          <EmptyState
+            icon={Globe}
+            title="Aucune plateforme ajoutee"
+            description="Ajoute tes premieres plateformes pour commencer."
           />
         ) : (
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -297,7 +303,7 @@ export default function PlatformsPage() {
                       <div className="flex items-center gap-2">
                         <Input
                           type="url"
-                          placeholder="URL de votre profil"
+                          placeholder="URL de ton profil"
                           className="h-8 text-sm"
                           defaultValue={userPlatform.profileUrl ?? ""}
                           onChange={(e) =>

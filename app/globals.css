@@ -48,6 +48,11 @@
   --color-status-warning: var(--status-warning);
   --color-status-info: var(--status-info);
   --color-status-neutral: var(--status-neutral);
+  --color-brand-rose: var(--brand-rose);
+  --color-brand-violet: var(--brand-violet);
+  --color-brand-cyan: var(--brand-cyan);
+  --color-brand-amber: var(--brand-amber);
+  --color-brand-emerald: var(--brand-emerald);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
   --radius-sm: calc(var(--radius) - 4px);
@@ -97,11 +102,11 @@
   --border: oklch(0.9276 0.0058 264.5313);
   --input: oklch(0.9276 0.0058 264.5313);
   --ring: oklch(0.6518 0.1654 194.77);
-  --chart-1: hsl(12 76% 61%);
-  --chart-2: hsl(173 58% 39%);
-  --chart-3: hsl(197 37% 24%);
-  --chart-4: hsl(43 74% 66%);
-  --chart-5: hsl(27 87% 67%);
+  --chart-1: #f43f5e;
+  --chart-2: #22d3ee;
+  --chart-3: #8b5cf6;
+  --chart-4: #f59e0b;
+  --chart-5: #10b981;
   --sidebar: oklch(0.9846 0.0017 247.8389);
   --sidebar-foreground: oklch(0.3211 0 0);
   --sidebar-primary: oklch(0.6518 0.1654 194.77);
@@ -148,6 +153,13 @@
   --status-warning: #EAB308;
   --status-info: #3B82F6;
   --status-neutral: #64748B;
+
+  /* Brand — Playful Bounce palette */
+  --brand-rose: #f43f5e;
+  --brand-violet: #8b5cf6;
+  --brand-cyan: #22d3ee;
+  --brand-amber: #f59e0b;
+  --brand-emerald: #10b981;
 }
 
 .dark {
@@ -170,11 +182,11 @@
   --border: oklch(0.3 0.015 262.75);
   --input: oklch(0.3 0.015 262.75);
   --ring: oklch(0.7714 0.1351 194.77);
-  --chart-1: hsl(220 70% 50%);
-  --chart-2: hsl(160 60% 45%);
-  --chart-3: hsl(30 80% 55%);
-  --chart-4: hsl(280 65% 60%);
-  --chart-5: hsl(340 75% 55%);
+  --chart-1: #f43f5e;
+  --chart-2: #22d3ee;
+  --chart-3: #8b5cf6;
+  --chart-4: #f59e0b;
+  --chart-5: #10b981;
   --sidebar: oklch(0.2157 0.0155 262.75);
   --sidebar-foreground: oklch(0.9219 0 0);
   --sidebar-primary: oklch(0.7714 0.1351 194.77);
@@ -219,6 +231,13 @@
   --status-warning: #EAB308;
   --status-info: #3B82F6;
   --status-neutral: #64748B;
+
+  /* Brand — Playful Bounce palette */
+  --brand-rose: #f43f5e;
+  --brand-violet: #8b5cf6;
+  --brand-cyan: #22d3ee;
+  --brand-amber: #f59e0b;
+  --brand-emerald: #10b981;
 }
 
 @layer base {

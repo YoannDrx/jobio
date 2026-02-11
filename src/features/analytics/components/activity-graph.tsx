@@ -38,7 +38,7 @@ export function ActivityGraph({ data }: ActivityGraphProps) {
         <Line
           type="monotone"
           dataKey="missions"
-          stroke="#22d3ee"
+          stroke="var(--brand-cyan)"
           strokeWidth={2}
           dot={{ r: 3 }}
           name="Missions créées"

@@ -32,7 +32,7 @@ export const typographyVariants = cva("", {
       large: "text-lg font-semibold",
       small: "text-sm font-medium leading-none",
       muted: "text-muted-foreground text-sm",
-      link: "dark:text-primary font-medium text-cyan-600 hover:underline",
+      link: "text-primary font-medium hover:underline",
     },
   },
   defaultVariants: {

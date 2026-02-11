@@ -1,7 +1,8 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import Link from "next/link";
 import {
   Dialog,
   DialogContent,
@@ -19,49 +20,11 @@ import { Calendar, Mail, Phone } from "lucide-react";
 import { toast } from "sonner";
 import { resolveActionResult } from "@/lib/actions/actions-utils";
 import { createFollowUpAction } from "../follow-ups.action";
+import { getSequencesAction } from "@/features/sequences/sequences.action";
+import type { Sequence } from "@/generated/prisma";
+import type { SequenceStep } from "@/features/sequences/sequences.schema";
 
 type FollowUpType = "EMAIL" | "CALL" | "MESSAGE" | "MEETING";
-
-type SequenceStep = {
-  daysOffset: number;
-  type: FollowUpType;
-  title: string;
-};
-
-type Sequence = {
-  id: string;
-  label: string;
-  steps: SequenceStep[];
-};
-
-const SEQUENCES: Sequence[] = [
-  {
-    id: "standard",
-    label: "Séquence standard (J+3, J+7, J+14)",
-    steps: [
-      { daysOffset: 3, type: "EMAIL", title: "Relance J+3" },
-      { daysOffset: 7, type: "EMAIL", title: "Relance J+7" },
-      { daysOffset: 14, type: "EMAIL", title: "Relance J+14" },
-    ],
-  },
-  {
-    id: "aggressive",
-    label: "Séquence rapide (J+1, J+3, J+7)",
-    steps: [
-      { daysOffset: 1, type: "EMAIL", title: "Relance J+1" },
-      { daysOffset: 3, type: "CALL", title: "Relance téléphonique J+3" },
-      { daysOffset: 7, type: "EMAIL", title: "Relance J+7" },
-    ],
-  },
-  {
-    id: "post-interview",
-    label: "Post-entretien (J+1, J+5)",
-    steps: [
-      { daysOffset: 1, type: "EMAIL", title: "Remerciement post-entretien" },
-      { daysOffset: 5, type: "EMAIL", title: "Suivi post-entretien" },
-    ],
-  },
-];
 
 type ApplySequenceDialogProps = {
   missionId: string;
@@ -89,11 +52,31 @@ export function ApplySequenceDialog({
   onOpenChange,
   onApplied,
 }: ApplySequenceDialogProps) {
-  const [selectedSequenceId, setSelectedSequenceId] =
-    useState<string>("standard");
+  const [sequences, setSequences] = useState<Sequence[]>([]);
+  const [selectedSequenceId, setSelectedSequenceId] = useState<string>("");
   const [isApplying, setIsApplying] = useState(false);
 
-  const selectedSequence = SEQUENCES.find((s) => s.id === selectedSequenceId);
+  useEffect(() => {
+    const loadSequences = async () => {
+      try {
+        const result = await resolveActionResult(getSequencesAction({}));
+        setSequences(result);
+        if (result.length > 0) {
+          setSelectedSequenceId(result[0].id);
+        }
+      } catch (error) {
+        toast.error(
+          error instanceof Error ? error.message : "Erreur lors du chargement",
+        );
+      }
+    };
+
+    if (open) {
+      void loadSequences();
+    }
+  }, [open]);
+
+  const selectedSequence = sequences.find((s) => s.id === selectedSequenceId);
 
   const handleApply = async () => {
     if (!selectedSequence) return;
@@ -102,23 +85,27 @@ export function ApplySequenceDialog({
     try {
       const today = new Date();
 
-      for (const step of selectedSequence.steps) {
-        const scheduledAt = new Date(today);
-        scheduledAt.setDate(scheduledAt.getDate() + step.daysOffset);
+      const createRequests: Promise<unknown>[] = [];
 
-        void resolveActionResult(
-          createFollowUpAction({
-            missionId,
-            type: step.type,
-            title: step.title,
-            scheduledAt,
-          }),
+      const steps = selectedSequence.steps as SequenceStep[];
+      for (const step of steps) {
+        const scheduledAt = new Date(today);
+        scheduledAt.setDate(scheduledAt.getDate() + step.delayDays);
+
+        createRequests.push(
+          resolveActionResult(
+            createFollowUpAction({
+              missionId,
+              type: step.type as FollowUpType,
+              title: step.title,
+              scheduledAt,
+            }),
+          ),
         );
       }
+      await Promise.all(createRequests);
 
-      toast.success(
-        `${selectedSequence.steps.length} relances créées avec succès`,
-      );
+      toast.success(`${steps.length} relances créées avec succès`);
       onOpenChange(false);
       onApplied?.();
     } catch (error) {
@@ -139,51 +126,74 @@ export function ApplySequenceDialog({
         </DialogHeader>
 
         <div className="flex flex-col gap-4">
-          <RadioGroup
-            value={selectedSequenceId}
-            onValueChange={setSelectedSequenceId}
-          >
-            {SEQUENCES.map((sequence) => (
-              <div key={sequence.id} className="flex items-center gap-3">
-                <RadioGroupItem value={sequence.id} id={sequence.id} />
-                <Label htmlFor={sequence.id} className="flex-1 cursor-pointer">
-                  {sequence.label}
-                </Label>
-              </div>
-            ))}
-          </RadioGroup>
-
-          {selectedSequence && (
-            <div className="bg-muted/50 flex flex-col gap-2 rounded-lg p-3">
-              <p className="text-muted-foreground text-xs font-medium">
-                Relances à créer
+          {sequences.length === 0 ? (
+            <div className="rounded-lg border border-dashed p-4 text-center">
+              <p className="text-muted-foreground text-sm">
+                Aucune séquence créée.{" "}
+                <Button variant="link" className="h-auto p-0" asChild>
+                  <Link href="/app/sequences">Créer une séquence</Link>
+                </Button>
               </p>
-              <div className="flex flex-col gap-2">
-                {selectedSequence.steps.map((step, index) => {
-                  const scheduledAt = new Date();
-                  scheduledAt.setDate(scheduledAt.getDate() + step.daysOffset);
-                  const dateStr = scheduledAt.toLocaleDateString("fr-FR", {
-                    month: "short",
-                    day: "numeric",
-                  });
-
-                  return (
-                    <div
-                      key={index}
-                      className="flex items-center justify-between text-sm"
-                    >
-                      <div className="flex items-center gap-2">
-                        {getTypeIcon(step.type)}
-                        <span>{step.title}</span>
-                      </div>
-                      <Badge variant="outline" className="text-xs">
-                        {dateStr}
-                      </Badge>
-                    </div>
-                  );
-                })}
-              </div>
             </div>
+          ) : (
+            <>
+              <RadioGroup
+                value={selectedSequenceId}
+                onValueChange={setSelectedSequenceId}
+              >
+                {sequences.map((sequence) => (
+                  <div key={sequence.id} className="flex items-center gap-3">
+                    <RadioGroupItem value={sequence.id} id={sequence.id} />
+                    <Label
+                      htmlFor={sequence.id}
+                      className="flex-1 cursor-pointer"
+                    >
+                      {sequence.name}
+                    </Label>
+                  </div>
+                ))}
+              </RadioGroup>
+
+              {selectedSequence && (
+                <div className="bg-muted/50 flex flex-col gap-2 rounded-lg p-3">
+                  <p className="text-muted-foreground text-xs font-medium">
+                    Relances à créer
+                  </p>
+                  <div className="flex flex-col gap-2">
+                    {(selectedSequence.steps as SequenceStep[]).map(
+                      (step, index) => {
+                        const scheduledAt = new Date();
+                        scheduledAt.setDate(
+                          scheduledAt.getDate() + step.delayDays,
+                        );
+                        const dateStr = scheduledAt.toLocaleDateString(
+                          "fr-FR",
+                          {
+                            month: "short",
+                            day: "numeric",
+                          },
+                        );
+
+                        return (
+                          <div
+                            key={index}
+                            className="flex items-center justify-between text-sm"
+                          >
+                            <div className="flex items-center gap-2">
+                              {getTypeIcon(step.type as FollowUpType)}
+                              <span>{step.title}</span>
+                            </div>
+                            <Badge variant="outline" className="text-xs">
+                              {dateStr}
+                            </Badge>
+                          </div>
+                        );
+                      },
+                    )}
+                  </div>
+                </div>
+              )}
+            </>
           )}
         </div>
 

@@ -1,4 +1,9 @@
+import { CTASection } from "@/features/landing/cta-section";
 import { FAQSection } from "@/features/landing/faq-section";
+import DemoAnalytics from "@/features/landing/demos/demo-analytics";
+import DemoKanban from "@/features/landing/demos/demo-kanban";
+import DemoScoreRing from "@/features/landing/demos/demo-score-ring";
+import DemoSequence from "@/features/landing/demos/demo-sequence";
 import { FeaturesSection } from "@/features/landing/feature-section";
 import { Hero } from "@/features/landing/hero";
 import { LandingHeader } from "@/features/landing/landing-header";
@@ -7,7 +12,6 @@ import { SectionDivider } from "@/features/landing/section-divider";
 import { StatsSection } from "@/features/landing/stats-section";
 import { Footer } from "@/features/layout/footer";
 import { Pricing } from "@/features/plans/pricing-section";
-import Image from "next/image";
 
 export default function HomePage() {
   return (
@@ -31,63 +35,28 @@ export default function HomePage() {
             title: "Scoring intelligent des missions",
             description:
               "Chaque mission reçoit un score 0-100 en fonction de ton profil, TJM cible et préférences. Priorise ce qui te convient vraiment.",
-            component: (
-              <Image
-                src="/images/placeholder1.gif"
-                alt="Scoring IA"
-                width={200}
-                height={100}
-                className="h-auto w-full object-cover"
-                unoptimized
-              />
-            ),
+            component: <DemoScoreRing />,
           },
           {
             badge: "📋 Kanban",
             title: "Pipeline visuel",
             description:
               "Organise tes prospects : Lead, Qualifié, Proposé, Gagné. Vue d'ensemble complète de ton pipeline.",
-            component: (
-              <Image
-                src="/images/placeholder1.gif"
-                alt="Kanban"
-                width={200}
-                height={100}
-                className="h-auto w-full object-cover"
-              />
-            ),
+            component: <DemoKanban />,
           },
           {
             badge: "⏰ Séquences",
             title: "Relances automatiques",
             description:
               "Crée tes séquences de relance personnalisées. Fini les deals oubliés, plus de conversions perdues.",
-            component: (
-              <Image
-                src="/images/placeholder1.gif"
-                alt="Séquences"
-                width={200}
-                height={100}
-                className="h-auto w-full object-cover"
-                unoptimized
-              />
-            ),
+            component: <DemoSequence />,
           },
           {
             badge: "📊 Analytics",
             title: "Dashboards puissants",
             description:
               "TJM moyen, taux de conversion par plateforme, cycle de vente... Toutes les données qui t'importent.",
-            component: (
-              <Image
-                src="/images/placeholder1.gif"
-                alt="Analytics"
-                width={200}
-                height={100}
-                className="h-auto w-full object-cover"
-                unoptimized
-              />
-            ),
+            component: <DemoAnalytics />,
           },
         ]}
       />
@@ -130,6 +99,8 @@ export default function HomePage() {
           },
         ]}
       />
+
+      <CTASection />
 
       <SectionDivider />
 

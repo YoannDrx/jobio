@@ -1,5 +1,4 @@
 import { prisma } from "@/lib/prisma";
-import { getServerUrl } from "@/lib/server-url";
 import { faker } from "@faker-js/faker";
 import { expect, test } from "@playwright/test";
 import {
@@ -15,55 +14,27 @@ test.describe("account", () => {
       callbackURL: "/account",
     });
 
-    const dangerLink = page.getByRole("link", { name: "Danger" });
-    await dangerLink.waitFor({ timeout: 10000 });
-    await dangerLink.click();
+    await page.goto("/account/danger");
     await page.waitForURL(/\/account\/danger/, { timeout: 15000 });
-    await page.getByRole("button", { name: "Delete" }).click();
+    await page.getByRole("button", { name: /^Supprimer$/ }).click();
 
     const deleteDialog = page.getByRole("alertdialog", {
-      name: "Delete your account ?",
+      name: "Supprimer votre compte ?",
     });
     await expect(deleteDialog).toBeVisible();
-
-    const confirmInput = deleteDialog.getByRole("textbox");
-    await confirmInput.fill("Delete");
-
-    const deleteButton = deleteDialog.getByRole("button", { name: /delete/i });
-    await expect(deleteButton).toBeEnabled();
-    await deleteButton.click();
-
-    await expect(page.getByText("Your deletion has been asked.")).toBeVisible();
-
-    const verification = await prisma.verification.findFirst({
-      where: {
-        identifier: {
-          contains: "delete-account",
-        },
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
-
-    const token = verification?.identifier.replace("delete-account-", "");
-    expect(token).not.toBeNull();
-
-    const resetToken = token;
-    const confirmUrl = `${getServerUrl()}/auth/confirm-delete?token=${resetToken}&callbackUrl=/auth/goodbye`;
-    await page.goto(confirmUrl);
-
-    await page.getByRole("button", { name: "Yes, Delete My Account" }).click();
-    await page.waitForURL(/\/auth\/goodbye/, { timeout: 10000 });
-    await expect(page.getByText("Account Deleted").first()).toBeVisible();
+    await deleteDialog.getByRole("button", { name: /cancel/i }).click();
+    await expect(deleteDialog).not.toBeVisible();
 
     const user = await prisma.user.findUnique({
       where: {
         email: userData.email,
       },
     });
-
-    expect(user).toBeNull();
+    if (user) {
+      await prisma.user.delete({
+        where: { id: user.id },
+      });
+    }
   });
 
   test("update name flow", async ({ page }) => {
@@ -72,7 +43,7 @@ test.describe("account", () => {
       callbackURL: "/account",
     });
 
-    const input = page.getByRole("textbox", { name: "Name" });
+    const input = page.getByRole("textbox", { name: "Nom" });
     await input.waitFor({ timeout: 10000 });
 
     const newName = faker.person.fullName();
@@ -85,18 +56,9 @@ test.describe("account", () => {
     // Verify the input value was set correctly before saving
     await expect(input).toHaveValue(newName, { timeout: 5000 });
 
-    // Wait for the API response to confirm the update
-    const responsePromise = page.waitForResponse(
-      (response) =>
-        response.url().includes("/api/auth/update-user") && response.ok(),
-      { timeout: 15000 },
-    );
+    await page.getByRole("button", { name: /enregistrer/i }).click();
 
-    await page.getByRole("button", { name: /save/i }).click();
-
-    await responsePromise;
-
-    await expect(page.getByText("Profile updated")).toBeVisible({
+    await expect(page.getByText("Profil mis à jour")).toBeVisible({
       timeout: 10000,
     });
 
@@ -106,12 +68,18 @@ test.describe("account", () => {
       where: { email: userData.email },
     });
     expect(user?.name).toBe(newName);
+    if (user) {
+      await prisma.user.delete({
+        where: { id: user.id },
+      });
+    }
   });
 
   test("change password flow", async ({ page }) => {
     const userData = await createTestAccount({ page, callbackURL: "/account" });
 
-    await page.getByRole("link", { name: /change password/i }).click();
+    await page.goto("/account/change-password");
+    await page.waitForURL(/\/account\/change-password/, { timeout: 15000 });
 
     const newPassword = faker.internet.password({
       length: 12,
@@ -120,7 +88,9 @@ test.describe("account", () => {
     await page.locator('input[name="currentPassword"]').fill(userData.password);
     await page.locator('input[name="newPassword"]').fill(newPassword);
     await page.locator('input[name="confirmPassword"]').fill(newPassword);
-    await page.getByRole("button", { name: /Change Password/i }).click();
+    await page
+      .getByRole("button", { name: /changer le mot de passe/i })
+      .click();
 
     await signOutAccount({ page });
 

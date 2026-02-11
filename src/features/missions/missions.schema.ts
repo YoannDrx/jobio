@@ -1,16 +1,7 @@
 import { z } from "zod";
+import { MISSION_STATUS_VALUES } from "./mission-status";
 
-export const missionStatusSchema = z.enum([
-  "A_POSTULER",
-  "POSTULE",
-  "ENTRETIEN",
-  "PROPOSITION",
-  "ACCEPTE",
-  "REFUSE",
-  "EN_PAUSE",
-  "ABANDONNE",
-  "ARCHIVE",
-]);
+export const missionStatusSchema = z.enum(MISSION_STATUS_VALUES);
 
 export const missionPrioritySchema = z.enum([
   "LOW",
@@ -55,6 +46,7 @@ export const updateMissionSchema = z.object({
   sourceUrl: z.string().url().optional().or(z.literal("")).optional(),
   score: z.number().int().min(0).max(100).optional(),
   notes: z.string().nullable().optional(),
+  rejectionReason: z.string().nullable().optional(),
   platformId: z.string().nullable().optional(),
   contactId: z.string().nullable().optional(),
   profileId: z.string().nullable().optional(),
@@ -80,6 +72,16 @@ export const missionFilterSchema = z.object({
   pageSize: z.number().int().positive().max(100).default(50),
 });
 
+export const exportMissionFilterSchema = z.object({
+  status: z.array(missionStatusSchema).optional(),
+  priority: z.array(missionPrioritySchema).optional(),
+  search: z.string().optional(),
+  platformId: z.string().optional(),
+  tjmMin: z.number().optional(),
+  tjmMax: z.number().optional(),
+});
+
 export type CreateMissionInput = z.infer<typeof createMissionSchema>;
 export type UpdateMissionInput = z.infer<typeof updateMissionSchema>;
 export type MissionFilter = z.infer<typeof missionFilterSchema>;
+export type ExportMissionFilter = z.infer<typeof exportMissionFilterSchema>;

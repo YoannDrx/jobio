@@ -23,6 +23,7 @@ import {
   createContactAction,
   getContactAction,
   getContactsAction,
+  getTagsAction,
   updateContactAction,
 } from "@/features/contacts/contacts.action";
 import {
@@ -41,8 +42,19 @@ import { ContactDetailSheet } from "@/features/contacts/components/contact-detai
 import { exportContactsAction } from "@/features/contacts/export-contacts.action";
 import type { CreateContactInput } from "@/features/contacts/contacts.schema";
 import { downloadCsv, generateCsv } from "@/lib/csv-export";
-import { Download, Users, Plus } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
+import dynamic from "next/dynamic";
+
+const ImportContactsDialog = dynamic(
+  async () =>
+    import("@/features/contacts/components/import-contacts-dialog").then(
+      (m) => m.ImportContactsDialog,
+    ),
+  { ssr: false },
+);
+import { Skeleton } from "@/components/ui/skeleton";
+import { Download, Upload, Users, Plus } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useQueryState, parseAsString, parseAsInteger } from "nuqs";
 import { toast } from "sonner";
 
 type Contact = {
@@ -52,6 +64,7 @@ type Contact = {
   company: string | null;
   email: string | null;
   role: string | null;
+  tags: string[];
   createdAt: Date;
   _count: {
     missions: number;
@@ -69,6 +82,7 @@ type ContactDetail = {
   linkedinUrl: string | null;
   role: string | null;
   notes: string | null;
+  tags: string[];
   createdAt: Date;
   missions: {
     id: string;
@@ -88,12 +102,15 @@ export default function ContactsPage() {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [total, setTotal] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useQueryState("page", parseAsInteger.withDefault(1));
   const [pageSize] = useState(20);
-  const [search, setSearch] = useState("");
-  const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(
-    null,
+  const [search, setSearch] = useQueryState("q", parseAsString.withDefault(""));
+  const [tagFilter, setTagFilter] = useQueryState(
+    "tag",
+    parseAsString.withDefault(""),
   );
+  const [availableTags, setAvailableTags] = useState<string[]>([]);
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [contactLimits, setContactLimits] = useState<{
     used: number;
     limit: number;
@@ -102,6 +119,7 @@ export default function ContactsPage() {
 
   // Dialog create/edit
   const [showForm, setShowForm] = useState(false);
+  const [showImport, setShowImport] = useState(false);
   const [editing, setEditing] = useState<Contact | null>(null);
 
   // Duplicate detection
@@ -129,6 +147,7 @@ export default function ContactsPage() {
       const result = await resolveActionResult(
         getContactsAction({
           search,
+          tag: tagFilter || undefined,
           page,
           pageSize,
           sortBy: "createdAt",
@@ -144,7 +163,7 @@ export default function ContactsPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [page, pageSize, search]);
+  }, [page, pageSize, search, tagFilter]);
 
   useEffect(() => {
     void fetchContacts();
@@ -154,30 +173,31 @@ export default function ContactsPage() {
     void resolveActionResult(checkAllLimitsAction()).then((limits) => {
       setContactLimits(limits.contacts);
     });
+    void resolveActionResult(getTagsAction()).then((tags) => {
+      setAvailableTags(tags);
+    });
   }, []);
 
   const handleSearchChange = (newSearch: string) => {
-    setSearch(newSearch);
-    setPage(1);
+    void setSearch(newSearch);
+    void setPage(1);
 
-    if (searchTimeout) {
-      clearTimeout(searchTimeout);
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
     }
 
-    const timeout = setTimeout(() => {
+    searchTimeoutRef.current = setTimeout(() => {
       void fetchContacts();
     }, 300);
-
-    setSearchTimeout(timeout);
   };
 
   const forceCreateContact = async (data: CreateContactInput) => {
     try {
       await resolveActionResult(createContactAction(data));
-      toast.success("Contact cree avec succes");
+      toast.success("Contact créé avec succès");
       setShowForm(false);
       setDuplicateWarning(null);
-      setPage(1);
+      void setPage(1);
       void fetchContacts();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Erreur");
@@ -302,6 +322,10 @@ export default function ContactsPage() {
           <Download className="size-4" />
           Exporter CSV
         </Button>
+        <Button size="sm" variant="outline" onClick={() => setShowImport(true)}>
+          <Upload className="size-4" />
+          Importer CSV
+        </Button>
         <Button
           size="sm"
           onClick={() => {
@@ -325,14 +349,16 @@ export default function ContactsPage() {
         )}
 
         {isLoading ? (
-          <div className="text-muted-foreground py-12 text-center text-sm">
-            Chargement...
+          <div className="flex flex-col gap-2">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <Skeleton key={i} className="h-16 w-full" />
+            ))}
           </div>
         ) : contacts.length === 0 ? (
           <EmptyState
             icon={Users}
             title="Aucun contact"
-            description="Créez votre premier contact pour commencer à gérer vos relations."
+            description="Crée ton premier contact pour commencer à gérer tes relations."
             action={{
               label: "Créer un contact",
               onClick: () => setShowForm(true),
@@ -346,8 +372,14 @@ export default function ContactsPage() {
             pageSize={pageSize}
             search={search}
             onSearchChange={handleSearchChange}
-            onPageChange={setPage}
+            onPageChange={(p) => void setPage(p)}
             onContactClick={handleContactClick}
+            tagFilter={tagFilter}
+            onTagFilterChange={(tag) => {
+              void setTagFilter(tag);
+              void setPage(1);
+            }}
+            availableTags={availableTags}
           />
         )}
       </LayoutContent>
@@ -370,6 +402,7 @@ export default function ContactsPage() {
                     company: editing.company ?? "",
                     email: editing.email ?? "",
                     role: editing.role ?? "",
+                    tags: editing.tags,
                   }
                 : undefined
             }
@@ -389,6 +422,13 @@ export default function ContactsPage() {
         onRefresh={handleRefreshDetail}
       />
 
+      {/* Import CSV dialog */}
+      <ImportContactsDialog
+        open={showImport}
+        onOpenChange={setShowImport}
+        onSuccess={() => void fetchContacts()}
+      />
+
       {/* Duplicate warning dialog */}
       <AlertDialog
         open={duplicateWarning !== null}
@@ -398,13 +438,13 @@ export default function ContactsPage() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Doublon detecte</AlertDialogTitle>
+            <AlertDialogTitle>Doublon détecté</AlertDialogTitle>
             <AlertDialogDescription>
               {duplicateWarning?.reason === "email" ? (
                 <>
                   Un contact avec l&apos;email{" "}
                   <strong>{duplicateWarning.existingContact.email}</strong>{" "}
-                  existe deja : {duplicateWarning.existingContact.firstName}{" "}
+                  existe déjà : {duplicateWarning.existingContact.firstName}{" "}
                   {duplicateWarning.existingContact.lastName}
                   {duplicateWarning.existingContact.company &&
                     ` (${duplicateWarning.existingContact.company})`}
@@ -412,18 +452,18 @@ export default function ContactsPage() {
                 </>
               ) : duplicateWarning?.reason === "name_company" ? (
                 <>
-                  Un contact nomme{" "}
+                  Un contact nommé{" "}
                   <strong>
                     {duplicateWarning.existingContact.firstName}{" "}
                     {duplicateWarning.existingContact.lastName}
                   </strong>{" "}
                   chez{" "}
                   <strong>{duplicateWarning.existingContact.company}</strong>{" "}
-                  existe deja.
+                  existe déjà.
                 </>
               ) : null}
               <br />
-              Voulez-vous creer le contact quand meme ?
+              Veux-tu créer le contact quand même ?
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -435,7 +475,7 @@ export default function ContactsPage() {
                 }
               }}
             >
-              Creer quand meme
+              Créer quand même
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

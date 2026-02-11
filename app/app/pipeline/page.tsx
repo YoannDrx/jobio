@@ -29,9 +29,9 @@ import {
 } from "@/features/missions/missions.action";
 import type { MissionParserOutput } from "@/features/ai/prompts/mission-parser.prompt";
 import type { MissionStatus } from "@/components/nowts/status-badge";
+import { PIPELINE_STATUS_VALUES } from "@/features/missions/mission-status";
 import type { CreateMissionInput } from "@/features/missions/missions.schema";
 
-type MissionPriority = "LOW" | "MEDIUM" | "HIGH" | "URGENT";
 import { QuickCaptureInput } from "@/features/missions/components/capture/quick-capture-input";
 import { MissionPreview } from "@/features/missions/components/capture/mission-preview";
 import { MissionForm } from "@/features/missions/components/mission-form";
@@ -43,15 +43,20 @@ import { getUserPlatformsAction } from "@/features/platforms/platforms.action";
 import { PipelineFilters } from "@/features/missions/components/pipeline/pipeline-filters";
 import { downloadCsv, generateCsv } from "@/lib/csv-export";
 import { Archive, Download, Kanban, List, Plus, Search } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import type { ComponentProps } from "react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
+import {
+  parseAsArrayOf,
+  parseAsString,
+  parseAsStringLiteral,
+  useQueryState,
+} from "nuqs";
 
 type SelectedMission = ComponentProps<typeof MissionDetailSheet>["mission"];
 
-type ViewMode = "kanban" | "list";
 type SortField = "createdAt" | "updatedAt" | "tjm" | "score" | "title";
-type SortOrder = "asc" | "desc";
 
 type MissionsData =
   Awaited<ReturnType<typeof getMissionsAction>> extends { data?: infer D }
@@ -59,19 +64,48 @@ type MissionsData =
     : never;
 
 export default function PipelinePage() {
-  const [viewMode, setViewMode] = useState<ViewMode>("kanban");
-  const [search, setSearch] = useState("");
-  const [sortBy, setSortBy] = useState<SortField>("createdAt");
-  const [sortOrder, setSortOrder] = useState<SortOrder>("desc");
+  // URL-synced state via nuqs
+  const [viewMode, setViewMode] = useQueryState(
+    "view",
+    parseAsStringLiteral(["kanban", "list"] as const).withDefault("kanban"),
+  );
+  const [search, setSearch] = useQueryState("q", parseAsString.withDefault(""));
+  const [sortBy, setSortBy] = useQueryState(
+    "sort",
+    parseAsStringLiteral([
+      "createdAt",
+      "updatedAt",
+      "tjm",
+      "score",
+      "title",
+    ] as const).withDefault("createdAt"),
+  );
+  const [sortOrder, setSortOrder] = useQueryState(
+    "order",
+    parseAsStringLiteral(["asc", "desc"] as const).withDefault("desc"),
+  );
 
-  // Filters
-  const [statusFilter, setStatusFilter] = useState<MissionStatus[]>([]);
-  const [priorityFilter, setPriorityFilter] = useState<MissionPriority[]>([]);
-  const [platformIdFilter, setPlatformIdFilter] = useState<
-    string | undefined
-  >();
-  const [tjmMinFilter, setTjmMinFilter] = useState<number | undefined>();
-  const [tjmMaxFilter, setTjmMaxFilter] = useState<number | undefined>();
+  // Filters (URL-synced)
+  const [statusFilter, setStatusFilter] = useQueryState(
+    "status",
+    parseAsArrayOf(parseAsString).withDefault([]),
+  );
+  const [priorityFilter, setPriorityFilter] = useQueryState(
+    "priority",
+    parseAsArrayOf(parseAsString).withDefault([]),
+  );
+  const [platformIdFilter, setPlatformIdFilter] = useQueryState(
+    "platform",
+    parseAsString.withDefault(""),
+  );
+  const [tjmMinFilter, setTjmMinFilter] = useQueryState(
+    "tjm_min",
+    parseAsString.withDefault(""),
+  );
+  const [tjmMaxFilter, setTjmMaxFilter] = useQueryState(
+    "tjm_max",
+    parseAsString.withDefault(""),
+  );
   const [platforms, setPlatforms] = useState<
     { id: string; platform: { id: string; name: string } }[]
   >([]);
@@ -103,16 +137,35 @@ export default function PipelinePage() {
   const [selectedMission, setSelectedMission] = useState<SelectedMission>(null);
   const [showDetail, setShowDetail] = useState(false);
 
+  const fetchMissionLimits = useCallback(async () => {
+    try {
+      const limits = await resolveActionResult(checkAllLimitsAction());
+      setMissionLimits(limits.missions);
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Erreur lors du chargement des limites",
+      );
+    }
+  }, []);
+
   const fetchMissions = useCallback(async () => {
     try {
       const result = await resolveActionResult(
         getMissionsAction({
           search: search || undefined,
-          status: statusFilter.length > 0 ? statusFilter : undefined,
-          priority: priorityFilter.length > 0 ? priorityFilter : undefined,
-          platformId: platformIdFilter,
-          tjmMin: tjmMinFilter,
-          tjmMax: tjmMaxFilter,
+          status:
+            statusFilter.length > 0
+              ? (statusFilter as MissionStatus[])
+              : [...PIPELINE_STATUS_VALUES],
+          priority:
+            priorityFilter.length > 0
+              ? (priorityFilter as ("LOW" | "MEDIUM" | "HIGH" | "URGENT")[])
+              : undefined,
+          platformId: platformIdFilter || undefined,
+          tjmMin: tjmMinFilter ? Number(tjmMinFilter) : undefined,
+          tjmMax: tjmMaxFilter ? Number(tjmMaxFilter) : undefined,
           sortBy,
           sortOrder,
         }),
@@ -147,10 +200,8 @@ export default function PipelinePage() {
   }, []);
 
   useEffect(() => {
-    void resolveActionResult(checkAllLimitsAction()).then((limits) => {
-      setMissionLimits(limits.missions);
-    });
-  }, []);
+    void fetchMissionLimits();
+  }, [fetchMissionLimits]);
 
   const handleParse = async (source: "url" | "text", content: string) => {
     setIsParsing(true);
@@ -186,6 +237,7 @@ export default function PipelinePage() {
       toast.success("Mission créée avec succès");
       setParsedData(null);
       void fetchMissions();
+      void fetchMissionLimits();
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Erreur lors de la création",
@@ -196,10 +248,17 @@ export default function PipelinePage() {
   };
 
   const handleCreateManual = async (data: CreateMissionInput) => {
-    await resolveActionResult(createMissionAction(data));
-    toast.success("Mission créée avec succès");
-    setShowForm(false);
-    void fetchMissions();
+    try {
+      await resolveActionResult(createMissionAction(data));
+      toast.success("Mission créée avec succès");
+      setShowForm(false);
+      void fetchMissions();
+      void fetchMissionLimits();
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Erreur lors de la création",
+      );
+    }
   };
 
   const handleEdit = (mission: NonNullable<SelectedMission>) => {
@@ -210,13 +269,22 @@ export default function PipelinePage() {
 
   const handleUpdateMission = async (data: CreateMissionInput) => {
     if (!editingMission) return;
-    await resolveActionResult(
-      updateMissionAction({ id: editingMission.id, ...data }),
-    );
-    toast.success("Mission modifiée avec succès");
-    setShowForm(false);
-    setEditingMission(null);
-    void fetchMissions();
+    try {
+      await resolveActionResult(
+        updateMissionAction({ id: editingMission.id, ...data }),
+      );
+      toast.success("Mission modifiée avec succès");
+      setShowForm(false);
+      setEditingMission(null);
+      void fetchMissions();
+      void fetchMissionLimits();
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Erreur lors de la modification",
+      );
+    }
   };
 
   const handleMissionClick = async (missionId: string) => {
@@ -237,10 +305,10 @@ export default function PipelinePage() {
 
   const handleSort = (field: SortField) => {
     if (field === sortBy) {
-      setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
+      void setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
     } else {
-      setSortBy(field);
-      setSortOrder("desc");
+      void setSortBy(field);
+      void setSortOrder("desc");
     }
   };
 
@@ -254,7 +322,7 @@ export default function PipelinePage() {
           <Button
             variant={viewMode === "kanban" ? "secondary" : "ghost"}
             size="sm"
-            onClick={() => setViewMode("kanban")}
+            onClick={async () => setViewMode("kanban")}
           >
             <Kanban className="size-4" />
             Kanban
@@ -262,7 +330,7 @@ export default function PipelinePage() {
           <Button
             variant={viewMode === "list" ? "secondary" : "ghost"}
             size="sm"
-            onClick={() => setViewMode("list")}
+            onClick={async () => setViewMode("list")}
           >
             <List className="size-4" />
             Liste
@@ -273,7 +341,27 @@ export default function PipelinePage() {
           variant="outline"
           onClick={async () => {
             try {
-              const rows = await resolveActionResult(exportMissionsAction());
+              const rows = await resolveActionResult(
+                exportMissionsAction({
+                  search: search || undefined,
+                  status:
+                    statusFilter.length > 0
+                      ? (statusFilter as MissionStatus[])
+                      : undefined,
+                  priority:
+                    priorityFilter.length > 0
+                      ? (priorityFilter as (
+                          | "LOW"
+                          | "MEDIUM"
+                          | "HIGH"
+                          | "URGENT"
+                        )[])
+                      : undefined,
+                  platformId: platformIdFilter || undefined,
+                  tjmMin: tjmMinFilter ? Number(tjmMinFilter) : undefined,
+                  tjmMax: tjmMaxFilter ? Number(tjmMaxFilter) : undefined,
+                }),
+              );
               const csv = generateCsv(rows, [
                 { key: "title", header: "Titre" },
                 { key: "company", header: "Entreprise" },
@@ -317,6 +405,7 @@ export default function PipelinePage() {
                 );
                 setSelectedMissionIds([]);
                 void fetchMissions();
+                void fetchMissionLimits();
               } catch {
                 toast.error("Erreur lors de l'archivage");
               }
@@ -338,7 +427,7 @@ export default function PipelinePage() {
             used={missionLimits.used}
             limit={missionLimits.limit}
             remaining={missionLimits.remaining}
-            featureLabel="missions"
+            featureLabel="missions actives"
           />
         )}
 
@@ -360,7 +449,7 @@ export default function PipelinePage() {
           <Search className="text-muted-foreground absolute top-1/2 left-3 size-4 -translate-y-1/2" />
           <Input
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={async (e) => setSearch(e.target.value)}
             placeholder="Rechercher une mission..."
             className="pl-10"
           />
@@ -369,27 +458,51 @@ export default function PipelinePage() {
         {/* Filters */}
         <PipelineFilters
           filters={{
-            status: statusFilter,
-            priority: priorityFilter,
-            platformId: platformIdFilter,
-            tjmMin: tjmMinFilter,
-            tjmMax: tjmMaxFilter,
+            status: statusFilter as MissionStatus[],
+            priority: priorityFilter as (
+              | "LOW"
+              | "MEDIUM"
+              | "HIGH"
+              | "URGENT"
+            )[],
+            platformId: platformIdFilter || undefined,
+            tjmMin: tjmMinFilter ? Number(tjmMinFilter) : undefined,
+            tjmMax: tjmMaxFilter ? Number(tjmMaxFilter) : undefined,
           }}
           platforms={platforms}
           onFiltersChange={(f) => {
-            setStatusFilter(f.status);
-            setPriorityFilter(f.priority);
-            setPlatformIdFilter(f.platformId);
-            setTjmMinFilter(f.tjmMin);
-            setTjmMaxFilter(f.tjmMax);
+            void setStatusFilter(f.status);
+            void setPriorityFilter(f.priority);
+            void setPlatformIdFilter(f.platformId ?? "");
+            void setTjmMinFilter(
+              f.tjmMin !== undefined ? String(f.tjmMin) : "",
+            );
+            void setTjmMaxFilter(
+              f.tjmMax !== undefined ? String(f.tjmMax) : "",
+            );
           }}
         />
 
         {/* Content */}
         {isLoading ? (
-          <div className="text-muted-foreground py-12 text-center text-sm">
-            Chargement...
-          </div>
+          viewMode === "kanban" ? (
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="flex flex-col gap-3">
+                  <Skeleton className="h-8 w-32" />
+                  <Skeleton className="h-24 w-full" />
+                  <Skeleton className="h-24 w-full" />
+                  <Skeleton className="h-24 w-full" />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-col gap-2">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <Skeleton key={i} className="h-12 w-full" />
+              ))}
+            </div>
+          )
         ) : !missions || missions.total === 0 ? (
           <EmptyState
             icon={Kanban}
@@ -418,7 +531,10 @@ export default function PipelinePage() {
             }))}
             counters={missions.counters}
             onMissionClick={handleMissionClick}
-            onRefresh={fetchMissions}
+            onRefresh={() => {
+              void fetchMissions();
+              void fetchMissionLimits();
+            }}
           />
         ) : (
           <MissionListTable
@@ -499,6 +615,7 @@ export default function PipelinePage() {
         onEdit={handleEdit}
         onRefresh={() => {
           void fetchMissions();
+          void fetchMissionLimits();
           setShowDetail(false);
         }}
       />

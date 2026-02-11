@@ -45,7 +45,7 @@ export default function TrialReminderEmail({
           style={{
             fontSize: "32px",
             fontWeight: "bold",
-            color: "#22D3EE",
+            color: SiteConfig.brand.primary,
             margin: "0",
           }}
         >
@@ -58,7 +58,7 @@ export default function TrialReminderEmail({
           style={{
             fontSize: "32px",
             fontWeight: "bold",
-            color: "#22D3EE",
+            color: SiteConfig.brand.primary,
             margin: "16px 0 0",
           }}
         >
@@ -76,7 +76,7 @@ export default function TrialReminderEmail({
         <Button
           href={`${SiteConfig.prodUrl}/app`}
           style={{
-            backgroundColor: "#22D3EE",
+            backgroundColor: SiteConfig.brand.primary,
             color: "#000",
             padding: "12px 24px",
             borderRadius: "6px",

@@ -5,13 +5,20 @@ export const SiteConfig = {
   prodUrl: "https://jobio.app",
   appId: "jobio",
   domain: "jobio.app",
-  appIcon: "/images/icon.png",
+  appIcon: "/images/logo-icon.svg",
   company: {
     name: "Jobio",
     address: "",
   },
   brand: {
     primary: "#22D3EE",
+    colors: {
+      rose: "#f43f5e",
+      violet: "#8b5cf6",
+      cyan: "#22d3ee",
+      amber: "#f59e0b",
+      emerald: "#10b981",
+    },
   },
   team: {
     image: "",

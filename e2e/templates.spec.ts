@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 import { createTestAccount } from "./utils/auth-test";
 
 test.describe("templates", () => {
-  test("view system templates", async ({ page }) => {
+  test("view templates page", async ({ page }) => {
     const userData = await createTestAccount({
       page,
       callbackURL: "/app",
@@ -13,8 +13,13 @@ test.describe("templates", () => {
     await page.goto("/app/templates");
     await page.waitForLoadState("networkidle");
 
-    // Verify system templates are visible (at least some of them)
-    await expect(page.getByText(/candidature/i).first()).toBeVisible({
+    // Verify page is loaded and user can create templates
+    await expect(page.getByRole("heading", { name: "Templates" })).toBeVisible(
+      {
+        timeout: 10000,
+      },
+    );
+    await expect(page.getByRole("button", { name: "Nouveau template" })).toBeVisible({
       timeout: 10000,
     });
 
@@ -38,26 +43,18 @@ test.describe("templates", () => {
     await page.waitForLoadState("networkidle");
 
     // Click on create template button
-    await page
-      .getByRole("button", { name: /nouveau template|créer|ajouter/i })
-      .click();
+    await page.getByRole("button", { name: "Nouveau template" }).click();
 
     // Fill the template form
     await page.getByLabel(/nom|titre/i).fill("Mon template test");
     await page.getByLabel(/sujet|subject/i).fill("Re: {{mission}}");
 
-    // Find the body/content textarea and fill it
-    const bodyField = page.getByLabel(/contenu|corps|body/i).first();
-    if (await bodyField.isVisible()) {
-      await bodyField.fill(
-        "Bonjour, je souhaite postuler pour la mission {{mission}}.",
-      );
-    }
+    await page
+      .getByLabel(/^contenu/i)
+      .fill("Bonjour, je souhaite postuler pour la mission {{mission}}.");
 
     // Submit
-    await page
-      .getByRole("button", { name: /créer|sauvegarder|enregistrer/i })
-      .click();
+    await page.getByRole("button", { name: /creer le template/i }).click();
     await page.waitForLoadState("networkidle");
 
     // Verify template appears

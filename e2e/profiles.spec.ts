@@ -13,33 +13,38 @@ test.describe("profiles", () => {
     await page.goto("/app/profiles");
     await page.waitForLoadState("networkidle");
 
-    // Click on "Nouveau profil" or similar button
-    await page
-      .getByRole("button", { name: /nouveau profil|créer|ajouter/i })
-      .click();
+    await page.getByRole("button", { name: "Nouveau profil" }).click();
 
     // Fill the profile form
-    await page.getByLabel(/titre|headline/i).fill("Développeur React Senior");
+    await page
+      .getByLabel(/nom du profil/i)
+      .fill("Développeur React Senior");
+    await page
+      .getByLabel(/titre professionnel/i)
+      .fill("Développeur Frontend React");
     await page.getByLabel(/tjm/i).fill("650");
 
     // Submit
-    await page
-      .getByRole("button", { name: /créer|sauvegarder|enregistrer/i })
-      .click();
-    await page.waitForLoadState("networkidle");
-
-    // Verify profile appears
-    await expect(page.getByText("Développeur React Senior")).toBeVisible({
+    await page.getByRole("button", { name: /créer le profil/i }).click();
+    await expect(page.getByText("Profil créé avec succès")).toBeVisible({
       timeout: 10000,
     });
 
-    // Clean up
     const user = await prisma.user.findUnique({
       where: { email: userData.email },
     });
-    if (user) {
-      await prisma.userProfile.deleteMany({ where: { userId: user.id } });
-      await prisma.user.delete({ where: { id: user.id } });
+
+    expect(user).not.toBeNull();
+    if (!user) {
+      throw new Error("User not found after signup");
     }
+    const createdProfile = await prisma.userProfile.findFirst({
+      where: { userId: user.id, name: "Développeur React Senior" },
+    });
+    expect(createdProfile).not.toBeNull();
+
+    // Clean up
+    await prisma.userProfile.deleteMany({ where: { userId: user.id } });
+    await prisma.user.delete({ where: { id: user.id } });
   });
 });

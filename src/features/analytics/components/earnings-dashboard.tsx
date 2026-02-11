@@ -36,7 +36,7 @@ export function EarningsDashboard({ data }: EarningsDashboardProps) {
       </Card>
       <Card className="p-4">
         <div className="flex items-center gap-2">
-          <Euro className="size-4 text-cyan-400" />
+          <Euro className="size-4 text-brand-cyan" />
           <p className="text-muted-foreground text-xs tracking-wide uppercase">
             TJM moyen accepté
           </p>
@@ -58,12 +58,12 @@ export function EarningsDashboard({ data }: EarningsDashboardProps) {
       </Card>
       <Card className="p-4">
         <div className="flex items-center gap-2">
-          <Calendar className="size-4 text-cyan-400" />
+          <Calendar className="size-4 text-brand-cyan" />
           <p className="text-muted-foreground text-xs tracking-wide uppercase">
             Projection mensuelle
           </p>
         </div>
-        <p className="mt-1 text-2xl font-bold text-cyan-400">
+        <p className="mt-1 text-2xl font-bold text-brand-cyan">
           {formatCurrency(data.monthlyProjection)}/mois
         </p>
       </Card>

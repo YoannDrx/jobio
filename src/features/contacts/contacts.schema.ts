@@ -18,6 +18,7 @@ export const createContactSchema = z.object({
   linkedinUrl: z.string().url().optional().or(z.literal("")),
   role: z.string().optional(),
   notes: z.string().optional(),
+  tags: z.array(z.string()).default([]),
 });
 
 export const updateContactSchema = z.object({
@@ -30,6 +31,7 @@ export const updateContactSchema = z.object({
   linkedinUrl: z.string().url().optional().or(z.literal("")).nullable(),
   role: z.string().nullable().optional(),
   notes: z.string().nullable().optional(),
+  tags: z.array(z.string()).optional(),
 });
 
 export const addInteractionSchema = z.object({
@@ -41,6 +43,7 @@ export const addInteractionSchema = z.object({
 
 export const contactFilterSchema = z.object({
   search: z.string().optional(),
+  tag: z.string().optional(),
   page: z.number().int().positive().default(1),
   pageSize: z.number().int().positive().max(100).default(20),
   sortBy: z.enum(["createdAt", "firstName", "lastName"]).default("createdAt"),

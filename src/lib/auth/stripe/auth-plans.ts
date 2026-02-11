@@ -1,10 +1,5 @@
 import type { Subscription } from "@/generated/prisma";
 import { logger } from "@/lib/logger";
-import { sendEmail } from "@/lib/mail/send-email";
-import { SiteConfig } from "@/site-config";
-import { prisma } from "@/lib/prisma";
-import TrialEndingEmail from "@email/trial-ending.email";
-import TrialReminderEmail from "@email/trial-reminder.email";
 import {
   Bot,
   Briefcase,
@@ -78,7 +73,7 @@ export const AUTH_PLANS: AppAuthPlan[] = [
   {
     name: "free",
     description:
-      "Pour commencer a organiser sa prospection freelance gratuitement",
+      "Pour commencer à organiser sa prospection freelance gratuitement",
     limits: DEFAULT_LIMIT,
     price: 0,
     currency: "EUR",
@@ -105,6 +100,12 @@ export const AUTH_PLANS: AppAuthPlan[] = [
         logger.debug(`Trial started for ${subscription.referenceId}`);
       },
       onTrialEnd: async ({ subscription }) => {
+        const { prisma } = await import("@/lib/prisma");
+        const { sendEmail } = await import("@/lib/mail/send-email");
+        const { SiteConfig } = await import("@/site-config");
+        const { default: TrialEndingEmail } = await import(
+          "@email/trial-ending.email"
+        );
         const user = await prisma.user.findFirst({
           where: { id: subscription.referenceId },
         });
@@ -113,12 +114,18 @@ export const AUTH_PLANS: AppAuthPlan[] = [
           to: user.email,
           subject: `Ton essai ${SiteConfig.title} se termine bientôt`,
           html: TrialEndingEmail({
-            name: user.name || "Freelance",
+            name: user.name,
             daysLeft: 2,
           }),
         });
       },
       onTrialExpired: async (subscription) => {
+        const { prisma } = await import("@/lib/prisma");
+        const { sendEmail } = await import("@/lib/mail/send-email");
+        const { SiteConfig } = await import("@/site-config");
+        const { default: TrialReminderEmail } = await import(
+          "@email/trial-reminder.email"
+        );
         const user = await prisma.user.findFirst({
           where: { id: subscription.referenceId },
         });
@@ -133,7 +140,7 @@ export const AUTH_PLANS: AppAuthPlan[] = [
           to: user.email,
           subject: `Ton essai ${SiteConfig.title} est terminé`,
           html: TrialReminderEmail({
-            name: user.name || "Freelance",
+            name: user.name,
             missionsCount,
             followUpsCount,
           }),
@@ -148,7 +155,7 @@ export const AUTH_PLANS: AppAuthPlan[] = [
     name: "ultra",
     isPopular: false,
     description:
-      "Pour les freelances exigeants avec acces illimite et IA avancee",
+      "Pour les freelances exigeants avec accès illimité et IA avancée",
     priceId: process.env.STRIPE_ULTRA_PLAN_ID ?? "",
     annualDiscountPriceId: process.env.STRIPE_ULTRA_YEARLY_PLAN_ID ?? "",
     limits: {
@@ -180,38 +187,38 @@ export const LIMITS_CONFIG: Record<
   missions: {
     icon: Briefcase,
     getLabel: (value: number) =>
-      value >= 999999 ? "Missions illimitees" : `${value} missions`,
-    description: "Suivre et gerer vos missions freelance",
+      value >= 999999 ? "Missions illimitées" : `${value} missions`,
+    description: "Suivre et gérer vos missions freelance",
   },
   profiles: {
     icon: UserCircle,
     getLabel: (value: number) =>
-      value >= 999999 ? "Profils illimites" : `${value} profils`,
-    description: "Creer des profils pour differentes specialisations",
+      value >= 999999 ? "Profils illimités" : `${value} profils`,
+    description: "Créer des profils pour différentes spécialisations",
   },
   contacts: {
     icon: Contact,
     getLabel: (value: number) =>
-      value >= 999999 ? "Contacts illimites" : `${value} contacts`,
-    description: "Gerer votre reseau de contacts professionnels",
+      value >= 999999 ? "Contacts illimités" : `${value} contacts`,
+    description: "Gérer votre réseau de contacts professionnels",
   },
   platforms: {
     icon: Monitor,
     getLabel: (value: number) =>
-      value >= 999999 ? "Plateformes illimitees" : `${value} plateformes`,
+      value >= 999999 ? "Plateformes illimitées" : `${value} plateformes`,
     description: "Connecter vos plateformes de freelance",
   },
   aiRequestsPerMonth: {
     icon: Bot,
     getLabel: (value: number) =>
-      value >= 999999 ? "Requetes IA illimitees" : `${value} requetes IA/mois`,
+      value >= 999999 ? "Requêtes IA illimitées" : `${value} requêtes IA/mois`,
     description: "Assistants IA pour optimiser votre prospection",
   },
   analyticsHistoryDays: {
     icon: ChartBar,
     getLabel: (value: number) =>
       value >= 999999
-        ? "Historique analytics illimite"
+        ? "Historique analytics illimité"
         : `${value} jours d'historique analytics`,
     description: "Analyser vos performances de prospection",
   },
@@ -222,8 +229,8 @@ export const ADDITIONAL_FEATURES = {
   free: [
     {
       icon: Shield,
-      label: "Securite de base",
-      description: "Protection standard de vos donnees",
+      label: "Sécurité de base",
+      description: "Protection standard de vos données",
     },
   ],
   pro: [
@@ -239,15 +246,15 @@ export const ADDITIONAL_FEATURES = {
     },
     {
       icon: Clock,
-      label: "Analytics avances",
-      description: "Statistiques detaillees de votre prospection",
+      label: "Analytics avancés",
+      description: "Statistiques détaillées de votre prospection",
     },
   ],
   ultra: [
     {
       icon: Zap,
       label: "Support prioritaire",
-      description: "Assistance en priorite",
+      description: "Assistance en priorité",
     },
   ],
 };

@@ -73,7 +73,7 @@ export default function ChangePasswordPage() {
       <CardHeader>
         <CardTitle>Changer le mot de passe</CardTitle>
         <CardDescription>
-          Mettez à jour votre mot de passe pour sécuriser votre compte.
+          Mets à jour ton mot de passe pour sécuriser ton compte.
         </CardDescription>
       </CardHeader>
       <Form form={form}>
@@ -117,8 +117,8 @@ export default function ChangePasswordPage() {
                 <div className="space-y-0.5">
                   <field.Label>Déconnecter les autres appareils</field.Label>
                   <field.Description>
-                    Cela vous déconnectera de tous les autres appareils où vous
-                    êtes actuellement connecté
+                    Cela te déconnectera de tous les autres appareils où tu es
+                    actuellement connecté
                   </field.Description>
                 </div>
                 <field.Switch />

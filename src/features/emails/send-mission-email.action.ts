@@ -36,27 +36,31 @@ export const sendMissionEmailAction = authAction
       }),
     });
 
-    const sentEmail = await prisma.sentEmail.create({
-      data: {
-        userId: user.id,
-        missionId: parsedInput.missionId,
-        contactId: parsedInput.contactId ?? null,
-        templateId: parsedInput.templateId ?? null,
-        to: parsedInput.to,
-        subject: parsedInput.subject,
-        body: parsedInput.body,
-        status: "sent",
-        resendId: emailResult.data?.id ?? null,
-      },
-    });
+    const sentEmail = await prisma.$transaction(async (tx) => {
+      const created = await tx.sentEmail.create({
+        data: {
+          userId: user.id,
+          missionId: parsedInput.missionId,
+          contactId: parsedInput.contactId ?? null,
+          templateId: parsedInput.templateId ?? null,
+          to: parsedInput.to,
+          subject: parsedInput.subject,
+          body: parsedInput.body,
+          status: "sent",
+          resendId: emailResult.data?.id ?? null,
+        },
+      });
 
-    await prisma.activityEvent.create({
-      data: {
-        missionId: parsedInput.missionId,
-        userId: user.id,
-        type: "EMAIL_SENT",
-        description: `Email envoyé à ${parsedInput.to} : "${parsedInput.subject}"`,
-      },
+      await tx.activityEvent.create({
+        data: {
+          missionId: parsedInput.missionId,
+          userId: user.id,
+          type: "EMAIL_SENT",
+          description: `Email envoyé à ${parsedInput.to} : "${parsedInput.subject}"`,
+        },
+      });
+
+      return created;
     });
 
     return sentEmail;
@@ -68,7 +72,16 @@ export const getSentEmailsAction = authAction
     return prisma.sentEmail.findMany({
       where: { missionId, userId: user.id },
       orderBy: { createdAt: "desc" },
-      include: { template: { select: { name: true } } },
+      select: {
+        id: true,
+        to: true,
+        subject: true,
+        status: true,
+        isDraft: true,
+        createdAt: true,
+        sentAt: true,
+        template: { select: { name: true } },
+      },
     });
   });
 

@@ -47,6 +47,7 @@ type ContactWithRelations = {
   linkedinUrl: string | null;
   role: string | null;
   notes: string | null;
+  tags: string[];
   createdAt: Date;
   missions: {
     id: string;

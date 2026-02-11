@@ -1,5 +1,6 @@
 "use client";
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -17,6 +18,8 @@ import {
   createContactSchema,
   type CreateContactInput,
 } from "@/features/contacts/contacts.schema";
+import { X } from "lucide-react";
+import { useState } from "react";
 
 type ContactFormProps = {
   defaultValues?: Partial<CreateContactInput>;
@@ -31,6 +34,8 @@ export function ContactForm({
   onCancel,
   submitLabel = "Créer le contact",
 }: ContactFormProps) {
+  const [tagInput, setTagInput] = useState("");
+
   const form = useZodForm({
     schema: createContactSchema,
     defaultValues: {
@@ -42,6 +47,7 @@ export function ContactForm({
       linkedinUrl: "",
       role: "",
       notes: "",
+      tags: [],
       ...defaultValues,
     },
   });
@@ -173,6 +179,68 @@ export function ContactForm({
                 {...field}
               />
             </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={form.control}
+        name="tags"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Tags</FormLabel>
+            <div className="flex gap-2">
+              <FormControl>
+                <Input
+                  placeholder="Ex: recruteur, tech..."
+                  value={tagInput}
+                  onChange={(e) => setTagInput(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      const trimmed = tagInput.trim();
+                      if (trimmed && !field.value.includes(trimmed)) {
+                        field.onChange([...field.value, trimmed]);
+                        setTagInput("");
+                      }
+                    }
+                  }}
+                />
+              </FormControl>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  const trimmed = tagInput.trim();
+                  if (trimmed && !field.value.includes(trimmed)) {
+                    field.onChange([...field.value, trimmed]);
+                    setTagInput("");
+                  }
+                }}
+              >
+                +
+              </Button>
+            </div>
+            {field.value.length > 0 && (
+              <div className="flex flex-wrap gap-1 pt-1">
+                {field.value.map((tag) => (
+                  <Badge key={tag} variant="secondary" className="gap-1">
+                    {tag}
+                    <button
+                      type="button"
+                      onClick={() =>
+                        field.onChange(field.value.filter((t) => t !== tag))
+                      }
+                      className="hover:text-destructive"
+                    >
+                      <X className="size-3" />
+                    </button>
+                  </Badge>
+                ))}
+              </div>
+            )}
             <FormMessage />
           </FormItem>
         )}

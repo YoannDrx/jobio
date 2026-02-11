@@ -1,5 +1,5 @@
+import { LogoSvg } from "@/components/svg/logo-svg";
 import { SiteConfig } from "@/site-config";
-import Image from "next/image";
 import Link from "next/link";
 import type { PropsWithChildren } from "react";
 import { Layout } from "../page/layout";
@@ -10,12 +10,7 @@ export function HeaderBase({ children }: PropsWithChildren) {
     <header className="bg-card sticky top-0 z-50 flex h-14 items-center gap-4 border-b px-4 lg:h-[60px] lg:px-6">
       <Layout className="my-2">
         <div className="flex items-center gap-2">
-          <Image
-            src={SiteConfig.appIcon}
-            alt="app logo"
-            width={32}
-            height={32}
-          />
+          <LogoSvg size={32} />
           <Link href="/" className="text-base font-bold">
             {SiteConfig.title}
           </Link>

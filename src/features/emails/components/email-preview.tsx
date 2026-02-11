@@ -1,39 +1,35 @@
 "use client";
 
+import type { Components } from "react-markdown";
+import ReactMarkdown from "react-markdown";
+
 type EmailPreviewProps = {
   body: string;
 };
 
-function renderMarkdown(text: string): string {
-  return text
-    .split("\n")
-    .map((line) => {
-      let html = line;
-      html = html.replace(
-        /^### (.+)$/,
-        "<h4 style='margin:8px 0 4px;font-size:14px;font-weight:600'>$1</h4>",
-      );
-      html = html.replace(
-        /^## (.+)$/,
-        "<h3 style='margin:12px 0 4px;font-size:16px;font-weight:600'>$1</h3>",
-      );
-      html = html.replace(
-        /^# (.+)$/,
-        "<h3 style='margin:12px 0 4px;font-size:18px;font-weight:600'>$1</h3>",
-      );
-      html = html.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
-      html = html.replace(/\*(.+?)\*/g, "<em>$1</em>");
-      html = html.replace(
-        /\[(.+?)\]\((.+?)\)/g,
-        '<a href="$2" style="color:#2563eb;text-decoration:underline">$1</a>',
-      );
-      if (html === line && !html.startsWith("<h")) {
-        html = html || "<br>";
-      }
-      return html;
-    })
-    .join("<br>");
-}
+const markdownComponents: Components = {
+  h1: ({ children }) => (
+    <h3 style={{ margin: "12px 0 4px", fontSize: "18px", fontWeight: 600 }}>
+      {children}
+    </h3>
+  ),
+  h2: ({ children }) => (
+    <h3 style={{ margin: "12px 0 4px", fontSize: "16px", fontWeight: 600 }}>
+      {children}
+    </h3>
+  ),
+  h3: ({ children }) => (
+    <h4 style={{ margin: "8px 0 4px", fontSize: "14px", fontWeight: 600 }}>
+      {children}
+    </h4>
+  ),
+  a: ({ href, children }) => (
+    <a href={href} style={{ color: "#2563eb", textDecoration: "underline" }}>
+      {children}
+    </a>
+  ),
+  p: ({ children }) => <p style={{ margin: "0 0 8px" }}>{children}</p>,
+};
 
 export function EmailPreview({ body }: EmailPreviewProps) {
   if (!body.trim()) {
@@ -45,9 +41,8 @@ export function EmailPreview({ body }: EmailPreviewProps) {
   }
 
   return (
-    <div
-      className="min-h-[200px] rounded-md border bg-white p-6 text-sm leading-relaxed text-black"
-      dangerouslySetInnerHTML={{ __html: renderMarkdown(body) }}
-    />
+    <div className="min-h-[200px] rounded-md border bg-white p-6 text-sm leading-relaxed text-black">
+      <ReactMarkdown components={markdownComponents}>{body}</ReactMarkdown>
+    </div>
   );
 }

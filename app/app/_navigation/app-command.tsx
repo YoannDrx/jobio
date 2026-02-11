@@ -11,23 +11,153 @@ import {
   CommandInput,
   CommandItem,
   CommandList,
+  CommandShortcut,
 } from "@/components/ui/command";
 import { Input } from "@/components/ui/input";
-import { Bell, Globe, Plus, Search, UserPlus } from "lucide-react";
+import { globalSearchAction } from "@/features/search/search.action";
+import { useDebounceFn } from "@/hooks/use-debounce-fn";
+import { resolveActionResult } from "@/lib/actions/actions-utils";
+import {
+  Bell,
+  Briefcase,
+  CalendarCheck,
+  CalendarClock,
+  Kanban,
+  ListOrdered,
+  Users,
+  UserCircle,
+  Globe,
+  FileText,
+  Mail,
+  BarChart3,
+  Settings,
+  Plus,
+  Search,
+  UserPlus,
+  Loader2,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
-import { APP_LINKS } from "./app-navigation.links";
+
+type CommandPage = {
+  label: string;
+  href: string;
+  icon: typeof CalendarCheck;
+  shortcut?: string;
+};
+
+const PAGES: CommandPage[] = [
+  { label: "Today", href: "/app", icon: CalendarCheck, shortcut: "T" },
+  { label: "Pipeline", href: "/app/pipeline", icon: Kanban, shortcut: "P" },
+  { label: "Contacts", href: "/app/contacts", icon: Users, shortcut: "C" },
+  { label: "Relances", href: "/app/follow-ups", icon: CalendarClock },
+  { label: "Séquences", href: "/app/sequences", icon: ListOrdered },
+  { label: "Analytics", href: "/app/analytics", icon: BarChart3 },
+  { label: "Templates", href: "/app/templates", icon: FileText },
+  { label: "Profils", href: "/app/profiles", icon: UserCircle },
+  { label: "Emails", href: "/app/emails", icon: Mail },
+  { label: "Plateformes", href: "/app/platforms", icon: Globe },
+  { label: "Notifications", href: "/app/notifications", icon: Bell },
+  { label: "Parametres", href: "/account", icon: Settings },
+];
+
+type CommandAction = {
+  label: string;
+  href: string;
+  icon: typeof Plus;
+};
+
+const QUICK_ACTIONS: CommandAction[] = [
+  { label: "Nouvelle mission", href: "/app/pipeline", icon: Plus },
+  { label: "Nouveau contact", href: "/app/contacts", icon: UserPlus },
+  { label: "Nouvelle relance", href: "/app/pipeline", icon: Bell },
+];
+
+type SearchResults = {
+  missions: {
+    id: string;
+    title: string;
+    company: string | null;
+    status: string;
+  }[];
+  contacts: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    company: string | null;
+  }[];
+};
 
 export function AppCommand() {
   const [open, setOpen] = useState(false);
+  const [searchResults, setSearchResults] = useState<SearchResults | null>(
+    null,
+  );
+  const [isSearching, setIsSearching] = useState(false);
   const router = useRouter();
 
-  const down = () => {
-    setOpen((open) => !open);
-  };
+  const toggleOpen = useCallback(() => {
+    setOpen((prev) => !prev);
+  }, []);
 
-  useHotkeys("mod+k", down);
+  useHotkeys("mod+k", toggleOpen);
+
+  // Vim-style "go to" shortcuts
+  useHotkeys("g t", () => router.push("/app"), { preventDefault: true });
+  useHotkeys("g p", () => router.push("/app/pipeline"), {
+    preventDefault: true,
+  });
+  useHotkeys("g c", () => router.push("/app/contacts"), {
+    preventDefault: true,
+  });
+  useHotkeys("g a", () => router.push("/app/analytics"), {
+    preventDefault: true,
+  });
+  useHotkeys("g r", () => router.push("/app/follow-ups"), {
+    preventDefault: true,
+  });
+  useHotkeys("g s", () => router.push("/app/sequences"), {
+    preventDefault: true,
+  });
+
+  const runCommand = useCallback(
+    (href: string) => {
+      setOpen(false);
+      setSearchResults(null);
+      router.push(href);
+    },
+    [router],
+  );
+
+  const debouncedSearch = useDebounceFn(async (value: string) => {
+    setIsSearching(true);
+    try {
+      const result = await resolveActionResult(
+        globalSearchAction({ query: value }),
+      );
+      setSearchResults(result);
+    } catch {
+      // silently fail
+    } finally {
+      setIsSearching(false);
+    }
+  }, 300);
+
+  const handleSearch = useCallback(
+    (value: string) => {
+      if (value.length < 2) {
+        setSearchResults(null);
+        return;
+      }
+      debouncedSearch(value);
+    },
+    [debouncedSearch],
+  );
+
+  const hasSearchResults =
+    searchResults &&
+    (searchResults.missions.length > 0 || searchResults.contacts.length > 0);
 
   return (
     <>
@@ -50,58 +180,94 @@ export function AppCommand() {
         </div>
       </div>
       <CommandDialog open={open} onOpenChange={setOpen}>
-        <CommandInput placeholder="Chercher ou lancer une action..." />
+        <CommandInput
+          placeholder="Chercher une page, une action ou un élément..."
+          onValueChange={handleSearch}
+        />
         <CommandList>
-          <CommandEmpty>Aucun résultat.</CommandEmpty>
-          <CommandGroup heading="Actions rapides">
-            <CommandItem
-              onSelect={() => {
-                router.push("/app/pipeline");
-              }}
-            >
-              <Plus className="mr-2 size-4" />
-              <span>Ajouter une mission</span>
-            </CommandItem>
-            <CommandItem
-              onSelect={() => {
-                router.push("/app/contacts");
-              }}
-            >
-              <UserPlus className="mr-2 size-4" />
-              <span>Nouveau contact</span>
-            </CommandItem>
-            <CommandItem
-              onSelect={() => {
-                router.push("/app/pipeline");
-              }}
-            >
-              <Bell className="mr-2 size-4" />
-              <span>Nouvelle relance</span>
-            </CommandItem>
-            <CommandItem
-              onSelect={() => {
-                router.push("/app/platforms");
-              }}
-            >
-              <Globe className="mr-2 size-4" />
-              <span>Plateformes</span>
-            </CommandItem>
+          <CommandEmpty>
+            {isSearching ? (
+              <div className="flex items-center justify-center gap-2">
+                <Loader2 className="size-4 animate-spin" />
+                <span>Recherche...</span>
+              </div>
+            ) : (
+              "Aucun resultat."
+            )}
+          </CommandEmpty>
+          {hasSearchResults ? (
+            <>
+              {searchResults.missions.length > 0 ? (
+                <CommandGroup heading="Missions">
+                  {searchResults.missions.map((mission) => (
+                    <CommandItem
+                      key={mission.id}
+                      value={`mission-${mission.title}-${mission.company ?? ""}`}
+                      onSelect={() =>
+                        runCommand(`/app/pipeline?missionId=${mission.id}`)
+                      }
+                    >
+                      <Briefcase className="mr-2 size-4" />
+                      <span>{mission.title}</span>
+                      {mission.company ? (
+                        <span className="text-muted-foreground ml-2 text-sm">
+                          {mission.company}
+                        </span>
+                      ) : null}
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              ) : null}
+              {searchResults.contacts.length > 0 ? (
+                <CommandGroup heading="Contacts">
+                  {searchResults.contacts.map((contact) => (
+                    <CommandItem
+                      key={contact.id}
+                      value={`contact-${contact.firstName}-${contact.lastName}-${contact.company ?? ""}`}
+                      onSelect={() =>
+                        runCommand(`/app/contacts?contactId=${contact.id}`)
+                      }
+                    >
+                      <Users className="mr-2 size-4" />
+                      <span>
+                        {contact.firstName} {contact.lastName}
+                      </span>
+                      {contact.company ? (
+                        <span className="text-muted-foreground ml-2 text-sm">
+                          {contact.company}
+                        </span>
+                      ) : null}
+                    </CommandItem>
+                  ))}
+                </CommandGroup>
+              ) : null}
+            </>
+          ) : null}
+          <CommandGroup heading="Pages">
+            {PAGES.map((page) => (
+              <CommandItem
+                key={page.href}
+                onSelect={() => runCommand(page.href)}
+              >
+                <page.icon className="mr-2 size-4" />
+                <span>{page.label}</span>
+                {page.shortcut ? (
+                  <CommandShortcut>{page.shortcut}</CommandShortcut>
+                ) : null}
+              </CommandItem>
+            ))}
           </CommandGroup>
-          {APP_LINKS.map((link, index) => (
-            <CommandGroup heading={link.title} key={index}>
-              {link.links.map((link) => (
-                <CommandItem
-                  key={link.href}
-                  onSelect={() => {
-                    router.push(link.href);
-                  }}
-                >
-                  <link.Icon className="mr-2 size-4" />
-                  <span>{link.label}</span>
-                </CommandItem>
-              ))}
-            </CommandGroup>
-          ))}
+          <CommandGroup heading="Actions rapides">
+            {QUICK_ACTIONS.map((action) => (
+              <CommandItem
+                key={action.label}
+                onSelect={() => runCommand(action.href)}
+              >
+                <action.icon className="mr-2 size-4" />
+                <span>{action.label}</span>
+              </CommandItem>
+            ))}
+          </CommandGroup>
         </CommandList>
       </CommandDialog>
     </>

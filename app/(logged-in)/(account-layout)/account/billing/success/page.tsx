@@ -13,7 +13,7 @@ import Link from "next/link";
 
 export const generateMetadata = combineWithParentMetadata({
   title: "Abonnement réussi",
-  description: "Votre abonnement a été activé avec succès.",
+  description: "Ton abonnement a été activé avec succès.",
 });
 
 export default async function SubscriptionSuccessPage() {
@@ -28,7 +28,7 @@ export default async function SubscriptionSuccessPage() {
           </div>
           <CardTitle className="text-2xl">Abonnement réussi !</CardTitle>
           <CardDescription>
-            Merci d&apos;avoir mis à niveau votre abonnement.
+            Merci d&apos;avoir mis à niveau ton abonnement.
           </CardDescription>
         </CardHeader>
         <CardContent>

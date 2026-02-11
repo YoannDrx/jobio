@@ -11,6 +11,12 @@ import { TodayContent } from "@/features/missions/components/today/today-content
 import type { Suggestion } from "@/features/missions/components/today/today-suggestions";
 import { resolveActionResult } from "@/lib/actions/actions-utils";
 import { getOnboardingStatusAction } from "@/features/onboarding/onboarding.action";
+import {
+  FOLLOW_UP_RECOMMENDED_STATUS_VALUES,
+  PIPELINE_STATUS_VALUES,
+  STALE_ELIGIBLE_STATUS_VALUES,
+  type MissionStatusValue,
+} from "@/features/missions/mission-status";
 
 export default async function TodayPage() {
   const user = await getRequiredUser();
@@ -70,7 +76,11 @@ export default async function TodayPage() {
     tjmPrevMonth,
   ] = await Promise.all([
     prisma.mission.findMany({
-      where: { userId: user.id, deletedAt: null },
+      where: {
+        userId: user.id,
+        deletedAt: null,
+        status: { in: [...PIPELINE_STATUS_VALUES] },
+      },
       select: {
         id: true,
         title: true,
@@ -84,7 +94,11 @@ export default async function TodayPage() {
     }),
     prisma.mission.groupBy({
       by: ["status"],
-      where: { userId: user.id, deletedAt: null },
+      where: {
+        userId: user.id,
+        deletedAt: null,
+        status: { in: [...PIPELINE_STATUS_VALUES] },
+      },
       _count: true,
     }),
     prisma.followUp.findMany({
@@ -127,9 +141,7 @@ export default async function TodayPage() {
     prisma.mission.findMany({
       where: {
         userId: user.id,
-        status: {
-          notIn: ["ACCEPTE", "REFUSE", "ARCHIVE"],
-        },
+        status: { in: [...STALE_ELIGIBLE_STATUS_VALUES] },
         updatedAt: { lt: twoWeeksAgo },
         deletedAt: null,
       },
@@ -165,7 +177,7 @@ export default async function TodayPage() {
     prisma.mission.findMany({
       where: {
         userId: user.id,
-        status: { in: ["POSTULE", "ENTRETIEN"] },
+        status: { in: [...FOLLOW_UP_RECOMMENDED_STATUS_VALUES] },
         deletedAt: null,
         followUps: {
           none: {
@@ -203,7 +215,7 @@ export default async function TodayPage() {
       where: {
         userId: user.id,
         contactId: null,
-        status: { notIn: ["REFUSE", "ARCHIVE"] },
+        status: { in: [...STALE_ELIGIBLE_STATUS_VALUES] },
         deletedAt: null,
       },
     }),
@@ -232,15 +244,15 @@ export default async function TodayPage() {
   const onboardingStatus = await resolveActionResult(
     getOnboardingStatusAction(),
   );
-  const isOnboardingComplete =
-    onboardingStatus.hasProfile &&
-    onboardingStatus.hasPlatforms &&
-    onboardingStatus.hasMission;
+  const isOnboardingComplete = onboardingStatus.isComplete;
 
   const counters = Object.fromEntries(
     statusCounts.map((s) => [s.status, s._count]),
   );
-  const totalMissions = statusCounts.reduce((acc, s) => acc + s._count, 0);
+  const totalMissions = PIPELINE_STATUS_VALUES.reduce(
+    (acc, status) => acc + (counters[status] ?? 0),
+    0,
+  );
 
   // Build suggestions (max 3)
   const suggestions: Suggestion[] = [];
@@ -318,14 +330,7 @@ export default async function TodayPage() {
             id: m.id,
             title: m.title,
             company: m.company,
-            status: m.status as
-              | "A_POSTULER"
-              | "POSTULE"
-              | "ENTRETIEN"
-              | "PROPOSITION"
-              | "ACCEPTE"
-              | "REFUSE"
-              | "ARCHIVE",
+            status: m.status as MissionStatusValue,
             score: m.score,
             createdAt: m.createdAt.toISOString(),
           }))}
@@ -372,6 +377,8 @@ export default async function TodayPage() {
                   hasProfile: onboardingStatus.hasProfile,
                   hasPlatforms: onboardingStatus.hasPlatforms,
                   hasMission: onboardingStatus.hasMission,
+                  hasSequence: onboardingStatus.hasSequence,
+                  isDismissed: onboardingStatus.isDismissed,
                 }
           }
         />

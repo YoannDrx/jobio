@@ -2,7 +2,8 @@ import type { PlaywrightTestConfig } from "@playwright/test";
 import { devices } from "@playwright/test";
 import { getServerUrl } from "./src/lib/server-url";
 
-const SERVER_URL = process.env.PLAYWRIGHT_TEST_BASE_URL ?? getServerUrl();
+const EXTERNAL_BASE_URL = process.env.PLAYWRIGHT_TEST_BASE_URL;
+const SERVER_URL = EXTERNAL_BASE_URL ?? getServerUrl();
 
 const HEADLESS = process.env.HEADLESS
   ? process.env.HEADLESS.toLowerCase() === "true"
@@ -49,8 +50,8 @@ const config: PlaywrightTestConfig = {
     navigationTimeout: 15000,
   },
   testDir: "e2e",
-  // Only start the web server if PLAYWRIGHT_TEST_BASE_URL is not set
-  ...(SERVER_URL
+  // Only start the web server when no external base URL is provided
+  ...(EXTERNAL_BASE_URL
     ? {}
     : {
         webServer: {

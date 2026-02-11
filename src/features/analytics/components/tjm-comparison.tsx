@@ -37,7 +37,7 @@ export function TJMComparison({ data }: TJMComparisonProps) {
           }}
         />
         <Legend />
-        <Bar dataKey="avgTjm" fill="#22d3ee" name="TJM moyen" />
+        <Bar dataKey="avgTjm" fill="var(--brand-cyan)" name="TJM moyen" />
       </BarChart>
     </ResponsiveContainer>
   );

@@ -16,7 +16,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Eye, Pencil, Trash2 } from "lucide-react";
+import { Copy, Eye, Pencil, Trash2 } from "lucide-react";
 import { useState } from "react";
 
 const TYPE_LABELS: Partial<Record<string, string>> = {
@@ -45,6 +45,7 @@ type TemplateListProps = {
   onEdit: (template: TemplateItem) => void;
   onDelete: (template: TemplateItem) => void;
   onPreview: (template: TemplateItem) => void;
+  onDuplicate: (template: TemplateItem) => void;
 };
 
 export function TemplateList({
@@ -52,6 +53,7 @@ export function TemplateList({
   onEdit,
   onDelete,
   onPreview,
+  onDuplicate,
 }: TemplateListProps) {
   const [filterType, setFilterType] = useState<string>("ALL");
 
@@ -116,6 +118,14 @@ export function TemplateList({
               >
                 <Pencil className="size-4" />
                 Modifier
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onDuplicate(template)}
+              >
+                <Copy className="size-4" />
+                Dupliquer
               </Button>
               <Button
                 variant="ghost"

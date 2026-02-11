@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Templates | Jobio",
-  description: "Créez et gérez vos templates de messages pour vos relances.",
+  description: "Crée et gère tes templates de messages pour tes relances.",
 };
 
 export default function TemplatesLayout(props: LayoutParams) {

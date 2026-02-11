@@ -27,7 +27,7 @@ export async function NavigationWrapper({
       <div className="bg-muted/40 hidden border-r md:block">
         <div className="flex h-full max-h-screen flex-col gap-2">
           <div className="flex h-14 items-center gap-2 border-b px-4 lg:h-[60px] lg:px-6">
-            <LogoSvg size={32} />
+            <LogoSvg size={36} />
             <Typography variant="large" className="font-mono">
               /
             </Typography>
@@ -52,7 +52,7 @@ export async function NavigationWrapper({
             </SheetTrigger>
             <SheetContent side="left" className="flex flex-col">
               <div className="flex items-center gap-2">
-                <LogoSvg size={32} />
+                <LogoSvg size={36} />
                 {logoChildren}
               </div>
               {navigationChildren}

@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/select";
 import { MISSION_STATUS_CONFIG } from "@/components/nowts/status-badge";
 import type { MissionStatus } from "@/components/nowts/status-badge";
+import { PIPELINE_STATUS_VALUES } from "@/features/missions/mission-status";
 import { cn } from "@/lib/utils";
 import { RotateCcw, SlidersHorizontal } from "lucide-react";
 import { useState } from "react";
@@ -110,12 +111,9 @@ export function PipelineFilters({
               Statut
             </span>
             <div className="flex flex-wrap gap-2">
-              {(
-                Object.entries(MISSION_STATUS_CONFIG) as [
-                  MissionStatus,
-                  (typeof MISSION_STATUS_CONFIG)[MissionStatus],
-                ][]
-              ).map(([key, config]) => (
+              {PIPELINE_STATUS_VALUES.map((key) => {
+                const config = MISSION_STATUS_CONFIG[key];
+                return (
                 <button
                   key={key}
                   type="button"
@@ -129,7 +127,8 @@ export function PipelineFilters({
                 >
                   {config.label}
                 </button>
-              ))}
+                );
+              })}
             </div>
           </div>
 

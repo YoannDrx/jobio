@@ -17,7 +17,7 @@ import { ToggleEmailCheckbox } from "./toggle-email-checkbox";
 
 export const generateMetadata = combineWithParentMetadata({
   title: "Email",
-  description: "Gérer vos paramètres de notifications email.",
+  description: "Gérer tes paramètres de notifications email.",
 });
 
 export default function Page() {
@@ -61,8 +61,7 @@ async function MailProfilePage() {
       <CardHeader>
         <CardTitle>Paramètres email</CardTitle>
         <CardDescription>
-          Configurez vos paramètres de notifications email selon vos
-          préférences.
+          Configure tes paramètres de notifications email selon tes préférences.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -78,8 +77,7 @@ const ErrorComponent = () => {
       <CardHeader>
         <CardTitle>Contact introuvable</CardTitle>
         <CardDescription>
-          Nous n&apos;avons pas trouvé votre contact Resend. Veuillez contacter
-          le support.
+          Nous n&apos;avons pas trouvé ton contact Resend. Contacte le support.
         </CardDescription>
       </CardHeader>
       <CardFooter>

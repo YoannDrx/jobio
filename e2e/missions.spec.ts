@@ -13,8 +13,8 @@ test.describe("missions", () => {
     await page.goto("/app/pipeline");
     await page.waitForLoadState("networkidle");
 
-    // Click on "Nouvelle mission" button
-    await page.getByRole("button", { name: /nouvelle mission/i }).click();
+    // Click on add mission button
+    await page.getByRole("button", { name: /ajouter/i }).first().click();
 
     // Fill the mission form
     await page.getByLabel(/titre/i).fill("Mission Test E2E");
@@ -22,9 +22,7 @@ test.describe("missions", () => {
     await page.getByLabel(/tjm/i).fill("600");
 
     // Submit the form
-    await page
-      .getByRole("button", { name: /créer|sauvegarder|enregistrer/i })
-      .click();
+    await page.getByRole("button", { name: /créer la mission/i }).click();
 
     // Wait for success
     await page.waitForLoadState("networkidle");
@@ -44,7 +42,7 @@ test.describe("missions", () => {
     }
   });
 
-  test("change mission status", async ({ page }) => {
+  test("open mission detail from pipeline", async ({ page }) => {
     const userData = await createTestAccount({
       page,
       callbackURL: "/app",
@@ -68,25 +66,175 @@ test.describe("missions", () => {
     await page.waitForLoadState("networkidle");
 
     // Click on the mission to open detail
-    await page.getByText("Mission Status Test").click();
+    await page.getByText("Mission Status Test").first().click();
 
-    // Wait for detail sheet to open
-    await page.waitForTimeout(500);
-
-    // Look for a status selector/button and change it
-    const statusButton = page
-      .getByRole("button", { name: /a postuler|à postuler/i })
-      .first();
-    if (await statusButton.isVisible()) {
-      await statusButton.click();
-      // Select "ENTRETIEN" from dropdown
-      await page
-        .getByRole("option", { name: /entretien/i })
-        .first()
-        .click();
-    }
+    const detailSheet = page.getByRole("dialog");
+    await expect(detailSheet).toBeVisible();
+    await expect(
+      detailSheet.getByRole("heading", { name: "Mission Status Test" }),
+    ).toBeVisible();
+    await expect(detailSheet.getByText("StatusCorp")).toBeVisible();
+    await expect(detailSheet.getByText(/a postuler|à postuler/i)).toBeVisible();
 
     // Cleanup
+    await prisma.mission.deleteMany({ where: { userId: user.id } });
+    await prisma.user.delete({ where: { id: user.id } });
+  });
+
+  test("show mission with EN_PAUSE status in pipeline", async ({ page }) => {
+    const userData = await createTestAccount({
+      page,
+      callbackURL: "/app",
+    });
+
+    const user = await prisma.user.findUniqueOrThrow({
+      where: { email: userData.email },
+    });
+
+    await prisma.mission.create({
+      data: {
+        title: "Mission Pause Test",
+        company: "PauseCorp",
+        status: "EN_PAUSE",
+        userId: user.id,
+      },
+    });
+
+    await page.goto("/app/pipeline");
+    await page.waitForLoadState("networkidle");
+
+    await expect(page.getByText("Mission Pause Test").first()).toBeVisible({
+      timeout: 10000,
+    });
+
+    await prisma.mission.deleteMany({ where: { userId: user.id } });
+    await prisma.user.delete({ where: { id: user.id } });
+  });
+
+  test("hide archived missions from default pipeline view", async ({ page }) => {
+    const userData = await createTestAccount({
+      page,
+      callbackURL: "/app",
+    });
+
+    const user = await prisma.user.findUniqueOrThrow({
+      where: { email: userData.email },
+    });
+
+    await prisma.mission.createMany({
+      data: [
+        {
+          title: "Mission Active Visible",
+          company: "VisibleCorp",
+          status: "A_POSTULER",
+          userId: user.id,
+        },
+        {
+          title: "Mission Archivee Cachee",
+          company: "HiddenCorp",
+          status: "ARCHIVE",
+          archivedAt: new Date(),
+          userId: user.id,
+        },
+      ],
+    });
+
+    await page.goto("/app/pipeline");
+    await page.waitForLoadState("networkidle");
+
+    await expect(page.getByText("Mission Active Visible").first()).toBeVisible({
+      timeout: 10000,
+    });
+    await expect(page.getByText("Mission Archivee Cachee")).toHaveCount(0);
+
+    await prisma.mission.deleteMany({ where: { userId: user.id } });
+    await prisma.user.delete({ where: { id: user.id } });
+  });
+
+  test("block mission creation when active mission limit is reached", async ({
+    page,
+  }) => {
+    const userData = await createTestAccount({
+      page,
+      callbackURL: "/app",
+    });
+
+    const user = await prisma.user.findUniqueOrThrow({
+      where: { email: userData.email },
+    });
+
+    await prisma.mission.createMany({
+      data: Array.from({ length: 15 }).map((_, index) => ({
+        title: `Mission Limit ${index + 1}`,
+        company: "LimitCorp",
+        status: "A_POSTULER" as const,
+        userId: user.id,
+      })),
+    });
+
+    await page.goto("/app/pipeline");
+    await page.waitForLoadState("networkidle");
+
+    await expect(page.getByText(/limite atteinte/i).first()).toBeVisible({
+      timeout: 10000,
+    });
+
+    await page.getByRole("button", { name: /ajouter/i }).first().click();
+    await page.getByLabel(/titre/i).fill("Mission Should Be Blocked");
+    await page.getByLabel(/entreprise/i).fill("BlockedCorp");
+    await page.getByRole("button", { name: /créer la mission/i }).click();
+
+    await expect(page.getByText(/limite atteinte/i).first()).toBeVisible({
+      timeout: 10000,
+    });
+    await expect(page.getByText("Mission Should Be Blocked")).toHaveCount(0);
+
+    await prisma.mission.deleteMany({ where: { userId: user.id } });
+    await prisma.user.delete({ where: { id: user.id } });
+  });
+
+  test("allow mission creation when archived missions are out of active limit", async ({
+    page,
+  }) => {
+    const userData = await createTestAccount({
+      page,
+      callbackURL: "/app",
+    });
+
+    const user = await prisma.user.findUniqueOrThrow({
+      where: { email: userData.email },
+    });
+
+    await prisma.mission.createMany({
+      data: [
+        ...Array.from({ length: 14 }).map((_, index) => ({
+          title: `Mission Active ${index + 1}`,
+          company: "ActiveCorp",
+          status: "A_POSTULER" as const,
+          userId: user.id,
+        })),
+        {
+          title: "Mission Archivee Hors Limite",
+          company: "ArchiveCorp",
+          status: "ARCHIVE" as const,
+          archivedAt: new Date(),
+          userId: user.id,
+        },
+      ],
+    });
+
+    await page.goto("/app/pipeline");
+    await page.waitForLoadState("networkidle");
+
+    await page.getByRole("button", { name: /ajouter/i }).first().click();
+    await page.getByLabel(/titre/i).fill("Mission Allowed By Archive");
+    await page.getByLabel(/entreprise/i).fill("AllowedCorp");
+    await page.getByRole("button", { name: /créer la mission/i }).click();
+
+    await expect(page.getByText("Mission Allowed By Archive").first()).toBeVisible({
+      timeout: 10000,
+    });
+
     await prisma.mission.deleteMany({ where: { userId: user.id } });
     await prisma.user.delete({ where: { id: user.id } });
   });

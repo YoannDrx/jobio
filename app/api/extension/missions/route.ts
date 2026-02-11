@@ -45,13 +45,13 @@ export const POST = authRoute
       },
     });
 
-    const score = await computeMissionScore(mission.id, ctx.user.id);
-    if (score > 0) {
+    const result = await computeMissionScore(mission.id, ctx.user.id);
+    if (result.score > 0) {
       await prisma.mission.update({
         where: { id: mission.id },
-        data: { score },
+        data: { score: result.score, scoreBreakdown: result.breakdown },
       });
     }
 
-    return { ...mission, score };
+    return { ...mission, score: result.score };
   });

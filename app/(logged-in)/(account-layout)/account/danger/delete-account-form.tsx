@@ -37,7 +37,7 @@ export function DeleteAccountForm() {
           </CardTitle>
         </div>
         <CardDescription className="text-muted-foreground text-base">
-          Cette action supprimera définitivement votre compte et toutes les
+          Cette action supprimera définitivement ton compte et toutes les
           données associées
         </CardDescription>
       </CardHeader>
@@ -48,7 +48,7 @@ export function DeleteAccountForm() {
             <div className="space-y-1">
               <p className="leading-none font-medium">Données personnelles</p>
               <p className="text-muted-foreground text-sm">
-                Toutes vos informations personnelles et paramètres seront
+                Toutes tes informations personnelles et paramètres seront
                 définitivement supprimés
               </p>
             </div>
@@ -62,7 +62,7 @@ export function DeleteAccountForm() {
                 Données d&apos;organisation
               </p>
               <p className="text-muted-foreground text-sm">
-                Si vous êtes propriétaire d&apos;une organisation, toutes les
+                Si tu es propriétaire d&apos;une organisation, toutes les
                 données seront supprimées et les abonnements annulés
               </p>
             </div>
@@ -76,16 +76,16 @@ export function DeleteAccountForm() {
           loading={deleteAccountMutation.isPending}
           onClick={() => {
             dialogManager.confirm({
-              title: "Supprimer votre compte ?",
-              description: "Êtes-vous sûr de vouloir supprimer votre compte ?",
+              title: "Supprimer ton compte ?",
+              description: "Es-tu sûr de vouloir supprimer ton compte ?",
               confirmText: "Supprimer",
               action: {
                 label: "Supprimer",
                 onClick: async () => {
                   await deleteAccountMutation.mutateAsync();
-                  toast.success("Votre demande de suppression a été envoyée.", {
+                  toast.success("Ta demande de suppression a été envoyée.", {
                     description:
-                      "Vérifiez votre email pour les instructions suivantes.",
+                      "Vérifie ton email pour les instructions suivantes.",
                   });
                 },
               },

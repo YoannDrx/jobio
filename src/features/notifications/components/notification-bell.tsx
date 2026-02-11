@@ -153,6 +153,20 @@ export function NotificationBell() {
             </div>
           )}
         </div>
+        <Separator />
+        <div className="p-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full text-xs"
+            onClick={() => {
+              setOpen(false);
+              router.push("/app/notifications");
+            }}
+          >
+            Voir toutes les notifications
+          </Button>
+        </div>
       </PopoverContent>
     </Popover>
   );

@@ -100,6 +100,30 @@ export const getTemplatesAction = authAction
     return templates;
   });
 
+export const duplicateTemplateAction = authAction
+  .inputSchema(z.object({ id: z.string() }))
+  .action(async ({ parsedInput: { id }, ctx: { user } }) => {
+    const template = await prisma.messageTemplate.findFirst({
+      where: { id, OR: [{ userId: user.id }, { isSystem: true }] },
+    });
+
+    if (!template) {
+      throw new ApplicationError("Template introuvable");
+    }
+
+    return prisma.messageTemplate.create({
+      data: {
+        name: `Copie de ${template.name}`,
+        subject: template.subject,
+        body: template.body,
+        type: template.type,
+        variables: template.variables,
+        userId: user.id,
+        isSystem: false,
+      },
+    });
+  });
+
 export const getTemplateAction = authAction
   .inputSchema(z.object({ id: z.string() }))
   .action(async ({ parsedInput: { id }, ctx: { user } }) => {

@@ -5,8 +5,10 @@ import { Button } from "@/components/ui/button";
 import {
   Calendar,
   Check,
+  Clock3,
   Mail,
   MessageSquare,
+  Pencil,
   Phone,
   Trash2,
   Users,
@@ -25,6 +27,7 @@ type FollowUpListProps = {
   onComplete: (id: string) => void;
   onDelete: (id: string) => void;
   onEdit?: (id: string) => void;
+  onSnooze?: (id: string) => void;
 };
 
 const typeIcons: Record<string, React.ReactNode> = {
@@ -86,6 +89,8 @@ export function FollowUpList({
   followUps,
   onComplete,
   onDelete,
+  onEdit,
+  onSnooze,
 }: FollowUpListProps) {
   if (followUps.length === 0) {
     return (
@@ -135,6 +140,26 @@ export function FollowUpList({
                 title="Marquer comme termine"
               >
                 <Check className="size-4" />
+              </Button>
+            )}
+            {!followUp.completedAt && onSnooze && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onSnooze(followUp.id)}
+                title="Reporter de 1 jour"
+              >
+                <Clock3 className="size-4" />
+              </Button>
+            )}
+            {onEdit && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => onEdit(followUp.id)}
+                title="Modifier"
+              >
+                <Pencil className="size-4" />
               </Button>
             )}
             <Button

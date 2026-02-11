@@ -29,5 +29,10 @@ export const completeFollowUpSchema = z.object({
   id: z.string(),
 });
 
+export const snoozeFollowUpSchema = z.object({
+  id: z.string(),
+  scheduledAt: z.coerce.date(),
+});
+
 export type CreateFollowUpInput = z.infer<typeof createFollowUpSchema>;
 export type UpdateFollowUpInput = z.infer<typeof updateFollowUpSchema>;

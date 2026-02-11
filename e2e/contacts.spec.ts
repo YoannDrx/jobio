@@ -14,20 +14,19 @@ test.describe("contacts", () => {
     await page.waitForLoadState("networkidle");
 
     // Click on create contact button
-    await page
-      .getByRole("button", { name: /nouveau contact|créer|ajouter/i })
-      .click();
+    await page.getByRole("button", { name: "Nouveau contact" }).click();
 
     // Fill the contact form
-    await page.getByLabel(/nom/i).first().fill("Jean Dupont");
+    await page.getByLabel(/prénom/i).fill("Jean");
+    await page.getByLabel(/^nom/i).fill("Dupont");
     await page.getByLabel(/email/i).fill("jean.dupont@example.com");
     await page.getByLabel(/entreprise|société/i).fill("TechCorp");
 
     // Submit
-    await page
-      .getByRole("button", { name: /créer|sauvegarder|enregistrer/i })
-      .click();
-    await page.waitForLoadState("networkidle");
+    await page.getByRole("button", { name: /créer le contact/i }).click();
+    await expect(page.getByText("Contact cree avec succes")).toBeVisible({
+      timeout: 10000,
+    });
 
     // Verify contact appears
     await expect(page.getByText("Jean Dupont")).toBeVisible({ timeout: 10000 });

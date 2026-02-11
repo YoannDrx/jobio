@@ -42,7 +42,7 @@ export function PlatformPerformance({ data }: PlatformPerformanceProps) {
             color: "#e2e8f0",
           }}
         />
-        <Bar yAxisId="left" dataKey="total" fill="#22d3ee" name="Total" />
+        <Bar yAxisId="left" dataKey="total" fill="var(--brand-cyan)" name="Total" />
         <Bar yAxisId="right" dataKey="rate" fill="#34d399" name="Taux %" />
       </BarChart>
     </ResponsiveContainer>

@@ -25,6 +25,7 @@ import { resolveActionResult } from "@/lib/actions/actions-utils";
 import {
   createTemplateAction,
   deleteTemplateAction,
+  duplicateTemplateAction,
   getTemplatesAction,
   updateTemplateAction,
 } from "@/features/templates/templates.action";
@@ -122,6 +123,20 @@ export default function TemplatesPage() {
     setShowPreview(true);
   };
 
+  const handleDuplicate = async (template: Template) => {
+    try {
+      await resolveActionResult(duplicateTemplateAction({ id: template.id }));
+      toast.success("Template duplique");
+      void fetchTemplates();
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Erreur lors de la duplication",
+      );
+    }
+  };
+
   const handleCloseForm = () => {
     setShowForm(false);
     setEditing(null);
@@ -154,7 +169,7 @@ export default function TemplatesPage() {
           <EmptyState
             icon={FileText}
             title="Aucun template"
-            description="Creez votre premier template de message pour gagner du temps."
+            description="Crée ton premier template de message pour gagner du temps."
             action={{
               label: "Creer un template",
               onClick: () => setShowForm(true),
@@ -166,6 +181,7 @@ export default function TemplatesPage() {
             onEdit={handleEdit}
             onDelete={(template) => void handleDelete(template)}
             onPreview={handlePreview}
+            onDuplicate={(template) => void handleDuplicate(template)}
           />
         )}
       </LayoutContent>

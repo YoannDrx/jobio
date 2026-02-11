@@ -54,7 +54,7 @@ export default function TrialEndingEmail({
         <Button
           href={`${SiteConfig.prodUrl}/account/billing`}
           style={{
-            backgroundColor: "#22D3EE",
+            backgroundColor: SiteConfig.brand.primary,
             color: "#000",
             padding: "12px 24px",
             borderRadius: "6px",

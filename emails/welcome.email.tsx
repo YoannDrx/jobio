@@ -20,7 +20,11 @@ export default function WelcomeEmail({
       <Preview>Bienvenue sur {SiteConfig.title} !</Preview>
       <Heading
         as="h1"
-        style={{ fontSize: "24px", fontWeight: "bold", color: "#22D3EE" }}
+        style={{
+          fontSize: "24px",
+          fontWeight: "bold",
+          color: SiteConfig.brand.primary,
+        }}
       >
         Bienvenue sur {SiteConfig.title} !
       </Heading>
@@ -44,7 +48,7 @@ export default function WelcomeEmail({
         <Button
           href={`${SiteConfig.prodUrl}/app`}
           style={{
-            backgroundColor: "#22D3EE",
+            backgroundColor: SiteConfig.brand.primary,
             color: "#000",
             padding: "12px 24px",
             borderRadius: "6px",

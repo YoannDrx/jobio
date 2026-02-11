@@ -35,7 +35,7 @@ L'équipe ${SiteConfig.title}
             lineHeight: "1.5rem",
           },
           link: {
-            color: "#22D3EE",
+            color: SiteConfig.brand.primary,
           },
         }}
       >

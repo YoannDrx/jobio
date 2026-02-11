@@ -44,6 +44,12 @@ type FollowUpFormProps = {
   submitLabel?: string;
 };
 
+function formatDateTimeLocal(value: Date) {
+  const date = new Date(value);
+  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60_000);
+  return local.toISOString().slice(0, 16);
+}
+
 export function FollowUpForm({
   onSubmit,
   onCancel,
@@ -73,7 +79,7 @@ export function FollowUpForm({
         render={({ field }) => (
           <FormItem>
             <FormLabel>Type</FormLabel>
-            <Select onValueChange={field.onChange} defaultValue={field.value}>
+            <Select onValueChange={field.onChange} value={field.value}>
               <FormControl>
                 <SelectTrigger>
                   <SelectValue placeholder="Type de relance" />
@@ -140,7 +146,7 @@ export function FollowUpForm({
                 type="datetime-local"
                 value={
                   field.value instanceof Date
-                    ? field.value.toISOString().slice(0, 16)
+                    ? formatDateTimeLocal(field.value)
                     : ""
                 }
                 onChange={(e) => {
