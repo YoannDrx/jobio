@@ -5,6 +5,11 @@ model UserProfile {
   headline           String
   bio                String?
   skills             Json?
+  experiences        Json?
+  education          Json?
+  certifications     Json?
+  languages          Json?
+  projects           Json?
   tjmTarget          Int?
   workTypePreference WorkType?
   zone               String?

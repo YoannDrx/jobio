@@ -12,7 +12,7 @@ import {
 } from "@/features/page/layout";
 import { resolveActionResult } from "@/lib/actions/actions-utils";
 import { getProgrammesAction } from "@/features/programmes/programmes.action";
-import { ProgrammeCarousel } from "./_components/programme-carousel";
+import { ProgrammeGrid } from "./_components/programme-grid";
 import { BookOpen } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -83,7 +83,7 @@ export default function ProgrammesPage() {
               </TabsTrigger>
             </TabsList>
             <TabsContent value="all" className="mt-6">
-              <ProgrammeCarousel programs={programs} />
+              <ProgrammeGrid programs={programs} />
             </TabsContent>
             <TabsContent value="unlocked" className="mt-6">
               {unlockedPrograms.length === 0 ? (
@@ -93,7 +93,7 @@ export default function ProgrammesPage() {
                   description="Débloque ton premier programme pour accéder aux templates LinkedIn."
                 />
               ) : (
-                <ProgrammeCarousel programs={unlockedPrograms} />
+                <ProgrammeGrid programs={unlockedPrograms} />
               )}
             </TabsContent>
           </Tabs>

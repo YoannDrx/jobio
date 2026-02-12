@@ -33,7 +33,7 @@ export const APP_LINKS: NavigationGroup[] = [
     defaultOpenStartPath: `${APP_PATH}/profiles`,
     links: [
       { href: `${APP_PATH}/profiles`, Icon: UserCircle, label: "Profils" },
-      { href: `${APP_PATH}/platforms`, Icon: Globe, label: "Plateformes" },
+      { href: `${APP_PATH}/prospection`, Icon: Globe, label: "Prospection" },
       { href: `${APP_PATH}/programmes`, Icon: BookOpen, label: "Programmes" },
       { href: `${APP_PATH}/sequences`, Icon: ListOrdered, label: "Séquences" },
       { href: `${APP_PATH}/emails`, Icon: Mail, label: "Emails" },

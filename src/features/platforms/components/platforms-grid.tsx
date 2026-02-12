@@ -5,21 +5,24 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/nowts/empty-state";
 import { Input } from "@/components/ui/input";
-import {
-  Layout,
-  LayoutContent,
-  LayoutHeader,
-  LayoutTitle,
-} from "@/features/page/layout";
 import { resolveActionResult } from "@/lib/actions/actions-utils";
 import {
   addUserPlatformAction,
+  deleteCustomPlatformAction,
   getPlatformsAction,
   getUserPlatformsAction,
   removeUserPlatformAction,
   updateUserPlatformAction,
 } from "@/features/platforms/platforms.action";
-import { ExternalLink, Globe, Loader2, Minus, Plus } from "lucide-react";
+import { CustomPlatformDialog } from "./custom-platform-dialog";
+import {
+  ExternalLink,
+  Globe,
+  Loader2,
+  Minus,
+  Plus,
+  Trash2,
+} from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -79,7 +82,7 @@ function PlatformStatusBadge({ status }: { status: PlatformStatus }) {
   );
 }
 
-export default function PlatformsPage() {
+export function PlatformsGrid() {
   const [platforms, setPlatforms] = useState<Platform[]>([]);
   const [userPlatforms, setUserPlatforms] = useState<UserPlatform[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -87,6 +90,7 @@ export default function PlatformsPage() {
     null,
   );
   const [editingUrl, setEditingUrl] = useState<Record<string, string>>({});
+  const [customDialogOpen, setCustomDialogOpen] = useState(false);
 
   const fetchData = useCallback(async () => {
     try {
@@ -135,6 +139,23 @@ export default function PlatformsPage() {
         removeUserPlatformAction({ id: userPlatformId }),
       );
       toast.success("Plateforme retirée");
+      void fetchData();
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Erreur lors de la suppression",
+      );
+    } finally {
+      setLoadingPlatformId(null);
+    }
+  };
+
+  const handleDeleteCustom = async (platformId: string) => {
+    try {
+      setLoadingPlatformId(platformId);
+      await resolveActionResult(deleteCustomPlatformAction({ id: platformId }));
+      toast.success("Plateforme supprimée");
       void fetchData();
     } catch (error) {
       toast.error(
@@ -197,77 +218,84 @@ export default function PlatformsPage() {
     void handleUpdateStatus(userPlatformId, nextStatus);
   };
 
+  if (isLoading) {
+    return (
+      <div className="text-muted-foreground py-12 text-center text-sm">
+        Chargement...
+      </div>
+    );
+  }
+
   return (
-    <Layout size="lg">
-      <LayoutHeader>
-        <LayoutTitle>Plateformes</LayoutTitle>
-      </LayoutHeader>
+    <div className="flex flex-col gap-4">
+      <div className="flex justify-end">
+        <Button onClick={() => setCustomDialogOpen(true)} size="sm">
+          <Plus className="mr-1 size-4" />
+          Ajouter une plateforme
+        </Button>
+      </div>
 
-      <LayoutContent>
-        {isLoading ? (
-          <div className="text-muted-foreground py-12 text-center text-sm">
-            Chargement...
-          </div>
-        ) : platforms.length === 0 ? (
-          <EmptyState
-            icon={Globe}
-            title="Aucune plateforme disponible"
-            description="Les plateformes seront bientot disponibles."
-          />
-        ) : userPlatforms.length === 0 ? (
-          <EmptyState
-            icon={Globe}
-            title="Aucune plateforme ajoutee"
-            description="Ajoute tes premieres plateformes pour commencer."
-          />
-        ) : (
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {platforms.map((platform) => {
-              const userPlatform = getUserPlatform(platform.id);
-              const isAdded = Boolean(userPlatform);
-              const isLoadingThis =
-                loadingPlatformId === platform.id ||
-                loadingPlatformId === userPlatform?.id;
+      {platforms.length === 0 ? (
+        <EmptyState
+          icon={Globe}
+          title="Aucune plateforme disponible"
+          description="Les plateformes seront bientôt disponibles."
+        />
+      ) : (
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {platforms.map((platform) => {
+            const userPlatform = getUserPlatform(platform.id);
+            const isAdded = Boolean(userPlatform);
+            const isLoadingThis =
+              loadingPlatformId === platform.id ||
+              loadingPlatformId === userPlatform?.id;
 
-              return (
-                <Card key={platform.id} className="gap-4 py-4">
-                  <CardHeader className="pb-0">
-                    <div className="flex items-start justify-between">
-                      <div className="flex flex-col gap-1">
-                        <CardTitle className="flex items-center gap-2">
-                          {platform.name}
-                          {platform.website && (
-                            <a
-                              href={platform.website}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-muted-foreground hover:text-foreground"
-                            >
-                              <ExternalLink className="size-3.5" />
-                            </a>
-                          )}
-                        </CardTitle>
-                        <div className="flex items-center gap-2">
-                          <Badge variant="secondary" className="text-xs">
-                            {CATEGORY_LABELS[platform.category]}
-                          </Badge>
-                          {isAdded && userPlatform && (
-                            <button
-                              onClick={() =>
-                                cycleStatus(
-                                  userPlatform.id,
-                                  userPlatform.status,
-                                )
-                              }
-                              className="cursor-pointer"
-                            >
-                              <PlatformStatusBadge
-                                status={userPlatform.status}
-                              />
-                            </button>
-                          )}
-                        </div>
+            return (
+              <Card key={platform.id} className="gap-4 py-4">
+                <CardHeader className="pb-0">
+                  <div className="flex items-start justify-between">
+                    <div className="flex flex-col gap-1">
+                      <CardTitle className="flex items-center gap-2">
+                        {platform.name}
+                        {platform.website && (
+                          <a
+                            href={platform.website}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-muted-foreground hover:text-foreground"
+                          >
+                            <ExternalLink className="size-3.5" />
+                          </a>
+                        )}
+                      </CardTitle>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="secondary" className="text-xs">
+                          {CATEGORY_LABELS[platform.category]}
+                        </Badge>
+                        {isAdded && userPlatform && (
+                          <button
+                            onClick={() =>
+                              cycleStatus(userPlatform.id, userPlatform.status)
+                            }
+                            className="cursor-pointer"
+                          >
+                            <PlatformStatusBadge status={userPlatform.status} />
+                          </button>
+                        )}
                       </div>
+                    </div>
+                    <div className="flex gap-1">
+                      {!platform.isSystem && (
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="text-destructive size-8"
+                          disabled={isLoadingThis}
+                          onClick={() => void handleDeleteCustom(platform.id)}
+                        >
+                          <Trash2 className="size-4" />
+                        </Button>
+                      )}
                       <Button
                         size="icon"
                         variant={isAdded ? "destructive" : "default"}
@@ -288,31 +316,44 @@ export default function PlatformsPage() {
                         )}
                       </Button>
                     </div>
-                  </CardHeader>
+                  </div>
+                </CardHeader>
 
-                  {platform.description && (
-                    <CardContent className="py-0">
-                      <p className="text-muted-foreground text-sm">
-                        {platform.description}
-                      </p>
-                    </CardContent>
-                  )}
+                {platform.description && (
+                  <CardContent className="py-0">
+                    <p className="text-muted-foreground text-sm">
+                      {platform.description}
+                    </p>
+                  </CardContent>
+                )}
 
-                  {isAdded && userPlatform && (
-                    <CardContent className="py-0">
-                      <div className="flex items-center gap-2">
-                        <Input
-                          type="url"
-                          placeholder="URL de ton profil"
-                          className="h-8 text-sm"
-                          defaultValue={userPlatform.profileUrl ?? ""}
-                          onChange={(e) =>
-                            setEditingUrl((prev) => ({
-                              ...prev,
-                              [userPlatform.id]: e.target.value,
-                            }))
+                {isAdded && userPlatform && (
+                  <CardContent className="py-0">
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="url"
+                        placeholder="URL de ton profil"
+                        className="h-8 text-sm"
+                        defaultValue={userPlatform.profileUrl ?? ""}
+                        onChange={(e) =>
+                          setEditingUrl((prev) => ({
+                            ...prev,
+                            [userPlatform.id]: e.target.value,
+                          }))
+                        }
+                        onBlur={() => {
+                          const url = editingUrl[userPlatform.id] as
+                            | string
+                            | undefined;
+                          if (
+                            url !== undefined &&
+                            url !== (userPlatform.profileUrl ?? "")
+                          ) {
+                            void handleUpdateProfileUrl(userPlatform.id, url);
                           }
-                          onBlur={() => {
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
                             const url = editingUrl[userPlatform.id] as
                               | string
                               | undefined;
@@ -322,43 +363,33 @@ export default function PlatformsPage() {
                             ) {
                               void handleUpdateProfileUrl(userPlatform.id, url);
                             }
-                          }}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") {
-                              const url = editingUrl[userPlatform.id] as
-                                | string
-                                | undefined;
-                              if (
-                                url !== undefined &&
-                                url !== (userPlatform.profileUrl ?? "")
-                              ) {
-                                void handleUpdateProfileUrl(
-                                  userPlatform.id,
-                                  url,
-                                );
-                              }
-                            }
-                          }}
-                        />
-                        {userPlatform.profileUrl && (
-                          <a
-                            href={userPlatform.profileUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-muted-foreground hover:text-foreground"
-                          >
-                            <ExternalLink className="size-4" />
-                          </a>
-                        )}
-                      </div>
-                    </CardContent>
-                  )}
-                </Card>
-              );
-            })}
-          </div>
-        )}
-      </LayoutContent>
-    </Layout>
+                          }
+                        }}
+                      />
+                      {userPlatform.profileUrl && (
+                        <a
+                          href={userPlatform.profileUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-muted-foreground hover:text-foreground"
+                        >
+                          <ExternalLink className="size-4" />
+                        </a>
+                      )}
+                    </div>
+                  </CardContent>
+                )}
+              </Card>
+            );
+          })}
+        </div>
+      )}
+
+      <CustomPlatformDialog
+        open={customDialogOpen}
+        onOpenChange={setCustomDialogOpen}
+        onSuccess={() => void fetchData()}
+      />
+    </div>
   );
 }

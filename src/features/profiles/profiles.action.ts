@@ -19,6 +19,26 @@ export const createProfileAction = authAction
         userId: user.id,
         skills:
           parsedInput.skills.length > 0 ? parsedInput.skills : Prisma.JsonNull,
+        experiences:
+          parsedInput.experiences.length > 0
+            ? parsedInput.experiences
+            : Prisma.JsonNull,
+        education:
+          parsedInput.education.length > 0
+            ? parsedInput.education
+            : Prisma.JsonNull,
+        certifications:
+          parsedInput.certifications.length > 0
+            ? parsedInput.certifications
+            : Prisma.JsonNull,
+        languages:
+          parsedInput.languages.length > 0
+            ? parsedInput.languages
+            : Prisma.JsonNull,
+        projects:
+          parsedInput.projects.length > 0
+            ? parsedInput.projects
+            : Prisma.JsonNull,
         tjmTarget: parsedInput.tjmTarget ?? null,
         workTypePreference: parsedInput.workTypePreference ?? null,
         zone: parsedInput.zone ?? null,
@@ -51,13 +71,17 @@ export const updateProfileAction = authAction
       throw new ApplicationError("Profil introuvable");
     }
 
+    const jsonField = (arr: unknown[] | undefined) =>
+      arr ? (arr.length > 0 ? arr : Prisma.JsonNull) : undefined;
+
     const updateData: Record<string, unknown> = {
       ...data,
-      skills: data.skills
-        ? data.skills.length > 0
-          ? data.skills
-          : Prisma.JsonNull
-        : undefined,
+      skills: jsonField(data.skills),
+      experiences: jsonField(data.experiences),
+      education: jsonField(data.education),
+      certifications: jsonField(data.certifications),
+      languages: jsonField(data.languages),
+      projects: jsonField(data.projects),
     };
 
     const updated = await prisma.userProfile.update({

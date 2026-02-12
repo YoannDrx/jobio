@@ -21,14 +21,42 @@ const removeUserPlatformSchema = z.object({
   id: z.string(),
 });
 
-export const getPlatformsAction = authAction.action(async () => {
-  const platforms = await prisma.platform.findMany({
-    where: { isSystem: true },
-    orderBy: { name: "asc" },
-  });
-
-  return platforms;
+const createCustomPlatformSchema = z.object({
+  name: z.string().min(1, "Le nom est requis"),
+  website: z.string().url().optional().or(z.literal("")),
 });
+
+const deleteCustomPlatformSchema = z.object({
+  id: z.string(),
+});
+
+function slugify(text: string): string {
+  return text
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+export const getPlatformsAction = authAction.action(
+  async ({ ctx: { user } }) => {
+    const platforms = await prisma.platform.findMany({
+      where: {
+        OR: [
+          { isSystem: true },
+          {
+            isSystem: false,
+            userPlatforms: { some: { userId: user.id } },
+          },
+        ],
+      },
+      orderBy: { name: "asc" },
+    });
+
+    return platforms;
+  },
+);
 
 export const getUserPlatformsAction = authAction.action(
   async ({ ctx: { user } }) => {
@@ -117,6 +145,74 @@ export const removeUserPlatformAction = authAction
     }
 
     await prisma.userPlatform.delete({
+      where: { id },
+    });
+
+    return { success: true };
+  });
+
+export const createCustomPlatformAction = authAction
+  .inputSchema(createCustomPlatformSchema)
+  .action(async ({ parsedInput, ctx: { user } }) => {
+    await enforcePlanLimit(user.id, "platforms");
+
+    const slug = slugify(parsedInput.name);
+
+    const existingSlug = await prisma.platform.findUnique({
+      where: { slug },
+    });
+
+    if (existingSlug) {
+      throw new ApplicationError("Une plateforme avec ce nom existe déjà");
+    }
+
+    const result = await prisma.$transaction(async (tx) => {
+      const platform = await tx.platform.create({
+        data: {
+          name: parsedInput.name,
+          slug,
+          website: parsedInput.website ?? null,
+          category: "GENERALIST",
+          isSystem: false,
+        },
+      });
+
+      const userPlatform = await tx.userPlatform.create({
+        data: {
+          userId: user.id,
+          platformId: platform.id,
+        },
+        include: { platform: true },
+      });
+
+      return userPlatform;
+    });
+
+    return result;
+  });
+
+export const deleteCustomPlatformAction = authAction
+  .inputSchema(deleteCustomPlatformSchema)
+  .action(async ({ parsedInput: { id }, ctx: { user } }) => {
+    const platform = await prisma.platform.findFirst({
+      where: { id, isSystem: false },
+    });
+
+    if (!platform) {
+      throw new ApplicationError("Plateforme introuvable ou non supprimable");
+    }
+
+    const userPlatform = await prisma.userPlatform.findFirst({
+      where: { userId: user.id, platformId: id },
+    });
+
+    if (!userPlatform) {
+      throw new ApplicationError(
+        "Vous n'êtes pas propriétaire de cette plateforme",
+      );
+    }
+
+    await prisma.platform.delete({
       where: { id },
     });
 

@@ -1,15 +1,23 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { ProfileCard } from "@/features/profiles/components/profile-card";
-import type { Skill } from "@/features/profiles/profiles.schema";
-import { Pencil, Trash2 } from "lucide-react";
+import type {
+  Skill,
+  Experience,
+  Education,
+  Language,
+  Project,
+} from "@/features/profiles/profiles.schema";
 
 type Profile = {
   id: string;
   name: string;
   headline: string;
   skills: Skill[] | null;
+  experiences: Experience[] | null;
+  education: Education[] | null;
+  languages: Language[] | null;
+  projects: Project[] | null;
   tjmTarget: number | null;
   workTypePreference: string | null;
   isDefault: boolean;
@@ -25,29 +33,21 @@ export function ProfileList({ profiles, onEdit, onDelete }: ProfileListProps) {
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
       {profiles.map((profile) => (
-        <div key={profile.id} className="relative">
-          <ProfileCard
-            name={profile.name}
-            headline={profile.headline}
-            skills={profile.skills}
-            tjmTarget={profile.tjmTarget}
-            workTypePreference={profile.workTypePreference}
-            isDefault={profile.isDefault}
-          />
-          <div className="absolute top-4 right-4 flex gap-1">
-            <Button variant="ghost" size="sm" onClick={() => onEdit(profile)}>
-              <Pencil className="size-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => onDelete(profile)}
-              className="text-destructive hover:text-destructive"
-            >
-              <Trash2 className="size-4" />
-            </Button>
-          </div>
-        </div>
+        <ProfileCard
+          key={profile.id}
+          name={profile.name}
+          headline={profile.headline}
+          skills={profile.skills}
+          experiences={profile.experiences}
+          education={profile.education}
+          languages={profile.languages}
+          projects={profile.projects}
+          tjmTarget={profile.tjmTarget}
+          workTypePreference={profile.workTypePreference}
+          isDefault={profile.isDefault}
+          onEdit={() => onEdit(profile)}
+          onDelete={() => onDelete(profile)}
+        />
       ))}
     </div>
   );

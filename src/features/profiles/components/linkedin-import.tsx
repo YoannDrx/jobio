@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { LoadingButton } from "@/features/form/submit-button";
 import type { CreateProfileInput } from "@/features/profiles/profiles.schema";
+import { resolveActionResult } from "@/lib/actions/actions-utils";
 
 import { useState } from "react";
 import { toast } from "sonner";
@@ -25,12 +26,12 @@ export function LinkedInImport({ onImport }: LinkedInImportProps) {
 
     setIsLoading(true);
     try {
-      const result = await importLinkedInAction({ content: content.trim() });
-      if (result.data) {
-        onImport(result.data);
-        setContent("");
-        toast.success("Profil importé avec succès");
-      }
+      const result = await resolveActionResult(
+        importLinkedInAction({ content: content.trim() }),
+      );
+      onImport(result);
+      setContent("");
+      toast.success("Profil importé avec succès");
     } catch (error) {
       toast.error(
         error instanceof Error

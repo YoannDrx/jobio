@@ -35,6 +35,13 @@ const SKILL_LEVELS = [
   { value: "EXPERT", label: "Expert" },
 ];
 
+const LANGUAGE_LEVELS = [
+  { value: "BEGINNER", label: "Débutant" },
+  { value: "INTERMEDIATE", label: "Intermédiaire" },
+  { value: "ADVANCED", label: "Avancé" },
+  { value: "FLUENT", label: "Courant" },
+];
+
 const WORK_TYPE_OPTIONS = [
   { value: "REMOTE", label: "Remote" },
   { value: "HYBRID", label: "Hybride" },
@@ -61,6 +68,11 @@ export function ProfileForm({
       headline: "",
       bio: "",
       skills: [],
+      experiences: [],
+      education: [],
+      certifications: [],
+      languages: [],
+      projects: [],
       tjmTarget: undefined,
       workTypePreference: undefined,
       zone: "",
@@ -71,14 +83,27 @@ export function ProfileForm({
     },
   });
 
-  const { fields, append, remove } = useFieldArray({
+  const skills = useFieldArray({ control: form.control, name: "skills" });
+  const experiences = useFieldArray({
     control: form.control,
-    name: "skills",
+    name: "experiences",
   });
-
-  const addSkill = () => {
-    append({ name: "", level: "BEGINNER" });
-  };
+  const education = useFieldArray({
+    control: form.control,
+    name: "education",
+  });
+  const certifications = useFieldArray({
+    control: form.control,
+    name: "certifications",
+  });
+  const languages = useFieldArray({
+    control: form.control,
+    name: "languages",
+  });
+  const projects = useFieldArray({
+    control: form.control,
+    name: "projects",
+  });
 
   return (
     <Form
@@ -137,16 +162,269 @@ export function ProfileForm({
         )}
       />
 
+      {/* Expériences */}
+      <div className="flex flex-col gap-2">
+        <div className="flex items-center justify-between">
+          <FormLabel>Expériences</FormLabel>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() =>
+              experiences.append({ title: "", company: "", description: "" })
+            }
+          >
+            Ajouter une expérience
+          </Button>
+        </div>
+        {experiences.fields.length > 0 && (
+          <div className="flex flex-col gap-3 rounded-lg border p-3">
+            {experiences.fields.map((field, index) => (
+              <div key={field.id} className="flex flex-col gap-2">
+                <div className="flex gap-2">
+                  <FormField
+                    control={form.control}
+                    name={`experiences.${index}.title`}
+                    render={({ field }) => (
+                      <FormItem className="flex-1">
+                        <FormControl>
+                          <Input placeholder="Poste" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name={`experiences.${index}.company`}
+                    render={({ field }) => (
+                      <FormItem className="flex-1">
+                        <FormControl>
+                          <Input placeholder="Entreprise" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => experiences.remove(index)}
+                    className="text-destructive hover:text-destructive"
+                  >
+                    <X className="size-4" />
+                  </Button>
+                </div>
+                <div className="flex gap-2">
+                  <FormField
+                    control={form.control}
+                    name={`experiences.${index}.startDate`}
+                    render={({ field }) => (
+                      <FormItem className="flex-1">
+                        <FormControl>
+                          <Input
+                            placeholder="Début (ex: 2022-01)"
+                            {...field}
+                            value={field.value ?? ""}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name={`experiences.${index}.endDate`}
+                    render={({ field }) => (
+                      <FormItem className="flex-1">
+                        <FormControl>
+                          <Input
+                            placeholder="Fin (ex: 2024-06)"
+                            {...field}
+                            value={field.value ?? ""}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <FormField
+                  control={form.control}
+                  name={`experiences.${index}.description`}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <Textarea
+                          placeholder="Description du poste..."
+                          rows={2}
+                          {...field}
+                          value={field.value ?? ""}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                {index < experiences.fields.length - 1 && (
+                  <hr className="my-1" />
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Formation */}
+      <div className="flex flex-col gap-2">
+        <div className="flex items-center justify-between">
+          <FormLabel>Formation</FormLabel>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() =>
+              education.append({
+                degree: "",
+                school: "",
+                field: "",
+                description: "",
+              })
+            }
+          >
+            Ajouter une formation
+          </Button>
+        </div>
+        {education.fields.length > 0 && (
+          <div className="flex flex-col gap-3 rounded-lg border p-3">
+            {education.fields.map((field, index) => (
+              <div key={field.id} className="flex flex-col gap-2">
+                <div className="flex gap-2">
+                  <FormField
+                    control={form.control}
+                    name={`education.${index}.degree`}
+                    render={({ field }) => (
+                      <FormItem className="flex-1">
+                        <FormControl>
+                          <Input placeholder="Diplôme" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name={`education.${index}.school`}
+                    render={({ field }) => (
+                      <FormItem className="flex-1">
+                        <FormControl>
+                          <Input placeholder="Établissement" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => education.remove(index)}
+                    className="text-destructive hover:text-destructive"
+                  >
+                    <X className="size-4" />
+                  </Button>
+                </div>
+                <div className="flex gap-2">
+                  <FormField
+                    control={form.control}
+                    name={`education.${index}.field`}
+                    render={({ field }) => (
+                      <FormItem className="flex-1">
+                        <FormControl>
+                          <Input
+                            placeholder="Domaine d'étude"
+                            {...field}
+                            value={field.value ?? ""}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name={`education.${index}.startDate`}
+                    render={({ field }) => (
+                      <FormItem className="flex-1">
+                        <FormControl>
+                          <Input
+                            placeholder="Début (ex: 2020)"
+                            {...field}
+                            value={field.value ?? ""}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name={`education.${index}.endDate`}
+                    render={({ field }) => (
+                      <FormItem className="flex-1">
+                        <FormControl>
+                          <Input
+                            placeholder="Fin (ex: 2023)"
+                            {...field}
+                            value={field.value ?? ""}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <FormField
+                  control={form.control}
+                  name={`education.${index}.description`}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <Textarea
+                          placeholder="Description, activités, mentions..."
+                          rows={2}
+                          {...field}
+                          value={field.value ?? ""}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                {index < education.fields.length - 1 && <hr className="my-1" />}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Compétences */}
       <div className="flex flex-col gap-2">
         <div className="flex items-center justify-between">
           <FormLabel>Compétences</FormLabel>
-          <Button type="button" variant="outline" size="sm" onClick={addSkill}>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => skills.append({ name: "", level: "BEGINNER" })}
+          >
             Ajouter une compétence
           </Button>
         </div>
-        {fields.length > 0 && (
+        {skills.fields.length > 0 && (
           <div className="flex flex-col gap-3 rounded-lg border p-3">
-            {fields.map((field, index) => (
+            {skills.fields.map((field, index) => (
               <div key={field.id} className="flex gap-2">
                 <FormField
                   control={form.control}
@@ -217,7 +495,265 @@ export function ProfileForm({
                   type="button"
                   variant="ghost"
                   size="sm"
-                  onClick={() => remove(index)}
+                  onClick={() => skills.remove(index)}
+                  className="text-destructive hover:text-destructive"
+                >
+                  <X className="size-4" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Certifications */}
+      <div className="flex flex-col gap-2">
+        <div className="flex items-center justify-between">
+          <FormLabel>Certifications</FormLabel>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() =>
+              certifications.append({ name: "", issuer: "", issueDate: "" })
+            }
+          >
+            Ajouter une certification
+          </Button>
+        </div>
+        {certifications.fields.length > 0 && (
+          <div className="flex flex-col gap-3 rounded-lg border p-3">
+            {certifications.fields.map((field, index) => (
+              <div key={field.id} className="flex gap-2">
+                <FormField
+                  control={form.control}
+                  name={`certifications.${index}.name`}
+                  render={({ field }) => (
+                    <FormItem className="flex-1">
+                      <FormControl>
+                        <Input placeholder="Certification" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name={`certifications.${index}.issuer`}
+                  render={({ field }) => (
+                    <FormItem className="flex-1">
+                      <FormControl>
+                        <Input placeholder="Organisme" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name={`certifications.${index}.issueDate`}
+                  render={({ field }) => (
+                    <FormItem className="w-32">
+                      <FormControl>
+                        <Input
+                          placeholder="Date"
+                          {...field}
+                          value={field.value ?? ""}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => certifications.remove(index)}
+                  className="text-destructive hover:text-destructive"
+                >
+                  <X className="size-4" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Projets */}
+      <div className="flex flex-col gap-2">
+        <div className="flex items-center justify-between">
+          <FormLabel>Projets</FormLabel>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => projects.append({ name: "", description: "" })}
+          >
+            Ajouter un projet
+          </Button>
+        </div>
+        {projects.fields.length > 0 && (
+          <div className="flex flex-col gap-3 rounded-lg border p-3">
+            {projects.fields.map((field, index) => (
+              <div key={field.id} className="flex flex-col gap-2">
+                <div className="flex gap-2">
+                  <FormField
+                    control={form.control}
+                    name={`projects.${index}.name`}
+                    render={({ field }) => (
+                      <FormItem className="flex-1">
+                        <FormControl>
+                          <Input placeholder="Nom du projet" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name={`projects.${index}.url`}
+                    render={({ field }) => (
+                      <FormItem className="flex-1">
+                        <FormControl>
+                          <Input
+                            placeholder="URL (optionnel)"
+                            {...field}
+                            value={field.value ?? ""}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => projects.remove(index)}
+                    className="text-destructive hover:text-destructive"
+                  >
+                    <X className="size-4" />
+                  </Button>
+                </div>
+                <div className="flex gap-2">
+                  <FormField
+                    control={form.control}
+                    name={`projects.${index}.startDate`}
+                    render={({ field }) => (
+                      <FormItem className="flex-1">
+                        <FormControl>
+                          <Input
+                            placeholder="Début (ex: 2022-01)"
+                            {...field}
+                            value={field.value ?? ""}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name={`projects.${index}.endDate`}
+                    render={({ field }) => (
+                      <FormItem className="flex-1">
+                        <FormControl>
+                          <Input
+                            placeholder="Fin (ex: 2024-06)"
+                            {...field}
+                            value={field.value ?? ""}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+                <FormField
+                  control={form.control}
+                  name={`projects.${index}.description`}
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <Textarea
+                          placeholder="Description du projet..."
+                          rows={2}
+                          {...field}
+                          value={field.value ?? ""}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                {index < projects.fields.length - 1 && <hr className="my-1" />}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Langues */}
+      <div className="flex flex-col gap-2">
+        <div className="flex items-center justify-between">
+          <FormLabel>Langues</FormLabel>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => languages.append({ name: "", level: "BEGINNER" })}
+          >
+            Ajouter une langue
+          </Button>
+        </div>
+        {languages.fields.length > 0 && (
+          <div className="flex flex-col gap-3 rounded-lg border p-3">
+            {languages.fields.map((field, index) => (
+              <div key={field.id} className="flex gap-2">
+                <FormField
+                  control={form.control}
+                  name={`languages.${index}.name`}
+                  render={({ field }) => (
+                    <FormItem className="flex-1">
+                      <FormControl>
+                        <Input placeholder="Langue" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name={`languages.${index}.level`}
+                  render={({ field }) => (
+                    <FormItem className="w-36">
+                      <Select
+                        onValueChange={field.onChange}
+                        value={field.value}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {LANGUAGE_LEVELS.map((opt) => (
+                            <SelectItem key={opt.value} value={opt.value}>
+                              {opt.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => languages.remove(index)}
                   className="text-destructive hover:text-destructive"
                 >
                   <X className="size-4" />

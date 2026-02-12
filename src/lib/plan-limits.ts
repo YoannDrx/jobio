@@ -8,6 +8,7 @@ type LimitFeature =
   | "profiles"
   | "contacts"
   | "platforms"
+  | "companies"
   | "aiRequestsPerMonth";
 
 async function getUserPlanLimits(userId: string) {
@@ -51,6 +52,9 @@ export async function checkPlanLimit(
       break;
     case "platforms":
       used = await prisma.userPlatform.count({ where: { userId } });
+      break;
+    case "companies":
+      used = await prisma.targetCompany.count({ where: { userId } });
       break;
     case "aiRequestsPerMonth": {
       const now = new Date();

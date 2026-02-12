@@ -2,6 +2,7 @@ import type { Subscription } from "@/generated/prisma";
 import { logger } from "@/lib/logger";
 import {
   Bot,
+  Building2,
   Briefcase,
   ChartBar,
   Clock,
@@ -18,6 +19,7 @@ const DEFAULT_LIMIT = {
   profiles: 2,
   contacts: 30,
   platforms: 3,
+  companies: 10,
   aiRequestsPerMonth: 5,
   analyticsHistoryDays: 7,
 };
@@ -91,6 +93,7 @@ export const AUTH_PLANS: AppAuthPlan[] = [
       profiles: 5,
       contacts: 200,
       platforms: 10,
+      companies: 50,
       aiRequestsPerMonth: 50,
       analyticsHistoryDays: 90,
     },
@@ -163,6 +166,7 @@ export const AUTH_PLANS: AppAuthPlan[] = [
       profiles: 999999,
       contacts: 999999,
       platforms: 999999,
+      companies: 999999,
       aiRequestsPerMonth: 999,
       analyticsHistoryDays: 999999,
     },
@@ -207,6 +211,12 @@ export const LIMITS_CONFIG: Record<
     getLabel: (value: number) =>
       value >= 999999 ? "Plateformes illimitées" : `${value} plateformes`,
     description: "Connecter vos plateformes de freelance",
+  },
+  companies: {
+    icon: Building2,
+    getLabel: (value: number) =>
+      value >= 999999 ? "Entreprises illimitées" : `${value} entreprises`,
+    description: "Suivre les entreprises que vous démarchez",
   },
   aiRequestsPerMonth: {
     icon: Bot,

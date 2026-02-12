@@ -50,7 +50,7 @@ export function OnboardingWizard({ status }: OnboardingWizardProps) {
       icon: Settings,
       title: "Sélectionne tes plateformes",
       description: "Ajoute les plateformes où tu prospèctes",
-      href: "/app/platforms",
+      href: "/app/prospection",
       completed: status.hasPlatforms,
     },
     {
@@ -142,7 +142,9 @@ export function OnboardingWizard({ status }: OnboardingWizardProps) {
 
       {nextStep ? (
         <div className="mb-4 rounded-lg border border-emerald-200 bg-emerald-50/50 p-3 dark:border-emerald-900 dark:bg-emerald-950/10">
-          <p className="text-sm font-medium">Prochaine priorité: {nextStep.title}</p>
+          <p className="text-sm font-medium">
+            Prochaine priorité: {nextStep.title}
+          </p>
           <p className="text-muted-foreground mt-0.5 text-xs">
             {nextStep.description}
           </p>
@@ -151,7 +153,7 @@ export function OnboardingWizard({ status }: OnboardingWizardProps) {
 
       <div className="space-y-4">
         <div>
-          <p className="mb-2 text-xs font-semibold uppercase tracking-wide">
+          <p className="mb-2 text-xs font-semibold tracking-wide uppercase">
             Fondations
           </p>
           <div className="flex flex-col gap-3">
@@ -176,7 +178,9 @@ export function OnboardingWizard({ status }: OnboardingWizardProps) {
                     {step.completed ? (
                       <Zap className="size-5 flex-shrink-0 text-green-500" />
                     ) : (
-                      <div className="text-muted-foreground flex-shrink-0">→</div>
+                      <div className="text-muted-foreground flex-shrink-0">
+                        →
+                      </div>
                     )}
                   </div>
                 </Link>
@@ -187,7 +191,7 @@ export function OnboardingWizard({ status }: OnboardingWizardProps) {
 
         {showActivation ? (
           <div>
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wide">
+            <p className="mb-2 text-xs font-semibold tracking-wide uppercase">
               Activation commerciale
             </p>
             <div className="flex flex-col gap-3">
@@ -212,7 +216,9 @@ export function OnboardingWizard({ status }: OnboardingWizardProps) {
                       {step.completed ? (
                         <Zap className="size-5 flex-shrink-0 text-green-500" />
                       ) : (
-                        <div className="text-muted-foreground flex-shrink-0">→</div>
+                        <div className="text-muted-foreground flex-shrink-0">
+                          →
+                        </div>
                       )}
                     </div>
                   </Link>

@@ -24,10 +24,11 @@ model Contact {
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
-  user         User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
-  missions     Mission[]
-  interactions ContactInteraction[]
-  sentEmails   SentEmail[]
+  user            User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  missions        Mission[]
+  interactions    ContactInteraction[]
+  sentEmails      SentEmail[]
+  targetCompanies TargetCompany[]
 
   @@index([userId, deletedAt])
   @@map("contact")

@@ -24,9 +24,14 @@ import {
 } from "@/features/profiles/profiles.action";
 import { ProfileForm } from "@/features/profiles/components/profile-form";
 import { ProfileList } from "@/features/profiles/components/profile-list";
-import { LinkedInImport } from "@/features/profiles/components/linkedin-import";
+import { LinkedInImportTabs } from "@/features/profiles/components/linkedin-import-tabs";
 import type {
+  Certification,
   CreateProfileInput,
+  Education,
+  Experience,
+  Language,
+  Project,
   Skill,
 } from "@/features/profiles/profiles.schema";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -40,6 +45,11 @@ type Profile = {
   headline: string;
   bio: string | null;
   skills: Skill[] | null;
+  experiences: Experience[] | null;
+  education: Education[] | null;
+  certifications: Certification[] | null;
+  languages: Language[] | null;
+  projects: Project[] | null;
   tjmTarget: number | null;
   workTypePreference: string | null;
   zone: string | null;
@@ -65,6 +75,11 @@ export default function ProfilesPage() {
           headline: p.headline,
           bio: p.bio,
           skills: p.skills as Skill[] | null,
+          experiences: p.experiences as Experience[] | null,
+          education: p.education as Education[] | null,
+          certifications: p.certifications as Certification[] | null,
+          languages: p.languages as Language[] | null,
+          projects: p.projects as Project[] | null,
           tjmTarget: p.tjmTarget,
           workTypePreference: p.workTypePreference,
           zone: p.zone,
@@ -155,7 +170,7 @@ export default function ProfilesPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <LinkedInImport onImport={handleImport} />
+              <LinkedInImportTabs onImport={handleImport} />
             </CardContent>
           </Card>
         )}
@@ -235,6 +250,16 @@ export default function ProfilesPage() {
                 bio: editingProfile.bio ?? undefined,
                 skills: (editingProfile.skills ??
                   []) as CreateProfileInput["skills"],
+                experiences: (editingProfile.experiences ??
+                  []) as CreateProfileInput["experiences"],
+                education: (editingProfile.education ??
+                  []) as CreateProfileInput["education"],
+                certifications: (editingProfile.certifications ??
+                  []) as CreateProfileInput["certifications"],
+                languages: (editingProfile.languages ??
+                  []) as CreateProfileInput["languages"],
+                projects: (editingProfile.projects ??
+                  []) as CreateProfileInput["projects"],
                 tjmTarget: editingProfile.tjmTarget ?? undefined,
                 workTypePreference: editingProfile.workTypePreference as
                   | "REMOTE"

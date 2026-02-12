@@ -1,6 +1,7 @@
 "use server";
 
 import { authAction } from "@/lib/actions/safe-actions";
+import { ActionError } from "@/lib/errors/action-error";
 import { prisma } from "@/lib/prisma";
 import { generateObject } from "ai";
 import { z } from "zod";
@@ -10,20 +11,38 @@ import {
   LINKEDIN_PARSER_SYSTEM_PROMPT,
   linkedInParserOutputSchema,
 } from "@/features/ai/prompts/linkedin-parser.prompt";
+import { extractTextFromPDF } from "./pdf-parser";
 
-export const importLinkedInAction = authAction
+export const importLinkedInPdfAction = authAction
   .inputSchema(
     z.object({
-      content: z.string().min(10, "Le contenu est trop court"),
+      formData: z.instanceof(FormData),
     }),
   )
-  .action(async ({ parsedInput: { content }, ctx: { user } }) => {
+  .action(async ({ parsedInput: { formData }, ctx: { user } }) => {
+    const file = formData.get("file") as File;
+
+    if (!(file instanceof File)) {
+      throw new ActionError("Aucun fichier fourni");
+    }
+
+    if (file.type !== "application/pdf") {
+      throw new ActionError("Seuls les fichiers PDF sont acceptés");
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      throw new ActionError("Le fichier est trop volumineux (max 5 Mo)");
+    }
+
     await checkAndIncrementAIQuota(user.id);
+
+    const buffer = await file.arrayBuffer();
+    const text = await extractTextFromPDF(buffer);
 
     const result = await generateObject({
       model: AI_MODELS.fast,
       system: LINKEDIN_PARSER_SYSTEM_PROMPT,
-      prompt: content,
+      prompt: text,
       schema: linkedInParserOutputSchema,
     });
 

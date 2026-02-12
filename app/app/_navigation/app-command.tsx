@@ -57,7 +57,7 @@ const PAGES: CommandPage[] = [
   { label: "Templates", href: "/app/templates", icon: FileText },
   { label: "Profils", href: "/app/profiles", icon: UserCircle },
   { label: "Emails", href: "/app/emails", icon: Mail },
-  { label: "Plateformes", href: "/app/platforms", icon: Globe },
+  { label: "Prospection", href: "/app/prospection", icon: Globe },
   { label: "Notifications", href: "/app/notifications", icon: Bell },
   { label: "Parametres", href: "/account", icon: Settings },
 ];

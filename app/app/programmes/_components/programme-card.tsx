@@ -2,8 +2,14 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Lock, Unlock, BookOpen } from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { BookOpen, CheckCircle, Lock, Sparkles } from "lucide-react";
 import Link from "next/link";
 
 type ProgrammeCardProps = {
@@ -13,7 +19,6 @@ type ProgrammeCardProps = {
     title: string;
     description: string;
     authorName: string;
-    authorImage?: string | null;
     price: number;
     isFree: boolean;
     templateCount: number;
@@ -21,95 +26,105 @@ type ProgrammeCardProps = {
   };
 };
 
-const PROGRAM_COLORS: Record<string, string> = {
-  "se-lancer-linkedin":
-    "bg-emerald-500/10 text-emerald-500 border-emerald-500/20",
-  "attirer-clients": "bg-violet-500/10 text-violet-500 border-violet-500/20",
-  "personal-branding": "bg-pink-500/10 text-pink-500 border-pink-500/20",
-  "exploser-croissance":
-    "bg-orange-500/10 text-orange-500 border-orange-500/20",
+const PROGRAM_STYLES: Record<
+  string,
+  { border: string; badge: string; glow: string }
+> = {
+  "se-lancer-linkedin": {
+    border: "border-t-emerald-500",
+    badge: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+    glow: "group-hover:shadow-emerald-500/10",
+  },
+  "attirer-clients": {
+    border: "border-t-violet-500",
+    badge: "bg-violet-500/10 text-violet-600 dark:text-violet-400",
+    glow: "group-hover:shadow-violet-500/10",
+  },
+  "personal-branding": {
+    border: "border-t-pink-500",
+    badge: "bg-pink-500/10 text-pink-600 dark:text-pink-400",
+    glow: "group-hover:shadow-pink-500/10",
+  },
+  "exploser-croissance": {
+    border: "border-t-orange-500",
+    badge: "bg-orange-500/10 text-orange-600 dark:text-orange-400",
+    glow: "group-hover:shadow-orange-500/10",
+  },
 };
 
-const PROGRAM_ACCENT: Record<string, string> = {
-  "se-lancer-linkedin": "from-emerald-500/20 to-emerald-500/5",
-  "attirer-clients": "from-violet-500/20 to-violet-500/5",
-  "personal-branding": "from-pink-500/20 to-pink-500/5",
-  "exploser-croissance": "from-orange-500/20 to-orange-500/5",
+const DEFAULT_STYLE = {
+  border: "border-t-primary",
+  badge: "bg-primary/10 text-primary",
+  glow: "group-hover:shadow-primary/10",
 };
-
-function getInitials(name: string) {
-  return name
-    .split(" ")
-    .map((n) => n[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
-}
 
 export function ProgrammeCard({ program }: ProgrammeCardProps) {
-  const colorClass =
-    PROGRAM_COLORS[program.slug] ??
-    "bg-primary/10 text-primary border-primary/20";
-  const accentClass =
-    PROGRAM_ACCENT[program.slug] ?? "from-primary/20 to-primary/5";
+  const style = PROGRAM_STYLES[program.slug] ?? DEFAULT_STYLE;
 
   return (
-    <Card className="group relative flex flex-col overflow-hidden transition-shadow hover:shadow-lg">
-      {/* Gradient header */}
-      <div className={`bg-gradient-to-b ${accentClass} px-5 pt-5 pb-6`}>
-        <div className="flex items-start justify-between">
-          <Badge variant="outline" className={colorClass}>
-            {program.isFree
-              ? "Gratuit"
-              : `${(program.price / 100).toFixed(0)}€`}
+    <Card
+      className={`group border-t-4 ${style.border} ${style.glow} flex h-full flex-col transition-shadow hover:shadow-lg`}
+    >
+      <CardHeader>
+        <div className="flex items-center gap-2">
+          <Badge
+            variant="secondary"
+            className={`${style.badge} border-none font-semibold`}
+          >
+            {program.isFree ? (
+              <>
+                <Sparkles className="size-3" />
+                Gratuit
+              </>
+            ) : (
+              `${(program.price / 100).toFixed(0)} €`
+            )}
           </Badge>
-          {/* Author avatar */}
-          <div className="bg-muted flex size-10 items-center justify-center rounded-full text-xs font-semibold">
-            {getInitials(program.authorName)}
-          </div>
+          {program.isUnlocked && (
+            <Badge
+              variant="secondary"
+              className="border-none bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+            >
+              <CheckCircle className="size-3" />
+              Débloqué
+            </Badge>
+          )}
         </div>
-        <h3 className="mt-3 text-lg leading-tight font-bold">
-          {program.title}
-        </h3>
-        <p className="text-muted-foreground mt-1 text-xs">
+        <CardTitle className="text-lg">{program.title}</CardTitle>
+        <p className="text-muted-foreground text-xs">
           par {program.authorName}
         </p>
-      </div>
+      </CardHeader>
 
-      {/* Content */}
-      <div className="flex flex-1 flex-col gap-4 px-5 pt-4 pb-5">
+      <CardContent className="flex flex-1 flex-col gap-4">
         <p className="text-muted-foreground line-clamp-3 text-sm leading-relaxed">
           {program.description}
         </p>
 
-        <div className="flex items-center gap-2">
-          <BookOpen className="text-muted-foreground size-4" />
-          <span className="text-muted-foreground text-sm">
-            {program.templateCount} templates
-          </span>
+        <div className="text-muted-foreground mt-auto flex items-center gap-1.5 text-sm">
+          <BookOpen className="size-3.5" />
+          <span>{program.templateCount} templates</span>
         </div>
+      </CardContent>
 
-        {/* Status + CTA */}
-        <div className="mt-auto">
-          {program.isUnlocked ? (
-            <Button asChild variant="outline" className="w-full">
-              <Link href={`/app/programmes/${program.slug}`}>
-                <Unlock className="size-4" />
-                Voir les templates
-              </Link>
-            </Button>
-          ) : (
-            <Button asChild className="w-full">
-              <Link href={`/app/programmes/${program.slug}`}>
-                <Lock className="size-4" />
-                {program.isFree
-                  ? "Débloquer gratuitement"
-                  : `Débloquer pour ${(program.price / 100).toFixed(0)}€`}
-              </Link>
-            </Button>
-          )}
-        </div>
-      </div>
+      <CardFooter>
+        {program.isUnlocked ? (
+          <Button asChild variant="outline" className="w-full">
+            <Link href={`/app/programmes/${program.slug}`}>
+              Voir les templates
+            </Link>
+          </Button>
+        ) : (
+          <Button asChild className="w-full">
+            <Link href={`/app/programmes/${program.slug}`}>
+              <Lock className="size-4" />
+              {program.isFree
+                ? "Débloquer gratuitement"
+                : `Débloquer pour ${(program.price / 100).toFixed(0)} €`}
+            </Link>
+          </Button>
+        )}
+      </CardFooter>
     </Card>
   );
 }
