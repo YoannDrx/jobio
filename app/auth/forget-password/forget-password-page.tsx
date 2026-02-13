@@ -27,8 +27,11 @@ export function ForgetPasswordPage() {
 
   const forgetPasswordMutation = useMutation({
     mutationFn: async (values: EmailFormType) => {
+      const forgetPassword = authClient.forgetPassword as unknown as (
+        params: Record<string, string>,
+      ) => Promise<{ data: unknown; error: Error }>;
       return unwrapSafePromise(
-        authClient.forgetPassword({
+        forgetPassword({
           email: values.email,
           redirectTo: "/auth/reset-password",
         }),
