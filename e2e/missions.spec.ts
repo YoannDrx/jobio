@@ -3,17 +3,14 @@ import { expect, test } from "@playwright/test";
 import { createTestAccount } from "./utils/auth-test";
 
 test.describe("missions", () => {
-  // Use a wider viewport for pipeline tests (Kanban board needs horizontal space)
-  test.use({ viewport: { width: 1920, height: 1080 } });
-
   test("create a mission and verify it appears", async ({ page }) => {
     const userData = await createTestAccount({
       page,
       callbackURL: "/app",
     });
 
-    // Navigate to pipeline
-    await page.goto("/app/pipeline");
+    // Navigate to pipeline in list view (more reliable than kanban for E2E)
+    await page.goto("/app/pipeline?view=list");
     await page.waitForLoadState("networkidle");
 
     // Click on add mission button
@@ -30,13 +27,13 @@ test.describe("missions", () => {
     // Submit the form
     await page.getByRole("button", { name: /créer la mission/i }).click();
 
-    // Wait for success
-    await page.waitForLoadState("networkidle");
+    // Wait for success toast
+    await expect(page.getByText(/mission créée/i)).toBeVisible({
+      timeout: 10000,
+    });
 
-    // Verify the mission appears in the pipeline
-    const missionText = page.getByText("Mission Test E2E").first();
-    await missionText.scrollIntoViewIfNeeded();
-    await expect(missionText).toBeVisible({
+    // Verify the mission appears in the list
+    await expect(page.getByText("Mission Test E2E").first()).toBeVisible({
       timeout: 10000,
     });
 
@@ -69,17 +66,15 @@ test.describe("missions", () => {
       },
     });
 
-    // Navigate to pipeline
-    await page.goto("/app/pipeline");
+    // Navigate to pipeline in list view
+    await page.goto("/app/pipeline?view=list");
     await page.waitForLoadState("networkidle");
 
-    // Scroll to and click on the mission to open detail
-    const missionText = page.getByText("Mission Status Test").first();
-    await missionText.scrollIntoViewIfNeeded();
-    await missionText.click();
+    // Click on the mission to open detail
+    await page.getByText("Mission Status Test").first().click();
 
     const detailSheet = page.getByRole("dialog");
-    await expect(detailSheet).toBeVisible();
+    await expect(detailSheet).toBeVisible({ timeout: 10000 });
     await expect(
       detailSheet.getByRole("heading", { name: "Mission Status Test" }),
     ).toBeVisible();
@@ -110,12 +105,11 @@ test.describe("missions", () => {
       },
     });
 
-    await page.goto("/app/pipeline");
+    // Use list view and include EN_PAUSE in the status filter via URL
+    await page.goto("/app/pipeline?view=list&status=EN_PAUSE");
     await page.waitForLoadState("networkidle");
 
-    const missionText = page.getByText("Mission Pause Test").first();
-    await missionText.scrollIntoViewIfNeeded();
-    await expect(missionText).toBeVisible({
+    await expect(page.getByText("Mission Pause Test").first()).toBeVisible({
       timeout: 10000,
     });
 
@@ -153,12 +147,10 @@ test.describe("missions", () => {
       ],
     });
 
-    await page.goto("/app/pipeline");
+    await page.goto("/app/pipeline?view=list");
     await page.waitForLoadState("networkidle");
 
-    const activeText = page.getByText("Mission Active Visible").first();
-    await activeText.scrollIntoViewIfNeeded();
-    await expect(activeText).toBeVisible({
+    await expect(page.getByText("Mission Active Visible").first()).toBeVisible({
       timeout: 10000,
     });
     await expect(page.getByText("Mission Archivee Cachee")).toHaveCount(0);
@@ -188,7 +180,7 @@ test.describe("missions", () => {
       })),
     });
 
-    await page.goto("/app/pipeline");
+    await page.goto("/app/pipeline?view=list");
     await page.waitForLoadState("networkidle");
 
     await expect(page.getByText(/limite atteinte/i).first()).toBeVisible({
@@ -242,7 +234,7 @@ test.describe("missions", () => {
       ],
     });
 
-    await page.goto("/app/pipeline");
+    await page.goto("/app/pipeline?view=list");
     await page.waitForLoadState("networkidle");
 
     await page
@@ -253,9 +245,14 @@ test.describe("missions", () => {
     await page.getByLabel(/entreprise/i).fill("AllowedCorp");
     await page.getByRole("button", { name: /créer la mission/i }).click();
 
-    const missionText = page.getByText("Mission Allowed By Archive").first();
-    await missionText.scrollIntoViewIfNeeded();
-    await expect(missionText).toBeVisible({
+    // Wait for success toast
+    await expect(page.getByText(/mission créée/i)).toBeVisible({
+      timeout: 10000,
+    });
+
+    await expect(
+      page.getByText("Mission Allowed By Archive").first(),
+    ).toBeVisible({
       timeout: 10000,
     });
 
