@@ -75,7 +75,7 @@ export async function POST(req: Request) {
   const result = streamText({
     model: AI_MODELS.fast,
     system: SYSTEM_PROMPT,
-    messages: convertToModelMessages(messages),
+    messages: await convertToModelMessages(messages),
     tools,
     stopWhen: stepCountIs(5),
     onFinish: async ({ text }) => {
