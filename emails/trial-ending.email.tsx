@@ -6,6 +6,7 @@ import {
   Preview,
   Section,
 } from "@react-email/components";
+import { BilingualDivider } from "./utils/bilingual-divider";
 import { EmailLayout } from "./utils/email-layout";
 
 type TrialEndingEmailProps = {
@@ -71,8 +72,61 @@ export default function TrialEndingEmail({
         5 requêtes IA/mois.
       </Text>
       <Text style={{ fontSize: "14px", lineHeight: "20px", marginTop: "16px" }}>
-        À bientôt,{"\n"}
-        L'équipe {SiteConfig.title}
+        À bientôt,{"\n"}L{"'"}équipe {SiteConfig.title}
+      </Text>
+
+      <BilingualDivider />
+
+      <Heading as="h1" style={{ fontSize: "24px", fontWeight: "bold" }}>
+        Your trial is ending soon
+      </Heading>
+      <Text style={{ fontSize: "16px", lineHeight: "24px" }}>Hi {name},</Text>
+      <Text style={{ fontSize: "16px", lineHeight: "24px" }}>
+        Your free trial of {SiteConfig.title} ends in{" "}
+        <strong>{daysLeft} days</strong>.
+      </Text>
+      <Text style={{ fontSize: "16px", lineHeight: "24px" }}>
+        To keep using all features without interruption, upgrade to Pro:
+      </Text>
+      <Section
+        style={{
+          backgroundColor: "#f8fafc",
+          borderRadius: "8px",
+          padding: "16px",
+          margin: "16px 0",
+        }}
+      >
+        <Text style={{ fontSize: "16px", fontWeight: "bold", margin: "0" }}>
+          Pro Plan — 9.99€/month
+        </Text>
+        <Text style={{ fontSize: "14px", color: "#64748B", margin: "4px 0 0" }}>
+          Unlimited missions · 5 profiles · 200 contacts · 50 AI requests/month
+          · 90-day analytics
+        </Text>
+      </Section>
+      <Section style={{ textAlign: "center", marginTop: "24px" }}>
+        <Button
+          href={`${SiteConfig.prodUrl}/account/billing`}
+          style={{
+            backgroundColor: SiteConfig.brand.primary,
+            color: "#000",
+            padding: "12px 24px",
+            borderRadius: "6px",
+            fontSize: "16px",
+            fontWeight: "bold",
+            textDecoration: "none",
+          }}
+        >
+          Upgrade to Pro
+        </Button>
+      </Section>
+      <Text style={{ fontSize: "14px", color: "#64748B", marginTop: "24px" }}>
+        Not ready? The Free plan remains available with 15 missions, 2 profiles
+        and 5 AI requests/month.
+      </Text>
+      <Text style={{ fontSize: "14px", lineHeight: "20px", marginTop: "16px" }}>
+        See you soon,{"\n"}
+        The {SiteConfig.title} team
       </Text>
     </EmailLayout>
   );

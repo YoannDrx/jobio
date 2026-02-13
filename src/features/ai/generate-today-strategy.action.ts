@@ -3,6 +3,7 @@
 import { authAction } from "@/lib/actions/safe-actions";
 import { ApplicationError } from "@/lib/errors/application-error";
 import { prisma } from "@/lib/prisma";
+
 import { checkAndIncrementAIQuota } from "./ai-quota";
 import { generateObject } from "ai";
 import { AI_MODELS } from "./ai-config";
@@ -50,7 +51,13 @@ export const generateTodayStrategyAction = authAction
           userId: user.id,
           deletedAt: null,
           status: {
-            in: ["A_POSTULER", "POSTULE", "ENTRETIEN", "PROPOSITION", "EN_PAUSE"],
+            in: [
+              "A_POSTULER",
+              "POSTULE",
+              "ENTRETIEN",
+              "PROPOSITION",
+              "EN_PAUSE",
+            ],
           },
         },
       }),
@@ -84,7 +91,13 @@ export const generateTodayStrategyAction = authAction
           userId: user.id,
           deletedAt: null,
           status: {
-            in: ["A_POSTULER", "POSTULE", "ENTRETIEN", "PROPOSITION", "EN_PAUSE"],
+            in: [
+              "A_POSTULER",
+              "POSTULE",
+              "ENTRETIEN",
+              "PROPOSITION",
+              "EN_PAUSE",
+            ],
           },
           updatedAt: { lt: fourteenDaysAgo },
         },
@@ -172,6 +185,28 @@ Objectif:
       temperature: 0.3,
     });
 
-    return result.object;
-  });
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
 
+    const saved = await prisma.dailyStrategy.upsert({
+      where: { userId_date: { userId: user.id, date: today } },
+      create: {
+        userId: user.id,
+        date: today,
+        summary: result.object.summary,
+        priorities: result.object.priorities,
+        quickWins: result.object.quickWins,
+        risks: result.object.risks,
+      },
+      update: {
+        summary: result.object.summary,
+        priorities: result.object.priorities,
+        quickWins: result.object.quickWins,
+        risks: result.object.risks,
+        completedPriorities: [],
+        completedQuickWins: [],
+      },
+    });
+
+    return saved;
+  });

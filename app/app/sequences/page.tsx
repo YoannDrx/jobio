@@ -13,6 +13,7 @@ import {
   Layout,
   LayoutActions,
   LayoutContent,
+  LayoutDescription,
   LayoutHeader,
   LayoutTitle,
 } from "@/features/page/layout";
@@ -29,6 +30,7 @@ import type { CreateSequenceInput } from "@/features/sequences/sequences.schema"
 import { Skeleton } from "@/components/ui/skeleton";
 import { ListOrdered, Plus } from "lucide-react";
 import { toast } from "sonner";
+import { FeatureGuide } from "@/components/nowts/feature-guide";
 import type { Sequence } from "@/generated/prisma";
 
 export default function SequencesPage() {
@@ -107,7 +109,22 @@ export default function SequencesPage() {
   return (
     <Layout size="lg">
       <LayoutHeader>
-        <LayoutTitle>Séquences ({sequences.length})</LayoutTitle>
+        <div className="flex items-center gap-1">
+          <LayoutTitle>Séquences ({sequences.length})</LayoutTitle>
+          <FeatureGuide title="Séquences">
+            <p>
+              Une séquence est un plan de relance automatique en plusieurs
+              étapes. Par exemple : Email J+3, Relance J+7, Appel J+14.
+            </p>
+            <p>
+              Crée une séquence, puis applique-la depuis une mission. Les
+              relances seront créées automatiquement.
+            </p>
+          </FeatureGuide>
+        </div>
+        <LayoutDescription>
+          Automatise tes relances avec des plans de suivi en plusieurs étapes.
+        </LayoutDescription>
       </LayoutHeader>
       <LayoutActions>
         <Button
@@ -133,7 +150,7 @@ export default function SequencesPage() {
           <EmptyState
             icon={ListOrdered}
             title="Aucune séquence"
-            description="Créez votre première séquence de relance pour automatiser vos suivi."
+            description="Crée ta première séquence pour automatiser tes relances."
             action={{
               label: "Créer une séquence",
               onClick: () => setShowForm(true),

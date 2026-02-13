@@ -44,6 +44,7 @@ import { PipelineFilters } from "@/features/missions/components/pipeline/pipelin
 import { downloadCsv, generateCsv } from "@/lib/csv-export";
 import { Archive, Download, Kanban, List, Plus, Search } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { FeatureGuide } from "@/components/nowts/feature-guide";
 import type { ComponentProps } from "react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -315,7 +316,16 @@ export default function PipelinePage() {
   return (
     <Layout size="xl">
       <LayoutHeader>
-        <LayoutTitle>Pipeline</LayoutTitle>
+        <div className="flex items-center gap-1">
+          <LayoutTitle>Pipeline</LayoutTitle>
+          <FeatureGuide title="Pipeline">
+            <p>Le pipeline représente le cycle de tes missions :</p>
+            <p>
+              À postuler → Postulé → Entretien → Proposition → Accepté / Refusé
+            </p>
+            <p>Chaque statut correspond à une étape du processus commercial.</p>
+          </FeatureGuide>
+        </div>
       </LayoutHeader>
       <LayoutActions className="gap-2">
         <div className="flex rounded-lg border p-0.5">

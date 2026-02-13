@@ -57,6 +57,7 @@ model Mission {
   followUps      FollowUp[]
   activityEvents ActivityEvent[]
   sentEmails     SentEmail[]
+  templateUsages MessageTemplateUsage[]
 
   @@index([userId, status])
   @@index([userId, createdAt])

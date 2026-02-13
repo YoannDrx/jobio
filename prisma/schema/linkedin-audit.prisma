@@ -1,0 +1,19 @@
+model LinkedInAudit {
+  id           String @id @default(nanoid(11))
+  userId       String
+  profileId    String
+  overallScore Int
+  sections     Json
+  strengths    String[]
+  gaps         String[]
+  quickWins    String[]
+  actionPlan   Json
+
+  createdAt DateTime @default(now())
+
+  user    User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  profile UserProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("linkedin_audit")
+}

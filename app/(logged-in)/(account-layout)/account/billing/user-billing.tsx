@@ -78,7 +78,7 @@ export function UserBilling(props: {
       <LayoutHeader>
         <LayoutTitle>Facturation</LayoutTitle>
       </LayoutHeader>
-      <LayoutActions>
+      <LayoutActions className="gap-2">
         <LoadingButton
           variant="outline"
           className="w-full sm:w-auto"
@@ -95,7 +95,7 @@ export function UserBilling(props: {
           <>
             {!subscription.cancelAtPeriodEnd && (
               <Button
-                variant="outline"
+                variant="destructive"
                 onClick={() => router.push(`/account/billing/cancel`)}
               >
                 <XCircle className="mr-2 size-4" />

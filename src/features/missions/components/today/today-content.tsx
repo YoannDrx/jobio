@@ -26,6 +26,8 @@ import { MISSION_STATUS_CONFIG } from "@/components/nowts/status-badge";
 import type { MissionStatus } from "@/components/nowts/status-badge";
 import { TODAY_SUMMARY_STATUS_VALUES } from "@/features/missions/mission-status";
 import { checkTodayNotificationsAction } from "@/features/notifications/check-today-notifications.action";
+import { ProfileCompleteness } from "@/features/profiles/components/profile-completeness";
+import { AIInsightsWidget } from "@/features/analytics/components/ai-insights-widget";
 
 type RecentMission = {
   id: string;
@@ -237,6 +239,12 @@ export function TodayContent({
         />
       )}
 
+      {/* Profile completeness */}
+      <ProfileCompleteness />
+
+      {/* AI Insights */}
+      <AIInsightsWidget />
+
       {/* Suggestions */}
       <TodaySuggestions suggestions={suggestions} />
 
@@ -262,7 +270,7 @@ export function TodayContent({
       {/* Clean state section */}
       {isClean && (
         <Card className="border-status-success/30 bg-status-success/5">
-          <CardContent className="pt-6">
+          <CardContent>
             <div className="flex items-center gap-3 text-center">
               <CheckCircle2 className="text-status-success size-5 shrink-0" />
               <p className="text-status-success text-sm font-medium">

@@ -32,8 +32,8 @@ export const getWeeklyActivityAction = authAction
         },
         completedAt: {
           not: null,
-          gte: dateRange.gte,
-          ...(dateRange.lte ? { lte: dateRange.lte } : {}),
+          ...(dateRange ? { gte: dateRange.gte } : {}),
+          ...(dateRange?.lte ? { lte: dateRange.lte } : {}),
         },
       },
       select: { completedAt: true },

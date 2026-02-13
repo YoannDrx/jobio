@@ -2,9 +2,9 @@ export const SiteConfig = {
   title: "Jobio",
   description:
     "Le cockpit commercial des freelances tech. Trouve des missions, relance au bon moment, signe plus.",
-  prodUrl: "https://jobio.app",
+  prodUrl: "https://jobbio.fr",
   appId: "jobio",
-  domain: "jobio.app",
+  domain: "jobbio.fr",
   appIcon: "/images/logo-icon.svg",
   company: {
     name: "Jobio",
@@ -22,7 +22,7 @@ export const SiteConfig = {
   },
   team: {
     image: "",
-    website: "https://jobio.app",
+    website: "https://jobbio.fr",
     twitter: "",
     name: "Jobio",
   },

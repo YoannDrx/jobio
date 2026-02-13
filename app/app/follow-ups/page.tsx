@@ -62,6 +62,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { dialogManager } from "@/features/dialog-manager/dialog-manager";
 import { FollowUpForm } from "@/features/follow-ups/components/follow-up-form";
+import { FeatureGuide } from "@/components/nowts/feature-guide";
 import type { CreateFollowUpInput } from "@/features/follow-ups/follow-ups.schema";
 
 type FollowUpForCalendar = {
@@ -167,7 +168,7 @@ export default function FollowUpsPage() {
       void resolveActionResult(
         getMissionsAction({
           page: 1,
-          pageSize: 200,
+          pageSize: 100,
           sortBy: "updatedAt",
           sortOrder: "desc",
         }),
@@ -294,7 +295,19 @@ export default function FollowUpsPage() {
   return (
     <Layout size="lg">
       <LayoutHeader>
-        <LayoutTitle>Relances</LayoutTitle>
+        <div className="flex items-center gap-1">
+          <LayoutTitle>Relances</LayoutTitle>
+          <FeatureGuide title="Relances">
+            <p>
+              Les relances sont des rappels programmés pour relancer un
+              recruteur ou un contact.
+            </p>
+            <p>
+              Tu peux les créer, les reporter (snooze) ou les marquer comme
+              complétées.
+            </p>
+          </FeatureGuide>
+        </div>
       </LayoutHeader>
       <LayoutActions>
         <div className="flex gap-2">

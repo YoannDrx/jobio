@@ -16,12 +16,15 @@ import {
 } from "@/features/platforms/platforms.action";
 import { CustomPlatformDialog } from "./custom-platform-dialog";
 import {
+  Check,
+  ChevronDown,
   ExternalLink,
   Globe,
   Loader2,
   Minus,
   Plus,
   Trash2,
+  X,
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -79,6 +82,90 @@ function PlatformStatusBadge({ status }: { status: PlatformStatus }) {
     <Badge variant="outline" className={config.className}>
       {config.label}
     </Badge>
+  );
+}
+
+function getChecklistSteps(userPlatform: UserPlatform) {
+  return [
+    {
+      label: "Compte cree",
+      done: userPlatform.status !== "NOT_REGISTERED",
+    },
+    {
+      label: "Profil rempli",
+      done: Boolean(userPlatform.profileUrl),
+    },
+    {
+      label: "Portfolio",
+      done: userPlatform.status === "ACTIVE",
+    },
+    {
+      label: "Preuves sociales",
+      done:
+        userPlatform.status === "ACTIVE" && Boolean(userPlatform.profileUrl),
+    },
+  ];
+}
+
+function getProgressColor(completed: number) {
+  if (completed <= 1) return "bg-muted-foreground/40";
+  if (completed <= 3) return "bg-status-warning";
+  return "bg-status-success";
+}
+
+function PlatformChecklist({ userPlatform }: { userPlatform: UserPlatform }) {
+  const [expanded, setExpanded] = useState(false);
+  const steps = getChecklistSteps(userPlatform);
+  const completed = steps.filter((s) => s.done).length;
+  const total = steps.length;
+  const color = getProgressColor(completed);
+
+  return (
+    <div className="flex flex-col gap-2">
+      <button
+        type="button"
+        onClick={() => setExpanded((prev) => !prev)}
+        className="flex cursor-pointer items-center gap-2"
+      >
+        <div className="bg-muted h-1.5 flex-1 overflow-hidden rounded-full">
+          <div
+            className={`h-full rounded-full transition-all duration-300 ${color}`}
+            style={{ width: `${(completed / total) * 100}%` }}
+          />
+        </div>
+        <span className="text-muted-foreground text-xs whitespace-nowrap">
+          {completed}/{total} etapes
+        </span>
+        <ChevronDown
+          className={`text-muted-foreground size-3.5 transition-transform duration-200 ${expanded ? "rotate-180" : ""}`}
+        />
+      </button>
+
+      <div
+        className={`grid transition-all duration-200 ease-in-out ${expanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}
+      >
+        <div className="overflow-hidden">
+          <ul className="flex flex-col gap-1 pt-1">
+            {steps.map((step) => (
+              <li key={step.label} className="flex items-center gap-2 text-xs">
+                {step.done ? (
+                  <Check className="text-status-success size-3.5" />
+                ) : (
+                  <X className="text-muted-foreground size-3.5" />
+                )}
+                <span
+                  className={
+                    step.done ? "text-foreground" : "text-muted-foreground"
+                  }
+                >
+                  {step.label}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -329,31 +416,20 @@ export function PlatformsGrid() {
 
                 {isAdded && userPlatform && (
                   <CardContent className="py-0">
-                    <div className="flex items-center gap-2">
-                      <Input
-                        type="url"
-                        placeholder="URL de ton profil"
-                        className="h-8 text-sm"
-                        defaultValue={userPlatform.profileUrl ?? ""}
-                        onChange={(e) =>
-                          setEditingUrl((prev) => ({
-                            ...prev,
-                            [userPlatform.id]: e.target.value,
-                          }))
-                        }
-                        onBlur={() => {
-                          const url = editingUrl[userPlatform.id] as
-                            | string
-                            | undefined;
-                          if (
-                            url !== undefined &&
-                            url !== (userPlatform.profileUrl ?? "")
-                          ) {
-                            void handleUpdateProfileUrl(userPlatform.id, url);
+                    <div className="flex flex-col gap-3">
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="url"
+                          placeholder="URL de ton profil"
+                          className="h-8 text-sm"
+                          defaultValue={userPlatform.profileUrl ?? ""}
+                          onChange={(e) =>
+                            setEditingUrl((prev) => ({
+                              ...prev,
+                              [userPlatform.id]: e.target.value,
+                            }))
                           }
-                        }}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") {
+                          onBlur={() => {
                             const url = editingUrl[userPlatform.id] as
                               | string
                               | undefined;
@@ -363,19 +439,36 @@ export function PlatformsGrid() {
                             ) {
                               void handleUpdateProfileUrl(userPlatform.id, url);
                             }
-                          }
-                        }}
-                      />
-                      {userPlatform.profileUrl && (
-                        <a
-                          href={userPlatform.profileUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-muted-foreground hover:text-foreground"
-                        >
-                          <ExternalLink className="size-4" />
-                        </a>
-                      )}
+                          }}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              const url = editingUrl[userPlatform.id] as
+                                | string
+                                | undefined;
+                              if (
+                                url !== undefined &&
+                                url !== (userPlatform.profileUrl ?? "")
+                              ) {
+                                void handleUpdateProfileUrl(
+                                  userPlatform.id,
+                                  url,
+                                );
+                              }
+                            }
+                          }}
+                        />
+                        {userPlatform.profileUrl && (
+                          <a
+                            href={userPlatform.profileUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-muted-foreground hover:text-foreground"
+                          >
+                            <ExternalLink className="size-4" />
+                          </a>
+                        )}
+                      </div>
+                      <PlatformChecklist userPlatform={userPlatform} />
                     </div>
                   </CardContent>
                 )}

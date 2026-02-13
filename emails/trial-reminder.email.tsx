@@ -6,6 +6,7 @@ import {
   Preview,
   Section,
 } from "@react-email/components";
+import { BilingualDivider } from "./utils/bilingual-divider";
 import { EmailLayout } from "./utils/email-layout";
 
 type TrialReminderEmailProps = {
@@ -89,8 +90,75 @@ export default function TrialReminderEmail({
         </Button>
       </Section>
       <Text style={{ fontSize: "14px", lineHeight: "20px", marginTop: "24px" }}>
-        À bientôt,{"\n"}
-        L'équipe {SiteConfig.title}
+        À bientôt,{"\n"}L{"'"}équipe {SiteConfig.title}
+      </Text>
+
+      <BilingualDivider />
+
+      <Heading as="h1" style={{ fontSize: "24px", fontWeight: "bold" }}>
+        One week with {SiteConfig.title}
+      </Heading>
+      <Text style={{ fontSize: "16px", lineHeight: "24px" }}>Hi {name},</Text>
+      <Text style={{ fontSize: "16px", lineHeight: "24px" }}>
+        Here{"'"}s what you accomplished this week:
+      </Text>
+      <Section
+        style={{
+          backgroundColor: "#f8fafc",
+          borderRadius: "8px",
+          padding: "16px",
+          margin: "16px 0",
+        }}
+      >
+        <Text
+          style={{
+            fontSize: "32px",
+            fontWeight: "bold",
+            color: SiteConfig.brand.primary,
+            margin: "0",
+          }}
+        >
+          {missionsCount}
+        </Text>
+        <Text style={{ fontSize: "14px", color: "#64748B", margin: "0" }}>
+          missions tracked
+        </Text>
+        <Text
+          style={{
+            fontSize: "32px",
+            fontWeight: "bold",
+            color: SiteConfig.brand.primary,
+            margin: "16px 0 0",
+          }}
+        >
+          {followUpsCount}
+        </Text>
+        <Text style={{ fontSize: "14px", color: "#64748B", margin: "0" }}>
+          follow-ups completed
+        </Text>
+      </Section>
+      <Text style={{ fontSize: "16px", lineHeight: "24px" }}>
+        Keep up the momentum! Upgrade to Pro to unlock all features.
+      </Text>
+      <Section style={{ textAlign: "center", marginTop: "24px" }}>
+        <Button
+          href={`${SiteConfig.prodUrl}/app`}
+          style={{
+            backgroundColor: SiteConfig.brand.primary,
+            color: "#000",
+            padding: "12px 24px",
+            borderRadius: "6px",
+            fontSize: "16px",
+            fontWeight: "bold",
+            textDecoration: "none",
+          }}
+        >
+          View my pipeline
+        </Button>
+      </Section>
+      <Text style={{ fontSize: "14px", lineHeight: "20px", marginTop: "24px" }}>
+        See you soon,{"\n"}
+        The {SiteConfig.title} team
       </Text>
     </EmailLayout>
   );

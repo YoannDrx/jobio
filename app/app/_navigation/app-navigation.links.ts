@@ -1,13 +1,15 @@
 import type { NavigationGroup } from "@/features/navigation/navigation.type";
 import {
   BarChart3,
-  BookOpen,
+  BotIcon,
   CalendarCheck,
   CalendarClock,
+  CalendarDays,
   Globe,
   Kanban,
   ListOrdered,
   Mail,
+  Settings,
   UserCircle,
   Users,
 } from "lucide-react";
@@ -26,18 +28,27 @@ export const APP_LINKS: NavigationGroup[] = [
         Icon: CalendarClock,
         label: "Relances",
       },
+      {
+        href: `${APP_PATH}/sequences`,
+        Icon: ListOrdered,
+        label: "Séquences",
+      },
+      { href: `${APP_PATH}/emails`, Icon: Mail, label: "Emails" },
     ],
   },
   {
     title: "Outils",
-    defaultOpenStartPath: `${APP_PATH}/profiles`,
     links: [
+      {
+        href: `${APP_PATH}/calendar`,
+        Icon: CalendarDays,
+        label: "Calendrier",
+      },
       { href: `${APP_PATH}/profiles`, Icon: UserCircle, label: "Profils" },
-      { href: `${APP_PATH}/prospection`, Icon: Globe, label: "Prospection" },
-      { href: `${APP_PATH}/programmes`, Icon: BookOpen, label: "Programmes" },
-      { href: `${APP_PATH}/sequences`, Icon: ListOrdered, label: "Séquences" },
-      { href: `${APP_PATH}/emails`, Icon: Mail, label: "Emails" },
+      { href: `${APP_PATH}/platforms`, Icon: Globe, label: "Plateformes" },
+      { href: `${APP_PATH}/ai`, Icon: BotIcon, label: "Chat IA" },
       { href: `${APP_PATH}/analytics`, Icon: BarChart3, label: "Analytics" },
+      { href: `${APP_PATH}/settings`, Icon: Settings, label: "Paramètres" },
     ],
   },
-] satisfies NavigationGroup[];
+];

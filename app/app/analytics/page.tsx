@@ -32,6 +32,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/nowts/empty-state";
+import { PipelineHealthWidget } from "@/features/analytics/components/pipeline-health-widget";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -151,7 +152,8 @@ export default function AnalyticsPage() {
 
         const end = new Date();
         const start = new Date();
-        start.setDate(start.getDate() - limits.analyticsHistoryDays);
+        const clampedDays = Math.min(limits.analyticsHistoryDays, 3650);
+        start.setDate(start.getDate() - clampedDays);
 
         setStartDate(formatDate(start));
         setEndDate(formatDate(end));
@@ -169,17 +171,7 @@ export default function AnalyticsPage() {
     setIsLoading(true);
     try {
       const params = { startDate: start, endDate: end };
-      const [
-        funnel,
-        platform,
-        tjm,
-        activity,
-        earnings,
-        winRate,
-        revenueForecast,
-        timeToHire,
-        comparison,
-      ] = await Promise.all([
+      const results = await Promise.allSettled([
         resolveActionResult(getFunnelDataAction(params)),
         resolveActionResult(getResponseRateByPlatformAction(params)),
         resolveActionResult(getAverageTJMAction(params)),
@@ -193,23 +185,55 @@ export default function AnalyticsPage() {
         ),
       ]);
 
-      const totalMissions = (funnel as FunnelData).reduce(
-        (sum, item) => sum + item.count,
-        0,
-      );
+      results.forEach((result, index) => {
+        if (result.status === "rejected") {
+          // eslint-disable-next-line no-console
+          console.error(`Analytics action ${index} failed:`, result.reason);
+        }
+      });
+
+      const funnel = (
+        results[0].status === "fulfilled" ? results[0].value : []
+      ) as FunnelData;
+      const platform = (
+        results[1].status === "fulfilled" ? results[1].value : []
+      ) as PlatformData;
+      const tjm = (
+        results[2].status === "fulfilled" ? results[2].value : []
+      ) as TJMData;
+      const activity = (
+        results[3].status === "fulfilled" ? results[3].value : []
+      ) as ActivityData;
+      const earnings = (
+        results[4].status === "fulfilled" ? results[4].value : null
+      ) as EarningsData | null;
+      const winRate = (
+        results[5].status === "fulfilled" ? results[5].value : []
+      ) as WinRateByPlatformData;
+      const revenueForecast = (
+        results[6].status === "fulfilled" ? results[6].value : null
+      ) as typeof revenueForecastData;
+      const timeToHire = (
+        results[7].status === "fulfilled" ? results[7].value : null
+      ) as TimeToHireData | null;
+      const comparison = (
+        results[8].status === "fulfilled" ? results[8].value : null
+      ) as ComparisonData | null;
+
+      const totalMissions = funnel.reduce((sum, item) => sum + item.count, 0);
       if (totalMissions === 0) {
         setHasData(false);
       } else {
         setHasData(true);
-        setFunnelData(funnel as FunnelData);
-        setPlatformData(platform as PlatformData);
-        setTJMData(tjm as TJMData);
-        setActivityData(activity as ActivityData);
-        setEarningsData(earnings as EarningsData);
-        setWinRateData(winRate as WinRateByPlatformData);
-        setRevenueForecastData(revenueForecast as typeof revenueForecastData);
-        setTimeToHireData(timeToHire as TimeToHireData);
-        setComparisonData(comparison as ComparisonData);
+        setFunnelData(funnel);
+        setPlatformData(platform);
+        setTJMData(tjm);
+        setActivityData(activity);
+        setEarningsData(earnings);
+        setWinRateData(winRate);
+        setRevenueForecastData(revenueForecast);
+        setTimeToHireData(timeToHire);
+        setComparisonData(comparison);
       }
     } catch {
       toast.error("Erreur lors du chargement des analytics");
@@ -409,7 +433,7 @@ export default function AnalyticsPage() {
                 <p className="text-muted-foreground text-xs tracking-wide uppercase">
                   Taux de conversion
                 </p>
-                <p className="mt-1 text-2xl font-bold text-brand-cyan">
+                <p className="text-brand-cyan mt-1 text-2xl font-bold">
                   {conversionRate}%
                 </p>
               </Card>
@@ -427,11 +451,16 @@ export default function AnalyticsPage() {
               </Card>
             </div>
 
+            {/* Pipeline Health */}
+            <div className="mb-6 grid gap-4 md:grid-cols-2">
+              <PipelineHealthWidget />
+            </div>
+
             {/* Charts Grid */}
             <div className="grid gap-4 md:grid-cols-2">
               <Card className="p-6">
                 <div className="mb-4 flex items-center gap-2">
-                  <TrendingUp className="h-5 w-5 text-brand-cyan" />
+                  <TrendingUp className="text-brand-cyan h-5 w-5" />
                   <h3 className="font-semibold">Entonnoir de conversion</h3>
                 </div>
                 <FunnelChart
@@ -461,7 +490,7 @@ export default function AnalyticsPage() {
 
               <Card className="p-6">
                 <div className="mb-4 flex items-center gap-2">
-                  <TrendingUp className="h-5 w-5 text-brand-cyan" />
+                  <TrendingUp className="text-brand-cyan h-5 w-5" />
                   <h3 className="font-semibold">TJM moyen</h3>
                 </div>
                 {tjmData.length > 0 ? (
@@ -547,7 +576,7 @@ export default function AnalyticsPage() {
                             <td className="px-4 py-3 text-right text-sm">
                               {row.total}
                             </td>
-                            <td className="px-4 py-3 text-right text-sm font-semibold text-brand-cyan">
+                            <td className="text-brand-cyan px-4 py-3 text-right text-sm font-semibold">
                               {row.winRate}%
                             </td>
                             <td className="px-4 py-3 text-right text-sm">
@@ -566,7 +595,7 @@ export default function AnalyticsPage() {
             {revenueForecastData && revenueForecastData.byStatus.length > 0 && (
               <div className="mt-6">
                 <div className="mb-4 flex items-center gap-2">
-                  <TrendingUp className="h-5 w-5 text-brand-cyan" />
+                  <TrendingUp className="text-brand-cyan h-5 w-5" />
                   <h3 className="text-lg font-semibold">
                     Revenue prévisionnelle
                   </h3>
@@ -658,7 +687,7 @@ export default function AnalyticsPage() {
                       <p className="text-muted-foreground text-xs tracking-wide uppercase">
                         Taux de conversion
                       </p>
-                      <p className="mt-1 text-2xl font-bold text-brand-cyan">
+                      <p className="text-brand-cyan mt-1 text-2xl font-bold">
                         {comparisonData.current.conversionRate}%
                       </p>
                       <p

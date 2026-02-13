@@ -56,7 +56,9 @@ export function SequenceForm({
       name: defaultValues?.name ?? "",
       description: defaultValues?.description ?? "",
       steps: defaultValues?.steps ?? [
-        { delayDays: 3, type: "EMAIL", title: "Relance" },
+        { delayDays: 3, type: "EMAIL", title: "Relance par email" },
+        { delayDays: 7, type: "MESSAGE", title: "Relance LinkedIn" },
+        { delayDays: 14, type: "CALL", title: "Appel de suivi" },
       ],
     },
   });

@@ -32,6 +32,17 @@ model User {
   sequences          Sequence[]
   programPurchases   ProgramPurchase[]
   targetCompanies    TargetCompany[]
+  aiChatThreads      AIChatThread[]
+  calendarFeedToken  CalendarFeedToken?
+  analyticsSnapshots AnalyticsSnapshot[]
+  followUpRules      FollowUpRule[]
+  templateUsages     MessageTemplateUsage[]
+  linkedInAudits     LinkedInAudit[]
+  pushSubscriptions  PushSubscription[]
+  clientPortals      ClientPortal[]
+  preference         UserPreference?
+  aiRecommendations  AIRecommendation[]
+  dailyStrategies    DailyStrategy[]
 
   // Stripe integration
   stripeCustomerId String?

@@ -6,6 +6,7 @@ import {
   Preview,
   Section,
 } from "@react-email/components";
+import { BilingualDivider } from "./utils/bilingual-divider";
 import { EmailLayout } from "./utils/email-layout";
 
 type VerifyEmailEmailProps = {
@@ -48,6 +49,40 @@ export default function VerifyEmailEmail({
       </Text>
       <Text style={{ fontSize: "14px", lineHeight: "20px", marginTop: "16px" }}>
         À bientôt,{"\n"}L{"'"}équipe {SiteConfig.title}
+      </Text>
+
+      <BilingualDivider />
+
+      <Heading as="h1" style={{ fontSize: "24px", fontWeight: "bold" }}>
+        Verify your email address
+      </Heading>
+      <Text style={{ fontSize: "16px", lineHeight: "24px" }}>
+        Welcome to {SiteConfig.title}!
+      </Text>
+      <Text style={{ fontSize: "16px", lineHeight: "24px" }}>
+        Click the button below to verify your email address.
+      </Text>
+      <Section style={{ textAlign: "center", marginTop: "24px" }}>
+        <Button
+          href={url}
+          style={{
+            backgroundColor: SiteConfig.brand.primary,
+            color: "#000",
+            padding: "12px 24px",
+            borderRadius: "6px",
+            fontSize: "16px",
+            fontWeight: "bold",
+            textDecoration: "none",
+          }}
+        >
+          Verify my email
+        </Button>
+      </Section>
+      <Text style={{ fontSize: "14px", color: "#64748B", marginTop: "24px" }}>
+        If you didn{"'"}t create an account, ignore this email.
+      </Text>
+      <Text style={{ fontSize: "14px", lineHeight: "20px", marginTop: "16px" }}>
+        See you soon,{"\n"}The {SiteConfig.title} team
       </Text>
     </EmailLayout>
   );

@@ -290,7 +290,7 @@ export default function ContactsPage() {
           )}
         </LayoutTitle>
       </LayoutHeader>
-      <LayoutActions>
+      <LayoutActions className="gap-2">
         <Button
           size="sm"
           variant="outline"

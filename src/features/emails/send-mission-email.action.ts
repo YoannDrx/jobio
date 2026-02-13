@@ -5,6 +5,7 @@ import { ApplicationError } from "@/lib/errors/application-error";
 import { sendEmail } from "@/lib/mail/send-email";
 import { prisma } from "@/lib/prisma";
 import MarkdownEmail from "@email/markdown.email";
+import { trackTemplateUsage } from "@/features/templates/track-template-usage";
 import { z } from "zod";
 
 const sendMissionEmailSchema = z.object({
@@ -59,6 +60,16 @@ export const sendMissionEmailAction = authAction
           description: `Email envoyé à ${parsedInput.to} : "${parsedInput.subject}"`,
         },
       });
+
+      if (parsedInput.templateId) {
+        await trackTemplateUsage({
+          templateId: parsedInput.templateId,
+          userId: user.id,
+          missionId: parsedInput.missionId,
+          channel: "email",
+          source: "send_mission_email",
+        });
+      }
 
       return created;
     });
@@ -185,6 +196,16 @@ export const sendDraftAction = authAction
           type: "EMAIL_SENT",
           description: `Email envoyé à ${draft.to} : "${draft.subject}"`,
         },
+      });
+    }
+
+    if (draft.templateId) {
+      await trackTemplateUsage({
+        templateId: draft.templateId,
+        userId: user.id,
+        missionId: draft.missionId ?? undefined,
+        channel: "email",
+        source: "send_draft",
       });
     }
 

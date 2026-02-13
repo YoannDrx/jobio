@@ -14,12 +14,12 @@ export function Footer() {
           <div className="flex flex-col gap-12">
             <div className="grid grid-cols-1 gap-8 md:grid-cols-[1fr_2fr]">
               <div className="flex flex-col gap-3">
-                <div className="flex items-center gap-2">
+                <Link href="/" className="flex items-center gap-2">
                   <LogoSvg size={32} />
                   <h3 className="text-lg font-semibold tracking-tight">
                     {SiteConfig.title}
                   </h3>
-                </div>
+                </Link>
                 <p className="text-muted-foreground max-w-xs text-sm">
                   {SiteConfig.description}
                 </p>
@@ -34,7 +34,7 @@ export function Footer() {
                       variant="link"
                       className="h-auto justify-start p-0"
                     >
-                      <Link href="/#features">Fonctionnalités</Link>
+                      <Link href="/features">Fonctionnalites</Link>
                     </Button>
                     <Button
                       asChild
@@ -63,6 +63,13 @@ export function Footer() {
                 <div className="flex flex-col gap-3">
                   <h4 className="font-medium">Ressources</h4>
                   <nav className="flex flex-col gap-2">
+                    <Button
+                      asChild
+                      variant="link"
+                      className="h-auto justify-start p-0"
+                    >
+                      <Link href="/blog">Blog</Link>
+                    </Button>
                     <Button
                       asChild
                       variant="link"

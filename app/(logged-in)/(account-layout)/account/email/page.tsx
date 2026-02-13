@@ -13,6 +13,7 @@ import { resend } from "@/lib/mail/resend";
 import { combineWithParentMetadata } from "@/lib/metadata";
 import { prisma } from "@/lib/prisma";
 import { Suspense } from "react";
+import { AccountLayout } from "../account-layout";
 import { ToggleEmailCheckbox } from "./toggle-email-checkbox";
 
 export const generateMetadata = combineWithParentMetadata({
@@ -22,9 +23,11 @@ export const generateMetadata = combineWithParentMetadata({
 
 export default function Page() {
   return (
-    <Suspense fallback={null}>
-      <MailProfilePage />
-    </Suspense>
+    <AccountLayout>
+      <Suspense fallback={null}>
+        <MailProfilePage />
+      </Suspense>
+    </AccountLayout>
   );
 }
 

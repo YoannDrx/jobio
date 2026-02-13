@@ -9,9 +9,13 @@ export function computeDateRange(
   historyDays: number,
   startDate?: string,
   endDate?: string,
-): { gte: Date; lte?: Date } {
+): { gte: Date; lte?: Date } | undefined {
+  if (historyDays >= 99999 && !startDate && !endDate) {
+    return undefined;
+  }
+
   const maxStart = new Date();
-  maxStart.setDate(maxStart.getDate() - historyDays);
+  maxStart.setDate(maxStart.getDate() - Math.min(historyDays, 3650));
 
   if (startDate) {
     const requestedStart = new Date(startDate);

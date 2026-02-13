@@ -33,7 +33,7 @@ export const EmailLayout = (
       <Head />
       <Body
         style={{
-          backgroundColor: "#ffffff",
+          backgroundColor: "#f8fafc",
           fontFamily:
             "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji'",
         }}
@@ -41,62 +41,79 @@ export const EmailLayout = (
         <Container
           style={{
             margin: "0 auto",
+            backgroundColor: "#ffffff",
+            borderRadius: "12px",
+            boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+            overflow: "hidden",
             backgroundSize: "contain",
             backgroundPosition: "bottom",
             backgroundRepeat: "no-repeat",
-            padding: "1.5rem",
           }}
         >
-          <Tailwind>
-            <table cellPadding={0} cellSpacing={0}>
-              <tr>
-                <td className="pr-2">
-                  <Img
-                    src={`${baseUrl}${SiteConfig.appIcon}`}
-                    width={32}
-                    height={32}
-                    className="inline"
-                    alt={`${SiteConfig.title}'s logo`}
-                  />
-                </td>
-                <td>
-                  <Text className="text-xl font-bold">{SiteConfig.title}</Text>
-                </td>
-              </tr>
-            </table>
-            <Hr className="mt-3 mb-6 border-gray-300" />
-          </Tailwind>
-          {props.disableTailwind ? (
-            props.children
-          ) : (
-            <Tailwind>{props.children}</Tailwind>
-          )}
-          <Tailwind>
-            <Hr className="mt-12 mb-6 border-gray-300" />
+          <div
+            style={{
+              backgroundColor: "#22D3EE",
+              height: "4px",
+              width: "100%",
+            }}
+          />
+          <div style={{ padding: "1.5rem" }}>
+            <Tailwind>
+              <table cellPadding={0} cellSpacing={0}>
+                <tr>
+                  <td className="pr-2">
+                    <Img
+                      src={`${baseUrl}${SiteConfig.appIcon}`}
+                      width={48}
+                      height={48}
+                      className="inline"
+                      alt={`${SiteConfig.title}'s logo`}
+                    />
+                  </td>
+                  <td>
+                    <Text className="text-xl font-bold">
+                      {SiteConfig.title}
+                    </Text>
+                  </td>
+                </tr>
+              </table>
+              <Hr className="mt-3 mb-6 border-gray-300" />
+            </Tailwind>
+            {props.disableTailwind ? (
+              props.children
+            ) : (
+              <Tailwind>{props.children}</Tailwind>
+            )}
+            <Tailwind>
+              <Hr className="mt-12 mb-6 border-gray-300" />
 
-            <table cellPadding={0} cellSpacing={0}>
-              <tr>
-                <td className="pr-2">
-                  <Img
-                    src={`${baseUrl}${SiteConfig.appIcon}`}
-                    width={32}
-                    height={32}
-                    className="inline"
-                    alt={`${SiteConfig.title}'s logo`}
-                  />
-                </td>
-                <td>
-                  <Text className="text-xl">{SiteConfig.title}</Text>
-                </td>
-              </tr>
-            </table>
-            <Text className="text-sm text-gray-500">
-              {SiteConfig.company.name}
-            </Text>
-            <Text className="text-sm text-gray-500">
-              {SiteConfig.company.address}
-            </Text>
-          </Tailwind>
+              <table cellPadding={0} cellSpacing={0}>
+                <tr>
+                  <td className="pr-2">
+                    <Img
+                      src={`${baseUrl}${SiteConfig.appIcon}`}
+                      width={32}
+                      height={32}
+                      className="inline"
+                      alt={`${SiteConfig.title}'s logo`}
+                    />
+                  </td>
+                  <td>
+                    <Text className="text-xl">{SiteConfig.title}</Text>
+                  </td>
+                </tr>
+              </table>
+              <Text className="text-sm text-gray-500">
+                {SiteConfig.company.name}
+              </Text>
+              <Text
+                className="text-sm text-gray-500"
+                style={{ marginTop: "16px" }}
+              >
+                {SiteConfig.company.address}
+              </Text>
+            </Tailwind>
+          </div>
         </Container>
       </Body>
     </Html>

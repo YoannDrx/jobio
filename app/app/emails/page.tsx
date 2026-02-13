@@ -17,17 +17,21 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   Layout,
   LayoutContent,
+  LayoutDescription,
   LayoutHeader,
   LayoutTitle,
 } from "@/features/page/layout";
 import { resolveActionResult } from "@/lib/actions/actions-utils";
 import { getAllSentEmailsAction } from "@/features/emails/emails.action";
 import { dayjs } from "@/lib/dayjs";
-import { ChevronLeft, ChevronRight, Mail, Search } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { ChevronLeft, ChevronRight, Info, Mail, Search } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useQueryState, parseAsString, parseAsInteger } from "nuqs";
 import { toast } from "sonner";
+import { FeatureGuide } from "@/components/nowts/feature-guide";
 
 type SentEmail = {
   id: string;
@@ -41,6 +45,7 @@ type SentEmail = {
 };
 
 export default function EmailsPage() {
+  const router = useRouter();
   const [emails, setEmails] = useState<SentEmail[]>([]);
   const [total, setTotal] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
@@ -102,12 +107,28 @@ export default function EmailsPage() {
   return (
     <Layout size="lg">
       <LayoutHeader>
-        <LayoutTitle>
-          Emails{" "}
-          {total > 0 && (
-            <span className="text-muted-foreground">({total})</span>
-          )}
-        </LayoutTitle>
+        <div className="flex items-center gap-1">
+          <LayoutTitle>
+            Emails{" "}
+            {total > 0 && (
+              <span className="text-muted-foreground">({total})</span>
+            )}
+          </LayoutTitle>
+          <FeatureGuide title="Emails">
+            <p>
+              Les emails s&apos;envoient depuis les missions : Pipeline →
+              Mission → onglet Emails.
+            </p>
+            <p>
+              Tu peux créer des brouillons, utiliser des templates avec
+              variables dynamiques ({"{nom}"}, {"{entreprise}"}), et suivre les
+              statuts (envoyé, ouvert, cliqué).
+            </p>
+          </FeatureGuide>
+        </div>
+        <LayoutDescription>
+          Les emails sont envoyés depuis les missions du Pipeline.
+        </LayoutDescription>
       </LayoutHeader>
 
       <LayoutContent className="flex flex-col gap-4">
@@ -140,11 +161,23 @@ export default function EmailsPage() {
         ) : emails.length === 0 ? (
           <EmptyState
             icon={Mail}
-            title="Aucun email"
-            description="Les emails envoyes depuis tes missions apparaitront ici."
+            title="Aucun email envoyé"
+            description="Pour envoyer un email, ouvre une mission dans le Pipeline et clique sur l'onglet Emails. Tu peux utiliser des templates, générer avec l'IA, et suivre les ouvertures."
+            action={{
+              label: "Aller au Pipeline",
+              onClick: () => router.push("/app/pipeline"),
+            }}
           />
         ) : (
           <>
+            <Alert variant="default" className="border-none bg-transparent p-0">
+              <div className="flex items-center gap-2">
+                <Info className="text-muted-foreground size-4" />
+                <AlertDescription className="text-muted-foreground text-sm">
+                  Les emails sont envoyés depuis les missions du Pipeline.
+                </AlertDescription>
+              </div>
+            </Alert>
             <div className="rounded-md border">
               <Table>
                 <TableHeader>
