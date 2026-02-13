@@ -28,7 +28,7 @@ test.describe("sequences", () => {
     }
   });
 
-  test("create a sequence with 2 steps", async ({ page }) => {
+  test("create a sequence with default steps", async ({ page }) => {
     const userData = await createTestAccount({
       page,
       callbackURL: "/app",
@@ -41,41 +41,11 @@ test.describe("sequences", () => {
     // Click on "Nouvelle séquence" button
     await page.getByRole("button", { name: /nouvelle séquence/i }).click();
 
-    // Fill the sequence form
-    await page.getByLabel(/nom/i).fill("Sequence Test E2E");
+    // Fill the sequence form (3 steps are pre-filled by default)
+    await page.getByLabel(/nom de la séquence/i).fill("Sequence Test E2E");
     await page.getByLabel(/description/i).fill("Sequence de test pour E2E");
 
-    // Add first step
-    await page.getByRole("button", { name: /ajouter une étape/i }).click();
-    await page
-      .getByLabel(/délai \(jours\)/i)
-      .first()
-      .fill("1");
-    await page
-      .getByLabel(/type d'action/i)
-      .first()
-      .selectOption("EMAIL");
-    await page
-      .getByLabel(/contenu|message/i)
-      .first()
-      .fill("Première relance");
-
-    // Add second step
-    await page.getByRole("button", { name: /ajouter une étape/i }).click();
-    await page
-      .getByLabel(/délai \(jours\)/i)
-      .last()
-      .fill("3");
-    await page
-      .getByLabel(/type d'action/i)
-      .last()
-      .selectOption("EMAIL");
-    await page
-      .getByLabel(/contenu|message/i)
-      .last()
-      .fill("Deuxième relance");
-
-    // Submit the form
+    // Submit the form with the 3 pre-filled steps
     await page.getByRole("button", { name: /créer la séquence/i }).click();
 
     // Wait for success toast
@@ -113,13 +83,13 @@ test.describe("sequences", () => {
         name: "Sequence Original",
         description: "Description originale",
         userId: user.id,
-        steps: JSON.stringify([
+        steps: [
           {
-            delay: 1,
+            delayDays: 1,
             type: "EMAIL",
-            content: "First step",
+            title: "First step",
           },
-        ]),
+        ],
       },
     });
 
@@ -127,16 +97,24 @@ test.describe("sequences", () => {
     await page.goto("/app/sequences");
     await page.waitForLoadState("networkidle");
 
-    // Click on the sequence to edit
-    await page.getByText("Sequence Original").click();
+    // Wait for sequence to appear
+    await expect(page.getByText("Sequence Original")).toBeVisible({
+      timeout: 10000,
+    });
+
+    // Click the edit (pencil) button for this sequence
+    const sequenceCard = page
+      .locator("[data-slot='card']")
+      .filter({ hasText: "Sequence Original" });
+    await sequenceCard.getByRole("button").first().click();
 
     // Wait for edit dialog to appear
     await expect(
       page.getByRole("heading", { name: /modifier la séquence/i }),
-    ).toBeVisible();
+    ).toBeVisible({ timeout: 5000 });
 
     // Clear the name field and enter new name
-    const nameInput = page.getByLabel(/nom/i);
+    const nameInput = page.getByLabel(/nom de la séquence/i);
     await nameInput.clear();
     await nameInput.fill("Sequence Modifiée");
 
@@ -173,13 +151,13 @@ test.describe("sequences", () => {
         name: "Sequence à supprimer",
         description: "Cette séquence sera supprimée",
         userId: user.id,
-        steps: JSON.stringify([
+        steps: [
           {
-            delay: 1,
+            delayDays: 1,
             type: "EMAIL",
-            content: "Step",
+            title: "Step",
           },
-        ]),
+        ],
       },
     });
 
@@ -188,23 +166,20 @@ test.describe("sequences", () => {
     await page.waitForLoadState("networkidle");
 
     // Verify sequence is visible
-    await expect(page.getByText("Sequence à supprimer").first()).toBeVisible();
+    await expect(page.getByText("Sequence à supprimer").first()).toBeVisible({
+      timeout: 10000,
+    });
 
-    // Find the delete button
-    const deleteButton = page
-      .getByRole("button", { name: /supprimer|delete/i })
-      .first();
+    // Click the delete (trash) button - it's the second button in the card
+    const sequenceCard = page
+      .locator("[data-slot='card']")
+      .filter({ hasText: "Sequence à supprimer" });
+    await sequenceCard.getByRole("button").last().click();
 
-    await deleteButton.click();
-
-    // Confirm deletion if there's a confirmation dialog
-    const confirmButton = page
-      .getByRole("button", { name: /confirmer|supprimer|oui/i })
-      .last();
-
-    if (await confirmButton.isVisible().catch(() => false)) {
-      await confirmButton.click();
-    }
+    // Confirm deletion in the AlertDialog
+    const confirmDialog = page.getByRole("alertdialog");
+    await expect(confirmDialog).toBeVisible({ timeout: 5000 });
+    await confirmDialog.getByRole("button", { name: /supprimer/i }).click();
 
     // Wait for success toast
     await expect(page.getByText(/séquence supprimée/i)).toBeVisible({
@@ -229,12 +204,10 @@ test.describe("sequences", () => {
     await page.waitForLoadState("networkidle");
 
     // Verify empty state is shown
-    await expect(page.getByText(/aucune séquence/i)).toBeVisible();
-    await expect(
-      page.getByText(
-        /créez votre première séquence de relance pour automatiser vos suivi/i,
-      ),
-    ).toBeVisible();
+    await expect(page.getByText(/aucune séquence/i)).toBeVisible({
+      timeout: 10000,
+    });
+    await expect(page.getByText(/automatiser tes relances/i)).toBeVisible();
 
     // Verify the empty state button is available
     await expect(

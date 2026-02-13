@@ -19,7 +19,7 @@ test.describe("account", () => {
     await page.getByRole("button", { name: /^Supprimer$/ }).click();
 
     const deleteDialog = page.getByRole("alertdialog", {
-      name: "Supprimer votre compte ?",
+      name: "Supprimer ton compte ?",
     });
     await expect(deleteDialog).toBeVisible();
     await deleteDialog.getByRole("button", { name: /cancel/i }).click();

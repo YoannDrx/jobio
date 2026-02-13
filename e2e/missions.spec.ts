@@ -3,6 +3,9 @@ import { expect, test } from "@playwright/test";
 import { createTestAccount } from "./utils/auth-test";
 
 test.describe("missions", () => {
+  // Use a wider viewport for pipeline tests (Kanban board needs horizontal space)
+  test.use({ viewport: { width: 1920, height: 1080 } });
+
   test("create a mission and verify it appears", async ({ page }) => {
     const userData = await createTestAccount({
       page,
@@ -14,7 +17,10 @@ test.describe("missions", () => {
     await page.waitForLoadState("networkidle");
 
     // Click on add mission button
-    await page.getByRole("button", { name: /ajouter/i }).first().click();
+    await page
+      .getByRole("button", { name: /ajouter/i })
+      .first()
+      .click();
 
     // Fill the mission form
     await page.getByLabel(/titre/i).fill("Mission Test E2E");
@@ -28,7 +34,9 @@ test.describe("missions", () => {
     await page.waitForLoadState("networkidle");
 
     // Verify the mission appears in the pipeline
-    await expect(page.getByText("Mission Test E2E")).toBeVisible({
+    const missionText = page.getByText("Mission Test E2E").first();
+    await missionText.scrollIntoViewIfNeeded();
+    await expect(missionText).toBeVisible({
       timeout: 10000,
     });
 
@@ -65,8 +73,10 @@ test.describe("missions", () => {
     await page.goto("/app/pipeline");
     await page.waitForLoadState("networkidle");
 
-    // Click on the mission to open detail
-    await page.getByText("Mission Status Test").first().click();
+    // Scroll to and click on the mission to open detail
+    const missionText = page.getByText("Mission Status Test").first();
+    await missionText.scrollIntoViewIfNeeded();
+    await missionText.click();
 
     const detailSheet = page.getByRole("dialog");
     await expect(detailSheet).toBeVisible();
@@ -103,7 +113,9 @@ test.describe("missions", () => {
     await page.goto("/app/pipeline");
     await page.waitForLoadState("networkidle");
 
-    await expect(page.getByText("Mission Pause Test").first()).toBeVisible({
+    const missionText = page.getByText("Mission Pause Test").first();
+    await missionText.scrollIntoViewIfNeeded();
+    await expect(missionText).toBeVisible({
       timeout: 10000,
     });
 
@@ -111,7 +123,9 @@ test.describe("missions", () => {
     await prisma.user.delete({ where: { id: user.id } });
   });
 
-  test("hide archived missions from default pipeline view", async ({ page }) => {
+  test("hide archived missions from default pipeline view", async ({
+    page,
+  }) => {
     const userData = await createTestAccount({
       page,
       callbackURL: "/app",
@@ -142,7 +156,9 @@ test.describe("missions", () => {
     await page.goto("/app/pipeline");
     await page.waitForLoadState("networkidle");
 
-    await expect(page.getByText("Mission Active Visible").first()).toBeVisible({
+    const activeText = page.getByText("Mission Active Visible").first();
+    await activeText.scrollIntoViewIfNeeded();
+    await expect(activeText).toBeVisible({
       timeout: 10000,
     });
     await expect(page.getByText("Mission Archivee Cachee")).toHaveCount(0);
@@ -179,7 +195,10 @@ test.describe("missions", () => {
       timeout: 10000,
     });
 
-    await page.getByRole("button", { name: /ajouter/i }).first().click();
+    await page
+      .getByRole("button", { name: /ajouter/i })
+      .first()
+      .click();
     await page.getByLabel(/titre/i).fill("Mission Should Be Blocked");
     await page.getByLabel(/entreprise/i).fill("BlockedCorp");
     await page.getByRole("button", { name: /créer la mission/i }).click();
@@ -226,12 +245,17 @@ test.describe("missions", () => {
     await page.goto("/app/pipeline");
     await page.waitForLoadState("networkidle");
 
-    await page.getByRole("button", { name: /ajouter/i }).first().click();
+    await page
+      .getByRole("button", { name: /ajouter/i })
+      .first()
+      .click();
     await page.getByLabel(/titre/i).fill("Mission Allowed By Archive");
     await page.getByLabel(/entreprise/i).fill("AllowedCorp");
     await page.getByRole("button", { name: /créer la mission/i }).click();
 
-    await expect(page.getByText("Mission Allowed By Archive").first()).toBeVisible({
+    const missionText = page.getByText("Mission Allowed By Archive").first();
+    await missionText.scrollIntoViewIfNeeded();
+    await expect(missionText).toBeVisible({
       timeout: 10000,
     });
 

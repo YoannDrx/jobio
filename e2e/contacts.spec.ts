@@ -24,7 +24,7 @@ test.describe("contacts", () => {
 
     // Submit
     await page.getByRole("button", { name: /créer le contact/i }).click();
-    await expect(page.getByText("Contact cree avec succes")).toBeVisible({
+    await expect(page.getByText(/contact créé/i)).toBeVisible({
       timeout: 10000,
     });
 
