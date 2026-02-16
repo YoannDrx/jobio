@@ -269,7 +269,7 @@ test.describe("cv-lab-coach", () => {
         timeout: 10000,
       });
 
-      const fullNameInput = page.getByLabel("Nom complet").first();
+      const fullNameInput = page.locator("#identity-fullName").first();
       await expect(fullNameInput).toHaveValue("Jean Dupont");
 
       await fullNameInput.fill("Jean Dupont Modifié");
@@ -283,7 +283,7 @@ test.describe("cv-lab-coach", () => {
       await page.reload();
       await page.waitForLoadState("networkidle");
 
-      await expect(page.getByLabel("Nom complet").first()).toHaveValue(
+      await expect(page.locator("#identity-fullName").first()).toHaveValue(
         "Jean Dupont Modifié",
         {
           timeout: 10000,

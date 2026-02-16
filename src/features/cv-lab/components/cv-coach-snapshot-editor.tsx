@@ -280,7 +280,10 @@ export function CvCoachSnapshotEditor({
               {identityFields.map((f) => (
                 <div key={f.key} className="flex flex-col gap-1">
                   <div className="flex items-center justify-between">
-                    <label className="text-muted-foreground text-xs">
+                    <label
+                      htmlFor={`identity-${f.key}`}
+                      className="text-muted-foreground text-xs"
+                    >
                       {f.label}
                     </label>
                     <LockToggle
@@ -290,6 +293,7 @@ export function CvCoachSnapshotEditor({
                     />
                   </div>
                   <Input
+                    id={`identity-${f.key}`}
                     value={
                       snapshot.identity[f.key as keyof typeof snapshot.identity]
                     }
@@ -1006,10 +1010,14 @@ export function CvCoachSnapshotEditor({
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {constraintFields.map((f) => (
                 <div key={f.key} className="flex flex-col gap-1">
-                  <label className="text-muted-foreground text-xs">
+                  <label
+                    htmlFor={`constraint-${f.key}`}
+                    className="text-muted-foreground text-xs"
+                  >
                     {f.label}
                   </label>
                   <Input
+                    id={`constraint-${f.key}`}
                     value={
                       snapshot.constraints[
                         f.key as keyof typeof snapshot.constraints

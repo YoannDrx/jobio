@@ -38,9 +38,11 @@ test.describe("freelance-billing", () => {
       await page.goto("/freelance/quotes");
       await page.waitForLoadState("networkidle");
 
-      await expect(page.getByText("Créer un devis rapide")).toBeVisible({
-        timeout: 10000,
-      });
+      await expect(page.getByText("Créer un devis rapide").first()).toBeVisible(
+        {
+          timeout: 10000,
+        },
+      );
 
       await page.getByRole("button", { name: "Créer le devis" }).click();
       await expect(page.getByText("Devis brouillon créé")).toBeVisible({
@@ -71,12 +73,16 @@ test.describe("freelance-billing", () => {
       await page.getByRole("button", { name: "Émettre" }).click();
       await page.waitForTimeout(500);
 
-      await page.getByRole("button", { name: "Enregistrer un paiement" }).click();
+      await page
+        .getByRole("button", { name: "Enregistrer un paiement" })
+        .click();
       await expect(
         page.getByRole("heading", { name: "Enregistrer un paiement" }),
       ).toBeVisible({ timeout: 10000 });
 
-      await page.getByRole("button", { name: "Enregistrer le paiement" }).click();
+      await page
+        .getByRole("button", { name: "Enregistrer le paiement" })
+        .click();
       await expect(page.getByText("Paiement enregistré")).toBeVisible({
         timeout: 10000,
       });
