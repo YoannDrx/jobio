@@ -1,5 +1,7 @@
 "use server";
 
+/* eslint-disable no-await-in-loop -- Bulk operations require sequential DB transactions within loops */
+
 import {
   BillingAuditEventType,
   BillingCreditNoteStatus,
@@ -830,6 +832,7 @@ export const bulkQuoteAction = authAction
 
         try {
           if (parsedInput.operation === "DELETE") {
+             
             await tx.billingQuote.update({
               where: {
                 id: quote.id,
@@ -839,6 +842,7 @@ export const bulkQuoteAction = authAction
               },
             });
 
+             
             await createBillingAuditEvent(tx, {
               userId: user.id,
               entityType: BillingEntityType.QUOTE,
@@ -877,6 +881,7 @@ export const bulkQuoteAction = authAction
               continue;
             }
 
+             
             const updated = await tx.billingQuote.update({
               where: {
                 id: quote.id,
@@ -893,13 +898,16 @@ export const bulkQuoteAction = authAction
               },
             });
 
+             
             await persistQuoteVersion(tx, {
               quoteId: updated.id,
               userId: user.id,
               payload: buildQuoteVersionPayload(updated),
+
               reason: `Bulk ${parsedInput.operation}: ${parsedInput.reason}`,
             });
 
+             
             await createBillingAuditEvent(tx, {
               userId: user.id,
               entityType: BillingEntityType.QUOTE,
@@ -935,9 +943,11 @@ export const bulkQuoteAction = authAction
 
           const number =
             quote.number ??
+             
             (await reserveBillingDocumentNumber(tx, {
               userId: user.id,
               kind: BillingSequenceKind.QUOTE,
+
               date: quote.issueDate,
             }));
 
@@ -958,13 +968,16 @@ export const bulkQuoteAction = authAction
             },
           });
 
+           
           await persistQuoteVersion(tx, {
             quoteId: updated.id,
             userId: user.id,
+
             payload: buildQuoteVersionPayload(updated),
             reason: `Bulk ${parsedInput.operation}: ${parsedInput.reason}`,
           });
 
+           
           await createBillingAuditEvent(tx, {
             userId: user.id,
             entityType: BillingEntityType.QUOTE,
@@ -1718,6 +1731,7 @@ export const bulkInvoiceAction = authAction
             status: "skipped",
             message: "Facture introuvable",
           });
+
           continue;
         }
 
@@ -1785,6 +1799,7 @@ export const bulkInvoiceAction = authAction
               },
               data: {
                 status: BillingInvoiceStatus.CANCELLED,
+
                 balanceCents: 0,
                 paidAt: null,
               },
@@ -1865,6 +1880,7 @@ export const bulkInvoiceAction = authAction
               issueDate,
               issuedAt: new Date(),
               status,
+
               balanceCents,
               paidAt: status === BillingInvoiceStatus.PAID ? new Date() : null,
             },
@@ -1888,6 +1904,7 @@ export const bulkInvoiceAction = authAction
             userId: user.id,
             entityType: BillingEntityType.INVOICE,
             entityId: updated.id,
+
             eventType: BillingAuditEventType.STATUS_CHANGED,
             message: `Bulk facture: ${invoice.status} -> ${updated.status}`,
             metadata: buildBulkAuditMetadata({
@@ -1895,6 +1912,7 @@ export const bulkInvoiceAction = authAction
               reason: parsedInput.reason,
               batchId,
               index: index + 1,
+
               total: ids.length,
               dryRun: false,
             }),

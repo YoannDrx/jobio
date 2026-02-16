@@ -21,11 +21,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Sheet,
-  SheetDescription,
-  SheetTitle,
-} from "@/components/ui/sheet";
+import { Sheet, SheetDescription, SheetTitle } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -194,7 +190,8 @@ const paymentMethodLabel: Record<BillingPaymentMethod, string> = {
   OTHER: "Autre",
 };
 
-const createLineKey = () => `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+const createLineKey = () =>
+  `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
 const createDefaultLine = (): InvoiceLineForm => ({
   key: createLineKey(),
@@ -259,7 +256,9 @@ const parseLine = (line: InvoiceLineForm) => {
 
   return {
     description:
-      line.unit === "unite" ? baseDescription : `${baseDescription} (${unitLabel})`,
+      line.unit === "unite"
+        ? baseDescription
+        : `${baseDescription} (${unitLabel})`,
     quantity,
     unitPriceCents: Math.round(unitPrice * 100),
     discountPercent,
@@ -296,29 +295,32 @@ export function FreelanceInvoicesManager() {
   const [catalogItems, setCatalogItems] = useState<CatalogOption[]>([]);
   const [invoices, setInvoices] = useState<InvoiceRow[]>([]);
   const [viewMode, setViewMode] = useState<"table" | "cards">("table");
-  const [billingProfile, setBillingProfile] = useState<BillingProfilePreview | null>(
-    null,
-  );
+  const [billingProfile, setBillingProfile] =
+    useState<BillingProfilePreview | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
   const [processingInvoiceId, setProcessingInvoiceId] = useState<string | null>(
     null,
   );
-  const [actionMenuInvoiceId, setActionMenuInvoiceId] = useState<string | null>(null);
+  const [actionMenuInvoiceId, setActionMenuInvoiceId] = useState<string | null>(
+    null,
+  );
   const [pendingInvoiceConfirmation, setPendingInvoiceConfirmation] = useState<{
     type: "cancel" | "delete";
     invoiceId: string;
     number: string | null;
   } | null>(null);
   const [selectedInvoiceIds, setSelectedInvoiceIds] = useState<string[]>([]);
-  const [pendingBulkInvoiceOperation, setPendingBulkInvoiceOperation] = useState<
-    "ISSUE" | "CANCEL" | "DELETE" | null
-  >(null);
+  const [pendingBulkInvoiceOperation, setPendingBulkInvoiceOperation] =
+    useState<"ISSUE" | "CANCEL" | "DELETE" | null>(null);
   const [bulkInvoiceReason, setBulkInvoiceReason] = useState("");
-  const [isBulkInvoiceProcessing, setIsBulkInvoiceProcessing] = useState(false);
+  const [_isBulkInvoiceProcessing, setIsBulkInvoiceProcessing] =
+    useState(false);
 
   const [createClientId, setCreateClientId] = useState("");
-  const [createIssueDate, setCreateIssueDate] = useState(toDateInputValue(new Date()));
+  const [createIssueDate, setCreateIssueDate] = useState(
+    toDateInputValue(new Date()),
+  );
   const [createDueDate, setCreateDueDate] = useState("");
   const [createCurrency, setCreateCurrency] = useState("EUR");
   const [createDocumentTemplate, setCreateDocumentTemplate] =
@@ -327,7 +329,8 @@ export function FreelanceInvoicesManager() {
     "Pénalité de retard: 3x taux légal + indemnité forfaitaire de 40€.",
   );
   const [createTerms, setCreateTerms] = useState("");
-  const [createCatalogItemId, setCreateCatalogItemId] = useState<string>("custom");
+  const [createCatalogItemId, setCreateCatalogItemId] =
+    useState<string>("custom");
   const [createLines, setCreateLines] = useState<InvoiceLineForm[]>([
     {
       key: createLineKey(),
@@ -339,9 +342,9 @@ export function FreelanceInvoicesManager() {
       discountPercent: "0",
     },
   ]);
-  const [invoiceCreationMode, setInvoiceCreationMode] = useState<"quick" | "full">(
-    "quick",
-  );
+  const [invoiceCreationMode, setInvoiceCreationMode] = useState<
+    "quick" | "full"
+  >("quick");
   const [createLanguage, setCreateLanguage] = useState("fr");
   const [showDeliveryAddress, setShowDeliveryAddress] = useState(false);
   const [showClientSiret, setShowClientSiret] = useState(true);
@@ -363,7 +366,9 @@ export function FreelanceInvoicesManager() {
     useState<BillingDocumentTemplateId>(DEFAULT_BILLING_DOCUMENT_TEMPLATE_ID);
   const [editNotes, setEditNotes] = useState("");
   const [editTerms, setEditTerms] = useState("");
-  const [editLines, setEditLines] = useState<InvoiceLineForm[]>([createDefaultLine()]);
+  const [editLines, setEditLines] = useState<InvoiceLineForm[]>([
+    createDefaultLine(),
+  ]);
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
   const [isSavingPayment, setIsSavingPayment] = useState(false);
   const [paymentInvoice, setPaymentInvoice] = useState<InvoiceRow | null>(null);
@@ -380,27 +385,27 @@ export function FreelanceInvoicesManager() {
       setIsLoading(true);
       const [clientsResult, invoicesResult, catalogResult, profileResult] =
         await Promise.all([
-        resolveActionResult(
-          getBillingClientsAction({
-            page: 1,
-            pageSize: 100,
-            sortBy: "displayName",
-            sortOrder: "asc",
-          }),
-        ),
-        resolveActionResult(
-          getInvoicesAction({
-            page: 1,
-            pageSize: 100,
-          }),
-        ),
-        resolveActionResult(
-          getCatalogItemsAction({
-            page: 1,
-            pageSize: 100,
-          }),
-        ),
-        resolveActionResult(getBillingProfileAction({})),
+          resolveActionResult(
+            getBillingClientsAction({
+              page: 1,
+              pageSize: 100,
+              sortBy: "displayName",
+              sortOrder: "asc",
+            }),
+          ),
+          resolveActionResult(
+            getInvoicesAction({
+              page: 1,
+              pageSize: 100,
+            }),
+          ),
+          resolveActionResult(
+            getCatalogItemsAction({
+              page: 1,
+              pageSize: 100,
+            }),
+          ),
+          resolveActionResult(getBillingProfileAction({})),
         ]);
 
       const nextClients = clientsResult.clients.map((client) => ({
@@ -413,7 +418,8 @@ export function FreelanceInvoicesManager() {
       setClients(nextClients);
       setInvoices(invoicesResult.invoices as InvoiceRow[]);
       setCatalogItems(catalogResult.items as CatalogOption[]);
-      const nextProfile = (profileResult as BillingProfilePreview | null) ?? null;
+      const nextProfile =
+        (profileResult as BillingProfilePreview | null) ?? null;
       setBillingProfile(nextProfile);
       setCreateDocumentTemplate(
         resolveBillingDocumentTemplate(nextProfile?.documentTemplate).id,
@@ -424,7 +430,9 @@ export function FreelanceInvoicesManager() {
       }
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Impossible de charger les factures",
+        error instanceof Error
+          ? error.message
+          : "Impossible de charger les factures",
       );
     } finally {
       setIsLoading(false);
@@ -466,7 +474,9 @@ export function FreelanceInvoicesManager() {
       return;
     }
 
-    issueDate.setDate(issueDate.getDate() + (billingProfile?.paymentTermsInDays ?? 30));
+    issueDate.setDate(
+      issueDate.getDate() + (billingProfile?.paymentTermsInDays ?? 30),
+    );
     setCreateDueDate(toDateInputValue(issueDate));
   }, [createIssueDate, createDueDate, billingProfile?.paymentTermsInDays]);
 
@@ -507,13 +517,16 @@ export function FreelanceInvoicesManager() {
   );
 
   const canCreateInvoice = useMemo(() => {
-    if (!createClientId || !createIssueDate || createCurrency.trim().length !== 3) {
+    if (
+      !createClientId ||
+      !createIssueDate ||
+      createCurrency.trim().length !== 3
+    ) {
       return false;
     }
 
     return (
-      createLines.length > 0 &&
-      parsedCreateLines.every((line) => line !== null)
+      createLines.length > 0 && parsedCreateLines.every((line) => line !== null)
     );
   }, [
     createClientId,
@@ -524,11 +537,19 @@ export function FreelanceInvoicesManager() {
   ]);
 
   const canSaveEdit = useMemo(() => {
-    if (!editingInvoiceId || !editClientId || !editIssueDate || editCurrency.trim().length !== 3) {
+    if (
+      !editingInvoiceId ||
+      !editClientId ||
+      !editIssueDate ||
+      editCurrency.trim().length !== 3
+    ) {
       return false;
     }
 
-    return editLines.length > 0 && editLines.every((line) => parseLine(line) !== null);
+    return (
+      editLines.length > 0 &&
+      editLines.every((line) => parseLine(line) !== null)
+    );
   }, [editingInvoiceId, editClientId, editIssueDate, editCurrency, editLines]);
 
   const canSavePayment = useMemo(() => {
@@ -598,7 +619,9 @@ export function FreelanceInvoicesManager() {
     value: string,
   ) => {
     setCreateLines((previous) =>
-      previous.map((line) => (line.key === key ? { ...line, [field]: value } : line)),
+      previous.map((line) =>
+        line.key === key ? { ...line, [field]: value } : line,
+      ),
     );
   };
 
@@ -649,7 +672,9 @@ export function FreelanceInvoicesManager() {
       );
       setCreateIssueDate(toDateInputValue(new Date()));
       setCreateDueDate("");
-      setCreateNotes("Pénalité de retard: 3x taux légal + indemnité forfaitaire de 40€.");
+      setCreateNotes(
+        "Pénalité de retard: 3x taux légal + indemnité forfaitaire de 40€.",
+      );
       setCreateTerms("");
       setCreateLines([
         {
@@ -664,7 +689,9 @@ export function FreelanceInvoicesManager() {
       ]);
       await loadData();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Création impossible");
+      toast.error(
+        error instanceof Error ? error.message : "Création impossible",
+      );
     } finally {
       setIsCreating(false);
     }
@@ -677,7 +704,9 @@ export function FreelanceInvoicesManager() {
       toast.success("Facture émise");
       await loadData();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Émission impossible");
+      toast.error(
+        error instanceof Error ? error.message : "Émission impossible",
+      );
     } finally {
       setProcessingInvoiceId(null);
     }
@@ -690,7 +719,9 @@ export function FreelanceInvoicesManager() {
       toast.success("Facture dupliquée en brouillon");
       await loadData();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Duplication impossible");
+      toast.error(
+        error instanceof Error ? error.message : "Duplication impossible",
+      );
     } finally {
       setActionMenuInvoiceId(null);
     }
@@ -703,7 +734,9 @@ export function FreelanceInvoicesManager() {
       toast.success("Facture annulée");
       await loadData();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Annulation impossible");
+      toast.error(
+        error instanceof Error ? error.message : "Annulation impossible",
+      );
     } finally {
       setActionMenuInvoiceId(null);
     }
@@ -716,7 +749,9 @@ export function FreelanceInvoicesManager() {
       toast.success("Facture supprimée");
       await loadData();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Suppression impossible");
+      toast.error(
+        error instanceof Error ? error.message : "Suppression impossible",
+      );
     } finally {
       setActionMenuInvoiceId(null);
     }
@@ -748,7 +783,10 @@ export function FreelanceInvoicesManager() {
     setSelectedInvoiceIds(invoices.map((invoice) => invoice.id));
   };
 
-  const handleToggleInvoiceSelection = (invoiceId: string, checked: boolean) => {
+  const handleToggleInvoiceSelection = (
+    invoiceId: string,
+    checked: boolean,
+  ) => {
     setSelectedInvoiceIds((previous) => {
       if (checked) {
         if (previous.includes(invoiceId)) {
@@ -761,7 +799,7 @@ export function FreelanceInvoicesManager() {
     });
   };
 
-  const handleRunBulkInvoiceOperation = async () => {
+  const _handleRunBulkInvoiceOperation = async () => {
     if (!pendingBulkInvoiceOperation) {
       return;
     }
@@ -786,8 +824,10 @@ export function FreelanceInvoicesManager() {
           reason,
         }),
       );
-      const processedCount = (result as { processedCount?: number }).processedCount ?? 0;
-      const skippedCount = (result as { skippedCount?: number }).skippedCount ?? 0;
+      const processedCount =
+        (result as { processedCount?: number }).processedCount ?? 0;
+      const skippedCount =
+        (result as { skippedCount?: number }).skippedCount ?? 0;
       const failedCount = (result as { failedCount?: number }).failedCount ?? 0;
       toast.success(
         `Bulk factures terminé: ${processedCount} traité(s), ${skippedCount} ignoré(s), ${failedCount} en erreur.`,
@@ -844,7 +884,9 @@ export function FreelanceInvoicesManager() {
       setPaymentInvoice(null);
       await loadData();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Paiement impossible");
+      toast.error(
+        error instanceof Error ? error.message : "Paiement impossible",
+      );
     } finally {
       setIsSavingPayment(false);
     }
@@ -875,7 +917,9 @@ export function FreelanceInvoicesManager() {
     value: string,
   ) => {
     setEditLines((previous) =>
-      previous.map((line) => (line.key === key ? { ...line, [field]: value } : line)),
+      previous.map((line) =>
+        line.key === key ? { ...line, [field]: value } : line,
+      ),
     );
   };
 
@@ -917,7 +961,9 @@ export function FreelanceInvoicesManager() {
           documentTemplate: editDocumentTemplate,
           notes: editNotes,
           terms: editTerms,
-          lines: lines.filter((line): line is NonNullable<typeof line> => line !== null),
+          lines: lines.filter(
+            (line): line is NonNullable<typeof line> => line !== null,
+          ),
         }),
       );
 
@@ -925,7 +971,9 @@ export function FreelanceInvoicesManager() {
       setIsEditOpen(false);
       await loadData();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Mise à jour impossible");
+      toast.error(
+        error instanceof Error ? error.message : "Mise à jour impossible",
+      );
     } finally {
       setIsSavingEdit(false);
     }
@@ -1215,7 +1263,9 @@ export function FreelanceInvoicesManager() {
                   variant="outline"
                   onClick={() => {
                     setPendingBulkInvoiceOperation("CANCEL");
-                    setBulkInvoiceReason("Annulation groupée depuis le tableau");
+                    setBulkInvoiceReason(
+                      "Annulation groupée depuis le tableau",
+                    );
                   }}
                 >
                   Annuler ({selectedInvoiceIds.length})
@@ -1242,7 +1292,9 @@ export function FreelanceInvoicesManager() {
               Chargement des factures...
             </div>
           ) : invoices.length === 0 ? (
-            <p className="text-muted-foreground text-sm">Aucune facture pour le moment.</p>
+            <p className="text-muted-foreground text-sm">
+              Aucune facture pour le moment.
+            </p>
           ) : viewMode === "table" ? (
             <Table>
               <TableHeader>
@@ -1275,7 +1327,10 @@ export function FreelanceInvoicesManager() {
                       <Checkbox
                         checked={selectedInvoiceIds.includes(invoice.id)}
                         onCheckedChange={(checked) => {
-                          handleToggleInvoiceSelection(invoice.id, Boolean(checked));
+                          handleToggleInvoiceSelection(
+                            invoice.id,
+                            Boolean(checked),
+                          );
                         }}
                         aria-label={`Sélectionner ${invoice.number ?? invoice.id}`}
                       />
@@ -1330,7 +1385,9 @@ export function FreelanceInvoicesManager() {
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-muted-foreground">Montant TTC</span>
-                      <span className="font-medium">{formatCents(invoice.totalCents)}</span>
+                      <span className="font-medium">
+                        {formatCents(invoice.totalCents)}
+                      </span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-muted-foreground">Payé</span>
@@ -1340,7 +1397,9 @@ export function FreelanceInvoicesManager() {
                       <span className="text-muted-foreground">Reste dû</span>
                       <span>{formatCents(invoice.balanceCents)}</span>
                     </div>
-                    <div className="pt-2">{renderInvoiceActions(invoice, true)}</div>
+                    <div className="pt-2">
+                      {renderInvoiceActions(invoice, true)}
+                    </div>
                   </CardContent>
                 </Card>
               ))}
@@ -1392,7 +1451,10 @@ export function FreelanceInvoicesManager() {
               </SelectTrigger>
               <SelectContent>
                 {BILLING_DOCUMENT_TEMPLATES.map((template) => (
-                  <SelectItem key={`edit-template-${template.id}`} value={template.id}>
+                  <SelectItem
+                    key={`edit-template-${template.id}`}
+                    value={template.id}
+                  >
                     {template.label}
                   </SelectItem>
                 ))}
@@ -1427,7 +1489,11 @@ export function FreelanceInvoicesManager() {
                       placeholder={`Description ligne ${index + 1}`}
                       value={line.description}
                       onChange={(event) => {
-                        handleUpdateLine(line.key, "description", event.target.value);
+                        handleUpdateLine(
+                          line.key,
+                          "description",
+                          event.target.value,
+                        );
                       }}
                     />
                     <Input
@@ -1437,7 +1503,11 @@ export function FreelanceInvoicesManager() {
                       placeholder="Qté"
                       value={line.quantity}
                       onChange={(event) => {
-                        handleUpdateLine(line.key, "quantity", event.target.value);
+                        handleUpdateLine(
+                          line.key,
+                          "quantity",
+                          event.target.value,
+                        );
                       }}
                     />
                     <Select
@@ -1451,7 +1521,10 @@ export function FreelanceInvoicesManager() {
                       </SelectTrigger>
                       <SelectContent>
                         {billingStudioUnitOptions.map((unit) => (
-                          <SelectItem key={`edit-${unit.value}`} value={unit.value}>
+                          <SelectItem
+                            key={`edit-${unit.value}`}
+                            value={unit.value}
+                          >
                             {unit.label}
                           </SelectItem>
                         ))}
@@ -1464,7 +1537,11 @@ export function FreelanceInvoicesManager() {
                       placeholder="PU (€)"
                       value={line.unitPrice}
                       onChange={(event) => {
-                        handleUpdateLine(line.key, "unitPrice", event.target.value);
+                        handleUpdateLine(
+                          line.key,
+                          "unitPrice",
+                          event.target.value,
+                        );
                       }}
                     />
                     <Input
@@ -1474,7 +1551,11 @@ export function FreelanceInvoicesManager() {
                       placeholder="TVA %"
                       value={line.vatRate}
                       onChange={(event) => {
-                        handleUpdateLine(line.key, "vatRate", event.target.value);
+                        handleUpdateLine(
+                          line.key,
+                          "vatRate",
+                          event.target.value,
+                        );
                       }}
                     />
                     <Input
@@ -1484,7 +1565,11 @@ export function FreelanceInvoicesManager() {
                       placeholder="Remise %"
                       value={line.discountPercent}
                       onChange={(event) => {
-                        handleUpdateLine(line.key, "discountPercent", event.target.value);
+                        handleUpdateLine(
+                          line.key,
+                          "discountPercent",
+                          event.target.value,
+                        );
                       }}
                     />
                     <Button
@@ -1536,8 +1621,14 @@ export function FreelanceInvoicesManager() {
             >
               Annuler
             </Button>
-            <Button type="button" onClick={handleSaveEdit} disabled={!canSaveEdit || isSavingEdit}>
-              {isSavingEdit ? <Loader2 className="size-4 animate-spin" /> : null}
+            <Button
+              type="button"
+              onClick={handleSaveEdit}
+              disabled={!canSaveEdit || isSavingEdit}
+            >
+              {isSavingEdit ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : null}
               Enregistrer
             </Button>
           </FreelanceSideSheetFooter>
@@ -1585,13 +1676,13 @@ export function FreelanceInvoicesManager() {
                 <SelectValue placeholder="Mode de paiement" />
               </SelectTrigger>
               <SelectContent>
-                {(Object.keys(paymentMethodLabel) as BillingPaymentMethod[]).map(
-                  (method) => (
-                    <SelectItem key={method} value={method}>
-                      {paymentMethodLabel[method]}
-                    </SelectItem>
-                  ),
-                )}
+                {(
+                  Object.keys(paymentMethodLabel) as BillingPaymentMethod[]
+                ).map((method) => (
+                  <SelectItem key={method} value={method}>
+                    {paymentMethodLabel[method]}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
 
@@ -1639,7 +1730,9 @@ export function FreelanceInvoicesManager() {
               }}
               disabled={!canSavePayment || isSavingPayment}
             >
-              {isSavingPayment ? <Loader2 className="size-4 animate-spin" /> : null}
+              {isSavingPayment ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : null}
               Enregistrer le paiement
             </Button>
           </FreelanceSideSheetFooter>
