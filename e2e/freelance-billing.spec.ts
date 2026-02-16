@@ -19,6 +19,19 @@ test.describe("freelance-billing", () => {
         throw new Error("User not found after signup");
       }
 
+      await prisma.billingProfile.create({
+        data: {
+          userId: user.id,
+          legalName: "Freelance E2E",
+          addressLine1: "1 rue de Test",
+          postalCode: "75000",
+          city: "Paris",
+          countryCode: "FR",
+          iban: "FR1420041010050500013M02606",
+          bic: "SOGEFRPP",
+        },
+      });
+
       await prisma.billingClient.create({
         data: {
           userId: user.id,
