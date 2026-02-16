@@ -166,3 +166,25 @@ export const getRecentAdminAuditLogs = async (limit = 8) => {
     throw error;
   }
 };
+
+export const getAdminAuditLogsForUser = async (
+  userId: string,
+  limit = 20,
+) => {
+  try {
+    return await prisma.adminAuditLog.findMany({
+      where: {
+        targetUserId: userId,
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+      take: limit,
+    });
+  } catch (error) {
+    if (isMissingAuditTableError(error)) {
+      return [];
+    }
+    throw error;
+  }
+};

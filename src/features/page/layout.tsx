@@ -7,15 +7,16 @@ export const Layout = (
     size?: "sm" | "default" | "lg" | "xl";
   },
 ) => {
+  const resolvedSize = props.size ?? "default";
+
   return (
     <div
       {...props}
       className={cn(
-        "m-auto mt-4 flex w-full max-w-4xl flex-wrap gap-4 px-4",
+        "mt-1 flex w-full flex-wrap gap-4 px-1.5 sm:px-2.5 lg:px-3.5",
         {
-          "max-w-[1400px]": props.size === "xl",
-          "max-w-7xl": props.size === "lg",
-          "max-w-3xl": props.size === "sm",
+          "mx-auto max-w-5xl": resolvedSize === "sm",
+          "max-w-none": resolvedSize !== "sm",
         },
         props.className,
       )}

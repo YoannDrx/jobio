@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { resolveActionResult } from "@/lib/actions/actions-utils";
+import { computeContactRelationship } from "@/features/contacts/contact-relationship";
 import {
   addInteractionAction,
   deleteContactAction,
@@ -98,6 +99,25 @@ export function ContactDetailSheet({
 
   if (!contact) return null;
 
+  const lastInteractionAt = contact.interactions.at(0)?.date ?? null;
+  const relationship = computeContactRelationship({
+    missionCount: contact.missions.length,
+    interactionCount: contact.interactions.length,
+    lastInteractionAt,
+  });
+  const relationshipTierLabel: Record<typeof relationship.tier, string> = {
+    hot: "Hot",
+    warm: "Warm",
+    cold: "Cold",
+  };
+  const relationshipTierClassName: Record<typeof relationship.tier, string> = {
+    hot: "border-emerald-200 text-emerald-700",
+    warm: "border-amber-200 text-amber-700",
+    cold: "border-slate-200 text-slate-600",
+  };
+  const lastInteractionLabel =
+    contact.interactions.at(0)?.date.toLocaleDateString("fr-FR") ?? "Jamais";
+
   const handleSaveNotes = async () => {
     try {
       await resolveActionResult(updateContactAction({ id: contact.id, notes }));
@@ -166,6 +186,18 @@ export function ContactDetailSheet({
                   {contact.company}
                 </p>
               )}
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                <Badge
+                  variant="outline"
+                  className={relationshipTierClassName[relationship.tier]}
+                >
+                  Relation {relationshipTierLabel[relationship.tier]}
+                </Badge>
+                <Badge variant="secondary">{relationship.score}/100</Badge>
+                <span className="text-muted-foreground text-xs">
+                  Dernier échange: {lastInteractionLabel}
+                </span>
+              </div>
             </div>
           </div>
         </SheetHeader>

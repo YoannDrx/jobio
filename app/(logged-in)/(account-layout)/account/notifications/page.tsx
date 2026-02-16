@@ -9,29 +9,33 @@ import {
 import { ContactSupportDialog } from "@/features/contact/support/contact-support-dialog";
 import { getRequiredUser } from "@/lib/auth/auth-user";
 import { env } from "@/lib/env";
-import { resend } from "@/lib/mail/resend";
 import { combineWithParentMetadata } from "@/lib/metadata";
+import { resend } from "@/lib/mail/resend";
 import { prisma } from "@/lib/prisma";
 import { Suspense } from "react";
 import { AccountLayout } from "../account-layout";
+import { NotificationsSettings } from "./notifications-settings";
 import { ToggleEmailCheckbox } from "./toggle-email-checkbox";
 
 export const generateMetadata = combineWithParentMetadata({
-  title: "Email",
-  description: "Gérer tes paramètres de notifications email.",
+  title: "Notifications",
+  description: "Gérer tes paramètres de notifications.",
 });
 
 export default function Page() {
   return (
     <AccountLayout>
-      <Suspense fallback={null}>
-        <MailProfilePage />
-      </Suspense>
+      <div className="flex flex-col gap-4">
+        <NotificationsSettings />
+        <Suspense fallback={null}>
+          <MarketingEmailSection />
+        </Suspense>
+      </div>
     </AccountLayout>
   );
 }
 
-async function MailProfilePage() {
+async function MarketingEmailSection() {
   const user = await getRequiredUser();
   const userWithResendContactId = await prisma.user.findUnique({
     where: {
@@ -43,11 +47,11 @@ async function MailProfilePage() {
   });
 
   if (!userWithResendContactId?.resendContactId) {
-    return <ErrorComponent />;
+    return <MarketingEmailError />;
   }
 
   if (!env.RESEND_AUDIENCE_ID) {
-    return <ErrorComponent />;
+    return <MarketingEmailError />;
   }
 
   const { data: resendUser } = await resend.contacts.get({
@@ -56,15 +60,15 @@ async function MailProfilePage() {
   });
 
   if (!resendUser) {
-    return <ErrorComponent />;
+    return <MarketingEmailError />;
   }
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Paramètres email</CardTitle>
+        <CardTitle>Emails marketing</CardTitle>
         <CardDescription>
-          Configure tes paramètres de notifications email selon tes préférences.
+          Configure tes préférences pour les emails marketing et promotionnels.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -74,7 +78,7 @@ async function MailProfilePage() {
   );
 }
 
-const ErrorComponent = () => {
+function MarketingEmailError() {
   return (
     <Card>
       <CardHeader>
@@ -88,4 +92,4 @@ const ErrorComponent = () => {
       </CardFooter>
     </Card>
   );
-};
+}

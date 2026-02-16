@@ -4,23 +4,18 @@ import {
   PublicPageShell,
   PublicSection,
 } from "@/features/layout/public-page-shell";
+import { buildMarketingMetadata } from "@/lib/seo";
 import { SiteConfig } from "@/site-config";
 import { Calendar, Clock } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = buildMarketingMetadata({
   title: `Blog | ${SiteConfig.title}`,
   description:
     "Conseils, strategies et bonnes pratiques pour les freelances tech : prospection, LinkedIn, TJM, productivite et plus.",
-  openGraph: {
-    title: `Blog | ${SiteConfig.title}`,
-    description:
-      "Articles pratiques pour optimiser sa prospection freelance tech.",
-    url: `${SiteConfig.prodUrl}/blog`,
-    type: "website",
-  },
-};
+  path: "/blog",
+});
 
 export default function BlogPage() {
   return (

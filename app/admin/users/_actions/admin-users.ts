@@ -1,4 +1,4 @@
-import type { Prisma } from "@/generated/prisma";
+import { Prisma } from "@/generated/prisma";
 import { prisma } from "@/lib/prisma";
 
 export type AdminUserRoleFilter = "all" | "admin" | "user";
@@ -43,6 +43,126 @@ type GetUsersOptions = {
   order?: "asc" | "desc";
 };
 
+type UserMetricsRow = {
+  id: string;
+  name: string;
+  email: string;
+  image: string | null;
+  role: string | null;
+  banned: boolean | null;
+  email_verified: boolean;
+  created_at: Date;
+  plan: string;
+  subscription_status: string | null;
+  missions_count: number;
+  active_sessions: number;
+  last_activity_at: Date;
+};
+
+const ORDER_BY_SQL: Record<AdminUserSortBy, Prisma.Sql> = {
+  createdAt: Prisma.raw("created_at"),
+  name: Prisma.raw("name"),
+  email: Prisma.raw("email"),
+  missions: Prisma.raw("missions_count"),
+  sessions: Prisma.raw("active_sessions"),
+  lastActivity: Prisma.raw("last_activity_at"),
+};
+
+const buildUserFiltersSql = (options: {
+  search?: string;
+  role: AdminUserRoleFilter;
+  status: AdminUserStatusFilter;
+  plan: AdminUserPlanFilter;
+}) => {
+  const clauses: Prisma.Sql[] = [Prisma.sql`1 = 1`];
+
+  if (options.search) {
+    const searchValue = `%${options.search}%`;
+    clauses.push(
+      Prisma.sql`(u.email ILIKE ${searchValue} OR u.name ILIKE ${searchValue})`,
+    );
+  }
+
+  if (options.role === "admin") {
+    clauses.push(Prisma.sql`u.role = 'admin'`);
+  }
+
+  if (options.role === "user") {
+    clauses.push(Prisma.sql`(u.role IS NULL OR u.role = 'user')`);
+  }
+
+  if (options.status === "active") {
+    clauses.push(Prisma.sql`COALESCE(u.banned, false) = false`);
+  }
+
+  if (options.status === "banned") {
+    clauses.push(Prisma.sql`COALESCE(u.banned, false) = true`);
+  }
+
+  if (options.status === "unverified") {
+    clauses.push(Prisma.sql`u."emailVerified" = false`);
+  }
+
+  if (options.plan === "free") {
+    clauses.push(Prisma.sql`(sub.id IS NULL OR sub.plan = 'free')`);
+  }
+
+  if (options.plan === "pro" || options.plan === "ultra") {
+    clauses.push(Prisma.sql`sub.plan = ${options.plan}`);
+  }
+
+  return Prisma.join(clauses, " AND ");
+};
+
+const buildUsersMetricsCteSql = (filtersSql: Prisma.Sql) => Prisma.sql`
+  WITH user_metrics AS (
+    SELECT
+      u.id,
+      u.name,
+      u.email,
+      u.image,
+      u.role,
+      u.banned,
+      u."emailVerified" AS email_verified,
+      u."createdAt" AS created_at,
+      COALESCE(sub.plan, 'free') AS plan,
+      sub.status AS subscription_status,
+      COALESCE(ms.missions_count, 0)::int AS missions_count,
+      COALESCE(ss.active_sessions, 0)::int AS active_sessions,
+      GREATEST(
+        COALESCE(ss.last_session_activity, u."createdAt"),
+        COALESCE(ae.last_mission_activity, u."createdAt"),
+        u."createdAt"
+      ) AS last_activity_at
+    FROM "user" u
+    LEFT JOIN "subscription" sub ON sub."referenceId" = u.id
+    LEFT JOIN (
+      SELECT
+        m."userId" AS user_id,
+        COUNT(*)::int AS missions_count
+      FROM "mission" m
+      WHERE m."deletedAt" IS NULL
+      GROUP BY m."userId"
+    ) ms ON ms.user_id = u.id
+    LEFT JOIN (
+      SELECT
+        s."userId" AS user_id,
+        COUNT(*) FILTER (WHERE s."expiresAt" > NOW())::int AS active_sessions,
+        MAX(s."updatedAt") AS last_session_activity
+      FROM "session" s
+      GROUP BY s."userId"
+    ) ss ON ss.user_id = u.id
+    LEFT JOIN (
+      SELECT
+        a."userId" AS user_id,
+        MAX(a."createdAt") AS last_mission_activity
+      FROM "activity_event" a
+      GROUP BY a."userId"
+    ) ae ON ae.user_id = u.id
+    WHERE ${filtersSql}
+  )
+`;
+
 export const getUsersWithStats = async ({
   page,
   pageSize = 10,
@@ -57,58 +177,26 @@ export const getUsersWithStats = async ({
   total: number;
   totalPages: number;
 }> => {
-  const whereClause: Prisma.UserWhereInput = {};
+  const safePage = Math.max(1, page);
+  const safePageSize = Math.max(1, pageSize);
+  const offset = (safePage - 1) * safePageSize;
 
-  if (search) {
-    whereClause.OR = [
-      {
-        email: {
-          contains: search,
-          mode: "insensitive",
-        },
-      },
-      {
-        name: {
-          contains: search,
-          mode: "insensitive",
-        },
-      },
-    ];
-  }
-
-  if (role !== "all") {
-    whereClause.role = role;
-  }
-
-  if (status === "active") {
-    whereClause.banned = {
-      not: true,
-    };
-  }
-
-  if (status === "banned") {
-    whereClause.banned = true;
-  }
-
-  if (status === "unverified") {
-    whereClause.emailVerified = false;
-  }
-
-  const baseUsers = await prisma.user.findMany({
-    where: whereClause,
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      image: true,
-      role: true,
-      banned: true,
-      emailVerified: true,
-      createdAt: true,
-    },
+  const filtersSql = buildUserFiltersSql({
+    search,
+    role,
+    status,
+    plan,
   });
+  const cteSql = buildUsersMetricsCteSql(filtersSql);
 
-  if (baseUsers.length === 0) {
+  const totalRows = await prisma.$queryRaw<{ total: number }[]>(Prisma.sql`
+    ${cteSql}
+    SELECT COUNT(*)::int AS total
+    FROM user_metrics
+  `);
+
+  const total = Number(totalRows[0]?.total ?? 0);
+  if (total === 0) {
     return {
       users: [],
       total: 0,
@@ -116,135 +204,51 @@ export const getUsersWithStats = async ({
     };
   }
 
-  const userIds = baseUsers.map((user) => user.id);
-  const now = new Date();
+  const orderBySql = ORDER_BY_SQL[sortBy];
+  const orderDirectionSql = order === "asc" ? Prisma.raw("ASC") : Prisma.raw("DESC");
 
-  const [
-    subscriptions,
-    missionsByUser,
-    activeSessionsByUser,
-    lastSessionActivityByUser,
-    lastMissionActivityByUser,
-  ] = await Promise.all([
-    prisma.subscription.findMany({
-      where: { referenceId: { in: userIds } },
-      select: {
-        referenceId: true,
-        plan: true,
-        status: true,
-      },
-    }),
-    prisma.mission.groupBy({
-      by: ["userId"],
-      where: {
-        userId: { in: userIds },
-        deletedAt: null,
-      },
-      _count: true,
-    }),
-    prisma.session.groupBy({
-      by: ["userId"],
-      where: {
-        userId: { in: userIds },
-        expiresAt: { gt: now },
-      },
-      _count: true,
-    }),
-    prisma.session.groupBy({
-      by: ["userId"],
-      where: {
-        userId: { in: userIds },
-      },
-      _max: {
-        updatedAt: true,
-      },
-    }),
-    prisma.activityEvent.groupBy({
-      by: ["userId"],
-      where: {
-        userId: { in: userIds },
-      },
-      _max: {
-        createdAt: true,
-      },
-    }),
-  ]);
+  const rows = await prisma.$queryRaw<UserMetricsRow[]>(Prisma.sql`
+    ${cteSql}
+    SELECT
+      id,
+      name,
+      email,
+      image,
+      role,
+      banned,
+      email_verified,
+      created_at,
+      plan,
+      subscription_status,
+      missions_count,
+      active_sessions,
+      last_activity_at
+    FROM user_metrics
+    ORDER BY ${orderBySql} ${orderDirectionSql}, id ${orderDirectionSql}
+    LIMIT ${safePageSize}
+    OFFSET ${offset}
+  `);
 
-  const subscriptionByUser = new Map(
-    subscriptions.map((subscription) => [subscription.referenceId, subscription]),
-  );
-  const missionsCountByUser = new Map(
-    missionsByUser.map((item) => [item.userId, item._count]),
-  );
-  const activeSessionsCountByUser = new Map(
-    activeSessionsByUser.map((item) => [item.userId, item._count]),
-  );
-  const lastSessionActivity = new Map(
-    lastSessionActivityByUser.map((item) => [item.userId, item._max.updatedAt]),
-  );
-  const lastMissionActivity = new Map(
-    lastMissionActivityByUser.map((item) => [item.userId, item._max.createdAt]),
-  );
-
-  const enrichedUsers = baseUsers.map((user) => {
-    const subscription = subscriptionByUser.get(user.id);
-    const sessionDate = lastSessionActivity.get(user.id);
-    const missionDate = lastMissionActivity.get(user.id);
-    const lastActivityCandidates = [
-      sessionDate ?? null,
-      missionDate ?? null,
-      user.createdAt,
-    ].filter((date): date is Date => date instanceof Date);
-    const lastActivityAt = new Date(
-      Math.max(...lastActivityCandidates.map((date) => date.getTime())),
-    );
-
-    return {
-      ...user,
-      plan: subscription?.plan ?? "free",
-      subscriptionStatus: subscription?.status ?? null,
-      missionsCount: missionsCountByUser.get(user.id) ?? 0,
-      activeSessions: activeSessionsCountByUser.get(user.id) ?? 0,
-      lastActivityAt,
-    } satisfies UserWithStats;
-  });
-
-  const filteredByPlan =
-    plan === "all"
-      ? enrichedUsers
-      : enrichedUsers.filter((user) => user.plan === plan);
-
-  const direction = order === "asc" ? 1 : -1;
-  const sortedUsers = [...filteredByPlan].sort((a, b) => {
-    if (sortBy === "name") {
-      return direction * a.name.localeCompare(b.name);
-    }
-    if (sortBy === "email") {
-      return direction * a.email.localeCompare(b.email);
-    }
-    if (sortBy === "missions") {
-      return direction * (a.missionsCount - b.missionsCount);
-    }
-    if (sortBy === "sessions") {
-      return direction * (a.activeSessions - b.activeSessions);
-    }
-    if (sortBy === "lastActivity") {
-      return (
-        direction * (a.lastActivityAt.getTime() - b.lastActivityAt.getTime())
-      );
-    }
-    return direction * (a.createdAt.getTime() - b.createdAt.getTime());
-  });
-
-  const total = sortedUsers.length;
-  const totalPages = Math.max(1, Math.ceil(total / pageSize));
-  const start = (page - 1) * pageSize;
-  const users = sortedUsers.slice(start, start + pageSize);
+  const users: UserWithStats[] = rows.map((row) => ({
+    id: row.id,
+    name: row.name,
+    email: row.email,
+    image: row.image,
+    role: row.role,
+    banned: row.banned,
+    emailVerified: row.email_verified,
+    createdAt: row.created_at,
+    plan: row.plan,
+    subscriptionStatus: row.subscription_status,
+    missionsCount: row.missions_count,
+    activeSessions: row.active_sessions,
+    lastActivityAt: row.last_activity_at,
+  }));
 
   return {
     users,
     total,
-    totalPages,
+    totalPages: Math.ceil(total / safePageSize),
   };
 };
 

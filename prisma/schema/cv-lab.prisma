@@ -1,0 +1,130 @@
+enum CvLabTemplate {
+  CLASSIC
+  TWO_COLUMN
+  EXECUTIVE
+  COMPACT
+}
+
+enum CvLabTheme {
+  MINIMAL
+  MODERN
+  CONTRAST
+  BOLD
+}
+
+enum CvLabPageSize {
+  A4
+  LETTER
+}
+
+enum CvLabCoachSessionStatus {
+  ACTIVE
+  COMPLETED
+  ARCHIVED
+}
+
+enum CvLabCoachMessageRole {
+  USER
+  ASSISTANT
+}
+
+model CvLabDocument {
+  id        String @id @default(nanoid(11))
+  userId    String
+  profileId String
+
+  name       String
+  targetRole String?
+
+  template    CvLabTemplate @default(CLASSIC)
+  theme       CvLabTheme    @default(MODERN)
+  pageSize    CvLabPageSize @default(A4)
+  accentColor String        @default("#0f172a")
+  fontFamily  String        @default("Inter")
+
+  headlineOverride String?
+  summaryOverride  String?
+  sectionOrder     Json?
+  hiddenSections   Json?
+
+  archivedAt DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  user     User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  profile  UserProfile            @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  versions CvLabDocumentVersion[]
+
+  @@index([userId, updatedAt])
+  @@index([profileId])
+  @@map("cv_lab_document")
+}
+
+model CvLabDocumentVersion {
+  id         String @id @default(nanoid(11))
+  documentId String
+  userId     String
+
+  label    String
+  snapshot Json
+
+  createdAt DateTime @default(now())
+
+  document CvLabDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  user     User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([documentId, createdAt])
+  @@index([userId, createdAt])
+  @@map("cv_lab_document_version")
+}
+
+model CvLabCoachSession {
+  id        String  @id @default(nanoid(11))
+  userId    String
+  profileId String?
+
+  name   String                  @default("Session CV")
+  status CvLabCoachSessionStatus @default(ACTIVE)
+
+  goalRole           String?
+  structuredSnapshot Json?
+  missingItems       Json?
+  inconsistencies    Json?
+  nextQuestions      Json?
+  completenessScore  Int     @default(0)
+
+  lastExtractedAt DateTime?
+  lockedFields    Json?
+  sourceEvidence  Json?
+
+  archivedAt DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  user     User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  profile  UserProfile?        @relation(fields: [profileId], references: [id], onDelete: SetNull)
+  messages CvLabCoachMessage[]
+
+  @@index([userId, updatedAt])
+  @@index([profileId])
+  @@map("cv_lab_coach_session")
+}
+
+model CvLabCoachMessage {
+  id        String @id @default(nanoid(11))
+  sessionId String
+  userId    String
+
+  role    CvLabCoachMessageRole
+  content String
+  meta    Json?
+
+  createdAt DateTime @default(now())
+
+  session CvLabCoachSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  user    User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId, createdAt])
+  @@index([userId, createdAt])
+  @@map("cv_lab_coach_message")
+}

@@ -1,14 +1,17 @@
 import type { Subscription } from "@/generated/prisma";
 import { logger } from "@/lib/logger";
 import {
+  BookText,
   Bot,
   Building2,
   Briefcase,
   ChartBar,
   Clock,
   Contact,
+  FileClock,
   HeadphonesIcon,
   Monitor,
+  Receipt,
   Shield,
   UserCircle,
   Zap,
@@ -20,6 +23,10 @@ const DEFAULT_LIMIT = {
   contacts: 30,
   platforms: 3,
   companies: 10,
+  billingClients: 10,
+  billingQuotes: 20,
+  billingInvoices: 20,
+  billingCatalogItems: 25,
   aiRequestsPerMonth: 5,
   analyticsHistoryDays: 7,
 };
@@ -94,6 +101,10 @@ export const AUTH_PLANS: AppAuthPlan[] = [
       contacts: 200,
       platforms: 10,
       companies: 50,
+      billingClients: 250,
+      billingQuotes: 999999,
+      billingInvoices: 999999,
+      billingCatalogItems: 250,
       aiRequestsPerMonth: 50,
       analyticsHistoryDays: 90,
     },
@@ -167,6 +178,10 @@ export const AUTH_PLANS: AppAuthPlan[] = [
       contacts: 999999,
       platforms: 999999,
       companies: 999999,
+      billingClients: 999999,
+      billingQuotes: 999999,
+      billingInvoices: 999999,
+      billingCatalogItems: 999999,
       aiRequestsPerMonth: 999,
       analyticsHistoryDays: 999999,
     },
@@ -217,6 +232,30 @@ export const LIMITS_CONFIG: Record<
     getLabel: (value: number) =>
       value >= 999999 ? "Entreprises illimitées" : `${value} entreprises`,
     description: "Suivre les entreprises que vous démarchez",
+  },
+  billingClients: {
+    icon: Contact,
+    getLabel: (value: number) =>
+      value >= 999999 ? "Clients facturation illimités" : `${value} clients facturation`,
+    description: "Créer et gérer votre base clients de facturation",
+  },
+  billingQuotes: {
+    icon: FileClock,
+    getLabel: (value: number) =>
+      value >= 999999 ? "Devis illimités" : `${value} devis`,
+    description: "Émettre et suivre vos devis",
+  },
+  billingInvoices: {
+    icon: Receipt,
+    getLabel: (value: number) =>
+      value >= 999999 ? "Factures illimitées" : `${value} factures`,
+    description: "Générer et suivre vos factures clients",
+  },
+  billingCatalogItems: {
+    icon: BookText,
+    getLabel: (value: number) =>
+      value >= 999999 ? "Catalogue illimité" : `${value} éléments catalogue`,
+    description: "Maintenir un catalogue de prestations réutilisables",
   },
   aiRequestsPerMonth: {
     icon: Bot,

@@ -14,7 +14,7 @@ import { useQueryState, parseAsString, parseAsArrayOf } from "nuqs";
 import { toast } from "sonner";
 import { resolveActionResult } from "@/lib/actions/actions-utils";
 import {
-  getFollowUpsForCalendarAction,
+  getFollowUpsAction,
   createFollowUpAction,
   completeFollowUpAction,
   deleteFollowUpAction,
@@ -136,11 +136,9 @@ export default function FollowUpsPage() {
   const fetchFollowUps = useCallback(async () => {
     try {
       setIsLoading(true);
-      const now = new Date();
       const result = await resolveActionResult(
-        getFollowUpsForCalendarAction({
-          month: now.getMonth() + 1,
-          year: now.getFullYear(),
+        getFollowUpsAction({
+          includeCompleted: true,
         }),
       );
       setFollowUps(

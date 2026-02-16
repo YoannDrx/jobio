@@ -10,6 +10,8 @@ enum AIFeature {
   PROFILE_IMPROVEMENT
   STRUCTURED_SCORING
   LINKEDIN_AUDIT
+  CV_COACH
+  BILLING_FORECAST
 }
 
 model AIUsage {
@@ -41,4 +43,34 @@ model AIMonthlyQuota {
 
   @@unique([userId, month, year])
   @@map("ai_monthly_quota")
+}
+
+model AIQuotaAdjustment {
+  id String @id @default(nanoid(11))
+
+  userId      String
+  actorUserId String
+
+  month Int
+  year  Int
+
+  mode   String
+  amount Int
+
+  previousRequestsLimit Int
+  nextRequestsLimit     Int
+  previousRequestsUsed  Int
+  nextRequestsUsed      Int
+
+  reason String
+
+  createdAt DateTime @default(now())
+
+  user  User @relation("AIQuotaAdjustmentTarget", fields: [userId], references: [id], onDelete: Cascade)
+  actor User @relation("AIQuotaAdjustmentActor", fields: [actorUserId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([actorUserId, createdAt])
+  @@index([userId, month, year])
+  @@map("ai_quota_adjustment")
 }

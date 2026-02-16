@@ -1,4 +1,3 @@
-import { getServerUrl } from "@/lib/server-url";
 import { SiteConfig } from "@/site-config";
 import {
   Body,
@@ -21,98 +20,113 @@ import type { PropsWithChildren } from "react";
 export const EmailLayout = (
   props: PropsWithChildren<{ disableTailwind?: boolean }>,
 ) => {
-  let baseUrl = getServerUrl();
-
-  // Email software can't handle localhost URL
-  if (baseUrl.startsWith("http://localhost")) {
-    baseUrl = SiteConfig.prodUrl;
-  }
+  // Always use prodUrl for email images — localhost and preview URLs
+  // are not reachable by email clients
+  const baseUrl = SiteConfig.prodUrl;
 
   return (
     <Html>
       <Head />
       <Body
         style={{
-          backgroundColor: "#f8fafc",
+          backgroundColor: "#f1f5f9",
           fontFamily:
             "-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji'",
+          margin: "0",
+          padding: "0",
         }}
       >
         <Container
           style={{
-            margin: "0 auto",
+            maxWidth: "580px",
+            margin: "40px auto",
             backgroundColor: "#ffffff",
-            borderRadius: "12px",
-            boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+            borderRadius: "16px",
+            boxShadow: "0 4px 24px rgba(0,0,0,0.06)",
             overflow: "hidden",
-            backgroundSize: "contain",
-            backgroundPosition: "bottom",
-            backgroundRepeat: "no-repeat",
           }}
         >
+          {/* Gradient top bar — fallback backgroundColor for Outlook */}
           <div
             style={{
-              backgroundColor: "#22D3EE",
-              height: "4px",
-              width: "100%",
+              height: "6px",
+              background: "linear-gradient(90deg, #06b6d4, #8b5cf6)",
+              backgroundColor: "#06b6d4",
             }}
           />
-          <div style={{ padding: "1.5rem" }}>
-            <Tailwind>
-              <table cellPadding={0} cellSpacing={0}>
-                <tr>
-                  <td className="pr-2">
-                    <Img
-                      src={`${baseUrl}${SiteConfig.appIcon}`}
-                      width={48}
-                      height={48}
-                      className="inline"
-                      alt={`${SiteConfig.title}'s logo`}
-                    />
-                  </td>
-                  <td>
-                    <Text className="text-xl font-bold">
-                      {SiteConfig.title}
-                    </Text>
-                  </td>
-                </tr>
-              </table>
-              <Hr className="mt-3 mb-6 border-gray-300" />
-            </Tailwind>
+
+          {/* Header */}
+          <div style={{ padding: "28px 0 20px", textAlign: "center" }}>
+            <Img
+              src={`${baseUrl}${SiteConfig.emailIcon}`}
+              width={56}
+              height={56}
+              alt={`${SiteConfig.title}'s logo`}
+              style={{
+                borderRadius: "12px",
+                margin: "0 auto",
+              }}
+            />
+            <Text
+              style={{
+                fontSize: "20px",
+                fontWeight: "bold",
+                color: "#0e7490",
+                margin: "12px 0 0",
+              }}
+            >
+              {SiteConfig.title}
+            </Text>
+          </div>
+
+          <Hr style={{ borderColor: "#e2e8f0", margin: "0 24px" }} />
+
+          {/* Content */}
+          <div style={{ padding: "32px 24px" }}>
             {props.disableTailwind ? (
               props.children
             ) : (
               <Tailwind>{props.children}</Tailwind>
             )}
-            <Tailwind>
-              <Hr className="mt-12 mb-6 border-gray-300" />
+          </div>
 
-              <table cellPadding={0} cellSpacing={0}>
-                <tr>
-                  <td className="pr-2">
-                    <Img
-                      src={`${baseUrl}${SiteConfig.appIcon}`}
-                      width={32}
-                      height={32}
-                      className="inline"
-                      alt={`${SiteConfig.title}'s logo`}
-                    />
-                  </td>
-                  <td>
-                    <Text className="text-xl">{SiteConfig.title}</Text>
-                  </td>
-                </tr>
-              </table>
-              <Text className="text-sm text-gray-500">
-                {SiteConfig.company.name}
-              </Text>
-              <Text
-                className="text-sm text-gray-500"
-                style={{ marginTop: "16px" }}
-              >
-                {SiteConfig.company.address}
-              </Text>
-            </Tailwind>
+          {/* Footer */}
+          <div
+            style={{
+              backgroundColor: "#f8fafc",
+              borderTop: "1px solid #e2e8f0",
+              padding: "24px",
+              textAlign: "center",
+            }}
+          >
+            <Img
+              src={`${baseUrl}${SiteConfig.emailIcon}`}
+              width={24}
+              height={24}
+              alt={`${SiteConfig.title}'s logo`}
+              style={{
+                borderRadius: "6px",
+                margin: "0 auto",
+              }}
+            />
+            <Text
+              style={{
+                fontSize: "12px",
+                color: "#94a3b8",
+                margin: "8px 0 0",
+              }}
+            >
+              {SiteConfig.title} · {SiteConfig.domain}
+            </Text>
+            <Text
+              style={{
+                fontSize: "11px",
+                color: "#cbd5e1",
+                margin: "4px 0 0",
+              }}
+            >
+              Cet email a été envoyé automatiquement par {SiteConfig.title}.
+            </Text>
           </div>
         </Container>
       </Body>

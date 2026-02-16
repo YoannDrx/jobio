@@ -17,6 +17,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { resolveActionResult } from "@/lib/actions/actions-utils";
 import { authClient } from "@/lib/auth-client";
 import { unwrapSafePromise } from "@/lib/promises";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -29,13 +30,49 @@ import {
   TrashIcon,
 } from "lucide-react";
 import { toast } from "sonner";
+import { createAdminAuditAction } from "@app/admin/_actions/admin-audit";
 
 type UserSessionsProps = {
   userId: string;
+  userEmail: string;
 };
 
-export function UserSessions({ userId }: UserSessionsProps) {
+export function UserSessions({ userId, userEmail }: UserSessionsProps) {
   const queryClient = useQueryClient();
+
+  const askReason = (actionLabel: string) => {
+    const reason = window.prompt(
+      `Raison obligatoire pour "${actionLabel}" (min 6 caractères)`,
+    );
+    if (!reason || reason.trim().length < 6) {
+      toast.error("Raison obligatoire (6 caractères minimum)");
+      return null;
+    }
+    return reason.trim();
+  };
+
+  const requestStrongConfirmation = (actionLabel: string) =>
+    window.prompt(
+      `Action sensible: ${actionLabel}\nTape CONFIRMER pour continuer.`,
+    ) === "CONFIRMER";
+
+  const logAdminAction = async (
+    action: string,
+    metadata?: Record<string, unknown>,
+  ) => {
+    try {
+      await resolveActionResult(
+        createAdminAuditAction({
+          action,
+          targetUserId: userId,
+          targetEmail: userEmail,
+          metadata,
+        }),
+      );
+    } catch {
+      // Keep session revocation responsive even if logging fails.
+    }
+  };
 
   // Fetch user sessions using useQuery
   const {
@@ -56,15 +93,27 @@ export function UserSessions({ userId }: UserSessionsProps) {
   const sessions = sessionsData?.sessions ?? [];
 
   const revokeSessionMutation = useMutation({
-    mutationFn: async (sessionToken: string) => {
+    mutationFn: async ({
+      sessionToken,
+      sessionId: _sessionId,
+      reason: _reason,
+    }: {
+      sessionToken: string;
+      sessionId: string;
+      reason: string;
+    }) => {
       return unwrapSafePromise(
         authClient.admin.revokeUserSession({
-          sessionToken: sessionToken,
+          sessionToken,
         }),
       );
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       toast.success("Session révoquée");
+      void logAdminAction("USER_SESSION_REVOKED", {
+        reason: variables.reason,
+        sessionId: variables.sessionId,
+      });
       void queryClient.invalidateQueries({
         queryKey: ["user-sessions", userId],
       });
@@ -75,15 +124,19 @@ export function UserSessions({ userId }: UserSessionsProps) {
   });
 
   const revokeAllSessionsMutation = useMutation({
-    mutationFn: async () => {
+    mutationFn: async ({ reason: _reason }: { reason: string }) => {
       return unwrapSafePromise(
         authClient.admin.revokeUserSessions({
           userId,
         }),
       );
     },
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       toast.success("Toutes les sessions ont été révoquées");
+      void logAdminAction("USER_SESSIONS_REVOKED_ALL", {
+        reason: variables.reason,
+        revokedCount: sessions.length,
+      });
       void queryClient.invalidateQueries({
         queryKey: ["user-sessions", userId],
       });
@@ -148,7 +201,12 @@ export function UserSessions({ userId }: UserSessionsProps) {
             <Button
               variant="destructive"
               size="sm"
-              onClick={() => revokeAllSessionsMutation.mutate()}
+              onClick={() => {
+                const reason = askReason("Révoquer toutes les sessions");
+                if (!reason) return;
+                if (!requestStrongConfirmation("Révoquer toutes les sessions")) return;
+                revokeAllSessionsMutation.mutate({ reason });
+              }}
               disabled={revokeAllSessionsMutation.isPending}
             >
               <TrashIcon className="mr-2 size-4" />
@@ -249,9 +307,15 @@ export function UserSessions({ userId }: UserSessionsProps) {
                       <Button
                         variant="destructive"
                         size="sm"
-                        onClick={() =>
-                          revokeSessionMutation.mutate(session.token)
-                        }
+                        onClick={() => {
+                          const reason = askReason("Révoquer cette session");
+                          if (!reason) return;
+                          revokeSessionMutation.mutate({
+                            sessionToken: session.token,
+                            sessionId: session.id,
+                            reason,
+                          });
+                        }}
                         disabled={revokeSessionMutation.isPending}
                       >
                         <Trash2 className="size-4" />

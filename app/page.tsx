@@ -15,6 +15,8 @@ import { LandingHeader } from "@/features/landing/landing-header";
 import { NewsletterSection } from "@/features/landing/newsletter-section";
 import { Footer } from "@/features/layout/footer";
 import { Pricing } from "@/features/plans/pricing-section";
+import { absoluteUrl, buildMarketingMetadata } from "@/lib/seo";
+import { SiteConfig } from "@/site-config";
 import {
   ArrowRight,
   Bot,
@@ -26,6 +28,48 @@ import {
   Target,
 } from "lucide-react";
 import Link from "next/link";
+
+export const metadata = buildMarketingMetadata({
+  title: SiteConfig.title,
+  description: SiteConfig.description,
+  path: "/",
+  keywords: [
+    "prospection freelance",
+    "CRM freelance",
+    "pipeline commercial freelance",
+    "outil freelance tech",
+    "relance client freelance",
+  ],
+});
+
+const organizationJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: SiteConfig.company.name,
+  url: SiteConfig.prodUrl,
+  logo: absoluteUrl("/images/logo-icon.svg"),
+  contactPoint: {
+    "@type": "ContactPoint",
+    email: "hello@jobio.fr",
+    contactType: "customer support",
+    availableLanguage: ["fr"],
+  },
+};
+
+const softwareJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  name: SiteConfig.title,
+  applicationCategory: "BusinessApplication",
+  operatingSystem: "Web",
+  url: SiteConfig.prodUrl,
+  description: SiteConfig.description,
+  offers: {
+    "@type": "Offer",
+    price: "0",
+    priceCurrency: "EUR",
+  },
+};
 
 const pillars = [
   {
@@ -103,6 +147,14 @@ const faqs = [
 export default function HomePage() {
   return (
     <div className="bg-background text-foreground relative min-h-screen overflow-x-hidden">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(softwareJsonLd) }}
+      />
       <LandingHeader />
 
       <main className="pt-20">

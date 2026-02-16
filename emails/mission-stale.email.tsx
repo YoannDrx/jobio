@@ -8,6 +8,7 @@ import {
 } from "@react-email/components";
 import { BilingualDivider } from "./utils/bilingual-divider";
 import { EmailLayout } from "./utils/email-layout";
+import { emailStyles } from "./utils/email-styles";
 
 type MissionStaleEmailProps = {
   name: string;
@@ -25,19 +26,16 @@ export default function MissionStaleEmail({
   return (
     <EmailLayout>
       <Preview>Missions à mettre à jour sur {SiteConfig.title}</Preview>
-      <Heading as="h1" style={{ fontSize: "24px", fontWeight: "bold" }}>
+      <Heading as="h1" style={emailStyles.heading}>
         Missions à mettre à jour
       </Heading>
-      <Text style={{ fontSize: "16px", lineHeight: "24px" }}>
-        Salut {name},
-      </Text>
-      <Text style={{ fontSize: "16px", lineHeight: "24px" }}>
+      <Text style={emailStyles.bodyText}>Salut {name},</Text>
+      <Text style={emailStyles.bodyText}>
         Ces missions n{"'"}ont pas été mises à jour depuis plus de 14 jours :
       </Text>
       <Section
         style={{
-          backgroundColor: "#f8fafc",
-          borderRadius: "8px",
+          ...emailStyles.card,
           padding: "16px",
           margin: "16px 0",
         }}
@@ -63,36 +61,33 @@ export default function MissionStaleEmail({
       <Section style={{ textAlign: "center", marginTop: "24px" }}>
         <Button
           href={`${SiteConfig.prodUrl}/app/pipeline`}
-          style={{
-            backgroundColor: SiteConfig.brand.primary,
-            color: "#000",
-            padding: "12px 24px",
-            borderRadius: "6px",
-            fontSize: "16px",
-            fontWeight: "bold",
-            textDecoration: "none",
-          }}
+          style={emailStyles.primaryButton}
         >
           Mettre à jour
         </Button>
       </Section>
-      <Text style={{ fontSize: "14px", lineHeight: "20px", marginTop: "24px" }}>
+      <Text
+        style={{
+          ...emailStyles.mutedText,
+          lineHeight: "20px",
+          marginTop: "16px",
+        }}
+      >
         À bientôt,{"\n"}L{"'"}équipe {SiteConfig.title}
       </Text>
 
       <BilingualDivider />
 
-      <Heading as="h1" style={{ fontSize: "24px", fontWeight: "bold" }}>
+      <Heading as="h1" style={emailStyles.heading}>
         Missions to update
       </Heading>
-      <Text style={{ fontSize: "16px", lineHeight: "24px" }}>Hi {name},</Text>
-      <Text style={{ fontSize: "16px", lineHeight: "24px" }}>
+      <Text style={emailStyles.bodyText}>Hi {name},</Text>
+      <Text style={emailStyles.bodyText}>
         These missions haven{"'"}t been updated in over 14 days:
       </Text>
       <Section
         style={{
-          backgroundColor: "#f8fafc",
-          borderRadius: "8px",
+          ...emailStyles.card,
           padding: "16px",
           margin: "16px 0",
         }}
@@ -118,20 +113,18 @@ export default function MissionStaleEmail({
       <Section style={{ textAlign: "center", marginTop: "24px" }}>
         <Button
           href={`${SiteConfig.prodUrl}/app/pipeline`}
-          style={{
-            backgroundColor: SiteConfig.brand.primary,
-            color: "#000",
-            padding: "12px 24px",
-            borderRadius: "6px",
-            fontSize: "16px",
-            fontWeight: "bold",
-            textDecoration: "none",
-          }}
+          style={emailStyles.primaryButton}
         >
           Update now
         </Button>
       </Section>
-      <Text style={{ fontSize: "14px", lineHeight: "20px", marginTop: "24px" }}>
+      <Text
+        style={{
+          ...emailStyles.mutedText,
+          lineHeight: "20px",
+          marginTop: "16px",
+        }}
+      >
         See you soon,{"\n"}
         The {SiteConfig.title} team
       </Text>

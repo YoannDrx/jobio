@@ -44,6 +44,22 @@ export const UserRow = ({ user }: UserRowProps) => {
   const router = useRouter();
   const queryClient = useQueryClient();
 
+  const askReason = (actionLabel: string) => {
+    const reason = window.prompt(
+      `Raison obligatoire pour "${actionLabel}" (min 6 caractères)`,
+    );
+    if (!reason || reason.trim().length < 6) {
+      toast.error("Raison obligatoire (6 caractères minimum)");
+      return null;
+    }
+    return reason.trim();
+  };
+
+  const requestStrongConfirmation = (actionLabel: string) =>
+    window.prompt(
+      `Action sensible: ${actionLabel}\nTape CONFIRMER pour continuer.`,
+    ) === "CONFIRMER";
+
   const logAdminAction = async (
     action: string,
     metadata?: Record<string, unknown>,
@@ -72,17 +88,17 @@ export const UserRow = ({ user }: UserRowProps) => {
       reason,
     }: {
       userId: string;
-      reason?: string;
+      reason: string;
     }) =>
       unwrapSafePromise(
         authClient.admin.banUser({
           userId,
-          banReason: reason ?? "Banned by admin",
+          banReason: reason,
         }),
       ),
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       toast.success("Utilisateur banni");
-      void logAdminAction("USER_BANNED");
+      void logAdminAction("USER_BANNED", { reason: variables.reason });
       onUserUpdate();
     },
     onError: (error: Error) => {
@@ -108,8 +124,14 @@ export const UserRow = ({ user }: UserRowProps) => {
   });
 
   const impersonateMutation = useMutation({
-    mutationFn: async (userId: string) => {
-      await logAdminAction("USER_IMPERSONATED");
+    mutationFn: async ({
+      userId,
+      reason,
+    }: {
+      userId: string;
+      reason: string;
+    }) => {
+      await logAdminAction("USER_IMPERSONATED", { reason });
       return unwrapSafePromise(
         authClient.admin.impersonateUser({
           userId,
@@ -133,6 +155,7 @@ export const UserRow = ({ user }: UserRowProps) => {
     }: {
       userId: string;
       role: "admin" | "user";
+      reason: string;
     }) =>
       unwrapSafePromise(
         authClient.admin.setRole({
@@ -140,10 +163,11 @@ export const UserRow = ({ user }: UserRowProps) => {
           role,
         }),
       ),
-    onSuccess: () => {
+    onSuccess: (_data, variables) => {
       toast.success("Rôle utilisateur mis à jour");
       void logAdminAction("USER_ROLE_UPDATED", {
-        newRole: "admin",
+        newRole: variables.role,
+        reason: variables.reason,
       });
       onUserUpdate();
     },
@@ -187,7 +211,15 @@ export const UserRow = ({ user }: UserRowProps) => {
           <DropdownMenuContent align="end">
             {!user.banned && (
               <DropdownMenuItem
-                onClick={() => impersonateMutation.mutate(user.id)}
+                onClick={() => {
+                  const reason = askReason("Impersonate utilisateur");
+                  if (!reason) return;
+                  if (!requestStrongConfirmation("Impersonate utilisateur")) return;
+                  impersonateMutation.mutate({
+                    userId: user.id,
+                    reason,
+                  });
+                }}
                 disabled={impersonateMutation.isPending}
               >
                 <Eye className="mr-2 size-4" />
@@ -197,12 +229,16 @@ export const UserRow = ({ user }: UserRowProps) => {
 
             {user.role !== "admin" && (
               <DropdownMenuItem
-                onClick={() =>
+                onClick={() => {
+                  const reason = askReason("Passer admin");
+                  if (!reason) return;
+                  if (!requestStrongConfirmation("Passer admin")) return;
                   setRoleMutation.mutate({
                     userId: user.id,
                     role: "admin",
-                  })
-                }
+                    reason,
+                  });
+                }}
                 disabled={setRoleMutation.isPending}
               >
                 <Crown className="mr-2 size-4" />
@@ -222,7 +258,12 @@ export const UserRow = ({ user }: UserRowProps) => {
               </DropdownMenuItem>
             ) : (
               <DropdownMenuItem
-                onClick={() => banUserMutation.mutate({ userId: user.id })}
+                onClick={() => {
+                  const reason = askReason("Bannir l'utilisateur");
+                  if (!reason) return;
+                  if (!requestStrongConfirmation("Bannir l'utilisateur")) return;
+                  banUserMutation.mutate({ userId: user.id, reason });
+                }}
                 disabled={banUserMutation.isPending}
                 variant="destructive"
               >

@@ -53,7 +53,7 @@ export const createFollowUpAction = authAction
         type: "FOLLOW_UP_DUE",
         title: "Relance planifiée aujourd'hui",
         message: `La relance "${followUp.title}" sur "${mission.title}" est prévue aujourd'hui`,
-        link: "/app",
+        link: `/app/pipeline?missionId=${mission.id}`,
       });
     }
 
@@ -166,7 +166,7 @@ export const completeFollowUpAction = authAction
   .action(async ({ parsedInput: { id }, ctx: { user } }) => {
     const followUp = await prisma.followUp.findFirst({
       where: { id, userId: user.id },
-      include: { mission: { select: { title: true } } },
+      include: { mission: { select: { id: true, title: true } } },
     });
 
     if (!followUp) {
@@ -198,7 +198,7 @@ export const completeFollowUpAction = authAction
         type: "FOLLOW_UP_OVERDUE",
         title: "Relance en retard complétée",
         message: `Relance "${followUp.title}" pour "${followUp.mission.title}" complétée`,
-        link: `/app/pipeline`,
+        link: `/app/pipeline?missionId=${followUp.mission.id}`,
       });
     }
 
@@ -318,10 +318,65 @@ export const snoozeFollowUpAction = authAction
       type: "FOLLOW_UP_DUE",
       title: "Relance reportée",
       message: `La relance "${followUp.title}" a été reportée au ${nextDate}`,
-      link: "/app",
+      link: `/app/pipeline?missionId=${followUp.mission.id}`,
     });
 
     return updated;
+  });
+
+const followUpTypeSchema = z.enum(["EMAIL", "CALL", "MESSAGE", "MEETING"]);
+
+export const getFollowUpsAction = authAction
+  .inputSchema(
+    z.object({
+      includeCompleted: z.boolean().default(true),
+      types: z.array(followUpTypeSchema).optional(),
+      startAt: z.date().optional(),
+      endAt: z.date().optional(),
+    }),
+  )
+  .action(async ({ parsedInput, ctx: { user } }) => {
+    const where: {
+      userId: string;
+      completedAt?: null;
+      type?: { in: ("EMAIL" | "CALL" | "MESSAGE" | "MEETING")[] };
+      scheduledAt?: {
+        gte?: Date;
+        lte?: Date;
+      };
+    } = {
+      userId: user.id,
+    };
+
+    if (!parsedInput.includeCompleted) {
+      where.completedAt = null;
+    }
+
+    if (parsedInput.types && parsedInput.types.length > 0) {
+      where.type = { in: parsedInput.types };
+    }
+
+    if (parsedInput.startAt || parsedInput.endAt) {
+      where.scheduledAt = {
+        ...(parsedInput.startAt ? { gte: parsedInput.startAt } : {}),
+        ...(parsedInput.endAt ? { lte: parsedInput.endAt } : {}),
+      };
+    }
+
+    const followUps = await prisma.followUp.findMany({
+      where,
+      include: {
+        mission: {
+          select: {
+            title: true,
+            company: true,
+          },
+        },
+      },
+      orderBy: { scheduledAt: "asc" },
+    });
+
+    return followUps;
   });
 
 export const getFollowUpsByMissionAction = authAction

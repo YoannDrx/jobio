@@ -1,6 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { PublicPageShell, PublicSection } from "@/features/layout/public-page-shell";
+import { buildMarketingMetadata } from "@/lib/seo";
 import { SiteConfig } from "@/site-config";
 import {
   Bot,
@@ -14,18 +15,12 @@ import {
 import Link from "next/link";
 import type { Metadata } from "next";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = buildMarketingMetadata({
   title: `Docs | ${SiteConfig.title}`,
   description:
     "Documentation produit Jobio: démarrage, workflows recommandés et bonnes pratiques de prospection.",
-  openGraph: {
-    title: `Docs | ${SiteConfig.title}`,
-    description:
-      "Guide opérationnel pour exploiter Jobio en conditions réelles.",
-    url: `${SiteConfig.prodUrl}/docs`,
-    type: "website",
-  },
-};
+  path: "/docs",
+});
 
 const quickStart = [
   {

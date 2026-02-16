@@ -20,10 +20,12 @@ model UserProfile {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
-  missions       Mission[]
-  linkedInAudits LinkedInAudit[]
-  clientPortals  ClientPortal[]
+  user               User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  missions           Mission[]
+  linkedInAudits     LinkedInAudit[]
+  clientPortals      ClientPortal[]
+  cvLabDocuments     CvLabDocument[]
+  cvLabCoachSessions CvLabCoachSession[]
 
   @@map("user_profile")
 }

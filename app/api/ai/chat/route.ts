@@ -27,15 +27,53 @@ Regles :
 - Ne fabrique jamais de donnees, utilise toujours les tools pour obtenir les informations
 - Quand tu listes des missions, formate-les clairement avec le titre, l'entreprise et le statut`;
 
+const DEFAULT_THREAD_TITLE = "Nouvelle conversation";
+
+function extractUserText(message: UIMessage): string {
+  const textParts = message.parts.filter(
+    (part): part is { type: "text"; text: string } =>
+      part.type === "text" && "text" in part && typeof part.text === "string",
+  );
+
+  const firstNonEmpty = textParts
+    .map((part) => part.text.trim())
+    .find((text) => text.length > 0);
+
+  return firstNonEmpty ?? "";
+}
+
+function buildThreadPreviewTitle(source: string): string {
+  return source.replace(/\s+/g, " ").trim().slice(0, 60);
+}
+
 export async function POST(req: Request) {
   const user = await getRequiredUser();
 
-  await checkAndIncrementAIQuota(user.id);
+  const payload = await req.json().catch(() => null);
+  if (!payload || typeof payload !== "object") {
+    return new Response("Payload invalide", { status: 400 });
+  }
 
-  const {
-    messages,
-    threadId,
-  }: { messages: UIMessage[]; threadId: string | null } = await req.json();
+  const body = payload as Record<string, unknown>;
+  const rawMessages = Array.isArray(body.messages) ? body.messages : [];
+  const messages = rawMessages as UIMessage[];
+  const threadId = typeof body.threadId === "string" ? body.threadId : null;
+
+  if (messages.length === 0) {
+    return new Response("Aucun message fourni", { status: 400 });
+  }
+
+  const lastMessage = messages[messages.length - 1];
+  if (lastMessage.role !== "user") {
+    return new Response("Le dernier message doit provenir de l'utilisateur", {
+      status: 400,
+    });
+  }
+
+  const userPrompt = extractUserText(lastMessage);
+  if (!userPrompt) {
+    return new Response("Message utilisateur vide", { status: 400 });
+  }
 
   let thread;
   if (threadId) {
@@ -49,26 +87,22 @@ export async function POST(req: Request) {
     thread = await prisma.aIChatThread.create({
       data: {
         userId: user.id,
-        title: "Nouvelle conversation",
+        title: DEFAULT_THREAD_TITLE,
       },
     });
   }
 
+  await checkAndIncrementAIQuota(user.id);
+
   const resolvedThreadId = thread.id;
 
-  const lastMessage = messages[messages.length - 1];
-  if (lastMessage.role === "user") {
-    const textPart = lastMessage.parts.find((p) => p.type === "text");
-    if (textPart && "text" in textPart) {
-      await prisma.aIChatMessage.create({
-        data: {
-          threadId: resolvedThreadId,
-          role: "USER",
-          content: textPart.text,
-        },
-      });
-    }
-  }
+  await prisma.aIChatMessage.create({
+    data: {
+      threadId: resolvedThreadId,
+      role: "USER",
+      content: userPrompt,
+    },
+  });
 
   const tools = createChatTools(user.id);
 
@@ -88,9 +122,9 @@ export async function POST(req: Request) {
           },
         });
 
-        const isDefaultTitle = thread.title === "Nouvelle conversation";
-        if (isDefaultTitle && text.length > 0) {
-          const preview = text.slice(0, 60).replace(/\n/g, " ");
+        const isDefaultTitle = thread.title === DEFAULT_THREAD_TITLE;
+        if (isDefaultTitle) {
+          const preview = buildThreadPreviewTitle(userPrompt);
           await prisma.aIChatThread.update({
             where: { id: resolvedThreadId },
             data: { title: preview },

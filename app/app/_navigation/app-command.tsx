@@ -29,6 +29,7 @@ import {
   Globe,
   FileText,
   Mail,
+  Receipt,
   BarChart3,
   Settings,
   Plus,
@@ -56,8 +57,10 @@ const PAGES: CommandPage[] = [
   { label: "Analytics", href: "/app/analytics", icon: BarChart3 },
   { label: "Templates", href: "/app/templates", icon: FileText },
   { label: "Profils", href: "/app/profiles", icon: UserCircle },
+  { label: "CV Lab", href: "/app/cv-lab", icon: FileText },
   { label: "Emails", href: "/app/emails", icon: Mail },
-  { label: "Prospection", href: "/app/prospection", icon: Globe },
+  { label: "Plateformes", href: "/app/platforms", icon: Globe },
+  { label: "Facturation", href: "/freelance", icon: Receipt },
   { label: "Notifications", href: "/app/notifications", icon: Bell },
   { label: "Parametres", href: "/account", icon: Settings },
 ];
@@ -118,6 +121,9 @@ export function AppCommand() {
     preventDefault: true,
   });
   useHotkeys("g s", () => router.push("/app/sequences"), {
+    preventDefault: true,
+  });
+  useHotkeys("g v", () => router.push("/app/cv-lab"), {
     preventDefault: true,
   });
 

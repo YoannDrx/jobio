@@ -7,5 +7,5 @@ export const openai = createOpenAI({
 
 export const AI_MODELS = {
   fast: openai("gpt-4o-mini"),
-  smart: openai("gpt-4o-mini"),
+  smart: openai("gpt-4o"),
 } as const;

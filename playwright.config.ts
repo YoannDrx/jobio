@@ -4,6 +4,8 @@ import { getServerUrl } from "./src/lib/server-url";
 
 const EXTERNAL_BASE_URL = process.env.PLAYWRIGHT_TEST_BASE_URL;
 const SERVER_URL = EXTERNAL_BASE_URL ?? getServerUrl();
+const REUSE_EXISTING_SERVER =
+  process.env.PLAYWRIGHT_REUSE_EXISTING_SERVER?.toLowerCase() === "true";
 
 const HEADLESS = process.env.HEADLESS
   ? process.env.HEADLESS.toLowerCase() === "true"
@@ -55,11 +57,12 @@ const config: PlaywrightTestConfig = {
     ? {}
     : {
         webServer: {
-          command: "pnpm run build; pnpm run start",
+          command: "pnpm prisma migrate deploy; pnpm run build; pnpm run start",
           url: SERVER_URL,
           timeout: 120 * 1000,
-          reuseExistingServer:
-            process.env.NODE_ENV === "development" ? !process.env.CI : true,
+          // Default to false to avoid silently reusing an unrelated app already
+          // bound to :3000 in local/CI environments.
+          reuseExistingServer: REUSE_EXISTING_SERVER,
         },
       }),
 };

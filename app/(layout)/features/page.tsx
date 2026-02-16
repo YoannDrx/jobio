@@ -2,6 +2,7 @@ import {
   PublicPageShell,
   PublicSection,
 } from "@/features/layout/public-page-shell";
+import { buildMarketingMetadata } from "@/lib/seo";
 import { SiteConfig } from "@/site-config";
 import {
   BarChart3,
@@ -14,21 +15,14 @@ import {
   UserCircle,
   Users,
 } from "lucide-react";
-import type { Metadata } from "next";
 import type { LucideIcon } from "lucide-react";
 
-export const metadata: Metadata = {
+export const metadata = buildMarketingMetadata({
   title: `Fonctionnalites | ${SiteConfig.title}`,
   description:
     "Decouvrez toutes les fonctionnalites de Jobio : pipeline commercial, CRM contacts, relances, profils freelance, IA, analytics et plus.",
-  openGraph: {
-    title: `Fonctionnalites | ${SiteConfig.title}`,
-    description:
-      "Tout ce dont un freelance tech a besoin pour prospecter efficacement.",
-    url: `${SiteConfig.prodUrl}/features`,
-    type: "website",
-  },
-};
+  path: "/features",
+});
 
 type FeatureSection = {
   icon: LucideIcon;

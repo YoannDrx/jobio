@@ -781,7 +781,10 @@ export default async function AdminPage() {
                     <TableCell>{formatInt(user._count.followUps)}</TableCell>
                     <TableCell>{formatInt(user._count.sentEmails)}</TableCell>
                     <TableCell className="flex gap-2">
-                      <ImpersonateUserButton userId={user.id} />
+                      <ImpersonateUserButton
+                        userId={user.id}
+                        userEmail={user.email}
+                      />
                       <Button asChild size="sm" variant="ghost">
                         <Link href={`/admin/users/${user.id}`}>Ouvrir</Link>
                       </Button>
@@ -838,7 +841,10 @@ export default async function AdminPage() {
                       </TableCell>
                       <TableCell>{formatDate(user.createdAt)}</TableCell>
                       <TableCell className="flex gap-2">
-                        <ImpersonateUserButton userId={user.id} />
+                        <ImpersonateUserButton
+                          userId={user.id}
+                          userEmail={user.email}
+                        />
                         <Button asChild size="sm" variant="ghost">
                           <Link href={`/admin/users/${user.id}`}>Détail</Link>
                         </Button>

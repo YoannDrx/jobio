@@ -2,6 +2,8 @@
 
 Date de démarrage: 2026-02-10
 
+Roadmap premium detaillee: `roadmap-premium.md` (ajoutee le 2026-02-14).
+
 ## Objectif global
 
 Construire une V1 fiable du cockpit commercial Jobio pour freelances tech, avec:

@@ -30,8 +30,18 @@ import { resolveActionResult } from "@/lib/actions/actions-utils";
 import {
   bulkAddTagAction,
   bulkDeleteContactsAction,
+  triggerContactNextActionAction,
 } from "@/features/contacts/contacts.action";
-import { ChevronLeft, ChevronRight, Mail, Tag, Trash2 } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Loader2,
+  Mail,
+  Sparkles,
+  Tag,
+  Trash2,
+} from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 
@@ -44,6 +54,10 @@ type Contact = {
   role: string | null;
   tags: string[];
   createdAt: Date;
+  lastInteractionAt: Date | null;
+  relationshipScore: number;
+  relationshipTier: "hot" | "warm" | "cold";
+  relationshipNextAction: string;
   _count: {
     missions: number;
     interactions: number;
@@ -61,7 +75,16 @@ type ContactListProps = {
   onContactClick: (contactId: string) => void;
   tagFilter?: string;
   onTagFilterChange?: (tag: string) => void;
+  sortBy: "createdAt" | "firstName" | "lastName" | "relationshipScore";
+  sortOrder: "asc" | "desc";
+  onSortChange: (
+    sortBy: "createdAt" | "firstName" | "lastName" | "relationshipScore",
+    sortOrder: "asc" | "desc",
+  ) => void;
+  relationshipTierFilter: "" | "hot" | "warm" | "cold";
+  onRelationshipTierChange: (tier: "" | "hot" | "warm" | "cold") => void;
   availableTags?: string[];
+  onDataChanged?: () => void;
 };
 
 export function ContactList({
@@ -75,16 +98,37 @@ export function ContactList({
   onContactClick,
   tagFilter,
   onTagFilterChange,
+  sortBy,
+  sortOrder,
+  onSortChange,
+  relationshipTierFilter,
+  onRelationshipTierChange,
   availableTags = [],
+  onDataChanged,
 }: ContactListProps) {
+  const router = useRouter();
   const totalPages = Math.ceil(total / pageSize);
   const hasNext = page < totalPages;
   const hasPrev = page > 1;
+  const tierLabel: Record<Contact["relationshipTier"], string> = {
+    hot: "Hot",
+    warm: "Warm",
+    cold: "Cold",
+  };
+  const tierClassName: Record<Contact["relationshipTier"], string> = {
+    hot: "border-emerald-200 text-emerald-700",
+    warm: "border-amber-200 text-amber-700",
+    cold: "border-slate-200 text-slate-600",
+  };
+  const sortValue = `${sortBy}:${sortOrder}`;
 
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [tagDialogOpen, setTagDialogOpen] = useState(false);
   const [newTag, setNewTag] = useState("");
   const [isPending, startTransition] = useTransition();
+  const [nextActionContactId, setNextActionContactId] = useState<string | null>(
+    null,
+  );
 
   const allSelected =
     contacts.length > 0 && contacts.every((c) => selectedIds.has(c.id));
@@ -117,6 +161,7 @@ export function ContactList({
       );
       toast.success(`${result.deleted} contact(s) supprime(s)`);
       setSelectedIds(new Set());
+      onDataChanged?.();
     });
   };
 
@@ -131,7 +176,35 @@ export function ContactList({
       setSelectedIds(new Set());
       setTagDialogOpen(false);
       setNewTag("");
+      onDataChanged?.();
     });
+  };
+
+  const handleTriggerNextAction = async (contactId: string) => {
+    setNextActionContactId(contactId);
+    try {
+      const result = await resolveActionResult(
+        triggerContactNextActionAction({ contactId }),
+      );
+      if (result.kind === "created") {
+        toast.success("Relance créée automatiquement");
+        router.push(`/app/pipeline?missionId=${result.missionId}`);
+        return;
+      }
+      if (result.kind === "already_planned") {
+        toast.info("Une relance est déjà prévue cette semaine");
+        router.push(`/app/pipeline?missionId=${result.missionId}`);
+        return;
+      }
+      toast.info(result.message);
+      onContactClick(contactId);
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Impossible de lancer l'action",
+      );
+    } finally {
+      setNextActionContactId(null);
+    }
   };
 
   return (
@@ -178,6 +251,50 @@ export function ContactList({
           onChange={(e) => onSearchChange(e.target.value)}
           className="flex-1"
         />
+        <Select
+          value={sortValue}
+          onValueChange={(value) => {
+            const [nextSortBy, nextSortOrder] = value.split(":") as [
+              "createdAt" | "firstName" | "lastName" | "relationshipScore",
+              "asc" | "desc",
+            ];
+            onSortChange(nextSortBy, nextSortOrder);
+          }}
+        >
+          <SelectTrigger className="w-[220px]">
+            <SelectValue placeholder="Tri" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="createdAt:desc">Plus récents</SelectItem>
+            <SelectItem value="createdAt:asc">Plus anciens</SelectItem>
+            <SelectItem value="relationshipScore:desc">
+              Relation la plus forte
+            </SelectItem>
+            <SelectItem value="relationshipScore:asc">
+              Relation la plus faible
+            </SelectItem>
+            <SelectItem value="firstName:asc">Prénom A → Z</SelectItem>
+            <SelectItem value="lastName:asc">Nom A → Z</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select
+          value={relationshipTierFilter || "all"}
+          onValueChange={(value) =>
+            onRelationshipTierChange(
+              value === "all" ? "" : (value as "hot" | "warm" | "cold"),
+            )
+          }
+        >
+          <SelectTrigger className="w-[170px]">
+            <SelectValue placeholder="Relation" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Tous niveaux</SelectItem>
+            <SelectItem value="hot">Hot</SelectItem>
+            <SelectItem value="warm">Warm</SelectItem>
+            <SelectItem value="cold">Cold</SelectItem>
+          </SelectContent>
+        </Select>
         {availableTags.length > 0 && onTagFilterChange && (
           <Select
             value={tagFilter ?? ""}
@@ -217,6 +334,7 @@ export function ContactList({
               <TableHead className="w-[150px]">Email</TableHead>
               <TableHead className="w-[100px]">Role</TableHead>
               <TableHead className="w-[150px]">Tags</TableHead>
+              <TableHead className="w-[210px]">Relation</TableHead>
               <TableHead className="w-[80px] text-center">Missions</TableHead>
               <TableHead className="w-[80px] text-center">
                 Interactions
@@ -287,6 +405,41 @@ export function ContactList({
                   ) : (
                     <span className="text-muted-foreground text-sm">-</span>
                   )}
+                </TableCell>
+                <TableCell onClick={() => onContactClick(contact.id)}>
+                  <div className="flex flex-col gap-1">
+                    <div className="flex items-center gap-2">
+                      <Badge
+                        variant="outline"
+                        className={tierClassName[contact.relationshipTier]}
+                      >
+                        {tierLabel[contact.relationshipTier]}
+                      </Badge>
+                      <span className="text-sm font-semibold">
+                        {contact.relationshipScore}/100
+                      </span>
+                    </div>
+                    <span className="text-muted-foreground text-xs">
+                      {contact.relationshipNextAction}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="mt-1 h-7 px-2 text-xs"
+                      disabled={nextActionContactId === contact.id}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        void handleTriggerNextAction(contact.id);
+                      }}
+                    >
+                      {nextActionContactId === contact.id ? (
+                        <Loader2 className="size-3 animate-spin" />
+                      ) : (
+                        <Sparkles className="size-3" />
+                      )}
+                      Action
+                    </Button>
+                  </div>
                 </TableCell>
                 <TableCell
                   className="text-center"

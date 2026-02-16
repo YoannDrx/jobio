@@ -12,24 +12,52 @@ import { createAdminAuditAction } from "../_actions/admin-audit";
 
 type ImpersonateUserButtonProps = {
   userId: string;
+  userEmail?: string;
   size?: "default" | "sm";
   variant?: "default" | "outline" | "ghost";
 };
 
 export function ImpersonateUserButton({
   userId,
+  userEmail,
   size = "sm",
   variant = "outline",
 }: ImpersonateUserButtonProps) {
   const router = useRouter();
 
+  const askReason = () => {
+    const reason = window.prompt(
+      'Raison obligatoire pour "Impersonate" (min 6 caractères)',
+    );
+    if (!reason || reason.trim().length < 6) {
+      throw new Error("Raison obligatoire (6 caractères minimum)");
+    }
+
+    const confirmed =
+      window.prompt(
+        "Action sensible: Impersonate utilisateur\nTape CONFIRMER pour continuer.",
+      ) === "CONFIRMER";
+
+    if (!confirmed) {
+      throw new Error("Impersonation annulée");
+    }
+
+    return reason.trim();
+  };
+
   const impersonateMutation = useMutation({
     mutationFn: async () => {
+      const reason = askReason();
+
       try {
         await resolveActionResult(
           createAdminAuditAction({
             action: "USER_IMPERSONATED",
             targetUserId: userId,
+            targetEmail: userEmail,
+            metadata: {
+              reason,
+            },
           }),
         );
       } catch {
@@ -47,6 +75,9 @@ export function ImpersonateUserButton({
       router.push("/app");
     },
     onError: (error: Error) => {
+      if (error.message === "Impersonation annulée") {
+        return;
+      }
       toast.error(`Impossible d'impersonate cet utilisateur: ${error.message}`);
     },
   });

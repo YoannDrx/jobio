@@ -43,7 +43,7 @@ type OverdueFollowUp = {
   title: string;
   type: string;
   scheduledAt: string;
-  mission: { title: string; company: string | null; status: string };
+  mission: { id: string; title: string; company: string | null; status: string };
 };
 
 type TodayFollowUp = {
@@ -51,7 +51,7 @@ type TodayFollowUp = {
   title: string;
   type: string;
   scheduledAt: string;
-  mission: { title: string; company: string | null; status: string };
+  mission: { id: string; title: string; company: string | null; status: string };
 };
 
 type StaleMission = {
@@ -131,6 +131,7 @@ export function TodayContent({
       overdueFollowUps: overdueFollowUps.slice(0, 3).map((f) => ({
         id: f.id,
         title: f.title,
+        missionId: f.mission.id,
         missionTitle: f.mission.title,
       })),
       staleMissions: staleMissions.slice(0, 3).map((m) => ({
@@ -140,6 +141,7 @@ export function TodayContent({
       dueSoonFollowUps: dueSoonFollowUps.slice(0, 2).map((f) => ({
         id: f.id,
         title: f.title,
+        missionId: f.mission.id,
         missionTitle: f.mission.title,
       })),
     });

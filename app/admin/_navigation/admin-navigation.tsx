@@ -13,7 +13,7 @@ export async function AdminNavigation({ children }: PropsWithChildren) {
       <AdminSidebar />
       <SidebarInset className="border-accent border">
         <header className="flex h-16 shrink-0 items-center gap-2">
-          <Layout size="lg" className="flex items-center gap-2">
+          <Layout size="lg" className="flex items-center gap-2 py-2">
             <SidebarTrigger
               size="lg"
               variant="outline"
@@ -24,7 +24,9 @@ export async function AdminNavigation({ children }: PropsWithChildren) {
             </div>
           </Layout>
         </header>
-        <div className="flex flex-1 flex-col gap-4 p-4 pt-0">{children}</div>
+        <div className="flex flex-1 flex-col gap-4 px-1.5 pb-4 pt-0 sm:px-2.5 lg:px-3.5">
+          {children}
+        </div>
       </SidebarInset>
     </SidebarProvider>
   );

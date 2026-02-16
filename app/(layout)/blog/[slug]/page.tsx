@@ -5,6 +5,7 @@ import {
   PublicPageShell,
   PublicSection,
 } from "@/features/layout/public-page-shell";
+import { buildMarketingMetadata } from "@/lib/seo";
 import { SiteConfig } from "@/site-config";
 import { ArrowLeft, Calendar, Clock } from "lucide-react";
 import type { Metadata } from "next";
@@ -29,17 +30,14 @@ export async function generateMetadata({
     return {};
   }
 
-  return {
+  return buildMarketingMetadata({
     title: `${post.title} | ${SiteConfig.title}`,
     description: post.description,
-    openGraph: {
-      title: `${post.title} | ${SiteConfig.title}`,
-      description: post.description,
-      url: `${SiteConfig.prodUrl}/blog/${post.slug}`,
-      type: "article",
-      publishedTime: post.date,
-    },
-  };
+    path: `/blog/${post.slug}`,
+    type: "article",
+    keywords: post.tags,
+    publishedTime: post.date,
+  });
 }
 
 export default async function BlogPostPage({ params }: PageProps) {

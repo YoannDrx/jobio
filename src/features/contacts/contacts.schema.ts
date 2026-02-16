@@ -44,9 +44,12 @@ export const addInteractionSchema = z.object({
 export const contactFilterSchema = z.object({
   search: z.string().optional(),
   tag: z.string().optional(),
+  relationshipTier: z.enum(["hot", "warm", "cold"]).optional(),
   page: z.number().int().positive().default(1),
   pageSize: z.number().int().positive().max(100).default(20),
-  sortBy: z.enum(["createdAt", "firstName", "lastName"]).default("createdAt"),
+  sortBy: z
+    .enum(["createdAt", "firstName", "lastName", "relationshipScore"])
+    .default("createdAt"),
   sortOrder: z.enum(["asc", "desc"]).default("desc"),
 });
 

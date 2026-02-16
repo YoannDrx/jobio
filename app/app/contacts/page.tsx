@@ -40,6 +40,7 @@ import { ContactForm } from "@/features/contacts/components/contact-form";
 import { ContactList } from "@/features/contacts/components/contact-list";
 import { ContactDetailSheet } from "@/features/contacts/components/contact-detail-sheet";
 import { exportContactsAction } from "@/features/contacts/export-contacts.action";
+import { computeContactRelationship } from "@/features/contacts/contact-relationship";
 import type { CreateContactInput } from "@/features/contacts/contacts.schema";
 import { downloadCsv, generateCsv } from "@/lib/csv-export";
 import dynamic from "next/dynamic";
@@ -53,8 +54,13 @@ const ImportContactsDialog = dynamic(
 );
 import { Skeleton } from "@/components/ui/skeleton";
 import { Download, Upload, Users, Plus } from "lucide-react";
-import { useCallback, useEffect, useRef, useState } from "react";
-import { useQueryState, parseAsString, parseAsInteger } from "nuqs";
+import { useCallback, useEffect, useState } from "react";
+import {
+  useQueryState,
+  parseAsString,
+  parseAsInteger,
+  parseAsStringLiteral,
+} from "nuqs";
 import { toast } from "sonner";
 
 type Contact = {
@@ -66,11 +72,18 @@ type Contact = {
   role: string | null;
   tags: string[];
   createdAt: Date;
+  lastInteractionAt: Date | null;
+  relationshipScore: number;
+  relationshipTier: "hot" | "warm" | "cold";
+  relationshipNextAction: string;
   _count: {
     missions: number;
     interactions: number;
   };
 };
+
+type ContactSortBy = "createdAt" | "firstName" | "lastName" | "relationshipScore";
+type ContactRelationshipTier = "" | "hot" | "warm" | "cold";
 
 type ContactDetail = {
   id: string;
@@ -105,12 +118,29 @@ export default function ContactsPage() {
   const [page, setPage] = useQueryState("page", parseAsInteger.withDefault(1));
   const [pageSize] = useState(20);
   const [search, setSearch] = useQueryState("q", parseAsString.withDefault(""));
+  const [sortBy, setSortBy] = useQueryState(
+    "sort",
+    parseAsStringLiteral(
+      ["createdAt", "firstName", "lastName", "relationshipScore"] as const,
+    ).withDefault("createdAt"),
+  );
+  const [sortOrder, setSortOrder] = useQueryState(
+    "order",
+    parseAsStringLiteral(["asc", "desc"] as const).withDefault("desc"),
+  );
+  const [relationshipTierFilter, setRelationshipTierFilter] = useQueryState(
+    "tier",
+    parseAsString.withDefault(""),
+  );
+  const [contactIdParam, setContactIdParam] = useQueryState(
+    "contactId",
+    parseAsString,
+  );
   const [tagFilter, setTagFilter] = useQueryState(
     "tag",
     parseAsString.withDefault(""),
   );
   const [availableTags, setAvailableTags] = useState<string[]>([]);
-  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [contactLimits, setContactLimits] = useState<{
     used: number;
     limit: number;
@@ -148,10 +178,17 @@ export default function ContactsPage() {
         getContactsAction({
           search,
           tag: tagFilter || undefined,
+          relationshipTier:
+            relationshipTierFilter.length > 0
+              ? (relationshipTierFilter as Exclude<
+                  ContactRelationshipTier,
+                  ""
+                >)
+              : undefined,
           page,
           pageSize,
-          sortBy: "createdAt",
-          sortOrder: "desc",
+          sortBy,
+          sortOrder,
         }),
       );
       setContacts(result.contacts);
@@ -163,7 +200,15 @@ export default function ContactsPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [page, pageSize, search, tagFilter]);
+  }, [
+    page,
+    pageSize,
+    relationshipTierFilter,
+    search,
+    sortBy,
+    sortOrder,
+    tagFilter,
+  ]);
 
   useEffect(() => {
     void fetchContacts();
@@ -178,17 +223,28 @@ export default function ContactsPage() {
     });
   }, []);
 
+  const openContactDetail = useCallback(async (contactId: string) => {
+    try {
+      const result = await resolveActionResult(
+        getContactAction({ id: contactId }),
+      );
+      setDetailContact(result);
+      setShowDetail(true);
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Erreur lors du chargement",
+      );
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!contactIdParam) return;
+    void openContactDetail(contactIdParam);
+  }, [contactIdParam, openContactDetail]);
+
   const handleSearchChange = (newSearch: string) => {
     void setSearch(newSearch);
     void setPage(1);
-
-    if (searchTimeoutRef.current) {
-      clearTimeout(searchTimeoutRef.current);
-    }
-
-    searchTimeoutRef.current = setTimeout(() => {
-      void fetchContacts();
-    }, 300);
   };
 
   const forceCreateContact = async (data: CreateContactInput) => {
@@ -241,23 +297,23 @@ export default function ContactsPage() {
     }
   };
 
-  const handleContactClick = async (contactId: string) => {
-    try {
-      const result = await resolveActionResult(
-        getContactAction({ id: contactId }),
-      );
-      setDetailContact(result);
-      setShowDetail(true);
-    } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Erreur lors du chargement",
-      );
-    }
+  const handleContactClick = (contactId: string) => {
+    void setContactIdParam(contactId);
   };
 
   const handleEdit = (contact: ContactDetail) => {
+    const lastInteractionAt = contact.interactions.at(0)?.date ?? null;
+    const relationship = computeContactRelationship({
+      missionCount: contact.missions.length,
+      interactionCount: contact.interactions.length,
+      lastInteractionAt,
+    });
     const contactForEdit: Contact = {
       ...contact,
+      lastInteractionAt,
+      relationshipScore: relationship.score,
+      relationshipTier: relationship.tier,
+      relationshipNextAction: relationship.nextAction,
       _count: {
         missions: contact.missions.length,
         interactions: contact.interactions.length,
@@ -266,6 +322,7 @@ export default function ContactsPage() {
     setEditing(contactForEdit);
     setShowForm(true);
     setShowDetail(false);
+    void setContactIdParam(null);
   };
 
   const handleCloseForm = () => {
@@ -275,7 +332,7 @@ export default function ContactsPage() {
 
   const handleRefreshDetail = async () => {
     if (detailContact) {
-      await handleContactClick(detailContact.id);
+      await openContactDetail(detailContact.id);
       void fetchContacts();
     }
   };
@@ -379,7 +436,24 @@ export default function ContactsPage() {
               void setTagFilter(tag);
               void setPage(1);
             }}
+            sortBy={sortBy}
+            sortOrder={sortOrder}
+            onSortChange={(nextSortBy, nextSortOrder) => {
+              void setSortBy(nextSortBy as ContactSortBy);
+              void setSortOrder(nextSortOrder);
+              void setPage(1);
+            }}
+            relationshipTierFilter={
+              relationshipTierFilter as ContactRelationshipTier
+            }
+            onRelationshipTierChange={(nextTier) => {
+              void setRelationshipTierFilter(nextTier);
+              void setPage(1);
+            }}
             availableTags={availableTags}
+            onDataChanged={() => {
+              void fetchContacts();
+            }}
           />
         )}
       </LayoutContent>
@@ -417,7 +491,13 @@ export default function ContactsPage() {
       <ContactDetailSheet
         contact={detailContact}
         open={showDetail}
-        onOpenChange={setShowDetail}
+        onOpenChange={(open) => {
+          setShowDetail(open);
+          if (!open) {
+            setDetailContact(null);
+            void setContactIdParam(null);
+          }
+        }}
         onEdit={handleEdit}
         onRefresh={handleRefreshDetail}
       />

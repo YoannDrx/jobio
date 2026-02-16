@@ -21,6 +21,7 @@ import {
   Moon,
   Settings,
   Shield,
+  Sparkles,
   SunMedium,
   SunMoon,
 } from "lucide-react";
@@ -60,6 +61,12 @@ export const UserDropdown = ({ children }: PropsWithChildren) => {
           <Link href="/app">
             <LayoutDashboard className="mr-2 size-4" />
             Tableau de bord
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link href="/freelance">
+            <Sparkles className="mr-2 size-4" />
+            Facturation freelance
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>

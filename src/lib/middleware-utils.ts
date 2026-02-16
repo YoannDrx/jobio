@@ -26,6 +26,10 @@ export const isAdminRoute = (pathname: string) => {
   return pathname.startsWith("/admin");
 };
 
+export const isFreelanceRoute = (pathname: string) => {
+  return pathname.startsWith("/freelance");
+};
+
 export const validateSession = async (request: NextRequest) => {
   const session = await auth.api.getSession({ headers: request.headers });
 

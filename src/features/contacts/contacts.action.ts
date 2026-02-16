@@ -12,6 +12,8 @@ import {
   updateContactSchema,
 } from "./contacts.schema";
 import { checkDuplicateContact } from "./duplicate-detection";
+import { computeContactRelationship } from "./contact-relationship";
+import { STALE_ELIGIBLE_STATUS_VALUES } from "@/features/missions/mission-status";
 
 export const checkDuplicateContactAction = authAction
   .inputSchema(createContactSchema)
@@ -103,33 +105,229 @@ export const getContactsAction = authAction
       where.tags = { has: filters.tag };
     }
 
+    type ContactRow = {
+      id: string;
+      firstName: string;
+      lastName: string;
+      company: string | null;
+      email: string | null;
+      role: string | null;
+      tags: string[];
+      createdAt: Date;
+      interactions: { date: Date }[];
+      _count: { missions: number; interactions: number };
+    };
+
+    const contactSelect = {
+      id: true,
+      firstName: true,
+      lastName: true,
+      company: true,
+      email: true,
+      role: true,
+      tags: true,
+      createdAt: true,
+      interactions: {
+        select: { date: true },
+        orderBy: { date: "desc" },
+        take: 1,
+      },
+      _count: { select: { missions: true, interactions: true } },
+    } as const;
+
+    const enrichContacts = (contacts: ContactRow[]) =>
+      contacts.map((contact) => {
+        const lastInteractionAt = contact.interactions.at(0)?.date ?? null;
+        const relationship = computeContactRelationship({
+          missionCount: contact._count.missions,
+          interactionCount: contact._count.interactions,
+          lastInteractionAt,
+        });
+
+        return {
+          id: contact.id,
+          firstName: contact.firstName,
+          lastName: contact.lastName,
+          company: contact.company,
+          email: contact.email,
+          role: contact.role,
+          tags: contact.tags,
+          createdAt: contact.createdAt,
+          lastInteractionAt,
+          relationshipScore: relationship.score,
+          relationshipTier: relationship.tier,
+          relationshipNextAction: relationship.nextAction,
+          _count: contact._count,
+        };
+      });
+
+    const shouldFilterByTier = Boolean(filters.relationshipTier);
+    const needsRelationshipPostProcessing =
+      filters.sortBy === "relationshipScore" || shouldFilterByTier;
+
+    const sortEnrichedContacts = (
+      contacts: ReturnType<typeof enrichContacts>,
+    ): ReturnType<typeof enrichContacts> => {
+      const direction = filters.sortOrder === "asc" ? 1 : -1;
+
+      return [...contacts].sort((a, b) => {
+        let diff = 0;
+        if (filters.sortBy === "relationshipScore") {
+          diff = a.relationshipScore - b.relationshipScore;
+        } else if (filters.sortBy === "firstName") {
+          diff = a.firstName.localeCompare(b.firstName, "fr");
+        } else if (filters.sortBy === "lastName") {
+          diff = a.lastName.localeCompare(b.lastName, "fr");
+        } else {
+          diff = a.createdAt.getTime() - b.createdAt.getTime();
+        }
+
+        if (diff !== 0) {
+          return diff * direction;
+        }
+
+        const aLast = a.lastInteractionAt?.getTime() ?? 0;
+        const bLast = b.lastInteractionAt?.getTime() ?? 0;
+        return bLast - aLast;
+      });
+    };
+
+    if (needsRelationshipPostProcessing) {
+      const contacts = await prisma.contact.findMany({
+        where,
+        select: contactSelect,
+      });
+      const enrichedContacts = enrichContacts(contacts as ContactRow[]);
+      const filteredContacts = shouldFilterByTier
+        ? enrichedContacts.filter(
+            (contact) => contact.relationshipTier === filters.relationshipTier,
+          )
+        : enrichedContacts;
+      const sortedContacts = sortEnrichedContacts(filteredContacts);
+      const start = (filters.page - 1) * filters.pageSize;
+      const end = start + filters.pageSize;
+      const pagedContacts = sortedContacts.slice(start, end);
+
+      return {
+        contacts: pagedContacts,
+        total: sortedContacts.length,
+        page: filters.page,
+        pageSize: filters.pageSize,
+        totalPages: Math.ceil(sortedContacts.length / filters.pageSize),
+      };
+    }
+
     const [contacts, total] = await Promise.all([
       prisma.contact.findMany({
         where,
-        select: {
-          id: true,
-          firstName: true,
-          lastName: true,
-          company: true,
-          email: true,
-          role: true,
-          tags: true,
-          createdAt: true,
-          _count: { select: { missions: true, interactions: true } },
+        select: contactSelect,
+        orderBy: {
+          [filters.sortBy as "createdAt" | "firstName" | "lastName"]:
+            filters.sortOrder,
         },
-        orderBy: { [filters.sortBy]: filters.sortOrder },
         skip: (filters.page - 1) * filters.pageSize,
         take: filters.pageSize,
       }),
       prisma.contact.count({ where }),
     ]);
 
+    const contactsWithRelationship = enrichContacts(contacts as ContactRow[]);
+
     return {
-      contacts,
+      contacts: contactsWithRelationship,
       total,
       page: filters.page,
       pageSize: filters.pageSize,
       totalPages: Math.ceil(total / filters.pageSize),
+    };
+  });
+
+export const triggerContactNextActionAction = authAction
+  .inputSchema(z.object({ contactId: z.string() }))
+  .action(async ({ parsedInput: { contactId }, ctx: { user } }) => {
+    const contact = await prisma.contact.findFirst({
+      where: { id: contactId, userId: user.id, deletedAt: null },
+      select: { id: true, firstName: true, lastName: true },
+    });
+
+    if (!contact) {
+      throw new ApplicationError("Contact introuvable");
+    }
+
+    const mission = await prisma.mission.findFirst({
+      where: {
+        userId: user.id,
+        contactId: contact.id,
+        deletedAt: null,
+        status: { in: [...STALE_ELIGIBLE_STATUS_VALUES] },
+      },
+      orderBy: { updatedAt: "desc" },
+      select: { id: true, title: true },
+    });
+
+    if (!mission) {
+      return {
+        kind: "open_contact" as const,
+        message: "Aucune mission active liée à ce contact",
+      };
+    }
+
+    const now = new Date();
+    const withinAWeek = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+    const existingPending = await prisma.followUp.findFirst({
+      where: {
+        userId: user.id,
+        missionId: mission.id,
+        completedAt: null,
+        scheduledAt: {
+          gte: now,
+          lte: withinAWeek,
+        },
+      },
+      orderBy: { scheduledAt: "asc" },
+      select: { id: true, scheduledAt: true },
+    });
+
+    if (existingPending) {
+      return {
+        kind: "already_planned" as const,
+        missionId: mission.id,
+        followUpId: existingPending.id,
+        scheduledAt: existingPending.scheduledAt,
+      };
+    }
+
+    const scheduledAt = new Date(now);
+    scheduledAt.setDate(scheduledAt.getDate() + 1);
+    scheduledAt.setHours(10, 0, 0, 0);
+
+    const followUp = await prisma.followUp.create({
+      data: {
+        missionId: mission.id,
+        userId: user.id,
+        type: "EMAIL",
+        title: "Relance de suivi",
+        description: `Relance recommandée pour ${contact.firstName} ${contact.lastName}`,
+        scheduledAt,
+      },
+      select: { id: true, scheduledAt: true },
+    });
+
+    await prisma.activityEvent.create({
+      data: {
+        missionId: mission.id,
+        userId: user.id,
+        type: "FOLLOW_UP_CREATED",
+        description: `Relance auto depuis contact "${contact.firstName} ${contact.lastName}"`,
+      },
+    });
+
+    return {
+      kind: "created" as const,
+      missionId: mission.id,
+      followUpId: followUp.id,
+      scheduledAt: followUp.scheduledAt,
     };
   });
 

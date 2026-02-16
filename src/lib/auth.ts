@@ -17,6 +17,19 @@ import { logger } from "./logger";
 import { prisma } from "./prisma";
 import { getServerUrl } from "./server-url";
 type SocialProvidersType = Parameters<typeof betterAuth>[0]["socialProviders"];
+const shouldSkipAuthSideEffects = env.CI === true;
+
+const sendAuthEmail = async (payload: Parameters<typeof sendEmail>[0]) => {
+  if (shouldSkipAuthSideEffects) {
+    logger.debug("Skipping auth email in CI mode", {
+      to: payload.to,
+      subject: payload.subject,
+    });
+    return;
+  }
+
+  await sendEmail(payload);
+};
 
 export const SocialProviders: SocialProvidersType = {};
 
@@ -59,8 +72,12 @@ export const auth = betterAuth({
     user: {
       create: {
         after: async (user, _req) => {
+          if (shouldSkipAuthSideEffects) {
+            return;
+          }
+
           await setupResendCustomer(user);
-          await sendEmail({
+          await sendAuthEmail({
             to: user.email,
             subject: `Bienvenue sur ${SiteConfig.title} !`,
             html: WelcomeEmail({ name: user.name || "Freelance" }),
@@ -75,7 +92,7 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
     async sendResetPassword({ user, url }) {
-      await sendEmail({
+      await sendAuthEmail({
         to: user.email,
         subject: "Réinitialise ton mot de passe",
         html: ResetPasswordEmail({ url }),
@@ -86,7 +103,7 @@ export const auth = betterAuth({
     changeEmail: {
       enabled: true,
       sendChangeEmailVerification: async ({ newEmail, url }) => {
-        await sendEmail({
+        await sendAuthEmail({
           to: newEmail,
           subject: "Confirme ton changement d'adresse email",
           html: ChangeEmailEmail({ url }),
@@ -97,7 +114,7 @@ export const auth = betterAuth({
       enabled: true,
       sendDeleteAccountVerification: async ({ user, token }) => {
         const url = `${getServerUrl()}/auth/confirm-delete?token=${token}&callbackUrl=/auth/goodbye`;
-        await sendEmail({
+        await sendAuthEmail({
           to: user.email,
           subject: "Suppression de ton compte",
           html: DeleteAccountEmail({ url }),
@@ -107,7 +124,7 @@ export const auth = betterAuth({
   },
   emailVerification: {
     sendVerificationEmail: async ({ user, url }) => {
-      await sendEmail({
+      await sendAuthEmail({
         to: user.email,
         subject: "Vérifie ton adresse email",
         html: VerifyEmailEmail({ url }),
@@ -119,7 +136,7 @@ export const auth = betterAuth({
     emailOTP({
       sendVerificationOTP: async ({ email, otp }) => {
         logger.debug("Sending OTP", { email, otp });
-        await sendEmail({
+        await sendAuthEmail({
           to: email,
           subject: `Ton code de connexion à ${SiteConfig.title} ${otp}`,
           html: OtpSigninEmail({

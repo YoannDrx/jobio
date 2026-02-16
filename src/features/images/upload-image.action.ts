@@ -2,7 +2,8 @@
 
 import { authAction } from "@/lib/actions/safe-actions";
 import { ActionError } from "@/lib/errors/action-error";
-import { fileAdapter } from "@/lib/files/vercel-blob-adapter";
+import { fileAdapter as localFileAdapter } from "@/lib/files/local-upload-adapter";
+import { fileAdapter as blobFileAdapter } from "@/lib/files/vercel-blob-adapter";
 import { z } from "zod";
 
 export const uploadImageAction = authAction
@@ -36,10 +37,30 @@ export const uploadImageAction = authAction
       throw new ActionError("File too large (max 2mb)");
     }
 
-    const response = await fileAdapter.uploadFile({
-      file,
-      path: "images",
-    });
+    const blobToken = process.env.BLOB_READ_WRITE_TOKEN?.trim();
+    const preferBlobAdapter = Boolean(blobToken && blobToken.length > 0);
+
+    let response = await (preferBlobAdapter
+      ? blobFileAdapter.uploadFile({
+          file,
+          path: "images",
+        })
+      : localFileAdapter.uploadFile({
+          file,
+          path: "images",
+        }));
+
+    // Fail-safe: local fallback if Blob token is missing/invalid at runtime.
+    if (
+      response.error &&
+      preferBlobAdapter &&
+      /No token found|BLOB_READ_WRITE_TOKEN|token/i.test(response.error.message)
+    ) {
+      response = await localFileAdapter.uploadFile({
+        file,
+        path: "images",
+      });
+    }
 
     if (response.error) {
       throw new ActionError(response.error.message);

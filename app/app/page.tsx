@@ -110,6 +110,7 @@ export default async function TodayPage() {
       include: {
         mission: {
           select: {
+            id: true,
             title: true,
             company: true,
             status: true,
@@ -130,6 +131,7 @@ export default async function TodayPage() {
       include: {
         mission: {
           select: {
+            id: true,
             title: true,
             company: true,
             status: true,
@@ -342,6 +344,7 @@ export default async function TodayPage() {
             type: f.type,
             scheduledAt: f.scheduledAt.toISOString(),
             mission: {
+              id: f.mission.id,
               title: f.mission.title,
               company: f.mission.company,
               status: f.mission.status,
@@ -353,6 +356,7 @@ export default async function TodayPage() {
             type: f.type,
             scheduledAt: f.scheduledAt.toISOString(),
             mission: {
+              id: f.mission.id,
               title: f.mission.title,
               company: f.mission.company,
               status: f.mission.status,

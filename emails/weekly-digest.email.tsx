@@ -8,6 +8,7 @@ import {
 } from "@react-email/components";
 import { BilingualDivider } from "./utils/bilingual-divider";
 import { EmailLayout } from "./utils/email-layout";
+import { emailStyles } from "./utils/email-styles";
 
 type WeeklyDigestEmailProps = {
   name: string;
@@ -30,16 +31,13 @@ export default function WeeklyDigestEmail({
   return (
     <EmailLayout>
       <Preview>Ton résumé de la semaine sur {SiteConfig.title}</Preview>
-      <Heading as="h1" style={{ fontSize: "24px", fontWeight: "bold" }}>
+      <Heading as="h1" style={emailStyles.heading}>
         Ton résumé de la semaine
       </Heading>
-      <Text style={{ fontSize: "16px", lineHeight: "24px" }}>
-        Salut {name},
-      </Text>
+      <Text style={emailStyles.bodyText}>Salut {name},</Text>
       <Section
         style={{
-          backgroundColor: "#f8fafc",
-          borderRadius: "8px",
+          ...emailStyles.card,
           padding: "16px",
           margin: "16px 0",
         }}
@@ -51,13 +49,19 @@ export default function WeeklyDigestEmail({
                 style={{
                   fontSize: "32px",
                   fontWeight: "bold",
-                  color: SiteConfig.brand.primary,
+                  color: "#0891b2",
                   margin: "0",
                 }}
               >
                 {stats.missionsAdded}
               </Text>
-              <Text style={{ fontSize: "12px", color: "#64748B", margin: "0" }}>
+              <Text
+                style={{
+                  ...emailStyles.mutedText,
+                  fontSize: "12px",
+                  margin: "0",
+                }}
+              >
                 missions ajoutées
               </Text>
             </td>
@@ -66,13 +70,19 @@ export default function WeeklyDigestEmail({
                 style={{
                   fontSize: "32px",
                   fontWeight: "bold",
-                  color: SiteConfig.brand.primary,
+                  color: "#0891b2",
                   margin: "0",
                 }}
               >
                 {stats.followUpsCompleted}
               </Text>
-              <Text style={{ fontSize: "12px", color: "#64748B", margin: "0" }}>
+              <Text
+                style={{
+                  ...emailStyles.mutedText,
+                  fontSize: "12px",
+                  margin: "0",
+                }}
+              >
                 relances faites
               </Text>
             </td>
@@ -81,13 +91,19 @@ export default function WeeklyDigestEmail({
                 style={{
                   fontSize: "32px",
                   fontWeight: "bold",
-                  color: SiteConfig.brand.primary,
+                  color: "#0891b2",
                   margin: "0",
                 }}
               >
                 {stats.emailsSent}
               </Text>
-              <Text style={{ fontSize: "12px", color: "#64748B", margin: "0" }}>
+              <Text
+                style={{
+                  ...emailStyles.mutedText,
+                  fontSize: "12px",
+                  margin: "0",
+                }}
+              >
                 emails envoyés
               </Text>
             </td>
@@ -97,8 +113,7 @@ export default function WeeklyDigestEmail({
       {topMissions.length > 0 && (
         <Section
           style={{
-            backgroundColor: "#f8fafc",
-            borderRadius: "8px",
+            ...emailStyles.card,
             padding: "16px",
             margin: "16px 0",
           }}
@@ -126,33 +141,30 @@ export default function WeeklyDigestEmail({
       <Section style={{ textAlign: "center", marginTop: "24px" }}>
         <Button
           href={`${SiteConfig.prodUrl}/app`}
-          style={{
-            backgroundColor: SiteConfig.brand.primary,
-            color: "#000",
-            padding: "12px 24px",
-            borderRadius: "6px",
-            fontSize: "16px",
-            fontWeight: "bold",
-            textDecoration: "none",
-          }}
+          style={emailStyles.primaryButton}
         >
           Ouvrir mon dashboard
         </Button>
       </Section>
-      <Text style={{ fontSize: "14px", lineHeight: "20px", marginTop: "24px" }}>
+      <Text
+        style={{
+          ...emailStyles.mutedText,
+          lineHeight: "20px",
+          marginTop: "16px",
+        }}
+      >
         À bientôt,{"\n"}L{"'"}équipe {SiteConfig.title}
       </Text>
 
       <BilingualDivider />
 
-      <Heading as="h1" style={{ fontSize: "24px", fontWeight: "bold" }}>
+      <Heading as="h1" style={emailStyles.heading}>
         Your weekly summary
       </Heading>
-      <Text style={{ fontSize: "16px", lineHeight: "24px" }}>Hi {name},</Text>
+      <Text style={emailStyles.bodyText}>Hi {name},</Text>
       <Section
         style={{
-          backgroundColor: "#f8fafc",
-          borderRadius: "8px",
+          ...emailStyles.card,
           padding: "16px",
           margin: "16px 0",
         }}
@@ -164,13 +176,19 @@ export default function WeeklyDigestEmail({
                 style={{
                   fontSize: "32px",
                   fontWeight: "bold",
-                  color: SiteConfig.brand.primary,
+                  color: "#0891b2",
                   margin: "0",
                 }}
               >
                 {stats.missionsAdded}
               </Text>
-              <Text style={{ fontSize: "12px", color: "#64748B", margin: "0" }}>
+              <Text
+                style={{
+                  ...emailStyles.mutedText,
+                  fontSize: "12px",
+                  margin: "0",
+                }}
+              >
                 missions added
               </Text>
             </td>
@@ -179,13 +197,19 @@ export default function WeeklyDigestEmail({
                 style={{
                   fontSize: "32px",
                   fontWeight: "bold",
-                  color: SiteConfig.brand.primary,
+                  color: "#0891b2",
                   margin: "0",
                 }}
               >
                 {stats.followUpsCompleted}
               </Text>
-              <Text style={{ fontSize: "12px", color: "#64748B", margin: "0" }}>
+              <Text
+                style={{
+                  ...emailStyles.mutedText,
+                  fontSize: "12px",
+                  margin: "0",
+                }}
+              >
                 follow-ups done
               </Text>
             </td>
@@ -194,13 +218,19 @@ export default function WeeklyDigestEmail({
                 style={{
                   fontSize: "32px",
                   fontWeight: "bold",
-                  color: SiteConfig.brand.primary,
+                  color: "#0891b2",
                   margin: "0",
                 }}
               >
                 {stats.emailsSent}
               </Text>
-              <Text style={{ fontSize: "12px", color: "#64748B", margin: "0" }}>
+              <Text
+                style={{
+                  ...emailStyles.mutedText,
+                  fontSize: "12px",
+                  margin: "0",
+                }}
+              >
                 emails sent
               </Text>
             </td>
@@ -210,8 +240,7 @@ export default function WeeklyDigestEmail({
       {topMissions.length > 0 && (
         <Section
           style={{
-            backgroundColor: "#f8fafc",
-            borderRadius: "8px",
+            ...emailStyles.card,
             padding: "16px",
             margin: "16px 0",
           }}
@@ -239,20 +268,18 @@ export default function WeeklyDigestEmail({
       <Section style={{ textAlign: "center", marginTop: "24px" }}>
         <Button
           href={`${SiteConfig.prodUrl}/app`}
-          style={{
-            backgroundColor: SiteConfig.brand.primary,
-            color: "#000",
-            padding: "12px 24px",
-            borderRadius: "6px",
-            fontSize: "16px",
-            fontWeight: "bold",
-            textDecoration: "none",
-          }}
+          style={emailStyles.primaryButton}
         >
           Open my dashboard
         </Button>
       </Section>
-      <Text style={{ fontSize: "14px", lineHeight: "20px", marginTop: "24px" }}>
+      <Text
+        style={{
+          ...emailStyles.mutedText,
+          lineHeight: "20px",
+          marginTop: "16px",
+        }}
+      >
         See you soon,{"\n"}
         The {SiteConfig.title} team
       </Text>

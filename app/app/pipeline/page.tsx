@@ -42,9 +42,25 @@ import { exportMissionsAction } from "@/features/missions/export-missions.action
 import { getUserPlatformsAction } from "@/features/platforms/platforms.action";
 import { PipelineFilters } from "@/features/missions/components/pipeline/pipeline-filters";
 import { downloadCsv, generateCsv } from "@/lib/csv-export";
-import { Archive, Download, Kanban, List, Plus, Search } from "lucide-react";
+import {
+  Archive,
+  BookmarkPlus,
+  BookmarkX,
+  Download,
+  Kanban,
+  List,
+  Plus,
+  Search,
+} from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { FeatureGuide } from "@/components/nowts/feature-guide";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import type { ComponentProps } from "react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -59,10 +75,28 @@ type SelectedMission = ComponentProps<typeof MissionDetailSheet>["mission"];
 
 type SortField = "createdAt" | "updatedAt" | "tjm" | "score" | "title";
 
+type SavedPipelineView = {
+  id: string;
+  name: string;
+  state: {
+    viewMode: "kanban" | "list";
+    search: string;
+    sortBy: SortField;
+    sortOrder: "asc" | "desc";
+    statusFilter: string[];
+    priorityFilter: string[];
+    platformIdFilter: string;
+    tjmMinFilter: string;
+    tjmMaxFilter: string;
+  };
+};
+
 type MissionsData =
   Awaited<ReturnType<typeof getMissionsAction>> extends { data?: infer D }
     ? NonNullable<D>
     : never;
+
+const SAVED_PIPELINE_VIEWS_STORAGE_KEY = "jobio.pipeline.saved-views.v1";
 
 export default function PipelinePage() {
   // URL-synced state via nuqs
@@ -84,6 +118,10 @@ export default function PipelinePage() {
   const [sortOrder, setSortOrder] = useQueryState(
     "order",
     parseAsStringLiteral(["asc", "desc"] as const).withDefault("desc"),
+  );
+  const [missionIdParam, setMissionIdParam] = useQueryState(
+    "missionId",
+    parseAsString,
   );
 
   // Filters (URL-synced)
@@ -137,6 +175,8 @@ export default function PipelinePage() {
   // Detail sheet
   const [selectedMission, setSelectedMission] = useState<SelectedMission>(null);
   const [showDetail, setShowDetail] = useState(false);
+  const [savedViews, setSavedViews] = useState<SavedPipelineView[]>([]);
+  const [selectedSavedViewId, setSelectedSavedViewId] = useState("");
 
   const fetchMissionLimits = useCallback(async () => {
     try {
@@ -204,6 +244,133 @@ export default function PipelinePage() {
     void fetchMissionLimits();
   }, [fetchMissionLimits]);
 
+  const openMissionDetail = useCallback(async (missionId: string) => {
+    try {
+      const result = await resolveActionResult(
+        getMissionAction({ id: missionId }),
+      );
+      setSelectedMission(result);
+      setShowDetail(true);
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Erreur lors du chargement de la mission",
+      );
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!missionIdParam) return;
+    void openMissionDetail(missionIdParam);
+  }, [missionIdParam, openMissionDetail]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const serialized = window.localStorage.getItem(
+        SAVED_PIPELINE_VIEWS_STORAGE_KEY,
+      );
+      if (!serialized) return;
+      const parsed = JSON.parse(serialized) as SavedPipelineView[];
+      if (Array.isArray(parsed)) {
+        setSavedViews(parsed);
+      }
+    } catch {
+      // Ignore invalid local cache.
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem(
+      SAVED_PIPELINE_VIEWS_STORAGE_KEY,
+      JSON.stringify(savedViews),
+    );
+  }, [savedViews]);
+
+  useEffect(() => {
+    if (!selectedSavedViewId) return;
+    const exists = savedViews.some((view) => view.id === selectedSavedViewId);
+    if (!exists) {
+      setSelectedSavedViewId("");
+    }
+  }, [savedViews, selectedSavedViewId]);
+
+  const applySavedView = useCallback(
+    (viewId: string) => {
+      const view = savedViews.find((item) => item.id === viewId);
+      if (!view) return;
+      setSelectedSavedViewId(view.id);
+      void setViewMode(view.state.viewMode);
+      void setSearch(view.state.search);
+      void setSortBy(view.state.sortBy);
+      void setSortOrder(view.state.sortOrder);
+      void setStatusFilter(view.state.statusFilter);
+      void setPriorityFilter(view.state.priorityFilter);
+      void setPlatformIdFilter(view.state.platformIdFilter);
+      void setTjmMinFilter(view.state.tjmMinFilter);
+      void setTjmMaxFilter(view.state.tjmMaxFilter);
+      toast.success(`Vue "${view.name}" appliquée`);
+    },
+    [
+      savedViews,
+      setPriorityFilter,
+      setPlatformIdFilter,
+      setSearch,
+      setSortBy,
+      setSortOrder,
+      setStatusFilter,
+      setTjmMaxFilter,
+      setTjmMinFilter,
+      setViewMode,
+    ],
+  );
+
+  const saveCurrentView = useCallback(() => {
+    const rawName = window.prompt("Nom de la vue sauvegardée");
+    const name = rawName?.trim();
+    if (!name) {
+      toast.error("Nom invalide");
+      return;
+    }
+    const next: SavedPipelineView = {
+      id: `view-${Date.now()}`,
+      name,
+      state: {
+        viewMode,
+        search,
+        sortBy,
+        sortOrder,
+        statusFilter,
+        priorityFilter,
+        platformIdFilter,
+        tjmMinFilter,
+        tjmMaxFilter,
+      },
+    };
+    setSavedViews((prev) => [next, ...prev].slice(0, 20));
+    setSelectedSavedViewId(next.id);
+    toast.success(`Vue "${name}" sauvegardée`);
+  }, [
+    platformIdFilter,
+    priorityFilter,
+    search,
+    sortBy,
+    sortOrder,
+    statusFilter,
+    tjmMaxFilter,
+    tjmMinFilter,
+    viewMode,
+  ]);
+
+  const deleteSelectedView = useCallback(() => {
+    if (!selectedSavedViewId) return;
+    setSavedViews((prev) => prev.filter((view) => view.id !== selectedSavedViewId));
+    setSelectedSavedViewId("");
+    toast.success("Vue supprimée");
+  }, [selectedSavedViewId]);
+
   const handleParse = async (source: "url" | "text", content: string) => {
     setIsParsing(true);
     try {
@@ -265,6 +432,7 @@ export default function PipelinePage() {
   const handleEdit = (mission: NonNullable<SelectedMission>) => {
     setEditingMission(mission);
     setShowDetail(false);
+    void setMissionIdParam(null);
     setShowForm(true);
   };
 
@@ -288,20 +456,8 @@ export default function PipelinePage() {
     }
   };
 
-  const handleMissionClick = async (missionId: string) => {
-    try {
-      const result = await resolveActionResult(
-        getMissionAction({ id: missionId }),
-      );
-      setSelectedMission(result);
-      setShowDetail(true);
-    } catch (error) {
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Erreur lors du chargement de la mission",
-      );
-    }
+  const handleMissionClick = (missionId: string) => {
+    void setMissionIdParam(missionId);
   };
 
   const handleSort = (field: SortField) => {
@@ -328,6 +484,34 @@ export default function PipelinePage() {
         </div>
       </LayoutHeader>
       <LayoutActions className="gap-2">
+        {savedViews.length > 0 ? (
+          <Select value={selectedSavedViewId} onValueChange={applySavedView}>
+            <SelectTrigger className="h-9 w-[220px]">
+              <SelectValue placeholder="Vues sauvegardées" />
+            </SelectTrigger>
+            <SelectContent>
+              {savedViews.map((view) => (
+                <SelectItem key={view.id} value={view.id}>
+                  {view.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        ) : (
+          <Button size="sm" variant="outline" disabled>
+            Vues sauvegardées (0)
+          </Button>
+        )}
+        <Button size="sm" variant="outline" onClick={saveCurrentView}>
+          <BookmarkPlus className="size-4" />
+          Sauvegarder vue
+        </Button>
+        {selectedSavedViewId && (
+          <Button size="sm" variant="outline" onClick={deleteSelectedView}>
+            <BookmarkX className="size-4" />
+            Supprimer vue
+          </Button>
+        )}
         <div className="flex rounded-lg border p-0.5">
           <Button
             variant={viewMode === "kanban" ? "secondary" : "ghost"}
@@ -621,12 +805,20 @@ export default function PipelinePage() {
       <MissionDetailSheet
         mission={selectedMission}
         open={showDetail}
-        onOpenChange={setShowDetail}
+        onOpenChange={(open) => {
+          setShowDetail(open);
+          if (!open) {
+            setSelectedMission(null);
+            void setMissionIdParam(null);
+          }
+        }}
         onEdit={handleEdit}
         onRefresh={() => {
           void fetchMissions();
           void fetchMissionLimits();
           setShowDetail(false);
+          setSelectedMission(null);
+          void setMissionIdParam(null);
         }}
       />
     </Layout>

@@ -38,6 +38,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Plus, UserCircle, Import } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
+import Link from "next/link";
 
 type Profile = {
   id: string;
@@ -139,6 +140,9 @@ export default function ProfilesPage() {
         <LayoutTitle>Profils</LayoutTitle>
       </LayoutHeader>
       <LayoutActions className="gap-2">
+        <Button variant="outline" size="sm" asChild>
+          <Link href="/app/cv-lab">CV Lab</Link>
+        </Button>
         <Button
           variant="outline"
           size="sm"

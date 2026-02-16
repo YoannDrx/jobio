@@ -7,6 +7,7 @@ import { createNotification } from "@/features/notifications/create-notification
 const overdueFollowUpSchema = z.object({
   id: z.string(),
   title: z.string(),
+  missionId: z.string(),
   missionTitle: z.string(),
 });
 
@@ -18,6 +19,7 @@ const staleMissionSchema = z.object({
 const dueSoonFollowUpSchema = z.object({
   id: z.string(),
   title: z.string(),
+  missionId: z.string(),
   missionTitle: z.string(),
 });
 
@@ -41,9 +43,10 @@ export const checkTodayNotificationsAction = authAction
             type: "FOLLOW_UP_OVERDUE",
             title: `Relance en retard: ${followUp.title}`,
             message: `Mission "${followUp.missionTitle}" nécessite une action immédiate`,
-            link: "/app",
+            link: `/app/pipeline?missionId=${followUp.missionId}`,
             metadata: {
               followUpId: followUp.id,
+              missionId: followUp.missionId,
               missionTitle: followUp.missionTitle,
             },
             dedupeHours: 12,
@@ -56,7 +59,7 @@ export const checkTodayNotificationsAction = authAction
             title: `Mission stale: ${mission.title}`,
             message:
               "Aucune action récente. Planifie une relance ou archive la mission.",
-            link: "/app",
+            link: `/app/pipeline?missionId=${mission.id}`,
             metadata: { missionId: mission.id },
             dedupeHours: 24,
           }),
@@ -67,9 +70,10 @@ export const checkTodayNotificationsAction = authAction
             type: "FOLLOW_UP_DUE",
             title: `Relance à faire bientôt: ${followUp.title}`,
             message: `Prévue aujourd'hui sur "${followUp.missionTitle}"`,
-            link: "/app",
+            link: `/app/pipeline?missionId=${followUp.missionId}`,
             metadata: {
               followUpId: followUp.id,
+              missionId: followUp.missionId,
               missionTitle: followUp.missionTitle,
             },
             dedupeHours: 6,

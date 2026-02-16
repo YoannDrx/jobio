@@ -8,6 +8,7 @@ import {
 } from "@react-email/components";
 import { BilingualDivider } from "./utils/bilingual-divider";
 import { EmailLayout } from "./utils/email-layout";
+import { emailStyles } from "./utils/email-styles";
 
 type TrialReminderEmailProps = {
   name: string;
@@ -25,19 +26,16 @@ export default function TrialReminderEmail({
       <Preview>
         Ça fait une semaine que tu utilises {SiteConfig.title} !
       </Preview>
-      <Heading as="h1" style={{ fontSize: "24px", fontWeight: "bold" }}>
+      <Heading as="h1" style={emailStyles.heading}>
         Une semaine avec {SiteConfig.title}
       </Heading>
-      <Text style={{ fontSize: "16px", lineHeight: "24px" }}>
-        Salut {name},
-      </Text>
-      <Text style={{ fontSize: "16px", lineHeight: "24px" }}>
+      <Text style={emailStyles.bodyText}>Salut {name},</Text>
+      <Text style={emailStyles.bodyText}>
         Voici ce que tu as accomplí cette semaine :
       </Text>
       <Section
         style={{
-          backgroundColor: "#f8fafc",
-          borderRadius: "8px",
+          ...emailStyles.card,
           padding: "16px",
           margin: "16px 0",
         }}
@@ -46,66 +44,59 @@ export default function TrialReminderEmail({
           style={{
             fontSize: "32px",
             fontWeight: "bold",
-            color: SiteConfig.brand.primary,
+            color: "#0891b2",
             margin: "0",
           }}
         >
           {missionsCount}
         </Text>
-        <Text style={{ fontSize: "14px", color: "#64748B", margin: "0" }}>
-          missions suivies
-        </Text>
+        <Text style={emailStyles.mutedText}>missions suivies</Text>
         <Text
           style={{
             fontSize: "32px",
             fontWeight: "bold",
-            color: SiteConfig.brand.primary,
+            color: "#0891b2",
             margin: "16px 0 0",
           }}
         >
           {followUpsCount}
         </Text>
-        <Text style={{ fontSize: "14px", color: "#64748B", margin: "0" }}>
-          relances effectuées
-        </Text>
+        <Text style={emailStyles.mutedText}>relances effectuées</Text>
       </Section>
-      <Text style={{ fontSize: "16px", lineHeight: "24px" }}>
+      <Text style={emailStyles.bodyText}>
         Continue sur ta lancée ! Passe en Pro pour débloquer toutes les
         fonctionnalités.
       </Text>
       <Section style={{ textAlign: "center", marginTop: "24px" }}>
         <Button
           href={`${SiteConfig.prodUrl}/app`}
-          style={{
-            backgroundColor: SiteConfig.brand.primary,
-            color: "#000",
-            padding: "12px 24px",
-            borderRadius: "6px",
-            fontSize: "16px",
-            fontWeight: "bold",
-            textDecoration: "none",
-          }}
+          style={emailStyles.primaryButton}
         >
           Voir mon pipeline
         </Button>
       </Section>
-      <Text style={{ fontSize: "14px", lineHeight: "20px", marginTop: "24px" }}>
+      <Text
+        style={{
+          ...emailStyles.mutedText,
+          lineHeight: "20px",
+          marginTop: "16px",
+        }}
+      >
         À bientôt,{"\n"}L{"'"}équipe {SiteConfig.title}
       </Text>
 
       <BilingualDivider />
 
-      <Heading as="h1" style={{ fontSize: "24px", fontWeight: "bold" }}>
+      <Heading as="h1" style={emailStyles.heading}>
         One week with {SiteConfig.title}
       </Heading>
-      <Text style={{ fontSize: "16px", lineHeight: "24px" }}>Hi {name},</Text>
-      <Text style={{ fontSize: "16px", lineHeight: "24px" }}>
+      <Text style={emailStyles.bodyText}>Hi {name},</Text>
+      <Text style={emailStyles.bodyText}>
         Here{"'"}s what you accomplished this week:
       </Text>
       <Section
         style={{
-          backgroundColor: "#f8fafc",
-          borderRadius: "8px",
+          ...emailStyles.card,
           padding: "16px",
           margin: "16px 0",
         }}
@@ -114,49 +105,43 @@ export default function TrialReminderEmail({
           style={{
             fontSize: "32px",
             fontWeight: "bold",
-            color: SiteConfig.brand.primary,
+            color: "#0891b2",
             margin: "0",
           }}
         >
           {missionsCount}
         </Text>
-        <Text style={{ fontSize: "14px", color: "#64748B", margin: "0" }}>
-          missions tracked
-        </Text>
+        <Text style={emailStyles.mutedText}>missions tracked</Text>
         <Text
           style={{
             fontSize: "32px",
             fontWeight: "bold",
-            color: SiteConfig.brand.primary,
+            color: "#0891b2",
             margin: "16px 0 0",
           }}
         >
           {followUpsCount}
         </Text>
-        <Text style={{ fontSize: "14px", color: "#64748B", margin: "0" }}>
-          follow-ups completed
-        </Text>
+        <Text style={emailStyles.mutedText}>follow-ups completed</Text>
       </Section>
-      <Text style={{ fontSize: "16px", lineHeight: "24px" }}>
+      <Text style={emailStyles.bodyText}>
         Keep up the momentum! Upgrade to Pro to unlock all features.
       </Text>
       <Section style={{ textAlign: "center", marginTop: "24px" }}>
         <Button
           href={`${SiteConfig.prodUrl}/app`}
-          style={{
-            backgroundColor: SiteConfig.brand.primary,
-            color: "#000",
-            padding: "12px 24px",
-            borderRadius: "6px",
-            fontSize: "16px",
-            fontWeight: "bold",
-            textDecoration: "none",
-          }}
+          style={emailStyles.primaryButton}
         >
           View my pipeline
         </Button>
       </Section>
-      <Text style={{ fontSize: "14px", lineHeight: "20px", marginTop: "24px" }}>
+      <Text
+        style={{
+          ...emailStyles.mutedText,
+          lineHeight: "20px",
+          marginTop: "16px",
+        }}
+      >
         See you soon,{"\n"}
         The {SiteConfig.title} team
       </Text>

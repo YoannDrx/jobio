@@ -1,9 +1,11 @@
 import type { NavigationGroup } from "@/features/navigation/navigation.type";
 import {
   AlertCircle,
+  Bell,
   CreditCard,
   LayoutDashboard,
-  Mail,
+  Palette,
+  Sparkles,
   User2,
 } from "lucide-react";
 
@@ -21,19 +23,24 @@ const ACCOUNT_LINKS: NavigationGroup[] = [
         label: "Profil",
       },
       {
-        href: "/account/email",
-        Icon: Mail,
-        label: "Email",
+        href: "/account/appearance",
+        Icon: Palette,
+        label: "Apparence",
       },
+      {
+        href: "/account/notifications",
+        Icon: Bell,
+        label: "Notifications",
+      },
+    ],
+  },
+  {
+    title: "Abonnement",
+    links: [
       {
         href: "/account/billing",
         Icon: CreditCard,
         label: "Facturation",
-      },
-      {
-        href: "/account/danger",
-        Icon: AlertCircle,
-        label: "Zone dangereuse",
       },
     ],
   },
@@ -44,6 +51,16 @@ const ACCOUNT_LINKS: NavigationGroup[] = [
         href: "/app",
         Icon: LayoutDashboard,
         label: "Tableau de bord",
+      },
+      {
+        href: "/freelance",
+        Icon: Sparkles,
+        label: "Facturation freelance",
+      },
+      {
+        href: "/account/danger",
+        Icon: AlertCircle,
+        label: "Zone dangereuse",
       },
     ],
   },

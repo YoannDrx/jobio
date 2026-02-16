@@ -50,7 +50,7 @@ export function OnboardingWizard({ status }: OnboardingWizardProps) {
       icon: Settings,
       title: "Sélectionne tes plateformes",
       description: "Ajoute les plateformes où tu prospèctes",
-      href: "/app/prospection",
+      href: "/app/platforms",
       completed: status.hasPlatforms,
     },
     {

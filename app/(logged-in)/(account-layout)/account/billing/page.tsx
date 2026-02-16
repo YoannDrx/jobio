@@ -37,14 +37,27 @@ export default async function OrgBillingPage() {
 
   const user = await getRequiredCurrentUser();
 
-  const [missions, profiles, contacts, platforms, aiRequestsPerMonth] =
-    await Promise.all([
-      checkPlanLimit(user.id, "missions"),
-      checkPlanLimit(user.id, "profiles"),
-      checkPlanLimit(user.id, "contacts"),
-      checkPlanLimit(user.id, "platforms"),
-      checkPlanLimit(user.id, "aiRequestsPerMonth"),
-    ]);
+  const [
+    missions,
+    profiles,
+    contacts,
+    platforms,
+    aiRequestsPerMonth,
+    billingClients,
+    billingQuotes,
+    billingInvoices,
+    billingCatalogItems,
+  ] = await Promise.all([
+    checkPlanLimit(user.id, "missions"),
+    checkPlanLimit(user.id, "profiles"),
+    checkPlanLimit(user.id, "contacts"),
+    checkPlanLimit(user.id, "platforms"),
+    checkPlanLimit(user.id, "aiRequestsPerMonth"),
+    checkPlanLimit(user.id, "billingClients"),
+    checkPlanLimit(user.id, "billingQuotes"),
+    checkPlanLimit(user.id, "billingInvoices"),
+    checkPlanLimit(user.id, "billingCatalogItems"),
+  ]);
 
   const usage = {
     missions,
@@ -52,6 +65,10 @@ export default async function OrgBillingPage() {
     contacts,
     platforms,
     aiRequestsPerMonth,
+    billingClients,
+    billingQuotes,
+    billingInvoices,
+    billingCatalogItems,
   };
 
   return <UserBilling subscription={subscription} usage={usage} />;

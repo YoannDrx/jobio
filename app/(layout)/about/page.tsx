@@ -1,21 +1,19 @@
 import { Badge } from "@/components/ui/badge";
 import { SiteConfig } from "@/site-config";
-import { PublicPageShell, PublicSection } from "@/features/layout/public-page-shell";
+import {
+  PublicPageShell,
+  PublicSection,
+} from "@/features/layout/public-page-shell";
+import { buildMarketingMetadata } from "@/lib/seo";
 import { Compass, Goal, ShieldCheck, Sparkles, Wrench } from "lucide-react";
 import type { Metadata } from "next";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = buildMarketingMetadata({
   title: `About | ${SiteConfig.title}`,
   description:
     "Découvrez la mission de Jobio: aider les freelances tech à piloter leur prospection avec méthode, clarté et vitesse.",
-  openGraph: {
-    title: `About | ${SiteConfig.title}`,
-    description:
-      "La vision, les principes produit et la feuille de route derrière Jobio.",
-    url: `${SiteConfig.prodUrl}/about`,
-    type: "website",
-  },
-};
+  path: "/about",
+});
 
 const valueCards = [
   {
@@ -67,7 +65,11 @@ export default function AboutPage() {
       badge="À propos de Jobio"
       title="Un cockpit commercial construit pour les freelances tech."
       description="Jobio est né d'un constat simple: la prospection freelance est souvent gérée entre Notion, mails, rappels, feuilles de calcul et mémoire personnelle. On construit un outil unique qui remet de l'ordre et accélère la conversion."
-      highlights={["Produit orienté action", "Roadmap active", "Approche pragmatique"]}
+      highlights={[
+        "Produit orienté action",
+        "Roadmap active",
+        "Approche pragmatique",
+      ]}
     >
       <div className="grid w-full gap-4 lg:grid-cols-3">
         <PublicSection
@@ -78,9 +80,9 @@ export default function AboutPage() {
           <p className="text-muted-foreground leading-relaxed">
             Nous aidons les freelances à passer d&apos;une prospection
             opportuniste à un système commercial reproductible. La priorité
-            n&apos;est pas d&apos;ajouter des fonctionnalités décoratives, mais de
-            donner une vision claire: où en sont les missions, quelles relances
-            faire, et comment améliorer le taux de conversion.
+            n&apos;est pas d&apos;ajouter des fonctionnalités décoratives, mais
+            de donner une vision claire: où en sont les missions, quelles
+            relances faire, et comment améliorer le taux de conversion.
           </p>
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             <div className="rounded-xl border p-4">
@@ -100,12 +102,18 @@ export default function AboutPage() {
           </div>
         </PublicSection>
 
-        <PublicSection title="Ce qu&apos;on optimise" description="Au quotidien">
+        <PublicSection title="Ce qu'on optimise" description="Au quotidien">
           <ul className="space-y-2 text-sm">
             <li className="rounded-lg border p-3">Priorisation des missions</li>
-            <li className="rounded-lg border p-3">Qualité et régularité des relances</li>
-            <li className="rounded-lg border p-3">Visibilité sur les performances</li>
-            <li className="rounded-lg border p-3">Capacité à apprendre de ses données</li>
+            <li className="rounded-lg border p-3">
+              Qualité et régularité des relances
+            </li>
+            <li className="rounded-lg border p-3">
+              Visibilité sur les performances
+            </li>
+            <li className="rounded-lg border p-3">
+              Capacité à apprendre de ses données
+            </li>
           </ul>
         </PublicSection>
       </div>
@@ -155,10 +163,10 @@ export default function AboutPage() {
       >
         <div className="flex flex-wrap items-center gap-3">
           <a
-            href="mailto:contact@jobio.app"
+            href="mailto:hello@jobio.fr"
             className="hover:text-primary text-sm font-medium transition-colors"
           >
-            contact@jobio.app
+            hello@jobio.fr
           </a>
           <span className="text-muted-foreground text-sm">
             • Réponse en général sous 24h ouvrées

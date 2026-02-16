@@ -1,5 +1,8 @@
 import { Badge } from "@/components/ui/badge";
-import { PublicPageShell, PublicSection } from "@/features/layout/public-page-shell";
+import {
+  PublicPageShell,
+  PublicSection,
+} from "@/features/layout/public-page-shell";
 import { SiteConfig } from "@/site-config";
 import type { Metadata } from "next";
 
@@ -62,7 +65,11 @@ export default function PrivacyPage() {
       title="Tes données restent sous ton contrôle."
       description="Cette politique décrit ce que Jobio collecte, pourquoi, combien de temps, et comment exercer tes droits. Version orientée clarté opérationnelle."
       lastUpdated="11 février 2026"
-      highlights={["Conforme RGPD", "Pas de revente de données", "Suppression compte en self-service"]}
+      highlights={[
+        "Conforme RGPD",
+        "Pas de revente de données",
+        "Suppression compte en self-service",
+      ]}
     >
       <div className="grid w-full gap-4 lg:grid-cols-3">
         <PublicSection
@@ -84,7 +91,7 @@ export default function PrivacyPage() {
         </PublicSection>
 
         <PublicSection title="Contact données" description="Canal direct">
-          <p className="text-sm font-medium">privacy@jobio.app</p>
+          <p className="text-sm font-medium">hello@jobio.fr</p>
           <p className="text-muted-foreground mt-2 text-sm">
             Pour une demande d&apos;accès, d&apos;effacement, de portabilité ou
             toute question RGPD.

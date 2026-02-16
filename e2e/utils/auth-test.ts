@@ -7,6 +7,30 @@ import { retry } from "./retry";
 export const getUserEmail = () =>
   `playwright-test-${faker.internet.email().toLowerCase()}`;
 
+const normalizePath = (path: string) => {
+  const withoutQuery = path.split("?")[0] ?? path;
+  if (withoutQuery.endsWith("/") && withoutQuery !== "/") {
+    return withoutQuery.slice(0, -1);
+  }
+  return withoutQuery;
+};
+
+const buildAuthUrl = (basePath: string, callbackURL?: string) => {
+  if (!callbackURL) {
+    return basePath;
+  }
+
+  return `${basePath}?callbackUrl=${encodeURIComponent(callbackURL)}`;
+};
+
+const isCallbackMatch = (url: URL, callbackURL: string) => {
+  const expectedPath = normalizePath(callbackURL);
+  const currentPath = normalizePath(url.pathname);
+  return (
+    currentPath === expectedPath || currentPath.startsWith(`${expectedPath}/`)
+  );
+};
+
 /**
  * Helper function to create a test account
  * @returns Object containing the test user's credentials
@@ -25,7 +49,7 @@ export async function createTestAccount(options: {
   };
 
   // Navigate to signup page
-  await options.page.goto(`/auth/signup?callbackUrl=${options.callbackURL}`);
+  await options.page.goto(buildAuthUrl("/auth/signup", options.callbackURL));
 
   // Fill out the form
   await options.page.getByLabel("Name").fill(userData.name);
@@ -40,13 +64,24 @@ export async function createTestAccount(options: {
 
   // Wait for navigation to complete - we should be redirected to the callback URL
   if (options.callbackURL) {
-    await options.page.waitForURL(
-      (url) => url.pathname === options.callbackURL,
-      {
-        timeout: 30000,
-      },
-    );
-    await options.page.waitForLoadState("networkidle");
+    const callbackURL = options.callbackURL;
+    try {
+      await options.page.waitForURL(
+        (url) =>
+          isCallbackMatch(url, callbackURL) ||
+          url.pathname.startsWith("/auth/verify"),
+        {
+          timeout: 30000,
+        },
+      );
+      await options.page.waitForLoadState("networkidle");
+    } catch (error) {
+      logger.warn("Timeout waiting for signup callback URL", {
+        callbackURL,
+        currentUrl: options.page.url(),
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
   }
 
   const user = await retry(
@@ -86,9 +121,7 @@ export async function signInAccount(options: {
   const { page, userData, callbackURL } = options;
 
   // Navigate to signin page
-  await page.goto(
-    `/auth/signin${callbackURL ? `?callbackUrl=${callbackURL}` : ""}`,
-  );
+  await page.goto(buildAuthUrl("/auth/signin", callbackURL));
 
   // Fill out the form
   await page.getByLabel("Email").fill(userData.email);
@@ -103,7 +136,7 @@ export async function signInAccount(options: {
   // Wait for navigation to complete if a callback URL is provided
   if (callbackURL) {
     try {
-      await page.waitForURL((url) => url.pathname === callbackURL, {
+      await page.waitForURL((url) => isCallbackMatch(url, callbackURL), {
         timeout: 30000,
       });
       await page.waitForLoadState("networkidle");

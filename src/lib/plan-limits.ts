@@ -9,7 +9,24 @@ type LimitFeature =
   | "contacts"
   | "platforms"
   | "companies"
+  | "billingClients"
+  | "billingQuotes"
+  | "billingInvoices"
+  | "billingCatalogItems"
   | "aiRequestsPerMonth";
+
+const LIMIT_FEATURE_LABELS: Record<LimitFeature, string> = {
+  missions: "missions actives",
+  profiles: "profils",
+  contacts: "contacts",
+  platforms: "plateformes",
+  companies: "entreprises",
+  billingClients: "clients facturation",
+  billingQuotes: "devis",
+  billingInvoices: "factures",
+  billingCatalogItems: "éléments de catalogue",
+  aiRequestsPerMonth: "requêtes IA/mois",
+};
 
 async function getUserPlanLimits(userId: string) {
   const subscription = await prisma.subscription.findUnique({
@@ -56,6 +73,37 @@ export async function checkPlanLimit(
     case "companies":
       used = await prisma.targetCompany.count({ where: { userId } });
       break;
+    case "billingClients":
+      used = await prisma.billingClient.count({
+        where: {
+          userId,
+          deletedAt: null,
+        },
+      });
+      break;
+    case "billingQuotes":
+      used = await prisma.billingQuote.count({
+        where: {
+          userId,
+          deletedAt: null,
+        },
+      });
+      break;
+    case "billingInvoices":
+      used = await prisma.billingInvoice.count({
+        where: {
+          userId,
+          deletedAt: null,
+        },
+      });
+      break;
+    case "billingCatalogItems":
+      used = await prisma.billingCatalogItem.count({
+        where: {
+          userId,
+        },
+      });
+      break;
     case "aiRequestsPerMonth": {
       const now = new Date();
       const quota = await prisma.aIMonthlyQuota.findUnique({
@@ -88,8 +136,9 @@ export async function enforcePlanLimit(
 ): Promise<void> {
   const result = await checkPlanLimit(userId, feature);
   if (!result.allowed) {
+    const featureLabel = LIMIT_FEATURE_LABELS[feature];
     throw new ApplicationError(
-      `Limite atteinte : ${result.used}/${result.limit} ${feature}. Passe en Pro pour débloquer.`,
+      `Limite atteinte : ${result.used}/${result.limit} ${featureLabel}. Passe en Pro pour débloquer.`,
     );
   }
 }

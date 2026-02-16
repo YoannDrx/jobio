@@ -7,23 +7,18 @@ import { contactSupportAction } from "@/features/contact/support/contact-support
 import { ContactSupportSchema } from "@/features/contact/support/contact-support.schema";
 import { PublicPageShell, PublicSection } from "@/features/layout/public-page-shell";
 import { env } from "@/lib/env";
+import { buildMarketingMetadata } from "@/lib/seo";
 import { serverToast } from "@/lib/server-toast";
 import { SiteConfig } from "@/site-config";
 import { Clock3, Headphones, ShieldCheck, Sparkles, Wrench } from "lucide-react";
 import type { Metadata } from "next";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = buildMarketingMetadata({
   title: `Contact | ${SiteConfig.title}`,
   description:
     "Une question produit, un bug ou une idée d'amélioration ? Contacte directement l'équipe Jobio.",
-  openGraph: {
-    title: `Contact | ${SiteConfig.title}`,
-    description:
-      "Parle-nous de ton usage et on t'aide à débloquer ta prospection.",
-    url: `${SiteConfig.prodUrl}/contact`,
-    type: "website",
-  },
-};
+  path: "/contact",
+});
 
 const contactTopics = [
   {
