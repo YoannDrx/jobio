@@ -38,14 +38,17 @@ test.describe("freelance-billing", () => {
       await page.goto("/freelance/quotes");
       await page.waitForLoadState("networkidle");
 
-      await expect(page.getByText("Créer un devis rapide").first()).toBeVisible(
-        {
-          timeout: 10000,
-        },
-      );
+      await expect(
+        page.getByRole("button", { name: "Créer le devis brouillon" }).first(),
+      ).toBeVisible({
+        timeout: 10000,
+      });
 
-      await page.getByRole("button", { name: "Créer le devis" }).click();
-      await expect(page.getByText("Devis brouillon créé")).toBeVisible({
+      await page
+        .getByRole("button", { name: "Créer le devis brouillon" })
+        .first()
+        .click();
+      await expect(page.getByText("Devis brouillon créé").first()).toBeVisible({
         timeout: 10000,
       });
 
@@ -57,7 +60,9 @@ test.describe("freelance-billing", () => {
         .getByRole("button", { name: "Convertir en facture" })
         .first()
         .click();
-      await expect(page.getByText("Devis converti en facture")).toBeVisible({
+      await expect(
+        page.getByText("Devis converti en facture").first(),
+      ).toBeVisible({
         timeout: 10000,
       });
 
@@ -70,24 +75,28 @@ test.describe("freelance-billing", () => {
         timeout: 10000,
       });
 
-      await page.getByRole("button", { name: "Émettre" }).click();
+      await page.getByRole("button", { name: "Émettre" }).first().click();
       await page.waitForTimeout(500);
 
       await page
         .getByRole("button", { name: "Enregistrer un paiement" })
+        .first()
         .click();
       await expect(
-        page.getByRole("heading", { name: "Enregistrer un paiement" }),
+        page.getByRole("heading", { name: "Enregistrer un paiement" }).first(),
       ).toBeVisible({ timeout: 10000 });
 
       await page
         .getByRole("button", { name: "Enregistrer le paiement" })
+        .first()
         .click();
-      await expect(page.getByText("Paiement enregistré")).toBeVisible({
+      await expect(page.getByText("Paiement enregistré").first()).toBeVisible({
         timeout: 10000,
       });
 
-      await expect(page.getByText("Payée")).toBeVisible({ timeout: 10000 });
+      await expect(page.getByText("Payée").first()).toBeVisible({
+        timeout: 10000,
+      });
     } finally {
       const user = await prisma.user.findUnique({
         where: { email: userData.email },
