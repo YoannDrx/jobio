@@ -31,36 +31,43 @@ test.describe("cv-lab-coach", () => {
       await page.waitForLoadState("networkidle");
 
       await expect(
-        page.getByRole("button", { name: "Nouvelle session" }),
+        page.getByRole("button", { name: "Nouvelle session" }).first(),
       ).toBeVisible({
         timeout: 10000,
       });
 
-      await page.getByRole("button", { name: "Nouvelle session" }).click();
+      await page
+        .getByRole("button", { name: "Nouvelle session" })
+        .first()
+        .click();
 
-      await expect(page.getByText("Nouvelle session créée")).toBeVisible({
+      await expect(
+        page.getByText("Nouvelle session créée").first(),
+      ).toBeVisible({
         timeout: 10000,
       });
 
-      const messageInput = page.getByPlaceholder(
-        "Raconte ton parcours, le coach structure tout...",
-      );
+      const messageInput = page
+        .getByPlaceholder("Raconte ton parcours, le coach structure tout...")
+        .first();
       await expect(messageInput).toBeVisible({ timeout: 10000 });
 
       await messageInput.fill(
         "Je suis développeur web avec 5 ans d'expérience en React et TypeScript.",
       );
-      await page.getByRole("button", { name: "Envoyer" }).click();
+      await page.getByRole("button", { name: "Envoyer" }).first().click();
 
-      await expect(page.getByText("Le coach rédige...")).toBeVisible({
+      await expect(page.getByText("Le coach rédige...").first()).toBeVisible({
         timeout: 10000,
       });
 
-      await expect(page.getByText("Extraction des données...")).toBeVisible({
+      await expect(
+        page.getByText("Extraction des données...").first(),
+      ).toBeVisible({
         timeout: 30000,
       });
 
-      await expect(page.getByText("Développeur web")).toBeVisible({
+      await expect(page.getByText("Développeur web").first()).toBeVisible({
         timeout: 30000,
       });
     } finally {
@@ -142,11 +149,14 @@ test.describe("cv-lab-coach", () => {
       await page.goto("/app/cv-lab/coach");
       await page.waitForLoadState("networkidle");
 
-      await page.getByRole("button", { name: "Importer un CV" }).click();
+      await page
+        .getByRole("button", { name: "Importer un CV" })
+        .first()
+        .click();
 
-      const importTextarea = page.getByPlaceholder(
-        "Colle le contenu de ton CV ici...",
-      );
+      const importTextarea = page
+        .getByPlaceholder("Colle le contenu de ton CV ici...")
+        .first();
       await expect(importTextarea).toBeVisible({ timeout: 10000 });
 
       await importTextarea.fill(
@@ -160,7 +170,9 @@ test.describe("cv-lab-coach", () => {
 
       await page.getByRole("button", { name: "Importer et analyser" }).click();
 
-      await expect(page.getByText("Extraction des données...")).toBeVisible({
+      await expect(
+        page.getByText("Extraction des données...").first(),
+      ).toBeVisible({
         timeout: 30000,
       });
 
@@ -253,25 +265,25 @@ test.describe("cv-lab-coach", () => {
       await page.goto("/app/cv-lab/coach");
       await page.waitForLoadState("networkidle");
 
-      await expect(page.getByText("Session Editor Test")).toBeVisible({
+      await expect(page.getByText("Session Editor Test").first()).toBeVisible({
         timeout: 10000,
       });
 
-      const fullNameInput = page.getByLabel("Nom complet");
+      const fullNameInput = page.getByLabel("Nom complet").first();
       await expect(fullNameInput).toHaveValue("Jean Dupont");
 
       await fullNameInput.fill("Jean Dupont Modifié");
 
-      await page.getByRole("button", { name: "Sauvegarder" }).click();
+      await page.getByRole("button", { name: "Sauvegarder" }).first().click();
 
-      await expect(page.getByText("Dossier sauvegardé")).toBeVisible({
+      await expect(page.getByText("Dossier sauvegardé").first()).toBeVisible({
         timeout: 10000,
       });
 
       await page.reload();
       await page.waitForLoadState("networkidle");
 
-      await expect(page.getByLabel("Nom complet")).toHaveValue(
+      await expect(page.getByLabel("Nom complet").first()).toHaveValue(
         "Jean Dupont Modifié",
         {
           timeout: 10000,
