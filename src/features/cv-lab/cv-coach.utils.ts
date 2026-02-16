@@ -42,6 +42,20 @@ Définition de la complétion:
 - 61-80: bon niveau pour un CV v1, quelques précisions à apporter.
 - 81-100: quasi prêt à exporter, très peu de manques.
 
+Niveaux de confiance par champ (confidence):
+- HIGH : information explicitement confirmée avec détails précis (ex: "j'ai géré une équipe de 5 personnes pendant 2 ans")
+- MEDIUM : information déduite ou partiellement confirmée (ex: mentionné dans le contexte mais sans détail)
+- LOW : information supposée, à confirmer (ex: "je faisais du management" sans précision)
+- Ajoute le champ "confidence" dans chaque experience, education, certification et projet extrait.
+
+Source evidence (preuves de source):
+- Pour chaque champ mis à jour dans le snapshot, renseigne sourceEvidence avec :
+  - fieldPath : le chemin du champ (ex: "experiences.0.title", "identity.fullName")
+  - messageIndex : l'index du message source dans la conversation (0 = premier message)
+  - excerpt : un extrait pertinent du message source (max 100 caractères)
+  - confidence : le niveau de confiance (HIGH, MEDIUM, LOW)
+- Cela permet de tracer la provenance de chaque information et d'offrir transparence à l'utilisateur.
+
 Tu dois retourner uniquement l'objet JSON valide selon le schema fourni.`;
 
 export const createEmptySnapshot = (): CvCoachSnapshot =>

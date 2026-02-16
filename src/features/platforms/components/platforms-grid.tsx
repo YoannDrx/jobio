@@ -26,6 +26,7 @@ import {
   Trash2,
   X,
 } from "lucide-react";
+import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -34,6 +35,7 @@ type Platform = {
   name: string;
   slug: string;
   website: string | null;
+  logoUrl: string | null;
   category: "GENERALIST" | "SPECIALIZED" | "ENTERPRISE";
   description: string | null;
   isSystem: boolean;
@@ -75,6 +77,34 @@ const CATEGORY_LABELS: Record<Platform["category"], string> = {
 };
 
 type PlatformStatus = keyof typeof PLATFORM_STATUS_CONFIG;
+
+function PlatformLogo({ platform }: { platform: Platform }) {
+  const logoPath = platform.logoUrl ?? `/images/platforms/${platform.slug}.png`;
+  const [error, setError] = useState(false);
+
+  if (error) {
+    return (
+      <div className="bg-muted flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-lg">
+        <span className="text-xs font-semibold">
+          {platform.name.slice(0, 2).toUpperCase()}
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-white">
+      <Image
+        src={logoPath}
+        alt={`Logo ${platform.name}`}
+        width={40}
+        height={40}
+        className="object-contain p-1"
+        onError={() => setError(true)}
+      />
+    </div>
+  );
+}
 
 function PlatformStatusBadge({ status }: { status: PlatformStatus }) {
   const config = PLATFORM_STATUS_CONFIG[status];
@@ -313,8 +343,160 @@ export function PlatformsGrid() {
     );
   }
 
+  // Séparer les plateformes actives des inactives
+  const activePlatforms = platforms.filter((p) => getUserPlatform(p.id));
+  const inactivePlatforms = platforms.filter((p) => !getUserPlatform(p.id));
+
+  const renderPlatformCard = (platform: Platform) => {
+    const userPlatform = getUserPlatform(platform.id);
+    const isAdded = Boolean(userPlatform);
+    const isLoadingThis =
+      loadingPlatformId === platform.id ||
+      loadingPlatformId === userPlatform?.id;
+
+    return (
+      <Card key={platform.id} className="gap-4 py-4">
+        <CardHeader className="pb-0">
+          <div className="flex items-start justify-between">
+            <div className="flex flex-col gap-1">
+              <CardTitle className="flex items-center gap-3">
+                <PlatformLogo platform={platform} />
+                <div className="flex flex-col">
+                  <span className="flex items-center gap-2">
+                    {platform.name}
+                    {platform.website && (
+                      <a
+                        href={platform.website}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-muted-foreground hover:text-foreground"
+                      >
+                        <ExternalLink className="size-3.5" />
+                      </a>
+                    )}
+                  </span>
+                  <Badge variant="secondary" className="w-fit text-xs">
+                    {CATEGORY_LABELS[platform.category]}
+                  </Badge>
+                </div>
+              </CardTitle>
+              <div className="flex items-center gap-2">
+                {isAdded && userPlatform && (
+                  <button
+                    onClick={() =>
+                      cycleStatus(userPlatform.id, userPlatform.status)
+                    }
+                    className="cursor-pointer"
+                  >
+                    <PlatformStatusBadge status={userPlatform.status} />
+                  </button>
+                )}
+              </div>
+            </div>
+            <div className="flex gap-1">
+              {!platform.isSystem && (
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="text-destructive size-8"
+                  disabled={isLoadingThis}
+                  onClick={() => void handleDeleteCustom(platform.id)}
+                >
+                  <Trash2 className="size-4" />
+                </Button>
+              )}
+              <Button
+                size="icon"
+                variant={isAdded ? "destructive" : "default"}
+                className="size-8 shrink-0"
+                disabled={isLoadingThis}
+                onClick={async () =>
+                  isAdded && userPlatform
+                    ? handleRemove(userPlatform.id)
+                    : handleAdd(platform.id)
+                }
+              >
+                {isLoadingThis ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : isAdded ? (
+                  <Minus className="size-4" />
+                ) : (
+                  <Plus className="size-4" />
+                )}
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+
+        {platform.description && (
+          <CardContent className="py-0">
+            <p className="text-muted-foreground text-sm">
+              {platform.description}
+            </p>
+          </CardContent>
+        )}
+
+        {isAdded && userPlatform && (
+          <CardContent className="py-0">
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center gap-2">
+                <Input
+                  type="url"
+                  placeholder="URL de ton profil"
+                  className="h-8 text-sm"
+                  defaultValue={userPlatform.profileUrl ?? ""}
+                  onChange={(e) =>
+                    setEditingUrl((prev) => ({
+                      ...prev,
+                      [userPlatform.id]: e.target.value,
+                    }))
+                  }
+                  onBlur={() => {
+                    const url = editingUrl[userPlatform.id] as
+                      | string
+                      | undefined;
+                    if (
+                      url !== undefined &&
+                      url !== (userPlatform.profileUrl ?? "")
+                    ) {
+                      void handleUpdateProfileUrl(userPlatform.id, url);
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      const url = editingUrl[userPlatform.id] as
+                        | string
+                        | undefined;
+                      if (
+                        url !== undefined &&
+                        url !== (userPlatform.profileUrl ?? "")
+                      ) {
+                        void handleUpdateProfileUrl(userPlatform.id, url);
+                      }
+                    }
+                  }}
+                />
+                {userPlatform.profileUrl && (
+                  <a
+                    href={userPlatform.profileUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-muted-foreground hover:text-foreground"
+                  >
+                    <ExternalLink className="size-4" />
+                  </a>
+                )}
+              </div>
+              <PlatformChecklist userPlatform={userPlatform} />
+            </div>
+          </CardContent>
+        )}
+      </Card>
+    );
+  };
+
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-6">
       <div className="flex justify-end">
         <Button onClick={() => setCustomDialogOpen(true)} size="sm">
           <Plus className="mr-1 size-4" />
@@ -329,152 +511,35 @@ export function PlatformsGrid() {
           description="Les plateformes seront bientôt disponibles."
         />
       ) : (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {platforms.map((platform) => {
-            const userPlatform = getUserPlatform(platform.id);
-            const isAdded = Boolean(userPlatform);
-            const isLoadingThis =
-              loadingPlatformId === platform.id ||
-              loadingPlatformId === userPlatform?.id;
-
-            return (
-              <Card key={platform.id} className="gap-4 py-4">
-                <CardHeader className="pb-0">
-                  <div className="flex items-start justify-between">
-                    <div className="flex flex-col gap-1">
-                      <CardTitle className="flex items-center gap-2">
-                        {platform.name}
-                        {platform.website && (
-                          <a
-                            href={platform.website}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-muted-foreground hover:text-foreground"
-                          >
-                            <ExternalLink className="size-3.5" />
-                          </a>
-                        )}
-                      </CardTitle>
-                      <div className="flex items-center gap-2">
-                        <Badge variant="secondary" className="text-xs">
-                          {CATEGORY_LABELS[platform.category]}
-                        </Badge>
-                        {isAdded && userPlatform && (
-                          <button
-                            onClick={() =>
-                              cycleStatus(userPlatform.id, userPlatform.status)
-                            }
-                            className="cursor-pointer"
-                          >
-                            <PlatformStatusBadge status={userPlatform.status} />
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex gap-1">
-                      {!platform.isSystem && (
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="text-destructive size-8"
-                          disabled={isLoadingThis}
-                          onClick={() => void handleDeleteCustom(platform.id)}
-                        >
-                          <Trash2 className="size-4" />
-                        </Button>
-                      )}
-                      <Button
-                        size="icon"
-                        variant={isAdded ? "destructive" : "default"}
-                        className="size-8 shrink-0"
-                        disabled={isLoadingThis}
-                        onClick={async () =>
-                          isAdded && userPlatform
-                            ? handleRemove(userPlatform.id)
-                            : handleAdd(platform.id)
-                        }
-                      >
-                        {isLoadingThis ? (
-                          <Loader2 className="size-4 animate-spin" />
-                        ) : isAdded ? (
-                          <Minus className="size-4" />
-                        ) : (
-                          <Plus className="size-4" />
-                        )}
-                      </Button>
-                    </div>
-                  </div>
-                </CardHeader>
-
-                {platform.description && (
-                  <CardContent className="py-0">
-                    <p className="text-muted-foreground text-sm">
-                      {platform.description}
-                    </p>
-                  </CardContent>
+        <div className="flex flex-col gap-6">
+          {/* Section Plateformes Actives */}
+          {activePlatforms.length > 0 && (
+            <div className="flex flex-col gap-4">
+              <h2 className="flex items-center gap-2 text-lg font-semibold">
+                <span className="bg-status-success/20 text-status-success rounded px-2 py-0.5 text-sm">
+                  {activePlatforms.length}
+                </span>
+                Plateformes actives
+              </h2>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {activePlatforms.map((platform) =>
+                  renderPlatformCard(platform),
                 )}
+              </div>
+            </div>
+          )}
 
-                {isAdded && userPlatform && (
-                  <CardContent className="py-0">
-                    <div className="flex flex-col gap-3">
-                      <div className="flex items-center gap-2">
-                        <Input
-                          type="url"
-                          placeholder="URL de ton profil"
-                          className="h-8 text-sm"
-                          defaultValue={userPlatform.profileUrl ?? ""}
-                          onChange={(e) =>
-                            setEditingUrl((prev) => ({
-                              ...prev,
-                              [userPlatform.id]: e.target.value,
-                            }))
-                          }
-                          onBlur={() => {
-                            const url = editingUrl[userPlatform.id] as
-                              | string
-                              | undefined;
-                            if (
-                              url !== undefined &&
-                              url !== (userPlatform.profileUrl ?? "")
-                            ) {
-                              void handleUpdateProfileUrl(userPlatform.id, url);
-                            }
-                          }}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") {
-                              const url = editingUrl[userPlatform.id] as
-                                | string
-                                | undefined;
-                              if (
-                                url !== undefined &&
-                                url !== (userPlatform.profileUrl ?? "")
-                              ) {
-                                void handleUpdateProfileUrl(
-                                  userPlatform.id,
-                                  url,
-                                );
-                              }
-                            }
-                          }}
-                        />
-                        {userPlatform.profileUrl && (
-                          <a
-                            href={userPlatform.profileUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-muted-foreground hover:text-foreground"
-                          >
-                            <ExternalLink className="size-4" />
-                          </a>
-                        )}
-                      </div>
-                      <PlatformChecklist userPlatform={userPlatform} />
-                    </div>
-                  </CardContent>
-                )}
-              </Card>
-            );
-          })}
+          {/* Section Toutes les plateformes */}
+          <div className="flex flex-col gap-4">
+            <h2 className="text-muted-foreground text-lg font-semibold">
+              Toutes les plateformes
+            </h2>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {inactivePlatforms.map((platform) =>
+                renderPlatformCard(platform),
+              )}
+            </div>
+          </div>
         </div>
       )}
 

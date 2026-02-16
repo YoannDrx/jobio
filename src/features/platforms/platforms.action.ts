@@ -24,6 +24,7 @@ const removeUserPlatformSchema = z.object({
 const createCustomPlatformSchema = z.object({
   name: z.string().min(1, "Le nom est requis"),
   website: z.string().url().optional().or(z.literal("")),
+  logoUrl: z.string().url().optional().or(z.literal("")),
 });
 
 const deleteCustomPlatformSchema = z.object({
@@ -172,6 +173,7 @@ export const createCustomPlatformAction = authAction
           name: parsedInput.name,
           slug,
           website: parsedInput.website ?? null,
+          logoUrl: parsedInput.logoUrl ?? null,
           category: "GENERALIST",
           isSystem: false,
         },

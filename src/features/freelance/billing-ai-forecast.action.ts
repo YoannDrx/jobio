@@ -2,10 +2,7 @@
 
 import { AI_MODELS } from "@/features/ai/ai-config";
 import { checkAndIncrementAIQuota } from "@/features/ai/ai-quota";
-import {
-  BillingInvoiceStatus,
-  BillingPaymentStatus,
-} from "@/generated/prisma";
+import { BillingInvoiceStatus, BillingPaymentStatus } from "@/generated/prisma";
 import { authAction } from "@/lib/actions/safe-actions";
 import { getPlanLimits } from "@/lib/auth/stripe/auth-plans";
 import { ApplicationError } from "@/lib/errors/application-error";
@@ -31,7 +28,8 @@ type MonthPoint = {
   collectedCents: number;
 };
 
-const monthKey = (date: Date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+const monthKey = (date: Date) =>
+  `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
 
 const monthLabel = (date: Date) => {
   return new Intl.DateTimeFormat("fr-FR", {
@@ -72,7 +70,8 @@ export const generateFreelanceBillingForecastAction = authAction
     const now = new Date();
     const ninetyDaysAgo = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
     const monthWindow = buildMonthWindow(6);
-    const fromDate = monthWindow[0] ?? new Date(now.getFullYear(), now.getMonth() - 5, 1);
+    const fromDate =
+      monthWindow[0] ?? new Date(now.getFullYear(), now.getMonth() - 5, 1);
 
     const [invoices, payments, quotesToValidate, overdueCount, outstandingAgg] =
       await Promise.all([
@@ -97,6 +96,7 @@ export const generateFreelanceBillingForecastAction = authAction
         prisma.billingPayment.findMany({
           where: {
             userId: user.id,
+            deletedAt: null,
             status: BillingPaymentStatus.CONFIRMED,
             paidAt: {
               gte: fromDate,
@@ -192,8 +192,10 @@ export const generateFreelanceBillingForecastAction = authAction
       monthlySeries.length === 0
         ? 0
         : Math.round(
-            monthlySeries.reduce((total, month) => total + month.invoicedCents, 0) /
-              monthlySeries.length,
+            monthlySeries.reduce(
+              (total, month) => total + month.invoicedCents,
+              0,
+            ) / monthlySeries.length,
           );
 
     const fallbackForecastInvoicedEur = Math.max(
@@ -203,7 +205,10 @@ export const generateFreelanceBillingForecastAction = authAction
 
     const fallbackForecastCollectedEur = Math.max(
       0,
-      Math.round((averageMonthlyInvoicedCents * 3 * Math.max(collectionRate, 0.45)) / 100),
+      Math.round(
+        (averageMonthlyInvoicedCents * 3 * Math.max(collectionRate, 0.45)) /
+          100,
+      ),
     );
 
     const prompt = `

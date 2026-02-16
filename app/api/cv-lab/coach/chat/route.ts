@@ -12,7 +12,11 @@ import {
   parseSnapshot,
   toJson,
 } from "@/features/cv-lab/cv-coach.utils";
-import { cvCoachAssistantOutputSchema } from "@/features/cv-lab/cv-coach.schema";
+import {
+  cvCoachAssistantOutputSchema,
+  type CvCoachSnapshot,
+} from "@/features/cv-lab/cv-coach.schema";
+import { preserveLockedFields } from "@/features/cv-lab/cv-coach-locked-fields";
 import { logger } from "@/lib/logger";
 
 export const maxDuration = 60;
@@ -106,6 +110,22 @@ export const POST = authRoute
           const targetRole = obj.snapshot.identity.targetRole.trim();
           const generatedName = obj.sessionName?.trim();
 
+          // Parse locked fields and current snapshot for preservation
+          const lockedFields = Array.isArray(session.lockedFields)
+            ? (session.lockedFields as string[])
+            : [];
+          const currentSnapshot = parseSnapshot(session.structuredSnapshot);
+
+          // Preserve locked fields from current snapshot
+          const mergedSnapshot =
+            lockedFields.length > 0
+              ? preserveLockedFields(
+                  currentSnapshot,
+                  obj.snapshot as CvCoachSnapshot,
+                  lockedFields,
+                )
+              : obj.snapshot;
+
           await prisma.cvLabCoachSession.update({
             where: { id: session.id },
             data: {
@@ -115,7 +135,7 @@ export const POST = authRoute
                   : session.name,
               goalRole:
                 session.goalRole ?? (targetRole.length > 0 ? targetRole : null),
-              structuredSnapshot: toJson(obj.snapshot),
+              structuredSnapshot: toJson(mergedSnapshot),
               missingItems: toJson(obj.missingItems),
               inconsistencies: toJson(obj.inconsistencies),
               nextQuestions: toJson(obj.nextQuestions),

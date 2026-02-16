@@ -10,7 +10,10 @@ import { generateCsv } from "@/lib/csv-export";
 import { ApplicationError } from "@/lib/errors/application-error";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
-import { buildBeforeAfterMetadata, createBillingAuditEvent } from "./billing-audit";
+import {
+  buildBeforeAfterMetadata,
+  createBillingAuditEvent,
+} from "./billing-audit";
 
 const pagerSchema = z.object({
   page: z.number().int().positive().default(1),
@@ -37,7 +40,9 @@ const upsertExpenseInvoiceSchema = z.object({
   dueDate: z.coerce.date().optional().nullable(),
   currency: z.string().length(3).default("EUR"),
   category: z.string().optional(),
-  status: z.nativeEnum(BillingExpenseStatus).default(BillingExpenseStatus.DRAFT),
+  status: z
+    .nativeEnum(BillingExpenseStatus)
+    .default(BillingExpenseStatus.DRAFT),
   totalExclTaxCents: z.number().int().min(0),
   taxCents: z.number().int().min(0),
   totalInclTaxCents: z.number().int().min(0),
@@ -60,7 +65,9 @@ const upsertExpenseNoteSchema = z.object({
   category: z.string().optional(),
   expenseDate: z.coerce.date(),
   currency: z.string().length(3).default("EUR"),
-  status: z.nativeEnum(BillingExpenseStatus).default(BillingExpenseStatus.DRAFT),
+  status: z
+    .nativeEnum(BillingExpenseStatus)
+    .default(BillingExpenseStatus.DRAFT),
   amountExclTaxCents: z.number().int().min(0),
   taxCents: z.number().int().min(0),
   amountInclTaxCents: z.number().int().min(0),
@@ -90,7 +97,9 @@ const upsertExpenseTripSchema = z.object({
   tollCents: z.number().int().min(0).default(0),
   parkingCents: z.number().int().min(0).default(0),
   totalCents: z.number().int().min(0),
-  status: z.nativeEnum(BillingExpenseStatus).default(BillingExpenseStatus.DRAFT),
+  status: z
+    .nativeEnum(BillingExpenseStatus)
+    .default(BillingExpenseStatus.DRAFT),
   isPaid: z.boolean().default(false),
   paidAt: z.coerce.date().optional().nullable(),
   paymentReference: z.string().optional(),
@@ -698,7 +707,11 @@ export const deleteExpenseTripAction = authAction
     });
   });
 
-const expenseEntitySchema = z.enum(["EXPENSE_INVOICE", "EXPENSE_NOTE", "EXPENSE_TRIP"]);
+const expenseEntitySchema = z.enum([
+  "EXPENSE_INVOICE",
+  "EXPENSE_NOTE",
+  "EXPENSE_TRIP",
+]);
 
 const suggestExpenseMatchingSchema = z.object({
   entityType: expenseEntitySchema,
@@ -738,7 +751,9 @@ const computeMatchScore = (input: {
   const reasons: string[] = [];
 
   if (input.targetAmountCents !== undefined) {
-    const amountDiff = Math.abs(input.paymentAmountCents - input.targetAmountCents);
+    const amountDiff = Math.abs(
+      input.paymentAmountCents - input.targetAmountCents,
+    );
     const ratio = amountDiff / Math.max(100, input.targetAmountCents);
 
     if (ratio <= 0.02) {
@@ -810,7 +825,9 @@ export const suggestExpenseMatchingAction = authAction
           },
         });
         if (!expense) {
-          throw new ApplicationError("Dépense facture introuvable pour le matching");
+          throw new ApplicationError(
+            "Dépense facture introuvable pour le matching",
+          );
         }
         targetAmountCents = expense.totalInclTaxCents;
         targetDate = expense.issueDate;
@@ -831,7 +848,9 @@ export const suggestExpenseMatchingAction = authAction
           },
         });
         if (!expense) {
-          throw new ApplicationError("Note de frais introuvable pour le matching");
+          throw new ApplicationError(
+            "Note de frais introuvable pour le matching",
+          );
         }
         targetAmountCents = expense.amountInclTaxCents;
         targetDate = expense.expenseDate;
@@ -881,6 +900,7 @@ export const suggestExpenseMatchingAction = authAction
     const payments = await prisma.billingPayment.findMany({
       where: {
         userId: user.id,
+        deletedAt: null,
         ...(minDate && maxDate
           ? {
               paidAt: {
@@ -930,7 +950,9 @@ export const suggestExpenseMatchingAction = authAction
         };
       })
       .filter((entry) => entry.score > 0)
-      .sort((a, b) => b.score - a.score || b.paidAt.getTime() - a.paidAt.getTime())
+      .sort(
+        (a, b) => b.score - a.score || b.paidAt.getTime() - a.paidAt.getTime(),
+      )
       .slice(0, 6);
 
     return {

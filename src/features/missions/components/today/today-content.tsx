@@ -8,6 +8,8 @@ import type { MissionParserOutput } from "@/features/ai/prompts/mission-parser.p
 import { QuickCaptureInput } from "@/features/missions/components/capture/quick-capture-input";
 import { MissionPreview } from "@/features/missions/components/capture/mission-preview";
 import { OnboardingWizard } from "@/features/onboarding/components/onboarding-wizard";
+import { triggerCelebration } from "@/features/onboarding/components/celebration";
+import { track, AnalyticsEvents } from "@/lib/analytics";
 import {
   TodaySuggestions,
   type Suggestion,
@@ -43,7 +45,12 @@ type OverdueFollowUp = {
   title: string;
   type: string;
   scheduledAt: string;
-  mission: { id: string; title: string; company: string | null; status: string };
+  mission: {
+    id: string;
+    title: string;
+    company: string | null;
+    status: string;
+  };
 };
 
 type TodayFollowUp = {
@@ -51,7 +58,12 @@ type TodayFollowUp = {
   title: string;
   type: string;
   scheduledAt: string;
-  mission: { id: string; title: string; company: string | null; status: string };
+  mission: {
+    id: string;
+    title: string;
+    company: string | null;
+    status: string;
+  };
 };
 
 type StaleMission = {
@@ -180,6 +192,16 @@ export function TodayContent({
         }),
       );
       toast.success("Mission créée avec succès");
+      track(AnalyticsEvents.MISSION_CREATED, {
+        source: "quick_capture",
+      });
+
+      // Check if this is the first mission
+      if (totalMissions === 0) {
+        track(AnalyticsEvents.FIRST_MISSION_CREATED);
+        triggerCelebration({ duration: 2000, particleCount: 50 });
+      }
+
       setParsedData(null);
       router.refresh();
     } catch (error) {

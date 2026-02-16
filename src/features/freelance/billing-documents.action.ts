@@ -42,7 +42,10 @@ import {
   updateInvoiceDraftSchema,
   updateQuoteDraftSchema,
 } from "./billing.schema";
-import { buildBeforeAfterMetadata, createBillingAuditEvent } from "./billing-audit";
+import {
+  buildBeforeAfterMetadata,
+  createBillingAuditEvent,
+} from "./billing-audit";
 import {
   computeDocumentLines,
   computeDocumentTotals,
@@ -1015,8 +1018,10 @@ export const bulkQuoteAction = authAction
         reason: parsedInput.reason,
         batchId,
         requestedCount: ids.length,
-        processedCount: results.filter((item) => item.status === "processed").length,
-        skippedCount: results.filter((item) => item.status === "skipped").length,
+        processedCount: results.filter((item) => item.status === "processed")
+          .length,
+        skippedCount: results.filter((item) => item.status === "skipped")
+          .length,
         failedCount: results.filter((item) => item.status === "failed").length,
         results,
       };
@@ -1192,7 +1197,9 @@ export const createInvoiceDraftAction = authAction
           dueDate,
           currency: parsedInput.currency,
           documentTemplate:
-            parsedInput.documentTemplate ?? billingProfile?.documentTemplate ?? null,
+            parsedInput.documentTemplate ??
+            billingProfile?.documentTemplate ??
+            null,
           notes: asOptionalText(parsedInput.notes),
           terms: asOptionalText(parsedInput.terms),
           subtotalCents: totals.subtotalCents,
@@ -1302,10 +1309,11 @@ export const updateInvoiceDraftAction = authAction
         data: {
           clientId: parsedInput.clientId,
           issueDate: parsedInput.issueDate,
-          ...(parsedInput.dueDate === undefined ? {} : { dueDate: parsedInput.dueDate }),
+          ...(parsedInput.dueDate === undefined
+            ? {}
+            : { dueDate: parsedInput.dueDate }),
           currency: parsedInput.currency,
-          documentTemplate:
-            parsedInput.documentTemplate ?? undefined,
+          documentTemplate: parsedInput.documentTemplate ?? undefined,
           notes:
             parsedInput.notes === undefined
               ? undefined
@@ -1558,6 +1566,22 @@ export const deleteInvoiceAction = authAction
         },
       });
 
+      // Soft delete associated payments
+      await tx.billingPayment.updateMany({
+        where: {
+          userId: user.id,
+          allocations: {
+            some: {
+              invoiceId: invoice.id,
+            },
+          },
+          deletedAt: null,
+        },
+        data: {
+          deletedAt: new Date(),
+        },
+      });
+
       await createBillingAuditEvent(tx, {
         userId: user.id,
         entityType: BillingEntityType.INVOICE,
@@ -1595,6 +1619,24 @@ export const restoreInvoiceAction = authAction
       const restored = await tx.billingInvoice.update({
         where: {
           id: invoice.id,
+        },
+        data: {
+          deletedAt: null,
+        },
+      });
+
+      // Restore associated payments
+      await tx.billingPayment.updateMany({
+        where: {
+          userId: user.id,
+          allocations: {
+            some: {
+              invoiceId: invoice.id,
+            },
+          },
+          deletedAt: {
+            not: null,
+          },
         },
         data: {
           deletedAt: null,
@@ -1803,7 +1845,10 @@ export const bulkInvoiceAction = authAction
               kind: BillingSequenceKind.INVOICE,
               date: issueDate,
             }));
-          const balanceCents = Math.max(0, invoice.totalCents - invoice.paidCents);
+          const balanceCents = Math.max(
+            0,
+            invoice.totalCents - invoice.paidCents,
+          );
           const status =
             balanceCents === 0
               ? BillingInvoiceStatus.PAID
@@ -1892,8 +1937,10 @@ export const bulkInvoiceAction = authAction
         reason: parsedInput.reason,
         batchId,
         requestedCount: ids.length,
-        processedCount: results.filter((item) => item.status === "processed").length,
-        skippedCount: results.filter((item) => item.status === "skipped").length,
+        processedCount: results.filter((item) => item.status === "processed")
+          .length,
+        skippedCount: results.filter((item) => item.status === "skipped")
+          .length,
         failedCount: results.filter((item) => item.status === "failed").length,
         results,
       };
@@ -2069,7 +2116,8 @@ export const recordInvoicePaymentAction = authAction
           paidCents,
           balanceCents,
           status,
-          paidAt: status === BillingInvoiceStatus.PAID ? parsedInput.paidAt : null,
+          paidAt:
+            status === BillingInvoiceStatus.PAID ? parsedInput.paidAt : null,
         },
         include: {
           lines: {
@@ -2181,7 +2229,10 @@ export const createCreditNoteAction = authAction
         },
       });
 
-      const nextTotalCents = Math.max(0, invoice.totalCents - targetAmountCents);
+      const nextTotalCents = Math.max(
+        0,
+        invoice.totalCents - targetAmountCents,
+      );
       const nextTaxCents = Math.max(0, invoice.taxCents - taxReduction);
       const nextSubtotalCents = Math.max(0, nextTotalCents - nextTaxCents);
       const nextDiscountCents =
@@ -2211,7 +2262,7 @@ export const createCreditNoteAction = authAction
           status: nextStatus,
           paidAt:
             nextStatus === BillingInvoiceStatus.PAID
-              ? invoice.paidAt ?? new Date()
+              ? (invoice.paidAt ?? new Date())
               : null,
         },
         include: {
@@ -2424,6 +2475,7 @@ export const rebuildBillingDeclarationPeriodsAction = authAction
               tx.billingPayment.aggregate({
                 where: {
                   userId: user.id,
+                  deletedAt: null,
                   status: BillingPaymentStatus.CONFIRMED,
                   paidAt: {
                     gte: rangeStart,
@@ -2815,6 +2867,7 @@ export const getBillingDashboardSnapshotAction = authAction
       prisma.billingPayment.findMany({
         where: {
           userId: user.id,
+          deletedAt: null,
           paidAt: {
             gte: chartRangeStart,
           },
@@ -2939,6 +2992,7 @@ export const getBillingPaymentsAction = authAction
       prisma.billingPayment.findMany({
         where: {
           userId: user.id,
+          deletedAt: null,
         },
         include: {
           client: {
@@ -2967,6 +3021,7 @@ export const getBillingPaymentsAction = authAction
       prisma.billingPayment.count({
         where: {
           userId: user.id,
+          deletedAt: null,
         },
       }),
     ]);
@@ -3105,6 +3160,7 @@ export const exportBillingCompliancePackageAction = authAction
       prisma.billingPayment.findMany({
         where: {
           userId: user.id,
+          deletedAt: null,
         },
         include: {
           client: {
@@ -3269,15 +3325,23 @@ export const exportBillingCompliancePackageAction = authAction
         "json/expenses-invoices.json",
         JSON.stringify(expenseInvoices, null, 2),
       );
-      zip.file("json/expenses-notes.json", JSON.stringify(expenseNotes, null, 2));
-      zip.file("json/expenses-trips.json", JSON.stringify(expenseTrips, null, 2));
+      zip.file(
+        "json/expenses-notes.json",
+        JSON.stringify(expenseNotes, null, 2),
+      );
+      zip.file(
+        "json/expenses-trips.json",
+        JSON.stringify(expenseTrips, null, 2),
+      );
     }
 
     const invoicesCsv = generateCsv(
       invoices.map((invoice) => ({
         number: invoice.number ?? "",
         issueDate: invoice.issueDate.toISOString().slice(0, 10),
-        dueDate: invoice.dueDate ? invoice.dueDate.toISOString().slice(0, 10) : "",
+        dueDate: invoice.dueDate
+          ? invoice.dueDate.toISOString().slice(0, 10)
+          : "",
         client: invoice.client.displayName,
         status: invoice.status,
         totalCents: invoice.totalCents,

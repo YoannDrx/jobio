@@ -2,16 +2,21 @@
 
 import { useState, type KeyboardEvent } from "react";
 import {
+  AlertTriangle,
   Award,
   Briefcase,
+  CheckCircle2,
   Code,
   FolderOpen,
   Globe,
   GraduationCap,
+  HelpCircle,
+  Lock,
   Plus,
   Save,
   Settings,
   Trash2,
+  Unlock,
   User,
 } from "lucide-react";
 
@@ -32,6 +37,8 @@ type CvCoachSnapshotEditorProps = {
   onChange: (snapshot: CvCoachSnapshot) => void;
   onSave: () => void;
   isSaving: boolean;
+  lockedFields?: string[];
+  onToggleLock?: (fieldPath: string) => void;
 };
 
 function SectionBadge({ filled, total }: { filled: number; total: number }) {
@@ -94,11 +101,68 @@ function TagInput({
   );
 }
 
+function ConfidenceBadge({
+  confidence,
+}: {
+  confidence?: "HIGH" | "MEDIUM" | "LOW";
+}) {
+  if (!confidence) return null;
+
+  const config = {
+    HIGH: {
+      icon: CheckCircle2,
+      color: "text-emerald-600",
+      bg: "bg-emerald-50",
+    },
+    MEDIUM: { icon: AlertTriangle, color: "text-amber-600", bg: "bg-amber-50" },
+    LOW: { icon: HelpCircle, color: "text-rose-600", bg: "bg-rose-50" },
+  };
+
+  const { icon: Icon, color, bg } = config[confidence];
+
+  return (
+    <div className={`flex items-center gap-1 rounded px-1.5 py-0.5 ${bg}`}>
+      <Icon className={`size-3 ${color}`} />
+    </div>
+  );
+}
+
+function LockToggle({
+  fieldPath,
+  lockedFields,
+  onToggleLock,
+}: {
+  fieldPath: string;
+  lockedFields?: string[];
+  onToggleLock?: (fieldPath: string) => void;
+}) {
+  if (!onToggleLock) return null;
+
+  const isLocked = lockedFields?.includes(fieldPath) ?? false;
+
+  return (
+    <button
+      type="button"
+      onClick={() => onToggleLock(fieldPath)}
+      className={`rounded p-1 transition-colors ${
+        isLocked
+          ? "bg-primary/10 text-primary"
+          : "text-muted-foreground hover:bg-muted"
+      }`}
+      title={isLocked ? "Déverrouiller ce champ" : "Verrouiller ce champ"}
+    >
+      {isLocked ? <Lock className="size-3" /> : <Unlock className="size-3" />}
+    </button>
+  );
+}
+
 export function CvCoachSnapshotEditor({
   snapshot,
   onChange,
   onSave,
   isSaving,
+  lockedFields,
+  onToggleLock,
 }: CvCoachSnapshotEditorProps) {
   const getSectionCompleteness = (
     section: string,
@@ -215,15 +279,27 @@ export function CvCoachSnapshotEditor({
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {identityFields.map((f) => (
                 <div key={f.key} className="flex flex-col gap-1">
-                  <label className="text-muted-foreground text-xs">
-                    {f.label}
-                  </label>
+                  <div className="flex items-center justify-between">
+                    <label className="text-muted-foreground text-xs">
+                      {f.label}
+                    </label>
+                    <LockToggle
+                      fieldPath={`identity.${f.key}`}
+                      lockedFields={lockedFields}
+                      onToggleLock={onToggleLock}
+                    />
+                  </div>
                   <Input
                     value={
                       snapshot.identity[f.key as keyof typeof snapshot.identity]
                     }
                     onChange={(e) => updateIdentity(f.key, e.target.value)}
                     placeholder={f.label}
+                    className={
+                      lockedFields?.includes(`identity.${f.key}`)
+                        ? "bg-muted/50"
+                        : ""
+                    }
                   />
                 </div>
               ))}
@@ -269,23 +345,33 @@ export function CvCoachSnapshotEditor({
                   className="border-border flex flex-col gap-3 rounded-md border p-3"
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">
-                      Experience {i + 1}
-                    </span>
-                    <Button
-                      variant="ghost"
-                      size="icon-xs"
-                      onClick={() =>
-                        onChange({
-                          ...snapshot,
-                          experiences: snapshot.experiences.filter(
-                            (_, idx) => idx !== i,
-                          ),
-                        })
-                      }
-                    >
-                      <Trash2 className="size-3" />
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium">
+                        Experience {i + 1}
+                      </span>
+                      <ConfidenceBadge confidence={exp.confidence} />
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <LockToggle
+                        fieldPath={`experiences.${i}`}
+                        lockedFields={lockedFields}
+                        onToggleLock={onToggleLock}
+                      />
+                      <Button
+                        variant="ghost"
+                        size="icon-xs"
+                        onClick={() =>
+                          onChange({
+                            ...snapshot,
+                            experiences: snapshot.experiences.filter(
+                              (_, idx) => idx !== i,
+                            ),
+                          })
+                        }
+                      >
+                        <Trash2 className="size-3" />
+                      </Button>
+                    </div>
                   </div>
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <Input

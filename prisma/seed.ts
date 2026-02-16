@@ -69,27 +69,15 @@ const PLATFORMS_DATA = [
     category: "GENERALIST" as const,
   },
   {
-    name: "Talent.io",
-    slug: "talent-io",
-    website: "https://www.talent.io",
-    category: "SPECIALIZED" as const,
-  },
-  {
     name: "Le Hibou",
     slug: "le-hibou",
     website: "https://www.lehibou.com",
     category: "ENTERPRISE" as const,
   },
   {
-    name: "Shine",
-    slug: "shine",
-    website: "https://www.shine.fr",
-    category: "GENERALIST" as const,
-  },
-  {
-    name: "Club Freelance",
-    slug: "club-freelance",
-    website: "https://www.club-freelance.com",
+    name: "MindQuest",
+    slug: "mindquest",
+    website: "https://mindquest.io/fr",
     category: "SPECIALIZED" as const,
   },
   {
@@ -102,12 +90,6 @@ const PLATFORMS_DATA = [
     name: "CherryPick",
     slug: "cherrypick",
     website: "https://www.cherrypick.io",
-    category: "SPECIALIZED" as const,
-  },
-  {
-    name: "MindQuest",
-    slug: "mindquest",
-    website: "https://www.mindquest.io",
     category: "SPECIALIZED" as const,
   },
   {
@@ -211,6 +193,36 @@ const PLATFORMS_DATA = [
     slug: "upfast",
     website: "https://www.upfast.io",
     category: "SPECIALIZED" as const,
+  },
+  {
+    name: "Freelance République",
+    slug: "freelance-republique",
+    website: "https://www.freelancerepublik.com",
+    category: "GENERALIST" as const,
+  },
+  {
+    name: "Codeur",
+    slug: "codeur",
+    website: "https://www.codeur.com",
+    category: "GENERALIST" as const,
+  },
+  {
+    name: "CollectiveWork",
+    slug: "collectivework",
+    website: "https://collective.work",
+    category: "SPECIALIZED" as const,
+  },
+  {
+    name: "Indeed",
+    slug: "indeed",
+    website: "https://fr.indeed.com",
+    category: "GENERALIST" as const,
+  },
+  {
+    name: "Welcome to the Jungle",
+    slug: "welcome-to-the-jungle",
+    website: "https://www.welcometothejungle.com/fr",
+    category: "GENERALIST" as const,
   },
 ] as const;
 

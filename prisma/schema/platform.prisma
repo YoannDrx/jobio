@@ -15,6 +15,7 @@ model Platform {
   name        String
   slug        String           @unique
   website     String?
+  logoUrl     String?
   category    PlatformCategory @default(GENERALIST)
   description String?
   isSystem    Boolean          @default(true)
