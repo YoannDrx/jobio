@@ -3,8 +3,9 @@ import { AccountLayout } from "../account-layout";
 import { DeleteAccountForm } from "./delete-account-form";
 
 export const generateMetadata = combineWithParentMetadata({
-  title: "Delete Account",
-  description: "Permanently delete your account and all associated data.",
+  title: "Supprimer le compte",
+  description:
+    "Supprimer définitivement votre compte et toutes les données associées.",
 });
 
 export default function DeleteProfilePage() {

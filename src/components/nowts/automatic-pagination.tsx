@@ -15,6 +15,7 @@ type AutomaticPaginationProps = {
   totalPages: number;
   searchParam?: string;
   paramName?: string;
+  queryParams?: Record<string, string | number | undefined>;
 };
 
 export function AutomaticPagination({
@@ -22,6 +23,7 @@ export function AutomaticPagination({
   totalPages,
   searchParam,
   paramName = "page",
+  queryParams,
 }: AutomaticPaginationProps) {
   const generatePageNumbers = () => {
     const pages = [];
@@ -52,10 +54,22 @@ export function AutomaticPagination({
   };
 
   const buildUrl = (page: number) => {
-    const searchQuery = searchParam
-      ? `&${getSearchParamName()}=${searchParam}`
-      : "";
-    return `?${paramName}=${page}${searchQuery}`;
+    const params = new URLSearchParams();
+    params.set(paramName, String(page));
+
+    if (queryParams) {
+      Object.entries(queryParams).forEach(([key, value]) => {
+        if (value !== undefined && value !== "") {
+          params.set(key, String(value));
+        }
+      });
+    }
+
+    if (searchParam) {
+      params.set(getSearchParamName(), searchParam);
+    }
+
+    return `?${params.toString()}`;
   };
 
   const getSearchParamName = () => {

@@ -1,0 +1,26 @@
+model ClientPortal {
+  id        String  @id @default(nanoid(11))
+  userId    String
+  profileId String
+  slug      String  @unique
+  isPublic  Boolean @default(false)
+
+  customBio       String?
+  showSkills      Boolean @default(true)
+  showExperiences Boolean @default(true)
+  showEducation   Boolean @default(true)
+  showProjects    Boolean @default(true)
+  showLanguages   Boolean @default(true)
+  showTjm         Boolean @default(false)
+  showAvailability Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user    User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  profile UserProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, profileId])
+  @@index([slug])
+  @@map("client_portal")
+}

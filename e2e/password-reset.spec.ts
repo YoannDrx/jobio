@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { getServerUrl } from "@/lib/server-url";
 import { faker } from "@faker-js/faker";
 import { expect, test } from "@playwright/test";
-import { createTestAccount } from "./utils/auth-test";
+import { createTestAccount, signOutAccount } from "./utils/auth-test";
 
 test("password reset flow", async ({ page }) => {
   // 1. Create a test account
@@ -14,12 +14,12 @@ test("password reset flow", async ({ page }) => {
   // Wait to be on the account page
   // Wait 2 seconds to ensure everything is loaded
 
-  await page.waitForURL(/\/account/, { timeout: 10000 });
+  await page.waitForURL((url) => url.pathname === "/account", {
+    timeout: 10000,
+  });
 
-  // 2. Sign out - open user dropdown then click logout
-  await page.getByTestId("sidebar-user-button").click();
-  await page.getByRole("menuitem", { name: /logout/i }).click();
-  await page.waitForURL(/\/auth\/signin/, { timeout: 10000 });
+  // 2. Sign out
+  await signOutAccount({ page });
 
   // 3. Go to forget password page
   await page.goto(`${getServerUrl()}/auth/forget-password`);
@@ -29,7 +29,9 @@ test("password reset flow", async ({ page }) => {
   await page.getByRole("button", { name: /send reset link/i }).click();
 
   // 5. Should be redirected to verify page
-  await page.waitForURL(/\/auth\/verify/, { timeout: 10000 });
+  await page.waitForURL((url) => url.pathname === "/auth/verify", {
+    timeout: 10000,
+  });
 
   const verification = await prisma.verification.findFirst({
     where: {
@@ -56,7 +58,9 @@ test("password reset flow", async ({ page }) => {
   await page.getByRole("button", { name: /reset password/i }).click();
 
   // 9. Should be redirected to sign in page
-  await page.waitForURL(/\/auth\/signin/, { timeout: 30000 });
+  await page.waitForURL((url) => url.pathname === "/auth/signin", {
+    timeout: 30000,
+  });
 
   // 10. Try to sign in with the new password
   await page.getByLabel("Email").fill(userData.email);
@@ -67,7 +71,12 @@ test("password reset flow", async ({ page }) => {
     .click();
 
   // 11. Should be redirected to the app page
-  await page.waitForURL(/\/app/, { timeout: 10000 });
+  await expect
+    .poll(() => {
+      const current = new URL(page.url());
+      return current.pathname;
+    })
+    .toBe("/app");
 
   // Clean up - delete the test user
   const user = await prisma.user.findUnique({

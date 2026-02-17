@@ -3,62 +3,73 @@
 import { Button } from "@/components/ui/button";
 import { Layout, LayoutContent } from "@/features/page/layout";
 import { SiteConfig } from "@/site-config";
+import { LogoSvg } from "@/components/svg/logo-svg";
 import Link from "next/link";
 
 export function Footer() {
   return (
     <footer className="bg-background border-t pb-8">
-      <Layout className="my-14">
+      <Layout size="lg" className="my-14 lg:px-8">
         <LayoutContent>
           <div className="flex flex-col gap-12">
             <div className="grid grid-cols-1 gap-8 md:grid-cols-[1fr_2fr]">
               <div className="flex flex-col gap-3">
-                <h3 className="text-lg font-semibold tracking-tight">
-                  {SiteConfig.title}
-                </h3>
+                <Link href="/" className="flex items-center gap-2">
+                  <LogoSvg size={32} />
+                  <h3 className="text-lg font-semibold tracking-tight">
+                    {SiteConfig.title}
+                  </h3>
+                </Link>
                 <p className="text-muted-foreground max-w-xs text-sm">
                   {SiteConfig.description}
                 </p>
               </div>
 
-              <div className="grid grid-cols-2 gap-8 sm:grid-cols-3">
+              <div className="grid grid-cols-2 gap-8">
                 <div className="flex flex-col gap-3">
-                  <h4 className="font-medium">Product</h4>
+                  <h4 className="font-medium">Produit</h4>
                   <nav className="flex flex-col gap-2">
                     <Button
                       asChild
                       variant="link"
                       className="h-auto justify-start p-0"
                     >
-                      <Link href="/posts">Blog</Link>
+                      <Link href="/features">Fonctionnalites</Link>
                     </Button>
                     <Button
                       asChild
                       variant="link"
                       className="h-auto justify-start p-0"
                     >
-                      <Link href="/docs">Documentation</Link>
+                      <Link href="/#pricing">Tarifs</Link>
                     </Button>
                     <Button
                       asChild
                       variant="link"
                       className="h-auto justify-start p-0"
                     >
-                      <Link href="/orgs">Dashboard</Link>
+                      <Link href="/app">Dashboard</Link>
                     </Button>
                     <Button
                       asChild
                       variant="link"
                       className="h-auto justify-start p-0"
                     >
-                      <Link href="/account">Account</Link>
+                      <Link href="/docs">Docs</Link>
                     </Button>
                   </nav>
                 </div>
 
                 <div className="flex flex-col gap-3">
-                  <h4 className="font-medium">Company</h4>
+                  <h4 className="font-medium">Ressources</h4>
                   <nav className="flex flex-col gap-2">
+                    <Button
+                      asChild
+                      variant="link"
+                      className="h-auto justify-start p-0"
+                    >
+                      <Link href="/blog">Blog</Link>
+                    </Button>
                     <Button
                       asChild
                       variant="link"
@@ -73,25 +84,19 @@ export function Footer() {
                     >
                       <Link href="/contact">Contact</Link>
                     </Button>
-                  </nav>
-                </div>
-
-                <div className="flex flex-col gap-3">
-                  <h4 className="font-medium">Legal</h4>
-                  <nav className="flex flex-col gap-2">
                     <Button
                       asChild
                       variant="link"
                       className="h-auto justify-start p-0"
                     >
-                      <Link href="/legal/terms">Terms</Link>
+                      <Link href="/legal/terms">CGU</Link>
                     </Button>
                     <Button
                       asChild
                       variant="link"
                       className="h-auto justify-start p-0"
                     >
-                      <Link href="/legal/privacy">Privacy</Link>
+                      <Link href="/legal/privacy">Confidentialité</Link>
                     </Button>
                   </nav>
                 </div>
@@ -104,7 +109,7 @@ export function Footer() {
                   {SiteConfig.company.address}
                 </p>
                 <p className="text-muted-foreground text-sm">
-                  © 2025 {SiteConfig.company.name}. All rights reserved.
+                  © 2026 {SiteConfig.company.name}. Tous droits réservés.
                 </p>
               </div>
             </div>

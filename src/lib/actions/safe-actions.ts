@@ -2,6 +2,7 @@ import { createSafeActionClient } from "next-safe-action";
 import { getRequiredUser } from "../auth/auth-user";
 import { ApplicationError } from "../errors/application-error";
 import { logger } from "../logger";
+import { logSystemError } from "../monitoring/log-system-error";
 
 /**
  * Base safe action client with error handling
@@ -76,6 +77,12 @@ function handleServerError(e: Error) {
   }
 
   logger.info("Unknown Error", e);
+  logSystemError({
+    source: "safe-action",
+    message: e.message,
+    stack: e.stack,
+    severity: "ERROR",
+  });
 
   if (process.env.NODE_ENV === "development") {
     return e.message;

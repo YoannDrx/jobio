@@ -8,12 +8,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { resolveActionResult } from "@/lib/actions/actions-utils";
 import { authClient } from "@/lib/auth-client";
 import { unwrapSafePromise } from "@/lib/promises";
 import { useMutation } from "@tanstack/react-query";
 import { Ban, Crown, Eye, MoreHorizontal, UserCheck } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { createAdminAuditAction } from "@app/admin/_actions/admin-audit";
 
 type User = {
   id: string;
@@ -30,8 +32,46 @@ type UserActionsProps = {
 export function UserActions({ user }: UserActionsProps) {
   const router = useRouter();
 
+  const askReason = (actionLabel: string) => {
+    const reason = window.prompt(
+      `Raison obligatoire pour "${actionLabel}" (min 6 caractères)`,
+    );
+    if (!reason || reason.trim().length < 6) {
+      toast.error("Raison obligatoire (6 caractères minimum)");
+      return null;
+    }
+    return reason.trim();
+  };
+
+  const requestStrongConfirmation = (actionLabel: string) =>
+    window.prompt(
+      `Action sensible: ${actionLabel}\nTape CONFIRMER pour continuer.`,
+    ) === "CONFIRMER";
+
+  const logAdminAction = async (action: string, metadata?: Record<string, unknown>) => {
+    try {
+      await resolveActionResult(
+        createAdminAuditAction({
+          action,
+          targetUserId: user.id,
+          targetEmail: user.email,
+          metadata,
+        }),
+      );
+    } catch {
+      // Keep primary action responsive even if logging fails
+    }
+  };
+
   const impersonateMutation = useMutation({
-    mutationFn: async (userId: string) => {
+    mutationFn: async ({
+      userId,
+      reason,
+    }: {
+      userId: string;
+      reason: string;
+    }) => {
+      await logAdminAction("USER_IMPERSONATED", { reason });
       return unwrapSafePromise(
         authClient.admin.impersonateUser({
           userId,
@@ -39,11 +79,11 @@ export function UserActions({ user }: UserActionsProps) {
       );
     },
     onSuccess: () => {
-      toast.success("Impersonation started");
+      toast.success("Impersonation démarrée");
       router.push("/app");
     },
     onError: (error: Error) => {
-      toast.error(`Failed to impersonate user: ${error.message}`);
+      toast.error(`Impossible d'impersonate l'utilisateur: ${error.message}`);
     },
   });
 
@@ -53,21 +93,22 @@ export function UserActions({ user }: UserActionsProps) {
       reason,
     }: {
       userId: string;
-      reason?: string;
+      reason: string;
     }) => {
       return unwrapSafePromise(
         authClient.admin.banUser({
           userId,
-          banReason: reason ?? "Banned by admin",
+          banReason: reason,
         }),
       );
     },
-    onSuccess: () => {
-      toast.success("User banned successfully");
+    onSuccess: (_data, variables) => {
+      toast.success("Utilisateur banni");
+      void logAdminAction("USER_BANNED", { reason: variables.reason });
       router.refresh();
     },
     onError: (error: Error) => {
-      toast.error(`Failed to ban user: ${error.message}`);
+      toast.error(`Impossible de bannir l'utilisateur: ${error.message}`);
     },
   });
 
@@ -80,11 +121,12 @@ export function UserActions({ user }: UserActionsProps) {
       );
     },
     onSuccess: () => {
-      toast.success("User unbanned successfully");
+      toast.success("Utilisateur débanni");
+      void logAdminAction("USER_UNBANNED");
       router.refresh();
     },
     onError: (error: Error) => {
-      toast.error(`Failed to unban user: ${error.message}`);
+      toast.error(`Impossible de débannir l'utilisateur: ${error.message}`);
     },
   });
 
@@ -95,6 +137,7 @@ export function UserActions({ user }: UserActionsProps) {
     }: {
       userId: string;
       role: "admin" | "user";
+      reason: string;
     }) => {
       return unwrapSafePromise(
         authClient.admin.setRole({
@@ -103,12 +146,16 @@ export function UserActions({ user }: UserActionsProps) {
         }),
       );
     },
-    onSuccess: () => {
-      toast.success("User role updated successfully");
+    onSuccess: (_data, variables) => {
+      toast.success("Rôle utilisateur mis à jour");
+      void logAdminAction("USER_ROLE_UPDATED", {
+        newRole: variables.role,
+        reason: variables.reason,
+      });
       router.refresh();
     },
     onError: (error: Error) => {
-      toast.error(`Failed to update user role: ${error.message}`);
+      toast.error(`Impossible de modifier le rôle: ${error.message}`);
     },
   });
 
@@ -117,32 +164,44 @@ export function UserActions({ user }: UserActionsProps) {
       <DropdownMenuTrigger asChild>
         <Button variant="outline">
           <MoreHorizontal className="mr-2 size-4" />
-          Actions
+          Actions admin
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         {!user.banned && (
           <DropdownMenuItem
-            onClick={() => impersonateMutation.mutate(user.id)}
+            onClick={() => {
+              const reason = askReason("Impersonate utilisateur");
+              if (!reason) return;
+              if (!requestStrongConfirmation("Impersonate utilisateur")) return;
+              impersonateMutation.mutate({
+                userId: user.id,
+                reason,
+              });
+            }}
             disabled={impersonateMutation.isPending}
           >
             <Eye className="mr-2 size-4" />
-            Impersonate User
+            Impersonate
           </DropdownMenuItem>
         )}
 
         {user.role !== "admin" && (
           <DropdownMenuItem
-            onClick={() =>
+            onClick={() => {
+              const reason = askReason("Passer admin");
+              if (!reason) return;
+              if (!requestStrongConfirmation("Passer admin")) return;
               setRoleMutation.mutate({
                 userId: user.id,
                 role: "admin" as const,
-              })
-            }
+                reason,
+              });
+            }}
             disabled={setRoleMutation.isPending}
           >
             <Crown className="mr-2 size-4" />
-            Make Admin
+            Passer admin
           </DropdownMenuItem>
         )}
 
@@ -154,16 +213,21 @@ export function UserActions({ user }: UserActionsProps) {
             disabled={unbanUserMutation.isPending}
           >
             <UserCheck className="mr-2 size-4" />
-            Unban User
+            Débannir
           </DropdownMenuItem>
         ) : (
           <DropdownMenuItem
-            onClick={() => banUserMutation.mutate({ userId: user.id })}
+            onClick={() => {
+              const reason = askReason("Bannir l'utilisateur");
+              if (!reason) return;
+              if (!requestStrongConfirmation("Bannir l'utilisateur")) return;
+              banUserMutation.mutate({ userId: user.id, reason });
+            }}
             disabled={banUserMutation.isPending}
             className="text-destructive focus:text-destructive"
           >
             <Ban className="mr-2 size-4" />
-            Ban User
+            Bannir
           </DropdownMenuItem>
         )}
       </DropdownMenuContent>

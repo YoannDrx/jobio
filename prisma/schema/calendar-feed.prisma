@@ -1,0 +1,12 @@
+model CalendarFeedToken {
+  id     String @id @default(nanoid(11))
+  userId String @unique
+  token  String @unique @default(nanoid(32))
+
+  createdAt DateTime  @default(now())
+  expiresAt DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("calendar_feed_token")
+}

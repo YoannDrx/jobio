@@ -24,22 +24,22 @@ const ReviewIcons = [
   {
     value: 1,
     icon: Angry,
-    tooltip: "Extremely Dissatisfied",
+    tooltip: "Très insatisfait",
   },
   {
     value: 2,
     icon: Frown,
-    tooltip: "Somewhat Dissatisfied",
+    tooltip: "Insatisfait",
   },
   {
     value: 3,
     icon: Meh,
-    tooltip: "Neutral",
+    tooltip: "Neutre",
   },
   {
     value: 4,
     icon: SmilePlus,
-    tooltip: "Satisfied",
+    tooltip: "Satisfait",
   },
 ];
 
@@ -73,7 +73,7 @@ export const FeedbackRow = ({ feedback }: FeedbackRowProps) => {
             </div>
           </InlineTooltip>
         ) : (
-          <Typography variant="muted">No rating</Typography>
+          <Typography variant="muted">Sans note</Typography>
         )}
       </TableCell>
       <TableCell>
@@ -103,7 +103,7 @@ export const FeedbackRow = ({ feedback }: FeedbackRowProps) => {
             <DropdownMenuItem asChild>
               <Link href={`/admin/feedback/${feedback.id}`}>
                 <Eye className="mr-2 size-4" />
-                View Details
+                Voir le détail
               </Link>
             </DropdownMenuItem>
           </DropdownMenuContent>

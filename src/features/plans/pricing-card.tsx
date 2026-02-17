@@ -70,7 +70,7 @@ export function PricingCard({
       {plan.isPopular && (
         <div className="absolute top-5 right-0">
           <div className="bg-primary text-primary-foreground rounded-l-full px-4 py-1 text-xs font-semibold">
-            Most Popular
+            Le plus populaire
           </div>
         </div>
       )}
@@ -83,46 +83,44 @@ export function PricingCard({
       <CardContent className="flex-1 pt-6">
         <div className="mb-8">
           <div className="flex items-baseline">
-            <span className="text-3xl font-bold">
-              {plan.currency === "USD" ? "$" : plan.currency}
-            </span>
             <span className="text-5xl font-bold tracking-tight">
               {displayPrice}
             </span>
-            <span className="text-muted-foreground ml-1.5">/mo</span>
+            <span className="text-3xl font-bold">€</span>
+            <span className="text-muted-foreground ml-1.5">/mois</span>
           </div>
 
           {isYearly && originalPrice !== null && originalPrice > 0 && (
             <div className="mt-2 flex items-center">
               <span className="text-muted-foreground mr-2 line-through">
-                ${originalPrice}/mo
+                {originalPrice}€/mois
               </span>
               <Badge
                 variant="outline"
                 className="border-primary/20 bg-primary/10 text-primary"
               >
-                Save {discount}%
+                Économise {discount}%
               </Badge>
             </div>
           )}
 
           {isYearly && yearlyPrice > 0 && (
             <p className="text-muted-foreground mt-2 text-sm">
-              Billed as ${yearlyPrice} per year
+              Facturé {yearlyPrice}€ par an
             </p>
           )}
 
           {plan.freeTrial && (
             <div className="bg-primary/10 text-primary mt-3 inline-flex items-center rounded-full px-3 py-1 text-sm font-medium">
               <Clock className="mr-1.5 size-3.5" />
-              {plan.freeTrial.days}-day free trial
+              {plan.freeTrial.days} jours d'essai gratuit
             </div>
           )}
         </div>
 
         <div className="space-y-6">
           <h4 className="text-muted-foreground text-sm font-semibold tracking-wider uppercase">
-            Plan Includes
+            Inclus dans le plan
           </h4>
 
           <ul className="space-y-5">
@@ -184,7 +182,7 @@ export function PricingCard({
           )}
           onClick={() => {
             if (!session?.user) {
-              toast.error("Please sign in to upgrade");
+              toast.error("Connecte-toi pour changer ton plan");
               return;
             }
             upgradeUser({
@@ -196,10 +194,10 @@ export function PricingCard({
           }}
         >
           {plan.price === 0
-            ? "Get Started"
+            ? "Commencer"
             : isYearly
-              ? "Subscribe Yearly"
-              : "Subscribe Monthly"}
+              ? "S'abonner à l'année"
+              : "S'abonner au mois"}
         </LoadingButton>
       </CardFooter>
     </Card>

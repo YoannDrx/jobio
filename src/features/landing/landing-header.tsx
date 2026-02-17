@@ -1,11 +1,19 @@
 "use client";
 
 import { LogoSvg } from "@/components/svg/logo-svg";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import { SiteConfig } from "@/site-config";
+import { Menu } from "lucide-react";
 import { motion, useMotionValue, useScroll, useTransform } from "motion/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { AuthButtonClient } from "../auth/auth-button-client";
 import { ThemeToggle } from "../theme/theme-toggle";
 
@@ -48,6 +56,7 @@ function useBoundedScroll(threshold: number) {
 export function LandingHeader() {
   const { scrollYBoundedProgress } = useBoundedScroll(400);
   const router = useRouter();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const scrollYBoundedProgressDelayed = useTransform(
     scrollYBoundedProgress,
     [0, 0.75, 1],
@@ -64,7 +73,7 @@ export function LandingHeader() {
       <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-4 lg:px-8">
         <div className="flex items-center gap-1">
           <LogoSvg
-            size={24}
+            size={32}
             onClick={() => {
               router.push("/");
             }}
@@ -77,11 +86,13 @@ export function LandingHeader() {
                 [1, 0.9],
               ),
             }}
-            className="flex origin-left items-center text-xl font-semibold uppercase max-sm:hidden"
+            className="flex origin-left items-center text-lg font-semibold max-sm:hidden"
           >
             {SiteConfig.title}
           </motion.p>
         </div>
+
+        {/* Navigation desktop */}
         <motion.nav
           style={{
             opacity: useTransform(
@@ -90,14 +101,53 @@ export function LandingHeader() {
               [1, 0],
             ),
           }}
-          className="text-muted-foreground flex items-center gap-4 text-sm font-medium"
+          className="text-muted-foreground hidden items-center gap-4 text-sm font-medium sm:flex"
         >
-          <Link href="#features">Features</Link>
-          <Link href="#pricing">Pricing</Link>
-          <Link href="/posts">Blog</Link>
+          <Link href="#features">Fonctionnalités</Link>
+          <Link href="#pricing">Tarifs</Link>
           <AuthButtonClient />
           <ThemeToggle />
         </motion.nav>
+
+        {/* Menu hamburger mobile */}
+        <div className="flex items-center gap-2 sm:hidden">
+          <ThemeToggle />
+          <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+            <SheetTrigger asChild>
+              <button
+                type="button"
+                className="text-muted-foreground hover:text-foreground p-2"
+                aria-label="Ouvrir le menu"
+              >
+                <Menu className="size-5" />
+              </button>
+            </SheetTrigger>
+            <SheetContent side="right">
+              <SheetHeader>
+                <SheetTitle>{SiteConfig.title}</SheetTitle>
+              </SheetHeader>
+              <nav className="flex flex-col gap-4 px-4">
+                <Link
+                  href="#features"
+                  className="text-foreground text-lg font-medium"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Fonctionnalités
+                </Link>
+                <Link
+                  href="#pricing"
+                  className="text-foreground text-lg font-medium"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Tarifs
+                </Link>
+                <div className="border-t pt-4">
+                  <AuthButtonClient />
+                </div>
+              </nav>
+            </SheetContent>
+          </Sheet>
+        </div>
       </div>
     </motion.header>
   );

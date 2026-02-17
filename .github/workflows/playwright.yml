@@ -40,8 +40,8 @@ jobs:
       NODE_ENV: "production"
       # Email
       RESEND_API_KEY: ${{ secrets.RESEND_API_KEY || 're_ci_placeholder' }}
-      EMAIL_FROM: "Jobio <contact@jobio.app>"
-      NEXT_PUBLIC_EMAIL_CONTACT: "contact@jobio.app"
+      EMAIL_FROM: "Jobio <noreply@do-not-reply.app>"
+      NEXT_PUBLIC_EMAIL_CONTACT: "hello@jobio.fr"
       # Stripe
       STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY || 'sk_test_ci_placeholder' }}
       NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || 'pk_test_ci_placeholder' }}
@@ -55,6 +55,8 @@ jobs:
       GITHUB_CLIENT_SECRET: ${{ secrets.OAUTH_GITHUB_CLIENT_SECRET }}
       GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
       GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+      # AI
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY || 'sk-ci-placeholder' }}
       # Analytics
       NEXT_PUBLIC_POSTHOG_KEY: ${{ secrets.NEXT_PUBLIC_POSTHOG_KEY }}
       NEXT_PUBLIC_POSTHOG_HOST: ${{ secrets.NEXT_PUBLIC_POSTHOG_HOST }}

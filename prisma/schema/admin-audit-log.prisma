@@ -1,0 +1,19 @@
+model AdminAuditLog {
+  id String @id @default(nanoid(11))
+
+  action      String
+  actorUserId String
+  actorEmail  String
+  targetUserId String?
+  targetEmail  String?
+  metadata    Json?
+  ipAddress   String?
+  userAgent   String?
+
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([actorUserId, createdAt])
+  @@index([targetUserId, createdAt])
+  @@map("admin_audit_log")
+}

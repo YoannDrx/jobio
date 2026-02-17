@@ -30,7 +30,7 @@ export function UserDetailsCard({ user }: UserDetailsCardProps) {
           <AvatarFallback>{user.name?.charAt(0) ?? "?"}</AvatarFallback>
         </Avatar>
         <div className="flex flex-col gap-1">
-          <CardTitle>{user.name ?? "No name"}</CardTitle>
+          <CardTitle>{user.name ?? "Sans nom"}</CardTitle>
           <CardDescription>{user.email}</CardDescription>
         </div>
       </CardHeader>
@@ -41,7 +41,7 @@ export function UserDetailsCard({ user }: UserDetailsCardProps) {
             <Typography variant="muted" className="text-sm">
               {" • "}
             </Typography>
-            <Badge variant="outline">Unverified</Badge>
+            <Badge variant="outline">Non vérifié</Badge>
           </>
         )}
         {user.banned && (
@@ -49,14 +49,14 @@ export function UserDetailsCard({ user }: UserDetailsCardProps) {
             <Typography variant="muted" className="text-sm">
               {" • "}
             </Typography>
-            <Badge variant="destructive">Banned</Badge>
+            <Badge variant="destructive">Banni</Badge>
           </>
         )}
         <Typography variant="muted" className="text-sm">
           {" • "}
         </Typography>
         <Typography variant="muted" className="text-sm">
-          Created: {new Date(user.createdAt).toLocaleDateString()}
+          Créé le {new Date(user.createdAt).toLocaleDateString()}
         </Typography>
       </CardContent>
     </Card>

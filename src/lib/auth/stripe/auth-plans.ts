@@ -1,24 +1,33 @@
 import type { Subscription } from "@/generated/prisma";
 import { logger } from "@/lib/logger";
 import {
+  BookText,
   Bot,
+  Building2,
   Briefcase,
   ChartBar,
   Clock,
   Contact,
+  FileClock,
   HeadphonesIcon,
   Monitor,
+  Receipt,
   Shield,
   UserCircle,
   Zap,
 } from "lucide-react";
 
 const DEFAULT_LIMIT = {
-  missions: 50,
-  profiles: 3,
-  contacts: 20,
+  missions: 15,
+  profiles: 2,
+  contacts: 30,
   platforms: 3,
-  aiRequestsPerMonth: 20,
+  companies: 10,
+  billingClients: 10,
+  billingQuotes: 20,
+  billingInvoices: 20,
+  billingCatalogItems: 25,
+  aiRequestsPerMonth: 5,
   analyticsHistoryDays: 7,
 };
 
@@ -73,7 +82,7 @@ export const AUTH_PLANS: AppAuthPlan[] = [
   {
     name: "free",
     description:
-      "Pour commencer a organiser sa prospection freelance gratuitement",
+      "Pour commencer à organiser sa prospection freelance gratuitement",
     limits: DEFAULT_LIMIT,
     price: 0,
     currency: "EUR",
@@ -88,22 +97,68 @@ export const AUTH_PLANS: AppAuthPlan[] = [
     annualDiscountPriceId: process.env.STRIPE_PRO_YEARLY_PLAN_ID ?? "",
     limits: {
       missions: 999999,
-      profiles: 10,
-      contacts: 999999,
-      platforms: 999999,
-      aiRequestsPerMonth: 200,
+      profiles: 5,
+      contacts: 200,
+      platforms: 10,
+      companies: 50,
+      billingClients: 250,
+      billingQuotes: 999999,
+      billingInvoices: 999999,
+      billingCatalogItems: 250,
+      aiRequestsPerMonth: 50,
       analyticsHistoryDays: 90,
     },
     freeTrial: {
       days: 14,
       onTrialStart: async (subscription) => {
-        logger.debug(`Welcome email sent to ${subscription}`);
+        logger.debug(`Trial started for ${subscription.referenceId}`);
+      },
+      onTrialEnd: async ({ subscription }) => {
+        const { prisma } = await import("@/lib/prisma");
+        const { sendEmail } = await import("@/lib/mail/send-email");
+        const { SiteConfig } = await import("@/site-config");
+        const { default: TrialEndingEmail } = await import(
+          "@email/trial-ending.email"
+        );
+        const user = await prisma.user.findFirst({
+          where: { id: subscription.referenceId },
+        });
+        if (!user) return;
+        await sendEmail({
+          to: user.email,
+          subject: `Ton essai ${SiteConfig.title} se termine bientôt`,
+          html: TrialEndingEmail({
+            name: user.name,
+            daysLeft: 2,
+          }),
+        });
       },
       onTrialExpired: async (subscription) => {
-        logger.debug(`Trial expired for ${subscription}`);
-      },
-      onTrialEnd: async (subscription) => {
-        logger.debug(`Trial ended for ${subscription}`);
+        const { prisma } = await import("@/lib/prisma");
+        const { sendEmail } = await import("@/lib/mail/send-email");
+        const { SiteConfig } = await import("@/site-config");
+        const { default: TrialReminderEmail } = await import(
+          "@email/trial-reminder.email"
+        );
+        const user = await prisma.user.findFirst({
+          where: { id: subscription.referenceId },
+        });
+        if (!user) return;
+        const [missionsCount, followUpsCount] = await Promise.all([
+          prisma.mission.count({ where: { userId: user.id, deletedAt: null } }),
+          prisma.followUp.count({
+            where: { userId: user.id, completedAt: { not: null } },
+          }),
+        ]);
+        await sendEmail({
+          to: user.email,
+          subject: `Ton essai ${SiteConfig.title} est terminé`,
+          html: TrialReminderEmail({
+            name: user.name,
+            missionsCount,
+            followUpsCount,
+          }),
+        });
       },
     },
     price: 9.99,
@@ -114,7 +169,7 @@ export const AUTH_PLANS: AppAuthPlan[] = [
     name: "ultra",
     isPopular: false,
     description:
-      "Pour les freelances exigeants avec acces illimite et IA avancee",
+      "Pour les freelances exigeants avec accès illimité et IA avancée",
     priceId: process.env.STRIPE_ULTRA_PLAN_ID ?? "",
     annualDiscountPriceId: process.env.STRIPE_ULTRA_YEARLY_PLAN_ID ?? "",
     limits: {
@@ -122,6 +177,11 @@ export const AUTH_PLANS: AppAuthPlan[] = [
       profiles: 999999,
       contacts: 999999,
       platforms: 999999,
+      companies: 999999,
+      billingClients: 999999,
+      billingQuotes: 999999,
+      billingInvoices: 999999,
+      billingCatalogItems: 999999,
       aiRequestsPerMonth: 999,
       analyticsHistoryDays: 999999,
     },
@@ -146,40 +206,68 @@ export const LIMITS_CONFIG: Record<
   missions: {
     icon: Briefcase,
     getLabel: (value: number) =>
-      value >= 999999 ? "Missions illimitees" : `${value} missions`,
-    description: "Suivre et gerer vos missions freelance",
+      value >= 999999 ? "Missions illimitées" : `${value} missions`,
+    description: "Suivre et gérer vos missions freelance",
   },
   profiles: {
     icon: UserCircle,
     getLabel: (value: number) =>
-      value >= 999999 ? "Profils illimites" : `${value} profils`,
-    description: "Creer des profils pour differentes specialisations",
+      value >= 999999 ? "Profils illimités" : `${value} profils`,
+    description: "Créer des profils pour différentes spécialisations",
   },
   contacts: {
     icon: Contact,
     getLabel: (value: number) =>
-      value >= 999999 ? "Contacts illimites" : `${value} contacts`,
-    description: "Gerer votre reseau de contacts professionnels",
+      value >= 999999 ? "Contacts illimités" : `${value} contacts`,
+    description: "Gérer votre réseau de contacts professionnels",
   },
   platforms: {
     icon: Monitor,
     getLabel: (value: number) =>
-      value >= 999999 ? "Plateformes illimitees" : `${value} plateformes`,
+      value >= 999999 ? "Plateformes illimitées" : `${value} plateformes`,
     description: "Connecter vos plateformes de freelance",
+  },
+  companies: {
+    icon: Building2,
+    getLabel: (value: number) =>
+      value >= 999999 ? "Entreprises illimitées" : `${value} entreprises`,
+    description: "Suivre les entreprises que vous démarchez",
+  },
+  billingClients: {
+    icon: Contact,
+    getLabel: (value: number) =>
+      value >= 999999 ? "Clients facturation illimités" : `${value} clients facturation`,
+    description: "Créer et gérer votre base clients de facturation",
+  },
+  billingQuotes: {
+    icon: FileClock,
+    getLabel: (value: number) =>
+      value >= 999999 ? "Devis illimités" : `${value} devis`,
+    description: "Émettre et suivre vos devis",
+  },
+  billingInvoices: {
+    icon: Receipt,
+    getLabel: (value: number) =>
+      value >= 999999 ? "Factures illimitées" : `${value} factures`,
+    description: "Générer et suivre vos factures clients",
+  },
+  billingCatalogItems: {
+    icon: BookText,
+    getLabel: (value: number) =>
+      value >= 999999 ? "Catalogue illimité" : `${value} éléments catalogue`,
+    description: "Maintenir un catalogue de prestations réutilisables",
   },
   aiRequestsPerMonth: {
     icon: Bot,
     getLabel: (value: number) =>
-      value >= 999999
-        ? "Requetes IA illimitees"
-        : `${value} requetes IA/mois`,
+      value >= 999999 ? "Requêtes IA illimitées" : `${value} requêtes IA/mois`,
     description: "Assistants IA pour optimiser votre prospection",
   },
   analyticsHistoryDays: {
     icon: ChartBar,
     getLabel: (value: number) =>
       value >= 999999
-        ? "Historique analytics illimite"
+        ? "Historique analytics illimité"
         : `${value} jours d'historique analytics`,
     description: "Analyser vos performances de prospection",
   },
@@ -190,8 +278,8 @@ export const ADDITIONAL_FEATURES = {
   free: [
     {
       icon: Shield,
-      label: "Securite de base",
-      description: "Protection standard de vos donnees",
+      label: "Sécurité de base",
+      description: "Protection standard de vos données",
     },
   ],
   pro: [
@@ -207,15 +295,15 @@ export const ADDITIONAL_FEATURES = {
     },
     {
       icon: Clock,
-      label: "Analytics avances",
-      description: "Statistiques detaillees de votre prospection",
+      label: "Analytics avancés",
+      description: "Statistiques détaillées de votre prospection",
     },
   ],
   ultra: [
     {
       icon: Zap,
       label: "Support prioritaire",
-      description: "Assistance en priorite",
+      description: "Assistance en priorité",
     },
   ],
 };

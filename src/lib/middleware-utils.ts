@@ -19,11 +19,15 @@ export const handleRootRedirect = (request: NextRequest) => {
 };
 
 export const isAppRoute = (pathname: string) => {
-  return pathname.startsWith("/app/app");
+  return pathname.startsWith("/app");
 };
 
 export const isAdminRoute = (pathname: string) => {
-  return pathname.startsWith("/app/admin");
+  return pathname.startsWith("/admin");
+};
+
+export const isFreelanceRoute = (pathname: string) => {
+  return pathname.startsWith("/freelance");
 };
 
 export const validateSession = async (request: NextRequest) => {

@@ -2,6 +2,7 @@ import {
   handleRootRedirect,
   isAdminRoute,
   isAppRoute,
+  isFreelanceRoute,
   redirectToSignIn,
   redirectToUnauthorized,
   validateSession,
@@ -17,6 +18,13 @@ export async function proxy(request: NextRequest) {
   }
 
   if (isAppRoute(pathname)) {
+    const session = await validateSession(request);
+    if (!session) {
+      return redirectToSignIn(request);
+    }
+  }
+
+  if (isFreelanceRoute(pathname)) {
     const session = await validateSession(request);
     if (!session) {
       return redirectToSignIn(request);

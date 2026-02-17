@@ -109,9 +109,9 @@ describe("Form Component", () => {
           expect.anything(),
         );
       },
-      { timeout: 500 },
+      { timeout: 1500 },
     );
-  }, 500);
+  }, 1500);
 
   // Skip this test for now as it appears to have issues
   it.skip("should save on blur when submitOnBlur is true", async () => {

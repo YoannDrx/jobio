@@ -1,0 +1,26 @@
+enum CronJobStatus {
+  RUNNING
+  SUCCESS
+  FAILED
+  UNAUTHORIZED
+}
+
+model CronJobRun {
+  id String @id @default(nanoid(11))
+
+  jobName String
+  route   String
+  status  CronJobStatus @default(RUNNING)
+
+  startedAt   DateTime @default(now())
+  finishedAt  DateTime?
+  durationMs  Int?
+  processedCount Int?
+  details     Json?
+  errorMessage String?
+
+  @@index([jobName, startedAt])
+  @@index([status, startedAt])
+  @@index([startedAt])
+  @@map("cron_job_run")
+}

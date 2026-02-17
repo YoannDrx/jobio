@@ -7,6 +7,12 @@ export function Header() {
   return (
     <HeaderBase>
       <Link
+        href="/features"
+        className={buttonVariants({ variant: "ghost", size: "sm" })}
+      >
+        Features
+      </Link>
+      <Link
         href="/docs"
         className={buttonVariants({ variant: "ghost", size: "sm" })}
       >
@@ -17,6 +23,12 @@ export function Header() {
         className={buttonVariants({ variant: "ghost", size: "sm" })}
       >
         About
+      </Link>
+      <Link
+        href="/blog"
+        className={buttonVariants({ variant: "ghost", size: "sm" })}
+      >
+        Blog
       </Link>
       <Link
         href="/contact"

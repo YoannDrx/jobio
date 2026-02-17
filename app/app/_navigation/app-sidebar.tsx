@@ -17,11 +17,11 @@ import {
 } from "@/components/ui/sidebar";
 import { SidebarNavigationMenu } from "@/components/ui/sidebar-utils";
 import { ContactFeedbackPopover } from "@/features/contact/feedback/contact-feedback-popover";
+import { PlanUsageSidebar } from "@/features/plans/components/plan-usage-sidebar";
 import { SidebarUserButton } from "@/features/sidebar/sidebar-user-button";
 import { ChevronDown } from "lucide-react";
-import { usePathname } from "next/navigation";
 import type { PropsWithChildren } from "react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { AppCommand } from "./app-command";
 import { APP_LINKS } from "./app-navigation.links";
 import { UpgradeCard } from "./upgrade-app-card";
@@ -34,10 +34,7 @@ export function AppSidebar() {
       </SidebarHeader>
       <SidebarContent>
         {APP_LINKS.map((link) => (
-          <ItemCollapsing
-            defaultOpenStartPath={link.defaultOpenStartPath}
-            key={link.title}
-          >
+          <ItemCollapsing key={link.title}>
             <SidebarGroup key={link.title}>
               <SidebarGroupLabel asChild>
                 <CollapsibleTrigger>
@@ -55,6 +52,7 @@ export function AppSidebar() {
         ))}
       </SidebarContent>
       <SidebarFooter className="flex flex-col gap-2">
+        <PlanUsageSidebar />
         <UpgradeCard />
         <ContactFeedbackPopover />
         <SidebarUserButton />
@@ -64,25 +62,12 @@ export function AppSidebar() {
   );
 }
 
-const ItemCollapsing = (
-  props: PropsWithChildren<{ defaultOpenStartPath?: string }>,
-) => {
-  const [open, setOpen] = useState(false);
-  const pathname = usePathname();
-
-  const isOpen = props.defaultOpenStartPath
-    ? pathname.startsWith(props.defaultOpenStartPath)
-    : true;
-
-  useEffect(() => {
-    if (isOpen) {
-      setOpen(isOpen);
-    }
-  }, [isOpen]);
+const ItemCollapsing = (props: PropsWithChildren) => {
+  const [open, setOpen] = useState(true);
 
   return (
     <Collapsible
-      defaultOpen={isOpen}
+      defaultOpen={true}
       onOpenChange={setOpen}
       open={open}
       className="group/collapsible"

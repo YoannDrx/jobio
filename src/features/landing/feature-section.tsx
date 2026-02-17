@@ -16,18 +16,17 @@ export const FeaturesSection = ({
     <SectionLayout size="sm" className="relative" id="features">
       <div className="relative flex flex-col gap-16 lg:gap-28">
         <div className="flex flex-col items-center gap-2">
-          <Badge>The features you NEED.</Badge>
+          <Badge>Tout ce qu'il te faut.</Badge>
           <Typography variant="h2" className="m-auto max-w-xl text-center">
-            More than a post schedulure, we will help you <u>grow</u>.
+            Bien plus qu'un suivi de missions.
           </Typography>
           <Typography
             variant="muted"
             className="m-auto max-w-lg text-center text-base"
           >
-            Lorem ipsum dolor sit amet consectetur adipisicing elit. Voluptates,
-            consequuntur! Similique, nulla placeat in expedita omnis ab error
-            eaque esse a doloremque, iusto libero eligendi, animi minus
-            architecto. Modi, consectetur?
+            Jobio centralise ta prospection freelance : scoring IA, pipeline
+            visuel, relances automatiques et analytics. Tout ce dont tu as
+            besoin pour signer plus de missions.
           </Typography>
         </div>
         {features.map((f, i) => {

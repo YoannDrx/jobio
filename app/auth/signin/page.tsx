@@ -1,5 +1,5 @@
 import { Typography } from "@/components/nowts/typography";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { LogoSvg } from "@/components/svg/logo-svg";
 import {
   Card,
   CardContent,
@@ -41,12 +41,7 @@ async function AuthSignInPage() {
     <Card className="mx-auto h-auto w-full max-w-md lg:max-w-lg lg:p-6">
       <CardHeader className="flex flex-col items-center justify-center gap-2">
         <div className="mx-auto mt-4 flex flex-row items-center gap-2">
-          <Avatar className="size-8 rounded-md">
-            <AvatarImage src={SiteConfig.appIcon} alt="app logo" />
-            <AvatarFallback>
-              {SiteConfig.title.substring(0, 1).toUpperCase()}
-            </AvatarFallback>
-          </Avatar>
+          <LogoSvg size={32} />
           <Typography variant="large">{SiteConfig.title}</Typography>
         </div>
 

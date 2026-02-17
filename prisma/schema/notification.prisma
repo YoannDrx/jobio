@@ -1,0 +1,25 @@
+enum NotificationType {
+  FOLLOW_UP_DUE
+  FOLLOW_UP_OVERDUE
+  MISSION_STALE
+  AI_QUOTA_HIGH
+  SYSTEM
+}
+
+model Notification {
+  id       String           @id @default(nanoid(11))
+  userId   String
+  type     NotificationType
+  title    String
+  message  String
+  read     Boolean          @default(false)
+  link     String?
+  metadata Json?
+
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, read])
+  @@map("notification")
+}

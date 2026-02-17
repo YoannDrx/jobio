@@ -10,7 +10,7 @@ export const UserDropdownLogout = () => {
   const logout = useMutation({
     mutationFn: async () => signOut(),
     onSuccess: () => {
-      window.location.href = "/auth/signin";
+      window.location.href = "/";
     },
   });
 
@@ -27,7 +27,7 @@ export const UserDropdownLogout = () => {
       ) : (
         <LogOut className="mr-2 size-4" />
       )}
-      <span>Logout</span>
+      <span>Se déconnecter</span>
     </DropdownMenuItem>
   );
 };

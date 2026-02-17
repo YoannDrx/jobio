@@ -32,7 +32,7 @@ export const UserDropdownStopImpersonating = () => {
       ) : (
         <LogOut className="mr-2 size-4" />
       )}
-      Stop Impersonating
+      Arrêter l&apos;impersonation
     </DropdownMenuItem>
   );
 };

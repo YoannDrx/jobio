@@ -1,0 +1,32 @@
+enum TemplateType {
+  FIRST_CONTACT
+  FOLLOW_UP_J3
+  FOLLOW_UP_J7
+  FOLLOW_UP_J14
+  POST_INTERVIEW
+  NEGOTIATION
+  THANK_YOU
+  CUSTOM
+}
+
+model MessageTemplate {
+  id        String       @id @default(nanoid(11))
+  userId    String?
+  name      String
+  type      TemplateType
+  subject   String?
+  body      String
+  variables String[]
+  isSystem  Boolean      @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user           User?                  @relation(fields: [userId], references: [id], onDelete: SetNull)
+  followUps      FollowUp[]
+  sentEmails     SentEmail[]
+  followUpRules  FollowUpRule[]
+  usages         MessageTemplateUsage[]
+
+  @@map("message_template")
+}

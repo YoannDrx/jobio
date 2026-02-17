@@ -1,0 +1,32 @@
+enum FollowUpType {
+  EMAIL
+  CALL
+  MESSAGE
+  MEETING
+}
+
+model FollowUp {
+  id          String       @id @default(nanoid(11))
+  missionId   String
+  userId      String
+  type        FollowUpType
+  title       String
+  description String?
+  scheduledAt DateTime
+  completedAt DateTime?
+  isOverdue   Boolean      @default(false)
+  templateId  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  mission  Mission          @relation(fields: [missionId], references: [id], onDelete: Cascade)
+  user     User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  template MessageTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
+
+  @@index([userId, scheduledAt])
+  @@index([missionId])
+  @@index([userId, scheduledAt, completedAt])
+  @@index([missionId, userId])
+  @@map("follow_up")
+}

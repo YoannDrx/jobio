@@ -1,0 +1,34 @@
+enum CompanySize {
+  STARTUP
+  PME
+  ETI
+  GRAND_GROUPE
+}
+
+enum ProspectionStatus {
+  A_DEMARCHER
+  CONTACTE
+  EN_DISCUSSION
+  REFUSE
+}
+
+model TargetCompany {
+  id        String             @id @default(nanoid(11))
+  userId    String
+  name      String
+  website   String?
+  notes     String?
+  sector    String?
+  size      CompanySize?
+  status    ProspectionStatus  @default(A_DEMARCHER)
+  contactId String?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  contact Contact? @relation(fields: [contactId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@map("target_company")
+}

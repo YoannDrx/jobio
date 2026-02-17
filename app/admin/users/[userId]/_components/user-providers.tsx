@@ -61,7 +61,7 @@ export function UserProviders({ accounts }: UserProvidersProps) {
         return "Google";
       case "credential":
       case "credentials":
-        return "Email/Password";
+        return "Email / mot de passe";
       default:
         return providerId;
     }
@@ -70,15 +70,15 @@ export function UserProviders({ accounts }: UserProvidersProps) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Authentication Providers</CardTitle>
+        <CardTitle>Providers d&apos;authentification</CardTitle>
         <CardDescription>
-          Connected authentication methods for this user
+          Méthodes de connexion associées à ce compte
         </CardDescription>
       </CardHeader>
       <CardContent>
         {accounts.length === 0 ? (
           <div className="text-muted-foreground py-4 text-center">
-            No authentication providers found
+            Aucun provider connecté
           </div>
         ) : (
           <div className="rounded-md border">
@@ -87,8 +87,8 @@ export function UserProviders({ accounts }: UserProvidersProps) {
                 <TableRow>
                   <TableHead>Provider</TableHead>
                   <TableHead>Account ID</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Connected</TableHead>
+                  <TableHead>Statut</TableHead>
+                  <TableHead>Connecté le</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -118,10 +118,10 @@ export function UserProviders({ accounts }: UserProvidersProps) {
                       >
                         {account.accessTokenExpiresAt &&
                         new Date(account.accessTokenExpiresAt) > new Date()
-                          ? "Active"
+                          ? "Actif"
                           : account.accessToken
-                            ? "Connected"
-                            : "Inactive"}
+                            ? "Connecté"
+                            : "Inactif"}
                       </Badge>
                     </TableCell>
                     <TableCell>

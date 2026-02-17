@@ -31,20 +31,17 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { openStripePortalAction } from "./billing.action";
 
-export function UserBilling(props: { subscription: UserActiveSubscription }) {
+type UsageData = Record<string, { used: number; limit: number }>;
+
+export function UserBilling(props: {
+  subscription: UserActiveSubscription;
+  usage: UsageData;
+}) {
   const subscription = props.subscription;
+  const usage = props.usage;
   const router = useRouter();
 
-  // Get plan limits and fake current usage
   const planLimits = getPlanLimits(subscription.plan);
-  const fakeUsage = {
-    missions: Math.floor(planLimits.missions * 0.6),
-    profiles: Math.floor(planLimits.profiles * 0.45),
-    contacts: Math.floor(planLimits.contacts * 0.8),
-    platforms: Math.floor(planLimits.platforms * 0.5),
-    aiRequestsPerMonth: Math.floor(planLimits.aiRequestsPerMonth * 0.3),
-    analyticsHistoryDays: planLimits.analyticsHistoryDays,
-  };
 
   const manageSubscriptionMutation = useMutation({
     mutationFn: async () => {
@@ -79,9 +76,9 @@ export function UserBilling(props: { subscription: UserActiveSubscription }) {
   return (
     <Layout size="lg">
       <LayoutHeader>
-        <LayoutTitle>Billing</LayoutTitle>
+        <LayoutTitle>Facturation</LayoutTitle>
       </LayoutHeader>
-      <LayoutActions>
+      <LayoutActions className="gap-2">
         <LoadingButton
           variant="outline"
           className="w-full sm:w-auto"
@@ -89,7 +86,7 @@ export function UserBilling(props: { subscription: UserActiveSubscription }) {
           loading={manageSubscriptionMutation.isPending}
         >
           <ArrowUpCircle className="mr-2 size-4" />
-          Manage Subscription
+          Gérer l'abonnement
         </LoadingButton>
 
         {subscription.status === "trialing" ? (
@@ -98,18 +95,18 @@ export function UserBilling(props: { subscription: UserActiveSubscription }) {
           <>
             {!subscription.cancelAtPeriodEnd && (
               <Button
-                variant="outline"
+                variant="destructive"
                 onClick={() => router.push(`/account/billing/cancel`)}
               >
                 <XCircle className="mr-2 size-4" />
-                Cancel Subscription
+                Annuler l'abonnement
               </Button>
             )}
           </>
         ) : (
           <Button className="w-full sm:w-auto">
             <CreditCard className="mr-2 size-4" />
-            Reactivate Subscription
+            Réactiver l'abonnement
           </Button>
         )}
       </LayoutActions>
@@ -125,7 +122,7 @@ export function UserBilling(props: { subscription: UserActiveSubscription }) {
               <div className="mt-1 space-y-1">
                 <div className="flex items-center justify-between text-sm">
                   <Typography>
-                    Trial period: {daysRemaining} days remaining
+                    Période d'essai : {daysRemaining} jours restants
                   </Typography>
                 </div>
                 <Progress value={trialProgress} className="h-2" />
@@ -133,9 +130,9 @@ export function UserBilling(props: { subscription: UserActiveSubscription }) {
             )}
             {subscription.cancelAtPeriodEnd && (
               <Typography variant="muted">
-                Your subscription will end on{" "}
+                Ton abonnement se terminera le{" "}
                 {dayjs(subscription.periodEnd ?? new Date()).format(
-                  "MMMM D, YYYY",
+                  "D MMMM YYYY",
                 )}
               </Typography>
             )}
@@ -144,28 +141,28 @@ export function UserBilling(props: { subscription: UserActiveSubscription }) {
 
         <Card>
           <CardHeader>
-            <CardTitle>Subscription Details</CardTitle>
+            <CardTitle>Détails de l'abonnement</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="flex justify-between">
-              <Typography variant="muted">Plan:</Typography>
+              <Typography variant="muted">Plan :</Typography>
               <Typography className="capitalize">
                 {subscription.plan}
               </Typography>
             </div>
             <div className="flex justify-between">
-              <Typography variant="muted">Start date:</Typography>
+              <Typography variant="muted">Date de début :</Typography>
               <Typography>
                 {dayjs(subscription.periodStart ?? new Date()).format(
-                  "MMMM D, YYYY",
+                  "D MMMM YYYY",
                 )}
               </Typography>
             </div>
             <div className="flex justify-between">
-              <Typography variant="muted">Renew at:</Typography>
+              <Typography variant="muted">Renouvellement :</Typography>
               <Typography>
                 {dayjs(subscription.periodEnd ?? new Date()).format(
-                  "MMMM D, YYYY",
+                  "D MMMM YYYY",
                 )}
               </Typography>
             </div>
@@ -176,7 +173,7 @@ export function UserBilling(props: { subscription: UserActiveSubscription }) {
 
         <Card>
           <CardHeader>
-            <CardTitle>Plan Limits</CardTitle>
+            <CardTitle>Limites du plan</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
             {Object.entries(planLimits).map(([key, total]) => {
@@ -184,7 +181,9 @@ export function UserBilling(props: { subscription: UserActiveSubscription }) {
                 LIMITS_CONFIG[key as keyof typeof LIMITS_CONFIG];
 
               const Icon = limitConfig.icon;
-              const used = fakeUsage[key as keyof typeof fakeUsage];
+              const used =
+                (usage[key] as { used: number; limit: number } | undefined)
+                  ?.used ?? 0;
               const percentage = (used / total) * 100;
 
               return (
@@ -217,43 +216,43 @@ export function UserBilling(props: { subscription: UserActiveSubscription }) {
 // Status configuration with colors and descriptions
 const STATUS_CONFIG = {
   trialing: {
-    label: "Trial",
-    description: "Your free trial is active",
+    label: "Essai",
+    description: "Ton essai gratuit est actif",
     color: "bg-blue-500",
     textColor: "text-blue-500",
     icon: Clock,
   },
   active: {
-    label: "Active",
-    description: "Your subscription is active",
+    label: "Actif",
+    description: "Ton abonnement est actif",
     color: "bg-green-500",
     textColor: "text-green-500",
     icon: CheckCircle2,
   },
   canceled: {
-    label: "Canceled",
-    description: "Your subscription has been canceled",
+    label: "Annulé",
+    description: "Ton abonnement a été annulé",
     color: "bg-orange-500",
     textColor: "text-orange-500",
     icon: XCircle,
   },
   past_due: {
-    label: "Past Due",
-    description: "Your payment is past due",
+    label: "En retard",
+    description: "Ton paiement est en retard",
     color: "bg-red-500",
     textColor: "text-red-500",
     icon: AlertCircle,
   },
   unpaid: {
-    label: "Unpaid",
-    description: "Your subscription is unpaid",
+    label: "Impayé",
+    description: "Ton abonnement est impayé",
     color: "bg-red-500",
     textColor: "text-red-500",
     icon: AlertCircle,
   },
   incomplete: {
-    label: "Incomplete",
-    description: "Your subscription setup is incomplete",
+    label: "Incomplet",
+    description: "La mise en place de ton abonnement est incomplète",
     color: "bg-yellow-500",
     textColor: "text-yellow-500",
     icon: AlertCircle,

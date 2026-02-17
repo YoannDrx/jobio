@@ -1,21 +1,35 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { nextCookies } from "better-auth/next-js";
-import {
-  admin,
-  emailOTP,
-  lastLoginMethod,
-} from "better-auth/plugins";
+import { admin, emailOTP, lastLoginMethod } from "better-auth/plugins";
 
 import { sendEmail } from "@/lib/mail/send-email";
 import { SiteConfig } from "@/site-config";
-import MarkdownEmail from "@email/markdown.email";
+import ChangeEmailEmail from "@email/change-email.email";
+import DeleteAccountEmail from "@email/delete-account.email";
+import OtpSigninEmail from "@email/otp-signin.email";
+import ResetPasswordEmail from "@email/reset-password.email";
+import VerifyEmailEmail from "@email/verify-email.email";
+import WelcomeEmail from "@email/welcome.email";
 import { setupResendCustomer } from "./auth/auth-config-setup";
 import { env } from "./env";
 import { logger } from "./logger";
 import { prisma } from "./prisma";
 import { getServerUrl } from "./server-url";
 type SocialProvidersType = Parameters<typeof betterAuth>[0]["socialProviders"];
+const shouldSkipAuthSideEffects = env.CI === true;
+
+const sendAuthEmail = async (payload: Parameters<typeof sendEmail>[0]) => {
+  if (shouldSkipAuthSideEffects) {
+    logger.debug("Skipping auth email in CI mode", {
+      to: payload.to,
+      subject: payload.subject,
+    });
+    return;
+  }
+
+  await sendEmail(payload);
+};
 
 export const SocialProviders: SocialProvidersType = {};
 
@@ -50,12 +64,24 @@ export const auth = betterAuth({
     // Disable rate limiting in CI
     enabled: env.CI ? false : undefined,
   },
-  trustedOrigins: ["*"],
+  trustedOrigins: [
+    getServerUrl(),
+    ...(env.NODE_ENV === "development" ? ["http://localhost:3000"] : []),
+  ],
   databaseHooks: {
     user: {
       create: {
         after: async (user, _req) => {
+          if (shouldSkipAuthSideEffects) {
+            return;
+          }
+
           await setupResendCustomer(user);
+          await sendAuthEmail({
+            to: user.email,
+            subject: `Bienvenue sur ${SiteConfig.title} !`,
+            html: WelcomeEmail({ name: user.name || "Freelance" }),
+          });
         },
       },
     },
@@ -66,19 +92,10 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
     async sendResetPassword({ user, url }) {
-      await sendEmail({
+      await sendAuthEmail({
         to: user.email,
-        subject: "Reset your password",
-        html: MarkdownEmail({
-          preview: `Reset your password for ${SiteConfig.title}`,
-          markdown: `
-          Hello,
-
-          You requested to reset your password.
-
-          [Click here to reset your password](${url})
-          `,
-        }),
+        subject: "Réinitialise ton mot de passe",
+        html: ResetPasswordEmail({ url }),
       });
     },
   },
@@ -86,19 +103,10 @@ export const auth = betterAuth({
     changeEmail: {
       enabled: true,
       sendChangeEmailVerification: async ({ newEmail, url }) => {
-        await sendEmail({
+        await sendAuthEmail({
           to: newEmail,
-          subject: "Change email address",
-          html: MarkdownEmail({
-            preview: `Change your email address for ${SiteConfig.title}`,
-            markdown: `
-            Hello,
-
-            You requested to change your email address.
-
-            [Click here to verify your new email address](${url})
-            `,
-          }),
+          subject: "Confirme ton changement d'adresse email",
+          html: ChangeEmailEmail({ url }),
         });
       },
     },
@@ -106,38 +114,20 @@ export const auth = betterAuth({
       enabled: true,
       sendDeleteAccountVerification: async ({ user, token }) => {
         const url = `${getServerUrl()}/auth/confirm-delete?token=${token}&callbackUrl=/auth/goodbye`;
-        await sendEmail({
+        await sendAuthEmail({
           to: user.email,
-          subject: "Delete your account",
-          html: MarkdownEmail({
-            preview: `Delete your account from ${SiteConfig.title}`,
-            markdown: `
-            Hello,
-
-            You requested to delete your account.
-
-            [Click here to confirm account deletion](${url})
-            `,
-          }),
+          subject: "Suppression de ton compte",
+          html: DeleteAccountEmail({ url }),
         });
       },
     },
   },
   emailVerification: {
     sendVerificationEmail: async ({ user, url }) => {
-      await sendEmail({
+      await sendAuthEmail({
         to: user.email,
-        subject: "Verify your email address",
-        html: MarkdownEmail({
-          preview: `Verify your email for ${SiteConfig.title}`,
-          markdown: `
-          Hello,
-
-          Welcome to ${SiteConfig.title}! Please verify your email address.
-
-          [Click here to verify your email](${url})
-          `,
-        }),
+        subject: "Vérifie ton adresse email",
+        html: VerifyEmailEmail({ url }),
       });
     },
   },
@@ -146,18 +136,12 @@ export const auth = betterAuth({
     emailOTP({
       sendVerificationOTP: async ({ email, otp }) => {
         logger.debug("Sending OTP", { email, otp });
-        await sendEmail({
+        await sendAuthEmail({
           to: email,
-          subject: `Your code to sign in to ${SiteConfig.title} ${otp}`,
-          html: MarkdownEmail({
-            preview: `Your code to sign in to ${SiteConfig.title}`,
-            markdown: `
-            Hello,
-
-            Your code to sign in: **${otp}**
-
-            [Or click here to sign in automatically](${getServerUrl()}/auth/signin/otp?email=${email}&otp=${otp})
-            `,
+          subject: `Ton code de connexion à ${SiteConfig.title} ${otp}`,
+          html: OtpSigninEmail({
+            otp,
+            autoLoginUrl: `${getServerUrl()}/auth/signin/otp?email=${email}&otp=${otp}`,
           }),
         });
       },

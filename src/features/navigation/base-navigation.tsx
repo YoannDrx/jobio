@@ -15,7 +15,7 @@ import {
 import { SidebarMenuButtonLink } from "@/components/ui/sidebar-utils";
 import { Layout } from "@/features/page/layout";
 import { SiteConfig } from "@/site-config";
-import { Building2, Home, User } from "lucide-react";
+import { Home, User } from "lucide-react";
 import type { PropsWithChildren } from "react";
 import { SidebarUserButton } from "../sidebar/sidebar-user-button";
 
@@ -25,11 +25,13 @@ export function BaseNavigation({ children }: PropsWithChildren) {
       <BaseSidebar />
       <SidebarInset className="border-accent border">
         <header className="flex h-16 shrink-0 items-center gap-2">
-          <Layout size="lg">
+          <Layout size="lg" className="py-2">
             <SidebarTrigger className="-ml-1" />
           </Layout>
         </header>
-        <div className="flex flex-1 flex-col gap-4 p-4 pt-0">{children}</div>
+        <div className="flex flex-1 flex-col gap-4 px-2 pb-4 pt-0 sm:px-3 lg:px-4">
+          {children}
+        </div>
       </SidebarInset>
     </SidebarProvider>
   );
@@ -40,18 +42,12 @@ const BaseSidebar = () => {
     <Sidebar variant="inset">
       <SidebarHeader>
         <div className="mb-4 flex flex-row items-center gap-2">
-          <LogoSvg size={24} />
-          <Typography>{SiteConfig.title}</Typography>
+          <LogoSvg size={32} />
+          <Typography variant="large">{SiteConfig.title}</Typography>
         </div>
       </SidebarHeader>
       <SidebarContent>
         <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButtonLink href="/orgs">
-              <Building2 />
-              <span>Organization</span>
-            </SidebarMenuButtonLink>
-          </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarMenuButtonLink href="/home">
               <Home />

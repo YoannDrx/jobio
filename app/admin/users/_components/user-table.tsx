@@ -13,6 +13,17 @@ type UserTableProps = {
   searchParams: {
     page: number;
     search: string;
+    role: "all" | "admin" | "user";
+    status: "all" | "active" | "banned" | "unverified";
+    plan: "all" | "free" | "pro" | "ultra";
+    sortBy:
+      | "createdAt"
+      | "name"
+      | "email"
+      | "missions"
+      | "sessions"
+      | "lastActivity";
+    order: "asc" | "desc";
   };
 };
 
@@ -24,6 +35,11 @@ export const UserTable = async ({ searchParams }: UserTableProps) => {
     page: currentPage,
     pageSize,
     search: searchParams.search || undefined,
+    role: searchParams.role,
+    status: searchParams.status,
+    plan: searchParams.plan,
+    sortBy: searchParams.sortBy,
+    order: searchParams.order,
   });
 
   return (
@@ -31,9 +47,13 @@ export const UserTable = async ({ searchParams }: UserTableProps) => {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>User</TableHead>
-            <TableHead>Role</TableHead>
-            <TableHead>Created</TableHead>
+            <TableHead>Utilisateur</TableHead>
+            <TableHead>Plan</TableHead>
+            <TableHead>Rôle</TableHead>
+            <TableHead>Missions</TableHead>
+            <TableHead>Sessions actives</TableHead>
+            <TableHead>Dernière activité</TableHead>
+            <TableHead>Créé le</TableHead>
             <TableHead>Actions</TableHead>
           </TableRow>
         </TableHeader>
@@ -47,8 +67,15 @@ export const UserTable = async ({ searchParams }: UserTableProps) => {
       <AutomaticPagination
         currentPage={currentPage}
         totalPages={totalPages}
-        searchParam={searchParams.search}
         paramName="page"
+        queryParams={{
+          search: searchParams.search,
+          role: searchParams.role,
+          status: searchParams.status,
+          plan: searchParams.plan,
+          sortBy: searchParams.sortBy,
+          order: searchParams.order,
+        }}
       />
     </>
   );

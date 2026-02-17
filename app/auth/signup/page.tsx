@@ -1,6 +1,6 @@
 import { Loader } from "@/components/nowts/loader";
+import { LogoSvg } from "@/components/svg/logo-svg";
 import { Typography } from "@/components/nowts/typography";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Card,
   CardContent,
@@ -40,12 +40,7 @@ async function AuthSignInPage() {
   return (
     <Card className="mx-auto w-full max-w-md lg:max-w-lg lg:p-6">
       <CardHeader className="flex flex-col items-center justify-center gap-1">
-        <Avatar className="mb-4 rounded-sm">
-          <AvatarImage src={SiteConfig.appIcon} alt="app logo" />
-          <AvatarFallback>
-            {SiteConfig.title.substring(0, 1).toUpperCase()}
-          </AvatarFallback>
-        </Avatar>
+        <LogoSvg size={40} className="mb-4" />
         <CardTitle>Sign up to {SiteConfig.title}</CardTitle>
         <CardDescription>
           We just need a few details to get you started.

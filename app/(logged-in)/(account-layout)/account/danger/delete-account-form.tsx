@@ -33,12 +33,12 @@ export function DeleteAccountForm() {
         <div className="flex items-center gap-2">
           <AlertTriangle className="text-destructive size-5" />
           <CardTitle className="text-xl font-semibold">
-            Delete Account
+            Supprimer le compte
           </CardTitle>
         </div>
         <CardDescription className="text-muted-foreground text-base">
-          This action will permanently delete your account and all associated
-          data
+          Cette action supprimera définitivement ton compte et toutes les
+          données associées
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -46,10 +46,10 @@ export function DeleteAccountForm() {
           <div className="flex items-start gap-4">
             <UserX2 className="text-muted-foreground mt-0.5 size-5" />
             <div className="space-y-1">
-              <p className="leading-none font-medium">Personal Data</p>
+              <p className="leading-none font-medium">Données personnelles</p>
               <p className="text-muted-foreground text-sm">
-                All your personal information and settings will be permanently
-                erased
+                Toutes tes informations personnelles et paramètres seront
+                définitivement supprimés
               </p>
             </div>
           </div>
@@ -58,10 +58,12 @@ export function DeleteAccountForm() {
           <div className="flex items-start gap-4">
             <Building2 className="text-muted-foreground mt-0.5 size-5" />
             <div className="space-y-1">
-              <p className="leading-none font-medium">Organization Data</p>
+              <p className="leading-none font-medium">
+                Données d&apos;organisation
+              </p>
               <p className="text-muted-foreground text-sm">
-                If you&apos;re an organization owner, all organization data will
-                be deleted and subscriptions cancelled
+                Si tu es propriétaire d&apos;une organisation, toutes les
+                données seront supprimées et les abonnements annulés
               </p>
             </div>
           </div>
@@ -74,23 +76,23 @@ export function DeleteAccountForm() {
           loading={deleteAccountMutation.isPending}
           onClick={() => {
             dialogManager.confirm({
-              title: "Delete your account ?",
-              description: "Are you sure you want to delete your profile?",
-              confirmText: "Delete",
+              title: "Supprimer ton compte ?",
+              description: "Es-tu sûr de vouloir supprimer ton compte ?",
+              confirmText: "Supprimer",
               action: {
-                label: "Delete",
+                label: "Supprimer",
                 onClick: async () => {
                   await deleteAccountMutation.mutateAsync();
-                  toast.success("Your deletion has been asked.", {
+                  toast.success("Ta demande de suppression a été envoyée.", {
                     description:
-                      "Please check your email for further instructions.",
+                      "Vérifie ton email pour les instructions suivantes.",
                   });
                 },
               },
             });
           }}
         >
-          Delete
+          Supprimer
         </LoadingButton>
       </CardFooter>
     </Card>

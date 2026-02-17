@@ -18,8 +18,18 @@ export const env = createEnv({
     EMAIL_FROM: z.string().min(1),
     STRIPE_SECRET_KEY: z.string().min(1),
     NODE_ENV: z.enum(["development", "production", "test"]),
+    RESEND_WEBHOOK_SECRET: z.string().optional(),
     STRIPE_WEBHOOK_SECRET: z.string().optional(),
+    OPENAI_API_KEY: z.string().min(1),
+    REDIS_URL: z.string().url(),
+    STRIPE_PRO_PLAN_ID: z.string().min(1),
+    STRIPE_PRO_YEARLY_PLAN_ID: z.string().min(1),
+    STRIPE_ULTRA_PLAN_ID: z.string().min(1),
+    STRIPE_ULTRA_YEARLY_PLAN_ID: z.string().min(1),
     CI: z.coerce.boolean().optional(),
+    STRIPE_PROGRAM_ATTIRER_PRICE_ID: z.string().optional(),
+    STRIPE_PROGRAM_BRANDING_PRICE_ID: z.string().optional(),
+    STRIPE_PROGRAM_CROISSANCE_PRICE_ID: z.string().optional(),
   },
   /**
    * If you add `client` environment variables, you need to add them to

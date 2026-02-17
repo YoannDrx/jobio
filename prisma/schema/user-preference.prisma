@@ -1,0 +1,24 @@
+model UserPreference {
+  id     String @id @default(nanoid(11))
+  userId String @unique
+
+  locale String @default("fr")
+  theme  String @default("system")
+
+  notifyFollowUpDue  Boolean @default(true)
+  notifyMissionStale Boolean @default(true)
+  notifyAiQuota      Boolean @default(true)
+  weeklyDigest       Boolean @default(false)
+
+  pushFollowUpDue    Boolean @default(true)
+  pushMissionStale   Boolean @default(true)
+  pushAiQuota        Boolean @default(false)
+  pushWeeklyDigest   Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("user_preference")
+}

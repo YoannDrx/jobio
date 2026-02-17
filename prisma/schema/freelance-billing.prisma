@@ -1,0 +1,652 @@
+enum BillingClientType {
+  COMPANY
+  INDIVIDUAL
+}
+
+enum BillingQuoteStatus {
+  DRAFT
+  SENT
+  ACCEPTED
+  REFUSED
+  EXPIRED
+  CANCELLED
+}
+
+enum BillingInvoiceStatus {
+  DRAFT
+  ISSUED
+  PARTIALLY_PAID
+  PAID
+  OVERDUE
+  CANCELLED
+}
+
+enum BillingCreditNoteStatus {
+  DRAFT
+  ISSUED
+  APPLIED
+  CANCELLED
+}
+
+enum BillingPaymentMethod {
+  BANK_TRANSFER
+  CARD
+  CASH
+  CHECK
+  DIRECT_DEBIT
+  OTHER
+}
+
+enum BillingPaymentStatus {
+  PENDING
+  CONFIRMED
+  FAILED
+  REFUNDED
+}
+
+enum BillingSequenceKind {
+  QUOTE
+  INVOICE
+  CREDIT_NOTE
+}
+
+enum BillingEntityType {
+  PROFILE
+  CLIENT
+  QUOTE
+  INVOICE
+  CREDIT_NOTE
+  PAYMENT
+  DECLARATION_PERIOD
+  EXPENSE_INVOICE
+  EXPENSE_NOTE
+  EXPENSE_TRIP
+}
+
+enum BillingAuditEventType {
+  CREATED
+  UPDATED
+  DELETED
+  STATUS_CHANGED
+  NUMBER_ASSIGNED
+  CONVERTED_TO_INVOICE
+  PAYMENT_RECORDED
+}
+
+enum BillingDeclarationPeriodType {
+  MONTHLY
+  QUARTERLY
+}
+
+enum BillingDeclarationPeriodStatus {
+  OPEN
+  READY
+  SUBMITTED
+}
+
+enum BillingExpenseStatus {
+  DRAFT
+  SUBMITTED
+  APPROVED
+  REJECTED
+  ARCHIVED
+}
+
+model BillingProfile {
+  id     String @id @default(nanoid(11))
+  userId String @unique
+
+  legalName             String
+  tradeName             String?
+  legalForm             String?
+  siret                 String?
+  siren                 String?
+  vatNumber             String?
+  rcsNumber             String?
+  rmNumber              String?
+  activityLabel         String?
+  addressLine1          String
+  addressLine2          String?
+  postalCode            String
+  city                  String
+  countryCode           String  @default("FR")
+  email                 String?
+  phone                 String?
+  website               String?
+  iban                  String?
+  bic                   String?
+  paymentTermsInDays    Int     @default(30)
+  latePenaltyRate       Float?
+  latePenaltyFlatFeeEur Int?    @default(40)
+  notes                 String?
+  freelanceStatus       String?
+  activityCategory      String?
+  urssafDeclarationType BillingDeclarationPeriodType?
+  urssafContributionRate Float?
+  vatExemptionMention   String?
+  documentTemplate      String  @default("jobio-octamy")
+  documentPrimaryColor  String?
+  documentAccentColor   String?
+  documentLogoUrl       String?
+  documentFooterText    String?
+  documentShowNotes     Boolean @default(true)
+  documentShowTerms     Boolean @default(true)
+  documentShowBankDetails Boolean @default(true)
+  documentShowClientContact Boolean @default(true)
+  documentShowIssuerContact Boolean @default(true)
+  documentShowLineVat   Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("billing_profile")
+}
+
+model BillingClient {
+  id     String @id @default(nanoid(11))
+  userId String
+
+  type               BillingClientType @default(COMPANY)
+  displayName        String
+  legalName          String?
+  contactFirstName   String?
+  contactLastName    String?
+  email              String?
+  phone              String?
+  vatNumber          String?
+  siret              String?
+  addressLine1       String
+  addressLine2       String?
+  postalCode         String
+  city               String
+  countryCode        String            @default("FR")
+  paymentTermsInDays Int?
+  defaultLateRate    Float?
+  defaultFlatFeeEur  Int?
+  notes              String?
+  tags               String[]
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  user            User                       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  contacts        BillingClientContact[]
+  quotes          BillingQuote[]
+  invoices        BillingInvoice[]
+  payments        BillingPayment[]
+  declarationRows BillingDeclarationPeriod[]
+
+  @@index([userId, deletedAt])
+  @@index([userId, displayName])
+  @@map("billing_client")
+}
+
+model BillingClientContact {
+  id       String @id @default(nanoid(11))
+  userId   String
+  clientId String
+
+  position       Int     @default(0)
+  lastName       String?
+  firstName      String?
+  role           String?
+  email          String?
+  phone          String?
+  includeInEmail Boolean @default(false)
+  isPrimary      Boolean @default(false)
+  notes          String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user   User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  client BillingClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([userId, clientId])
+  @@index([clientId, position])
+  @@map("billing_client_contact")
+}
+
+model BillingCatalogItem {
+  id     String @id @default(nanoid(11))
+  userId String
+
+  name           String
+  description    String?
+  unitLabel      String  @default("jour")
+  unitPriceCents Int
+  vatRatePercent Float   @default(20)
+  isActive       Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isActive])
+  @@map("billing_catalog_item")
+}
+
+model BillingNumberingSequence {
+  id     String @id @default(nanoid(11))
+  userId String
+
+  kind        BillingSequenceKind
+  year        Int
+  nextCounter Int                 @default(1)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, kind, year])
+  @@index([userId, kind])
+  @@map("billing_numbering_sequence")
+}
+
+model BillingQuote {
+  id       String @id @default(nanoid(11))
+  userId   String
+  clientId String
+
+  number     String?            @unique
+  status     BillingQuoteStatus @default(DRAFT)
+  issueDate  DateTime
+  validUntil DateTime?
+  currency   String             @default("EUR")
+  notes      String?
+  terms      String?
+
+  subtotalCents Int @default(0)
+  discountCents Int @default(0)
+  taxCents      Int @default(0)
+  totalCents    Int @default(0)
+
+  acceptedAt DateTime?
+  refusedAt  DateTime?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  user     User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  client   BillingClient         @relation(fields: [clientId], references: [id], onDelete: Restrict)
+  lines    BillingQuoteLine[]
+  versions BillingQuoteVersion[]
+  invoices BillingInvoice[]
+
+  @@index([userId, status, deletedAt])
+  @@index([clientId, createdAt])
+  @@index([userId, issueDate])
+  @@map("billing_quote")
+}
+
+model BillingQuoteLine {
+  id      String @id @default(nanoid(11))
+  quoteId String
+
+  position        Int
+  description     String
+  quantity        Float
+  unitPriceCents  Int
+  discountPercent Float  @default(0)
+  vatRatePercent  Float  @default(20)
+
+  subtotalCents Int
+  taxCents      Int
+  totalCents    Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  quote BillingQuote @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+
+  @@index([quoteId, position])
+  @@map("billing_quote_line")
+}
+
+model BillingQuoteVersion {
+  id      String @id @default(nanoid(11))
+  quoteId String
+  userId  String
+
+  version Int
+  reason  String?
+  payload Json
+
+  createdAt DateTime @default(now())
+
+  quote BillingQuote @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  user  User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([quoteId, version])
+  @@index([quoteId, createdAt])
+  @@map("billing_quote_version")
+}
+
+model BillingInvoice {
+  id            String  @id @default(nanoid(11))
+  userId        String
+  clientId      String
+  sourceQuoteId String?
+
+  number    String?              @unique
+  status    BillingInvoiceStatus @default(DRAFT)
+  issueDate DateTime
+  dueDate   DateTime?
+  currency  String               @default("EUR")
+  documentTemplate String?
+  notes     String?
+  terms     String?
+
+  subtotalCents Int @default(0)
+  discountCents Int @default(0)
+  taxCents      Int @default(0)
+  totalCents    Int @default(0)
+  paidCents     Int @default(0)
+  balanceCents  Int @default(0)
+
+  issuedAt DateTime?
+  paidAt   DateTime?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  user        User                       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  client      BillingClient              @relation(fields: [clientId], references: [id], onDelete: Restrict)
+  sourceQuote BillingQuote?              @relation(fields: [sourceQuoteId], references: [id], onDelete: SetNull)
+  lines       BillingInvoiceLine[]
+  versions    BillingInvoiceVersion[]
+  creditNotes BillingCreditNote[]
+  payments    BillingPaymentAllocation[]
+
+  @@index([userId, status, deletedAt])
+  @@index([clientId, createdAt])
+  @@index([userId, dueDate])
+  @@index([sourceQuoteId])
+  @@map("billing_invoice")
+}
+
+model BillingInvoiceLine {
+  id        String @id @default(nanoid(11))
+  invoiceId String
+
+  position        Int
+  description     String
+  quantity        Float
+  unitPriceCents  Int
+  discountPercent Float  @default(0)
+  vatRatePercent  Float  @default(20)
+
+  subtotalCents Int
+  taxCents      Int
+  totalCents    Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  invoice BillingInvoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceId, position])
+  @@map("billing_invoice_line")
+}
+
+model BillingInvoiceVersion {
+  id        String @id @default(nanoid(11))
+  invoiceId String
+  userId    String
+
+  version Int
+  reason  String?
+  payload Json
+
+  createdAt DateTime @default(now())
+
+  invoice BillingInvoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  user    User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([invoiceId, version])
+  @@index([invoiceId, createdAt])
+  @@map("billing_invoice_version")
+}
+
+model BillingCreditNote {
+  id        String @id @default(nanoid(11))
+  userId    String
+  invoiceId String
+
+  number    String?                 @unique
+  status    BillingCreditNoteStatus @default(DRAFT)
+  issueDate DateTime
+  reason    String?
+
+  subtotalCents Int @default(0)
+  taxCents      Int @default(0)
+  totalCents    Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user    User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  invoice BillingInvoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status])
+  @@index([invoiceId])
+  @@map("billing_credit_note")
+}
+
+model BillingPayment {
+  id       String @id @default(nanoid(11))
+  userId   String
+  clientId String
+
+  method    BillingPaymentMethod @default(BANK_TRANSFER)
+  status    BillingPaymentStatus @default(PENDING)
+  reference String?
+  note      String?
+
+  amountCents Int
+  paidAt      DateTime
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  deletedAt DateTime?
+
+  user        User                       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  client      BillingClient              @relation(fields: [clientId], references: [id], onDelete: Restrict)
+  allocations BillingPaymentAllocation[]
+
+  @@index([userId, paidAt])
+  @@index([clientId, paidAt])
+  @@index([userId, deletedAt])
+  @@map("billing_payment")
+}
+
+model BillingPaymentAllocation {
+  id        String @id @default(nanoid(11))
+  paymentId String
+  invoiceId String
+
+  amountCents Int
+
+  createdAt DateTime @default(now())
+
+  payment BillingPayment @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  invoice BillingInvoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@unique([paymentId, invoiceId])
+  @@index([invoiceId])
+  @@map("billing_payment_allocation")
+}
+
+model BillingDeclarationPeriod {
+  id     String @id @default(nanoid(11))
+  userId String
+
+  type      BillingDeclarationPeriodType
+  year      Int
+  month     Int?
+  quarter   Int?
+  periodKey String
+  status    BillingDeclarationPeriodStatus @default(OPEN)
+
+  dueDate            DateTime?
+  submittedAt        DateTime?
+  invoicedCents      Int       @default(0)
+  collectedCents     Int       @default(0)
+  socialChargesCents Int       @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user     User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  client   BillingClient? @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  clientId String?
+
+  @@unique([userId, periodKey])
+  @@index([userId, status, year])
+  @@map("billing_declaration_period")
+}
+
+model BillingSocialContributionSnapshot {
+  id     String @id @default(nanoid(11))
+  userId String
+
+  periodKey    String
+  activityType String
+  regimeLabel  String
+  revenueCents Int
+  ratePercent  Float
+  amountCents  Int
+  source       String?
+
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, periodKey])
+  @@map("billing_social_contribution_snapshot")
+}
+
+model BillingAuditEvent {
+  id     String @id @default(nanoid(11))
+  userId String
+
+  entityType BillingEntityType
+  entityId   String
+  eventType  BillingAuditEventType
+  message    String?
+  metadata   Json?
+
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, entityType, createdAt])
+  @@index([entityType, entityId, createdAt])
+  @@map("billing_audit_event")
+}
+
+model BillingExpenseInvoice {
+  id     String @id @default(nanoid(11))
+  userId String
+
+  vendorName        String
+  vendorVatNumber   String?
+  documentNumber    String?
+  issueDate         DateTime
+  dueDate           DateTime?
+  currency          String               @default("EUR")
+  category          String?
+  status            BillingExpenseStatus @default(DRAFT)
+  totalExclTaxCents Int                  @default(0)
+  taxCents          Int                  @default(0)
+  totalInclTaxCents Int                  @default(0)
+  deductibleTaxCents Int                 @default(0)
+  isPaid            Boolean              @default(false)
+  paidAt            DateTime?
+  paymentReference  String?
+  matchedRegisterRef String?
+  attachmentUrl     String?
+  notes             String?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status, deletedAt])
+  @@index([userId, issueDate])
+  @@map("billing_expense_invoice")
+}
+
+model BillingExpenseNote {
+  id     String @id @default(nanoid(11))
+  userId String
+
+  label             String
+  category          String?
+  expenseDate       DateTime
+  currency          String               @default("EUR")
+  status            BillingExpenseStatus @default(DRAFT)
+  amountExclTaxCents Int                 @default(0)
+  taxCents          Int                  @default(0)
+  amountInclTaxCents Int                 @default(0)
+  deductibleTaxCents Int                 @default(0)
+  isReimbursable    Boolean              @default(true)
+  isPaid            Boolean              @default(false)
+  paidAt            DateTime?
+  paymentReference  String?
+  matchedRegisterRef String?
+  attachmentUrl     String?
+  notes             String?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status, deletedAt])
+  @@index([userId, expenseDate])
+  @@map("billing_expense_note")
+}
+
+model BillingExpenseTrip {
+  id     String @id @default(nanoid(11))
+  userId String
+
+  tripDate               DateTime
+  fromAddress            String
+  toAddress              String
+  distanceKm             Float
+  roundTrip              Boolean              @default(false)
+  vehiclePower           String?
+  allowanceRateCentsPerKm Int                 @default(0)
+  tollCents              Int                  @default(0)
+  parkingCents           Int                  @default(0)
+  totalCents             Int                  @default(0)
+  status                 BillingExpenseStatus @default(DRAFT)
+  isPaid                 Boolean              @default(false)
+  paidAt                 DateTime?
+  paymentReference       String?
+  matchedRegisterRef     String?
+  notes                  String?
+
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, status, deletedAt])
+  @@index([userId, tripDate])
+  @@map("billing_expense_trip")
+}

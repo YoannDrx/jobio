@@ -9,9 +9,9 @@
       "Bash(cd *)",
       "Bash(ls *)",
       "Bash(node *)",
-      "WebFetch(:*)",
-      "Edit(:*)",
-      "mcp_context7"
+      "WebFetch(domain:*)",
+      "Edit(**)",
+      "Mcp_context7"
     ]
   },
   "hooks": {

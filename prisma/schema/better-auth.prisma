@@ -13,13 +13,67 @@ model User {
   resendContactId String?
 
   // Outgoing
-  sessions      Session[]
-  accounts      Account[]
-  feedbacks     Feedback[]
-  subscription  Subscription?
-  
+  sessions     Session[]
+  accounts     Account[]
+  feedbacks    Feedback[]
+  subscription Subscription?
+
+  missions                           Mission[]
+  followUps                          FollowUp[]
+  activityEvents                     ActivityEvent[]
+  contacts                           Contact[]
+  profiles                           UserProfile[]
+  userPlatforms                      UserPlatform[]
+  messageTemplates                   MessageTemplate[]
+  aiUsages                           AIUsage[]
+  aiMonthlyQuotas                    AIMonthlyQuota[]
+  aiQuotaAdjustmentsReceived         AIQuotaAdjustment[]                 @relation("AIQuotaAdjustmentTarget")
+  aiQuotaAdjustmentsAuthored         AIQuotaAdjustment[]                 @relation("AIQuotaAdjustmentActor")
+  notifications                      Notification[]
+  sentEmails                         SentEmail[]
+  sequences                          Sequence[]
+  programPurchases                   ProgramPurchase[]
+  targetCompanies                    TargetCompany[]
+  aiChatThreads                      AIChatThread[]
+  calendarFeedToken                  CalendarFeedToken?
+  analyticsSnapshots                 AnalyticsSnapshot[]
+  followUpRules                      FollowUpRule[]
+  templateUsages                     MessageTemplateUsage[]
+  linkedInAudits                     LinkedInAudit[]
+  pushSubscriptions                  PushSubscription[]
+  clientPortals                      ClientPortal[]
+  preference                         UserPreference?
+  aiRecommendations                  AIRecommendation[]
+  dailyStrategies                    DailyStrategy[]
+  cvLabDocuments                     CvLabDocument[]
+  cvLabDocumentVersions              CvLabDocumentVersion[]
+  cvLabCoachSessions                 CvLabCoachSession[]
+  cvLabCoachMessages                 CvLabCoachMessage[]
+  billingProfile                     BillingProfile?
+  billingClients                     BillingClient[]
+  billingClientContacts              BillingClientContact[]
+  billingCatalogItems                BillingCatalogItem[]
+  billingNumberingSequences          BillingNumberingSequence[]
+  billingQuotes                      BillingQuote[]
+  billingQuoteVersions               BillingQuoteVersion[]
+  billingInvoices                    BillingInvoice[]
+  billingInvoiceVersions             BillingInvoiceVersion[]
+  billingCreditNotes                 BillingCreditNote[]
+  billingPayments                    BillingPayment[]
+  billingDeclarationPeriods          BillingDeclarationPeriod[]
+  billingSocialContributionSnapshots BillingSocialContributionSnapshot[]
+  billingAuditEvents                 BillingAuditEvent[]
+  billingExpenseInvoices             BillingExpenseInvoice[]
+  billingExpenseNotes                BillingExpenseNote[]
+  billingExpenseTrips                BillingExpenseTrip[]
+  adminNotesReceived                 AdminUserNote[]                     @relation("AdminUserNoteTarget")
+  adminNotesAuthored                 AdminUserNote[]                     @relation("AdminUserNoteAuthor")
+
   // Stripe integration
   stripeCustomerId String?
+
+  // Onboarding
+  onboardingDismissed Boolean @default(false)
 
   role       String?
   banned     Boolean?
@@ -31,15 +85,15 @@ model User {
 }
 
 model Session {
-  id                   String   @id
-  expiresAt            DateTime
-  token                String
-  createdAt            DateTime
-  updatedAt            DateTime
-  ipAddress            String?
-  userAgent            String?
-  userId               String
-  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id        String   @id
+  expiresAt DateTime
+  token     String
+  createdAt DateTime
+  updatedAt DateTime
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   impersonatedBy String?
 
@@ -78,10 +132,10 @@ model Verification {
 }
 
 model Subscription {
-  id                   String  @id
+  id                   String    @id
   plan                 String
-  referenceId          String  @unique
-  user                 User    @relation(fields: [referenceId], references: [id], onDelete: Cascade)
+  referenceId          String    @unique
+  user                 User      @relation(fields: [referenceId], references: [id], onDelete: Cascade)
   stripeCustomerId     String?
   stripeSubscriptionId String?
   status               String?

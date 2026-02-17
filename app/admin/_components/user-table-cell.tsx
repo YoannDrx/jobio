@@ -55,12 +55,12 @@ export const UserTableCell = ({
             <div className="mt-1 flex items-center gap-1">
               {!user.emailVerified && (
                 <Badge variant="outline" className="text-xs">
-                  Unverified
+                  Non vérifié
                 </Badge>
               )}
               {user.banned && (
                 <Badge variant="destructive" className="text-xs">
-                  Banned
+                  Banni
                 </Badge>
               )}
             </div>

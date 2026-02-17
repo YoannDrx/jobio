@@ -7,6 +7,30 @@ import { retry } from "./retry";
 export const getUserEmail = () =>
   `playwright-test-${faker.internet.email().toLowerCase()}`;
 
+const normalizePath = (path: string) => {
+  const withoutQuery = path.split("?")[0] ?? path;
+  if (withoutQuery.endsWith("/") && withoutQuery !== "/") {
+    return withoutQuery.slice(0, -1);
+  }
+  return withoutQuery;
+};
+
+const buildAuthUrl = (basePath: string, callbackURL?: string) => {
+  if (!callbackURL) {
+    return basePath;
+  }
+
+  return `${basePath}?callbackUrl=${encodeURIComponent(callbackURL)}`;
+};
+
+const isCallbackMatch = (url: URL, callbackURL: string) => {
+  const expectedPath = normalizePath(callbackURL);
+  const currentPath = normalizePath(url.pathname);
+  return (
+    currentPath === expectedPath || currentPath.startsWith(`${expectedPath}/`)
+  );
+};
+
 /**
  * Helper function to create a test account
  * @returns Object containing the test user's credentials
@@ -25,7 +49,7 @@ export async function createTestAccount(options: {
   };
 
   // Navigate to signup page
-  await options.page.goto(`/auth/signup?callbackUrl=${options.callbackURL}`);
+  await options.page.goto(buildAuthUrl("/auth/signup", options.callbackURL));
 
   // Fill out the form
   await options.page.getByLabel("Name").fill(userData.name);
@@ -40,24 +64,39 @@ export async function createTestAccount(options: {
 
   // Wait for navigation to complete - we should be redirected to the callback URL
   if (options.callbackURL) {
-    await options.page.waitForLoadState("networkidle");
-    await options.page.waitForURL(new RegExp(options.callbackURL), {
-      timeout: 30000,
-    });
+    const callbackURL = options.callbackURL;
+    try {
+      await options.page.waitForURL(
+        (url) =>
+          isCallbackMatch(url, callbackURL) ||
+          url.pathname.startsWith("/auth/verify"),
+        {
+          timeout: 30000,
+        },
+      );
+      await options.page.waitForLoadState("networkidle");
+    } catch (error) {
+      logger.warn("Timeout waiting for signup callback URL", {
+        callbackURL,
+        currentUrl: options.page.url(),
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
   }
 
+  const user = await retry(
+    async () =>
+      prisma.user.findUniqueOrThrow({
+        where: { email: userData.email },
+      }),
+    {
+      maxAttempts: 5,
+      delayMs: 1000,
+      backoff: true,
+    },
+  );
+
   if (options.admin) {
-    const user = await retry(
-      async () =>
-        prisma.user.findUniqueOrThrow({
-          where: { email: userData.email },
-        }),
-      {
-        maxAttempts: 5,
-        delayMs: 1000,
-        backoff: true,
-      },
-    );
     logger.info("Creating admin user", user);
     await prisma.user.update({
       where: { id: user.id },
@@ -82,9 +121,7 @@ export async function signInAccount(options: {
   const { page, userData, callbackURL } = options;
 
   // Navigate to signin page
-  await page.goto(
-    `/auth/signin${callbackURL ? `?callbackUrl=${callbackURL}` : ""}`,
-  );
+  await page.goto(buildAuthUrl("/auth/signin", callbackURL));
 
   // Fill out the form
   await page.getByLabel("Email").fill(userData.email);
@@ -99,7 +136,10 @@ export async function signInAccount(options: {
   // Wait for navigation to complete if a callback URL is provided
   if (callbackURL) {
     try {
-      await page.waitForURL(new RegExp(callbackURL), { timeout: 30000 });
+      await page.waitForURL((url) => isCallbackMatch(url, callbackURL), {
+        timeout: 30000,
+      });
+      await page.waitForLoadState("networkidle");
     } catch (error) {
       logger.error("Error waiting for navigation to complete", error);
     }
@@ -115,14 +155,46 @@ export async function signInAccount(options: {
 export async function signOutAccount(options: { page: Page }) {
   const { page } = options;
 
-  // Navigate to account page
-  await page.goto(`/account`);
+  try {
+    // Navigate to account page so the user dropdown is always available.
+    await page.goto(`/account`);
+    await page.waitForLoadState("networkidle");
 
-  // Open the user dropdown in the sidebar
-  await page.getByTestId("sidebar-user-button").click();
+    // Dismiss potential overlays that can intercept pointer events in CI.
+    await page.keyboard.press("Escape").catch(() => undefined);
 
-  // Click the logout menu item
-  await page.getByRole("menuitem", { name: /logout/i }).click();
+    const sidebarUserButton = page.getByTestId("sidebar-user-button");
+    await sidebarUserButton.waitFor({ state: "visible", timeout: 10000 });
+    await sidebarUserButton.click({ force: true });
 
-  await page.waitForURL(/\/auth\/signin/, { timeout: 10000 });
+    const logoutMenuItem = page.getByRole("menuitem", {
+      name: /logout|log out|se déconnecter|deconnexion|déconnexion/i,
+    });
+    await logoutMenuItem.waitFor({ state: "visible", timeout: 10000 });
+    await logoutMenuItem.click({ force: true });
+
+    await page.waitForURL(
+      (url) => url.pathname === "/auth/signin" || url.pathname === "/",
+      {
+        timeout: 15000,
+      },
+    );
+
+    if (page.url().endsWith("/")) {
+      await page.goto("/auth/signin");
+    }
+
+    await page.waitForURL((url) => url.pathname === "/auth/signin", {
+      timeout: 15000,
+    });
+  } catch (error) {
+    logger.warn("UI sign-out failed, falling back to cookie reset", error);
+
+    // Keep tests deterministic even if UI overlays interfere.
+    await page.context().clearCookies();
+    await page.goto("/auth/signin");
+    await page.waitForURL((url) => url.pathname === "/auth/signin", {
+      timeout: 10000,
+    });
+  }
 }

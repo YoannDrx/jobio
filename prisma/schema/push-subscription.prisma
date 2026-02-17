@@ -1,0 +1,15 @@
+model PushSubscription {
+  id       String    @id @default(nanoid(11))
+  userId   String
+  endpoint String    @unique
+  p256dh   String
+  auth     String
+  expiresAt DateTime?
+
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("push_subscription")
+}

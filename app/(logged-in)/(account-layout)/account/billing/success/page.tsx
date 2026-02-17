@@ -12,8 +12,8 @@ import { CheckCircle } from "lucide-react";
 import Link from "next/link";
 
 export const generateMetadata = combineWithParentMetadata({
-  title: "Subscription Successful",
-  description: "Your subscription has been successfully activated.",
+  title: "Abonnement réussi",
+  description: "Ton abonnement a été activé avec succès.",
 });
 
 export default async function SubscriptionSuccessPage() {
@@ -26,19 +26,19 @@ export default async function SubscriptionSuccessPage() {
           <div className="mb-4 flex justify-center">
             <CheckCircle className="h-16 w-16 text-green-500" />
           </div>
-          <CardTitle className="text-2xl">Subscription Successful!</CardTitle>
+          <CardTitle className="text-2xl">Abonnement réussi !</CardTitle>
           <CardDescription>
-            Thank you for upgrading your subscription.
+            Merci d&apos;avoir mis à niveau ton abonnement.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             <div className="flex justify-center gap-4 pt-4">
               <Button asChild>
-                <Link href="/account/billing">Manage Subscription</Link>
+                <Link href="/account/billing">Gérer l&apos;abonnement</Link>
               </Button>
               <Button asChild variant="outline">
-                <Link href="/app">Go to Dashboard</Link>
+                <Link href="/app">Aller au tableau de bord</Link>
               </Button>
             </div>
           </div>
