@@ -70,12 +70,6 @@ const PLATFORM_STATUS_CONFIG = {
   },
 } as const;
 
-const CATEGORY_LABELS: Record<Platform["category"], string> = {
-  GENERALIST: "Généraliste",
-  SPECIALIZED: "Spécialisée",
-  ENTERPRISE: "Entreprise",
-};
-
 type PlatformStatus = keyof typeof PLATFORM_STATUS_CONFIG;
 
 function PlatformLogo({ platform }: { platform: Platform }) {
@@ -343,10 +337,6 @@ export function PlatformsGrid() {
     );
   }
 
-  // Séparer les plateformes actives des inactives
-  const activePlatforms = platforms.filter((p) => getUserPlatform(p.id));
-  const inactivePlatforms = platforms.filter((p) => !getUserPlatform(p.id));
-
   const renderPlatformCard = (platform: Platform) => {
     const userPlatform = getUserPlatform(platform.id);
     const isAdded = Boolean(userPlatform);
@@ -375,9 +365,6 @@ export function PlatformsGrid() {
                       </a>
                     )}
                   </span>
-                  <Badge variant="secondary" className="w-fit text-xs">
-                    {CATEGORY_LABELS[platform.category]}
-                  </Badge>
                 </div>
               </CardTitle>
               <div className="flex items-center gap-2">
@@ -511,35 +498,8 @@ export function PlatformsGrid() {
           description="Les plateformes seront bientôt disponibles."
         />
       ) : (
-        <div className="flex flex-col gap-6">
-          {/* Section Plateformes Actives */}
-          {activePlatforms.length > 0 && (
-            <div className="flex flex-col gap-4">
-              <h2 className="flex items-center gap-2 text-lg font-semibold">
-                <span className="bg-status-success/20 text-status-success rounded px-2 py-0.5 text-sm">
-                  {activePlatforms.length}
-                </span>
-                Plateformes actives
-              </h2>
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {activePlatforms.map((platform) =>
-                  renderPlatformCard(platform),
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Section Toutes les plateformes */}
-          <div className="flex flex-col gap-4">
-            <h2 className="text-muted-foreground text-lg font-semibold">
-              Toutes les plateformes
-            </h2>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {inactivePlatforms.map((platform) =>
-                renderPlatformCard(platform),
-              )}
-            </div>
-          </div>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {platforms.map((platform) => renderPlatformCard(platform))}
         </div>
       )}
 
