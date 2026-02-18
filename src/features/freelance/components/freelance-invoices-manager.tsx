@@ -1153,96 +1153,85 @@ export function FreelanceInvoicesManager() {
   };
 
   return (
-    <div className="space-y-4">
-      <Card id="invoice-create-card" className="border-2">
-        <CardHeader className="space-y-2">
-          <CardTitle>Invoice Studio</CardTitle>
-          <p className="text-muted-foreground text-sm">
-            Preview A4 éditable en live. Clique un champ dans l’aperçu pour
-            basculer la section d’édition à droite.
-          </p>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <BillingDocumentStudio
-            title="Invoice Studio"
-            description="Preview A4 éditable en live. Clique un champ dans l’aperçu pour basculer la section d’édition à droite."
-            documentLabel="Facture"
-            secondaryDateLabel="Échéance"
-            issuer={billingProfile}
-            clients={clients}
-            selectedClientId={createClientId}
-            onSelectedClientIdChange={setCreateClientId}
-            selectedClient={selectedCreateClient}
-            issueDate={createIssueDate}
-            onIssueDateChange={setCreateIssueDate}
-            secondaryDate={createDueDate}
-            onSecondaryDateChange={setCreateDueDate}
-            currency={createCurrency}
-            onCurrencyChange={setCreateCurrency}
-            lines={createLines}
-            onLineChange={handleCreateLineChange}
-            onAddLine={handleAddCreateLine}
-            onRemoveLine={handleRemoveCreateLine}
-            catalogItems={catalogItems}
-            selectedCatalogItemId={createCatalogItemId}
-            onCatalogSelection={handleCatalogSelection}
-            notes={createNotes}
-            onNotesChange={setCreateNotes}
-            terms={createTerms}
-            onTermsChange={setCreateTerms}
-            totals={createTotals}
-            computeLineTotals={computeLinePreviewTotals}
-            documentTemplateId={createDocumentTemplate}
-            onDocumentTemplateChange={setCreateDocumentTemplate}
-            documentPrimaryColor={documentPrimaryColor}
-            documentAccentColor={documentAccentColor}
-            options={{
-              showDeliveryAddress,
-              showClientSiret,
-              showClientVat,
-              showBankInfo,
-              showPaymentConditions,
-              showDocumentTitle,
-              showFreeField,
-              showGlobalDiscount,
-            }}
-            onOptionsChange={(patch) => {
-              if (patch.showDeliveryAddress !== undefined) {
-                setShowDeliveryAddress(patch.showDeliveryAddress);
-              }
-              if (patch.showClientSiret !== undefined) {
-                setShowClientSiret(patch.showClientSiret);
-              }
-              if (patch.showClientVat !== undefined) {
-                setShowClientVat(patch.showClientVat);
-              }
-              if (patch.showBankInfo !== undefined) {
-                setShowBankInfo(patch.showBankInfo);
-              }
-              if (patch.showPaymentConditions !== undefined) {
-                setShowPaymentConditions(patch.showPaymentConditions);
-              }
-              if (patch.showDocumentTitle !== undefined) {
-                setShowDocumentTitle(patch.showDocumentTitle);
-              }
-              if (patch.showFreeField !== undefined) {
-                setShowFreeField(patch.showFreeField);
-              }
-              if (patch.showGlobalDiscount !== undefined) {
-                setShowGlobalDiscount(patch.showGlobalDiscount);
-              }
-            }}
-            creationMode={invoiceCreationMode}
-            onCreationModeChange={setInvoiceCreationMode}
-            language={createLanguage}
-            onLanguageChange={setCreateLanguage}
-            isSubmitting={isCreating}
-            canSubmit={canCreateInvoice}
-            submitLabel="Créer la facture brouillon"
-            onSubmit={handleCreateInvoice}
-          />
-        </CardContent>
-      </Card>
+    <div data-full-width className="flex flex-col gap-6">
+      <BillingDocumentStudio
+        id="invoice-create-card"
+        title="Nouvelle facture"
+        documentLabel="Facture"
+        secondaryDateLabel="Échéance"
+        issuer={billingProfile}
+        clients={clients}
+        selectedClientId={createClientId}
+        onSelectedClientIdChange={setCreateClientId}
+        selectedClient={selectedCreateClient}
+        issueDate={createIssueDate}
+        onIssueDateChange={setCreateIssueDate}
+        secondaryDate={createDueDate}
+        onSecondaryDateChange={setCreateDueDate}
+        currency={createCurrency}
+        onCurrencyChange={setCreateCurrency}
+        lines={createLines}
+        onLineChange={handleCreateLineChange}
+        onAddLine={handleAddCreateLine}
+        onRemoveLine={handleRemoveCreateLine}
+        catalogItems={catalogItems}
+        selectedCatalogItemId={createCatalogItemId}
+        onCatalogSelection={handleCatalogSelection}
+        notes={createNotes}
+        onNotesChange={setCreateNotes}
+        terms={createTerms}
+        onTermsChange={setCreateTerms}
+        totals={createTotals}
+        computeLineTotals={computeLinePreviewTotals}
+        documentTemplateId={createDocumentTemplate}
+        onDocumentTemplateChange={setCreateDocumentTemplate}
+        documentPrimaryColor={documentPrimaryColor}
+        documentAccentColor={documentAccentColor}
+        options={{
+          showDeliveryAddress,
+          showClientSiret,
+          showClientVat,
+          showBankInfo,
+          showPaymentConditions,
+          showDocumentTitle,
+          showFreeField,
+          showGlobalDiscount,
+        }}
+        onOptionsChange={(patch) => {
+          if (patch.showDeliveryAddress !== undefined) {
+            setShowDeliveryAddress(patch.showDeliveryAddress);
+          }
+          if (patch.showClientSiret !== undefined) {
+            setShowClientSiret(patch.showClientSiret);
+          }
+          if (patch.showClientVat !== undefined) {
+            setShowClientVat(patch.showClientVat);
+          }
+          if (patch.showBankInfo !== undefined) {
+            setShowBankInfo(patch.showBankInfo);
+          }
+          if (patch.showPaymentConditions !== undefined) {
+            setShowPaymentConditions(patch.showPaymentConditions);
+          }
+          if (patch.showDocumentTitle !== undefined) {
+            setShowDocumentTitle(patch.showDocumentTitle);
+          }
+          if (patch.showFreeField !== undefined) {
+            setShowFreeField(patch.showFreeField);
+          }
+          if (patch.showGlobalDiscount !== undefined) {
+            setShowGlobalDiscount(patch.showGlobalDiscount);
+          }
+        }}
+        creationMode={invoiceCreationMode}
+        onCreationModeChange={setInvoiceCreationMode}
+        language={createLanguage}
+        onLanguageChange={setCreateLanguage}
+        isSubmitting={isCreating}
+        canSubmit={canCreateInvoice}
+        submitLabel="Créer la facture brouillon"
+        onSubmit={handleCreateInvoice}
+      />
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between gap-3">

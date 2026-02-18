@@ -4,7 +4,7 @@ import { cn } from "../../lib/utils";
 
 export const Layout = (
   props: ComponentPropsWithoutRef<"div"> & {
-    size?: "sm" | "default" | "lg" | "xl";
+    size?: "sm" | "default" | "lg" | "xl" | "full";
   },
 ) => {
   const resolvedSize = props.size ?? "default";

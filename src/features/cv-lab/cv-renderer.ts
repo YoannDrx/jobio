@@ -92,7 +92,9 @@ const normalizeSections = (
           .filter((value): value is CvLabSection =>
             CV_LAB_SECTIONS.includes(value as CvLabSection),
           )
-          .filter((value, index, arr) => arr.indexOf(value) === index) as CvLabSection[])
+          .filter(
+            (value, index, arr) => arr.indexOf(value) === index,
+          ) as CvLabSection[])
       : [...CV_LAB_SECTIONS];
 
   const hidden = new Set(
@@ -103,14 +105,17 @@ const normalizeSections = (
       : [],
   );
 
-  const remaining = CV_LAB_SECTIONS.filter((section) => !order.includes(section));
+  const remaining = CV_LAB_SECTIONS.filter(
+    (section) => !order.includes(section),
+  );
   return {
     order: [...order, ...remaining],
     hidden,
   };
 };
 
-const asArray = <T>(value: unknown): T[] => (Array.isArray(value) ? (value as T[]) : []);
+const asArray = <T>(value: unknown): T[] =>
+  Array.isArray(value) ? (value as T[]) : [];
 
 const sectionTitle: Record<CvLabSection, string> = {
   summary: "Profil",
@@ -166,18 +171,21 @@ const renderSkills = (profile: RenderableProfile): string => {
   return `<div class="badges">
     ${skills
       .map(
-        (skill) => `<span class="badge">${escapeHtml(skill.name ?? "Compétence")}${
-          skill.level ? `<small>${escapeHtml(skill.level)}</small>` : ""
-        }</span>`,
+        (skill) =>
+          `<span class="badge">${escapeHtml(skill.name ?? "Compétence")}${
+            skill.level ? `<small>${escapeHtml(skill.level)}</small>` : ""
+          }</span>`,
       )
       .join("")}
   </div>`;
 };
 
 const renderProjects = (profile: RenderableProfile): string => {
-  const projects = asArray<{ name?: string; description?: string; url?: string }>(
-    profile.projects,
-  );
+  const projects = asArray<{
+    name?: string;
+    description?: string;
+    url?: string;
+  }>(profile.projects);
   if (projects.length === 0) return "";
 
   return projects
@@ -229,7 +237,9 @@ const renderEducation = (profile: RenderableProfile): string => {
 };
 
 const renderLanguages = (profile: RenderableProfile): string => {
-  const languages = asArray<{ name?: string; level?: string }>(profile.languages);
+  const languages = asArray<{ name?: string; level?: string }>(
+    profile.languages,
+  );
   if (languages.length === 0) return "";
 
   return `<ul class="list">
@@ -245,9 +255,11 @@ const renderLanguages = (profile: RenderableProfile): string => {
 };
 
 const renderCertifications = (profile: RenderableProfile): string => {
-  const certifications = asArray<{ name?: string; issuer?: string; issueDate?: string }>(
-    profile.certifications,
-  );
+  const certifications = asArray<{
+    name?: string;
+    issuer?: string;
+    issueDate?: string;
+  }>(profile.certifications);
   if (certifications.length === 0) return "";
 
   return `<ul class="list">
@@ -567,6 +579,24 @@ export const renderCvLabHtml = (
       ${isTwoColumn ? `<aside class="sidebar">${sidebarContent}</aside>` : ""}
     </div>
   </div>
+  <style>
+    [data-section]:hover, .header:hover {
+      outline: 2px solid rgba(59, 130, 246, 0.5);
+      outline-offset: 2px;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+  </style>
+  <script>
+    document.addEventListener('click', function(e) {
+      var section = e.target.closest('[data-section]');
+      var header = e.target.closest('.header');
+      var target = section ? section.dataset.section : (header ? 'header' : null);
+      if (target && window.parent !== window) {
+        window.parent.postMessage({ type: 'cv-section-click', section: target }, '*');
+      }
+    });
+  </script>
   ${
     options?.autoPrint
       ? `<script>

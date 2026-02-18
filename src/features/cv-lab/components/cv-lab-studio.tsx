@@ -1,32 +1,14 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Progress } from "@/components/ui/progress";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
-import { Switch } from "@/components/ui/switch";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Layout,
-  LayoutActions,
-  LayoutContent,
-  LayoutDescription,
-  LayoutHeader,
-  LayoutTitle,
-} from "@/features/page/layout";
+import { DocumentStudioLayout } from "@/components/nowts/document-studio-layout";
+import { CvLabPreview } from "./cv-lab-preview";
+import { CvLabMinimalToolbar } from "./cv-lab-minimal-toolbar";
+import { CvLabEditPanel, type CvLabEditTab } from "./cv-lab-edit-panel";
+import { CvLabPanelContent } from "./cv-lab-panel-content";
 import { getProfilesAction } from "@/features/profiles/profiles.action";
 import { resolveActionResult } from "@/lib/actions/actions-utils";
-import { cn } from "@/lib/utils";
 import { useMutation } from "@tanstack/react-query";
 import {
   analyzeCvLabAtsAction,
@@ -52,21 +34,6 @@ import {
   type CvLabTheme,
 } from "../cv-lab.schema";
 import {
-  ArrowDown,
-  ArrowUp,
-  BarChart3,
-  Copy,
-  Download,
-  Eye,
-  FileDown,
-  History,
-  Plus,
-  RotateCcw,
-  Save,
-  Trash2,
-  Upload,
-} from "lucide-react";
-import {
   useCallback,
   useEffect,
   useMemo,
@@ -77,6 +44,8 @@ import {
 import { dialogManager } from "@/features/dialog-manager/dialog-manager";
 import { toast } from "sonner";
 import { z } from "zod";
+import { ArrowLeft } from "lucide-react";
+import { CvSectionEditorRouter } from "./section-editors/cv-section-editor-router";
 
 type CvProfile = {
   id: string;
@@ -84,6 +53,11 @@ type CvProfile = {
   headline: string;
   bio: string | null;
   experiences: unknown;
+  skills: unknown;
+  education: unknown;
+  projects: unknown;
+  languages: unknown;
+  certifications: unknown;
 };
 
 type CvDocument = {
@@ -173,30 +147,6 @@ type AtsAnalysis = {
   recommendations: string[];
 };
 
-type DocumentViewFilter = "active" | "all" | "archived";
-
-const FONT_OPTIONS = [
-  "Inter",
-  "Space Grotesk",
-  "IBM Plex Sans",
-  "Helvetica",
-  "Georgia",
-] as const;
-
-const TEMPLATE_LABELS: Record<CvLabTemplate, string> = {
-  CLASSIC: "Classique",
-  TWO_COLUMN: "2 colonnes",
-  EXECUTIVE: "Executive",
-  COMPACT: "Compact",
-};
-
-const THEME_LABELS: Record<CvLabTheme, string> = {
-  MINIMAL: "Minimal",
-  MODERN: "Modern",
-  CONTRAST: "Contrast",
-  BOLD: "Bold",
-};
-
 const SECTION_LABELS: Record<CvLabSection, string> = {
   summary: "Résumé",
   experiences: "Expériences",
@@ -208,12 +158,6 @@ const SECTION_LABELS: Record<CvLabSection, string> = {
 };
 
 const toDate = (value: string | Date) => new Date(value);
-
-const getScoreTone = (score: number) => {
-  if (score >= 80) return "text-emerald-600";
-  if (score >= 60) return "text-amber-600";
-  return "text-rose-600";
-};
 
 const buildDraft = (document: CvDocument): Draft => ({
   profileId: document.profileId,
@@ -728,8 +672,6 @@ const buildDraftDiffItems = (before: Draft, after: Draft): DraftDiffItem[] => {
 export function CvLabStudio() {
   const [profiles, setProfiles] = useState<CvProfile[]>([]);
   const [documents, setDocuments] = useState<CvDocument[]>([]);
-  const [documentView, setDocumentView] =
-    useState<DocumentViewFilter>("active");
   const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(
     null,
   );
@@ -752,6 +694,11 @@ export function CvLabStudio() {
     savedAt: string;
   } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [editTab, setEditTab] = useState<CvLabEditTab>("settings");
+  const [activeProfileSection, setActiveProfileSection] = useState<
+    string | null
+  >(null);
   const importInputRef = useRef<HTMLInputElement | null>(null);
 
   const selectedDocument = useMemo(
@@ -790,18 +737,9 @@ export function CvLabStudio() {
     });
   }, []);
 
-  const filterDocumentsByView = useCallback(
-    (sourceDocuments: CvDocument[]) => {
-      if (documentView === "all") return sourceDocuments;
-      if (documentView === "archived") {
-        return sourceDocuments.filter((document) =>
-          Boolean(document.archivedAt),
-        );
-      }
-      return sourceDocuments.filter((document) => !document.archivedAt);
-    },
-    [documentView],
-  );
+  const filterDocumentsByView = useCallback((sourceDocuments: CvDocument[]) => {
+    return sourceDocuments.filter((document) => !document.archivedAt);
+  }, []);
 
   const reloadData = useCallback(
     async (nextSelectedId?: string | null) => {
@@ -809,7 +747,7 @@ export function CvLabStudio() {
         resolveActionResult(getProfilesAction({})),
         resolveActionResult(
           listCvLabDocumentsAction({
-            includeArchived: documentView !== "active",
+            includeArchived: false,
           }),
         ),
       ]);
@@ -820,6 +758,11 @@ export function CvLabStudio() {
         headline: profile.headline,
         bio: profile.bio,
         experiences: profile.experiences,
+        skills: profile.skills,
+        education: profile.education,
+        projects: profile.projects,
+        languages: profile.languages,
+        certifications: profile.certifications,
       }));
       const normalizedDocuments = documentRows as unknown as CvDocument[];
       const visibleDocuments = filterDocumentsByView(normalizedDocuments);
@@ -849,7 +792,7 @@ export function CvLabStudio() {
         setVersions([]);
       }
     },
-    [documentView, filterDocumentsByView, refreshVersions, selectedDocumentId],
+    [filterDocumentsByView, refreshVersions, selectedDocumentId],
   );
 
   useEffect(() => {
@@ -1448,6 +1391,39 @@ export function CvLabStudio() {
     },
   });
 
+  const handleDraftChange = useCallback((patch: Partial<Draft>) => {
+    setDraft((prev) => (prev ? { ...prev, ...patch } : prev));
+  }, []);
+
+  const handleSectionClick = useCallback(
+    (section: string) => {
+      setActiveProfileSection(section);
+      if (!isEditOpen) {
+        setIsEditOpen(true);
+      }
+    },
+    [isEditOpen],
+  );
+
+  const handleProfileSaved = useCallback(async () => {
+    await reloadData(selectedDocumentId);
+  }, [reloadData, selectedDocumentId]);
+
+  const handleToggleSection = useCallback(
+    (section: CvLabSection, visible: boolean) => {
+      setDraft((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          hiddenSections: visible
+            ? prev.hiddenSections.filter((item) => item !== section)
+            : Array.from(new Set([...prev.hiddenSections, section])),
+        };
+      });
+    },
+    [],
+  );
+
   const moveSection = (section: CvLabSection, direction: "up" | "down") => {
     setDraft((prev) => {
       if (!prev) return prev;
@@ -1655,1174 +1631,184 @@ export function CvLabStudio() {
 
   if (isLoading) {
     return (
-      <Layout size="xl">
-        <LayoutHeader>
-          <LayoutTitle>CV Lab</LayoutTitle>
-        </LayoutHeader>
-        <LayoutContent>
-          <p className="text-muted-foreground text-sm">Chargement...</p>
-        </LayoutContent>
-      </Layout>
+      <div data-full-width className="flex flex-col gap-3">
+        <p className="text-muted-foreground text-sm">Chargement...</p>
+      </div>
     );
   }
 
+  const editPanelContentNode =
+    selectedDocument && draft ? (
+      activeProfileSection ? (
+        <div className="flex flex-col gap-4">
+          <button
+            type="button"
+            className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-sm"
+            onClick={() => setActiveProfileSection(null)}
+          >
+            <ArrowLeft className="size-4" />
+            Retour aux onglets
+          </button>
+          <CvSectionEditorRouter
+            section={activeProfileSection}
+            profile={
+              profileById.get(draft.profileId) ?? {
+                id: draft.profileId,
+                name: "",
+                headline: "",
+                bio: null,
+                experiences: null,
+                skills: null,
+                education: null,
+                projects: null,
+                languages: null,
+                certifications: null,
+              }
+            }
+            draft={draft}
+            onDraftChange={handleDraftChange}
+            onProfileSaved={handleProfileSaved}
+          />
+        </div>
+      ) : (
+        <CvLabEditPanel
+          activeTab={editTab}
+          onTabChange={setEditTab}
+          draft={draft}
+          onDraftChange={handleDraftChange}
+          profiles={profiles}
+          onToggleSection={handleToggleSection}
+          onMoveSection={moveSection}
+          versions={versions}
+          versionLabel={versionLabel}
+          onVersionLabelChange={setVersionLabel}
+          onCreateVersion={() => createVersionMutation.mutate()}
+          isCreatingVersion={createVersionMutation.isPending}
+          onRestoreVersion={(versionId) =>
+            restoreVersionMutation.mutate(versionId)
+          }
+          isRestoringVersion={restoreVersionMutation.isPending}
+          compareLeftVersionId={compareLeftVersionId}
+          onCompareLeftVersionIdChange={setCompareLeftVersionId}
+          compareRightReference={compareRightReference}
+          onCompareRightReferenceChange={setCompareRightReference}
+          compareLeftDraft={compareLeftDraft}
+          compareRightDraft={compareRightDraft}
+          versionDiffItems={versionDiffItems}
+          versionSectionLineDiffs={versionSectionLineDiffs}
+          compareLeftLabel={compareLeftLabel}
+          compareRightLabel={compareRightLabel}
+          atsJobDescription={atsJobDescription}
+          onAtsJobDescriptionChange={setAtsJobDescription}
+          onAnalyzeAts={() => atsMutation.mutate()}
+          isAnalyzingAts={atsMutation.isPending}
+          atsAnalysis={atsAnalysis}
+          atsSuggestionPreview={atsSuggestionPreview}
+          atsSuggestionDiffItems={atsSuggestionDiffItems}
+          onPreviewAtsSuggestions={previewAtsSuggestions}
+          onApplyAtsSuggestions={applyAtsSuggestionsToDraft}
+          onCancelAtsPreview={() => setAtsSuggestionPreview(null)}
+        />
+      )
+    ) : null;
+
   return (
-    <Layout size="xl">
-      <LayoutHeader>
-        <LayoutTitle>CV Lab</LayoutTitle>
-        <LayoutDescription>
-          Crée plusieurs CV premium, paramètre les sections, sauvegarde des
-          versions et exporte en PDF.
-        </LayoutDescription>
-      </LayoutHeader>
-      <LayoutActions>
-        <Button
-          onClick={() => createMutation.mutate()}
-          disabled={createMutation.isPending}
-        >
-          <Plus className="mr-2 size-4" />
-          Nouveau CV
-        </Button>
-      </LayoutActions>
-
-      <LayoutContent className="grid gap-4 xl:grid-cols-[320px_minmax(0,1fr)]">
-        <Card className="h-fit">
-          <CardHeader>
-            <CardTitle>Mes CV</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="space-y-1">
-              <Label>Vue</Label>
-              <Select
-                value={documentView}
-                onValueChange={(value) => {
-                  if (hasUnsavedChanges) {
-                    dialogManager.confirm({
-                      title: "Modifications non sauvegardées",
-                      description:
-                        "Tu as des modifications non sauvegardées. Changer de vue va les perdre. Continuer ?",
-                      action: {
-                        label: "Continuer",
-                        onClick: async () => {
-                          setDocumentView(value as DocumentViewFilter);
-                        },
-                      },
-                      cancel: { label: "Annuler" },
-                    });
-                    return;
-                  }
-                  setDocumentView(value as DocumentViewFilter);
-                }}
-              >
-                <SelectTrigger
-                  className="w-full"
-                  data-testid="cv-lab-view-filter-trigger"
-                >
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="active">Actifs</SelectItem>
-                  <SelectItem value="all">Tous</SelectItem>
-                  <SelectItem value="archived">Archivés</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            {documents.length === 0 ? (
-              <p className="text-muted-foreground text-sm">
-                Aucun CV dans cette vue.
-              </p>
-            ) : (
-              documents.map((document) => (
-                <button
-                  key={document.id}
-                  className={cn(
-                    "w-full rounded-md border p-3 text-left transition-colors",
-                    document.id === selectedDocumentId
-                      ? "border-primary bg-primary/5"
-                      : "hover:bg-muted/40",
-                  )}
-                  onClick={() => {
-                    if (document.id === selectedDocumentId) return;
-                    if (hasUnsavedChanges) {
-                      dialogManager.confirm({
-                        title: "Modifications non sauvegardées",
-                        description:
-                          "Tu as des modifications non sauvegardées. Changer de CV va les perdre. Continuer ?",
-                        action: {
-                          label: "Continuer",
-                          onClick: async () => {
-                            setSelectedDocumentId(document.id);
-                          },
-                        },
-                        cancel: { label: "Annuler" },
-                      });
-                      return;
-                    }
-                    setSelectedDocumentId(document.id);
-                  }}
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <p className="truncate text-sm font-medium">
-                      {document.name}
-                    </p>
-                    <div className="flex items-center gap-2">
-                      {document.coachSessionId ? (
-                        <Badge
-                          variant="outline"
-                          className="border-violet-300 bg-violet-50 text-violet-700 dark:border-violet-700 dark:bg-violet-950 dark:text-violet-300"
-                        >
-                          Coach IA
-                        </Badge>
-                      ) : null}
-                      {document.archivedAt ? (
-                        <Badge variant="secondary">Archivé</Badge>
-                      ) : null}
-                      <span className="text-muted-foreground text-xs">
-                        {document._count.versions} v
-                      </span>
-                    </div>
-                  </div>
-                  <p className="text-muted-foreground mt-1 truncate text-xs">
-                    {document.targetRole ?? "Poste non défini"}
-                  </p>
-                  <p className="text-muted-foreground mt-1 text-xs">
-                    {toDate(document.updatedAt).toLocaleDateString("fr-FR")}
-                  </p>
-                </button>
-              ))
-            )}
-          </CardContent>
-        </Card>
-
-        {selectedDocument && draft ? (
-          <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,0.95fr)] xl:items-start">
-            <div className="space-y-4">
-              {recoverableLocalDraft ? (
-                <Card data-testid="cv-lab-local-recovery-card">
-                  <CardHeader>
-                    <CardTitle className="text-base">
-                      Brouillon local détecté
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-3">
-                    <p className="text-muted-foreground text-sm">
-                      Un brouillon non sauvegardé a été retrouvé (
-                      {toDate(recoverableLocalDraft.savedAt).toLocaleString(
-                        "fr-FR",
-                      )}
-                      ).
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      <Button size="sm" onClick={restoreRecoverableLocalDraft}>
-                        Restaurer le brouillon local
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={discardRecoverableLocalDraft}
-                      >
-                        Ignorer le brouillon local
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ) : null}
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">Paramètres</CardTitle>
-                </CardHeader>
-                <CardContent className="grid gap-4 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label htmlFor="cv-name">Nom du CV</Label>
-                    <Input
-                      id="cv-name"
-                      value={draft.name}
-                      onChange={(event) =>
-                        setDraft((prev) =>
-                          prev ? { ...prev, name: event.target.value } : prev,
-                        )
-                      }
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="cv-target-role">Poste ciblé</Label>
-                    <Input
-                      id="cv-target-role"
-                      value={draft.targetRole}
-                      placeholder="Senior Frontend React"
-                      onChange={(event) =>
-                        setDraft((prev) =>
-                          prev
-                            ? {
-                                ...prev,
-                                targetRole: event.target.value,
-                              }
-                            : prev,
-                        )
-                      }
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Profil source</Label>
-                    <Select
-                      value={draft.profileId}
-                      onValueChange={(value) =>
-                        setDraft((prev) =>
-                          prev
-                            ? {
-                                ...prev,
-                                profileId: value,
-                              }
-                            : prev,
-                        )
-                      }
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {profiles.map((profile) => (
-                          <SelectItem key={profile.id} value={profile.id}>
-                            {profile.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Template</Label>
-                    <Select
-                      value={draft.template}
-                      onValueChange={(value) =>
-                        setDraft((prev) =>
-                          prev
-                            ? {
-                                ...prev,
-                                template: value as CvLabTemplate,
-                              }
-                            : prev,
-                        )
-                      }
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {CV_LAB_TEMPLATES.map((template) => (
-                          <SelectItem key={template} value={template}>
-                            {TEMPLATE_LABELS[template]}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Thème</Label>
-                    <Select
-                      value={draft.theme}
-                      onValueChange={(value) =>
-                        setDraft((prev) =>
-                          prev
-                            ? {
-                                ...prev,
-                                theme: value as CvLabTheme,
-                              }
-                            : prev,
-                        )
-                      }
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {CV_LAB_THEMES.map((theme) => (
-                          <SelectItem key={theme} value={theme}>
-                            {THEME_LABELS[theme]}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Taille de page</Label>
-                    <div className="bg-muted/40 rounded-md border px-3 py-2 text-sm font-medium">
-                      A4 (verrouillé)
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Couleur accent</Label>
-                    <div className="flex items-center gap-2">
-                      <Input
-                        type="color"
-                        value={draft.accentColor}
-                        className="h-10 w-16 p-1"
-                        onChange={(event) =>
-                          setDraft((prev) =>
-                            prev
-                              ? {
-                                  ...prev,
-                                  accentColor: event.target.value,
-                                }
-                              : prev,
-                          )
-                        }
-                      />
-                      <Input
-                        value={draft.accentColor}
-                        onChange={(event) =>
-                          setDraft((prev) =>
-                            prev
-                              ? {
-                                  ...prev,
-                                  accentColor: event.target.value,
-                                }
-                              : prev,
-                          )
-                        }
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Police</Label>
-                    <Select
-                      value={draft.fontFamily}
-                      onValueChange={(value) =>
-                        setDraft((prev) =>
-                          prev
-                            ? {
-                                ...prev,
-                                fontFamily: value,
-                              }
-                            : prev,
-                        )
-                      }
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {FONT_OPTIONS.map((font) => (
-                          <SelectItem key={font} value={font}>
-                            {font}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2 md:col-span-2">
-                    <Label htmlFor="headline-override">
-                      Titre personnalisé
-                    </Label>
-                    <Input
-                      id="headline-override"
-                      value={draft.headlineOverride}
-                      placeholder="Ex: Lead Product Engineer"
-                      onChange={(event) =>
-                        setDraft((prev) =>
-                          prev
-                            ? {
-                                ...prev,
-                                headlineOverride: event.target.value,
-                              }
-                            : prev,
-                        )
-                      }
-                    />
-                  </div>
-
-                  <div className="space-y-2 md:col-span-2">
-                    <Label htmlFor="summary-override">
-                      Résumé personnalisé
-                    </Label>
-                    <Textarea
-                      id="summary-override"
-                      value={draft.summaryOverride}
-                      rows={5}
-                      placeholder="Pitch adapté à ce poste..."
-                      onChange={(event) =>
-                        setDraft((prev) =>
-                          prev
-                            ? {
-                                ...prev,
-                                summaryOverride: event.target.value,
-                              }
-                            : prev,
-                        )
-                      }
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">Sections</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  {draft.sectionOrder.map((section, index) => {
-                    const isHidden = draft.hiddenSections.includes(section);
-                    return (
-                      <div
-                        key={section}
-                        className="flex items-center justify-between rounded-md border px-3 py-2"
-                      >
-                        <div className="flex items-center gap-3">
-                          <Switch
-                            checked={!isHidden}
-                            onCheckedChange={(checked) =>
-                              setDraft((prev) => {
-                                if (!prev) return prev;
-                                return {
-                                  ...prev,
-                                  hiddenSections: checked
-                                    ? prev.hiddenSections.filter(
-                                        (item) => item !== section,
-                                      )
-                                    : Array.from(
-                                        new Set([
-                                          ...prev.hiddenSections,
-                                          section,
-                                        ]),
-                                      ),
-                                };
-                              })
-                            }
-                          />
-                          <span className="text-sm">
-                            {SECTION_LABELS[section]}
-                          </span>
-                        </div>
-                        <div className="flex gap-1">
-                          <Button
-                            size="icon-sm"
-                            variant="ghost"
-                            disabled={index === 0}
-                            onClick={() => moveSection(section, "up")}
-                          >
-                            <ArrowUp className="size-4" />
-                          </Button>
-                          <Button
-                            size="icon-sm"
-                            variant="ghost"
-                            disabled={index === draft.sectionOrder.length - 1}
-                            onClick={() => moveSection(section, "down")}
-                          >
-                            <ArrowDown className="size-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">Versions</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="flex flex-col gap-2 md:flex-row">
-                    <Input
-                      placeholder="Nom du snapshot (optionnel)"
-                      value={versionLabel}
-                      onChange={(event) => setVersionLabel(event.target.value)}
-                    />
-                    <Button
-                      variant="outline"
-                      onClick={() => createVersionMutation.mutate()}
-                      disabled={createVersionMutation.isPending}
-                    >
-                      <History className="mr-2 size-4" />
-                      Snapshot
-                    </Button>
-                  </div>
-                  <Separator />
-                  <div className="space-y-2">
-                    {versions.length === 0 ? (
-                      <p className="text-muted-foreground text-sm">
-                        Aucune version sauvegardée.
-                      </p>
-                    ) : (
-                      versions.map((version) => (
-                        <div
-                          key={version.id}
-                          className="flex items-center justify-between rounded-md border px-3 py-2"
-                        >
-                          <div>
-                            <p className="text-sm font-medium">
-                              {version.label}
-                            </p>
-                            <p className="text-muted-foreground text-xs">
-                              {toDate(version.createdAt).toLocaleString(
-                                "fr-FR",
-                              )}
-                            </p>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => {
-                                setCompareLeftVersionId(version.id);
-                                setCompareRightReference(
-                                  CV_LAB_VERSION_COMPARE_CURRENT,
-                                );
-                              }}
-                            >
-                              Comparer
-                            </Button>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() =>
-                                restoreVersionMutation.mutate(version.id)
-                              }
-                              disabled={restoreVersionMutation.isPending}
-                            >
-                              Restaurer
-                            </Button>
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-
-                  <Separator />
-
-                  <div className="space-y-3">
-                    <p className="text-sm font-medium">
-                      Comparateur de versions
-                    </p>
-                    {versions.length === 0 ? (
-                      <p className="text-muted-foreground text-sm">
-                        Crée au moins une version pour comparer.
-                      </p>
-                    ) : (
-                      <>
-                        <div className="grid gap-2 md:grid-cols-2">
-                          <div className="space-y-1">
-                            <Label>Version de référence (avant)</Label>
-                            <Select
-                              value={compareLeftVersionId}
-                              onValueChange={setCompareLeftVersionId}
-                            >
-                              <SelectTrigger
-                                className="w-full"
-                                data-testid="cv-lab-version-compare-left"
-                              >
-                                <SelectValue placeholder="Choisir une version" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {versions.map((version) => (
-                                  <SelectItem
-                                    key={version.id}
-                                    value={version.id}
-                                  >
-                                    {version.label}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-
-                          <div className="space-y-1">
-                            <Label>Version cible (après)</Label>
-                            <Select
-                              value={compareRightReference}
-                              onValueChange={setCompareRightReference}
-                            >
-                              <SelectTrigger
-                                className="w-full"
-                                data-testid="cv-lab-version-compare-right"
-                              >
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem
-                                  value={CV_LAB_VERSION_COMPARE_CURRENT}
-                                >
-                                  Brouillon actuel
-                                </SelectItem>
-                                {versions.map((version) => (
-                                  <SelectItem
-                                    key={version.id}
-                                    value={version.id}
-                                  >
-                                    {version.label}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        </div>
-
-                        {!compareLeftDraft || !compareRightDraft ? (
-                          <p className="text-muted-foreground text-sm">
-                            Impossible de comparer ces versions (snapshot
-                            incomplet).
-                          </p>
-                        ) : versionDiffItems.length === 0 &&
-                          versionSectionLineDiffs.length === 0 ? (
-                          <div className="rounded-md border p-3">
-                            <p className="text-sm font-medium">
-                              Aucune différence détectée
-                            </p>
-                            <p className="text-muted-foreground mt-1 text-xs">
-                              {compareLeftLabel ?? "Version sélectionnée"} et{" "}
-                              {compareRightLabel ?? "cible"} sont identiques.
-                            </p>
-                          </div>
-                        ) : (
-                          <div className="space-y-2">
-                            <p className="text-muted-foreground text-xs">
-                              {versionDiffItems.length +
-                                versionSectionLineDiffs.length}{" "}
-                              changement(s) entre{" "}
-                              {compareLeftLabel ?? "version de référence"} et{" "}
-                              {compareRightLabel ?? "version cible"}.
-                            </p>
-                            {versionDiffItems.map((item) => (
-                              <div
-                                key={item.id}
-                                className="rounded-md border p-3"
-                                data-testid={`cv-lab-version-diff-${item.id}`}
-                              >
-                                <p className="text-sm font-medium">
-                                  {item.label}
-                                </p>
-                                <div className="mt-2 grid gap-2 md:grid-cols-2">
-                                  <div className="rounded-md border bg-amber-50 p-2">
-                                    <p className="text-[11px] font-medium text-amber-800 uppercase">
-                                      Avant
-                                    </p>
-                                    <p className="mt-1 text-xs text-amber-900">
-                                      {item.before}
-                                    </p>
-                                  </div>
-                                  <div className="rounded-md border bg-emerald-50 p-2">
-                                    <p className="text-[11px] font-medium text-emerald-800 uppercase">
-                                      Après
-                                    </p>
-                                    <p className="mt-1 text-xs text-emerald-900">
-                                      {item.after}
-                                    </p>
-                                  </div>
-                                </div>
-                              </div>
-                            ))}
-
-                            {versionSectionLineDiffs.length > 0 ? (
-                              <div className="space-y-2 pt-2">
-                                <p className="text-xs font-medium uppercase">
-                                  Diff par section (lignes)
-                                </p>
-                                {versionSectionLineDiffs.map((sectionDiff) => (
-                                  <div
-                                    key={sectionDiff.sectionId}
-                                    className="rounded-md border p-3"
-                                    data-testid={`cv-lab-version-section-diff-${sectionDiff.sectionId}`}
-                                  >
-                                    <p className="text-sm font-medium">
-                                      {sectionDiff.sectionLabel}
-                                    </p>
-                                    <div className="mt-2 grid gap-2 md:grid-cols-2">
-                                      <div className="rounded-md border bg-rose-50 p-2">
-                                        <p className="text-[11px] font-medium text-rose-800 uppercase">
-                                          Lignes supprimées
-                                        </p>
-                                        {sectionDiff.removedLines.length ===
-                                        0 ? (
-                                          <p className="mt-1 text-xs text-rose-900">
-                                            Aucune
-                                          </p>
-                                        ) : (
-                                          <ul className="mt-1 list-disc space-y-1 pl-4 text-xs text-rose-900">
-                                            {sectionDiff.removedLines.map(
-                                              (line) => (
-                                                <li key={line}>{line}</li>
-                                              ),
-                                            )}
-                                          </ul>
-                                        )}
-                                      </div>
-                                      <div className="rounded-md border bg-emerald-50 p-2">
-                                        <p className="text-[11px] font-medium text-emerald-800 uppercase">
-                                          Lignes ajoutées
-                                        </p>
-                                        {sectionDiff.addedLines.length === 0 ? (
-                                          <p className="mt-1 text-xs text-emerald-900">
-                                            Aucune
-                                          </p>
-                                        ) : (
-                                          <ul className="mt-1 list-disc space-y-1 pl-4 text-xs text-emerald-900">
-                                            {sectionDiff.addedLines.map(
-                                              (line) => (
-                                                <li key={line}>{line}</li>
-                                              ),
-                                            )}
-                                          </ul>
-                                        )}
-                                      </div>
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-                            ) : null}
-                          </div>
-                        )}
-                      </>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">ATS Check</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="ats-job-description">
-                      Fiche de poste (optionnel, recommande)
-                    </Label>
-                    <Textarea
-                      id="ats-job-description"
-                      rows={5}
-                      placeholder="Colle ici l'offre cible pour evaluer le matching ATS..."
-                      value={atsJobDescription}
-                      onChange={(event) =>
-                        setAtsJobDescription(event.target.value)
-                      }
-                    />
-                  </div>
-
-                  <Button
-                    variant="outline"
-                    onClick={() => atsMutation.mutate()}
-                    disabled={atsMutation.isPending || !draft}
-                  >
-                    <BarChart3 className="mr-2 size-4" />
-                    {atsMutation.isPending
-                      ? "Analyse..."
-                      : "Lancer l'analyse ATS"}
-                  </Button>
-
-                  {atsAnalysis ? (
-                    <div className="space-y-4 rounded-md border p-4">
-                      <div className="flex items-center justify-between gap-3">
-                        <div>
-                          <p className="text-muted-foreground text-xs uppercase">
-                            Score global ATS
-                          </p>
-                          <p
-                            className={cn(
-                              "text-2xl font-semibold",
-                              getScoreTone(atsAnalysis.overallScore),
-                            )}
-                          >
-                            {atsAnalysis.overallScore}/100
-                          </p>
-                        </div>
-                        <p className="text-muted-foreground text-xs">
-                          {toDate(atsAnalysis.generatedAt).toLocaleString(
-                            "fr-FR",
-                          )}
-                        </p>
-                      </div>
-                      <Progress
-                        value={atsAnalysis.overallScore}
-                        className="h-2"
-                        aria-label="Score ATS"
-                      />
-
-                      <div className="grid gap-3 md:grid-cols-2">
-                        <div className="rounded-md border p-3">
-                          <p className="text-xs font-medium uppercase">
-                            Completeness
-                          </p>
-                          <p className="mt-1 text-sm">
-                            {atsAnalysis.scoreBreakdown.completeness}/100
-                          </p>
-                        </div>
-                        <div className="rounded-md border p-3">
-                          <p className="text-xs font-medium uppercase">
-                            Keyword Match
-                          </p>
-                          <p className="mt-1 text-sm">
-                            {atsAnalysis.scoreBreakdown.keywordMatch}/100
-                          </p>
-                        </div>
-                        <div className="rounded-md border p-3">
-                          <p className="text-xs font-medium uppercase">
-                            Impact
-                          </p>
-                          <p className="mt-1 text-sm">
-                            {atsAnalysis.scoreBreakdown.impact}/100
-                          </p>
-                        </div>
-                        <div className="rounded-md border p-3">
-                          <p className="text-xs font-medium uppercase">
-                            Readability
-                          </p>
-                          <p className="mt-1 text-sm">
-                            {atsAnalysis.scoreBreakdown.readability}/100
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="space-y-2">
-                        <p className="text-xs font-medium uppercase">
-                          Couverture mots-cles
-                        </p>
-                        <p className="text-muted-foreground text-sm">
-                          {atsAnalysis.keywordMetrics.matchedKeywords.length} /{" "}
-                          {atsAnalysis.keywordMetrics.targetKeywords.length ||
-                            0}{" "}
-                          matches ({atsAnalysis.keywordMetrics.coverage}%)
-                        </p>
-                        {atsAnalysis.keywordMetrics.missingKeywords.length >
-                        0 ? (
-                          <div className="flex flex-wrap gap-2">
-                            {atsAnalysis.keywordMetrics.missingKeywords
-                              .slice(0, 12)
-                              .map((keyword) => (
-                                <Badge key={keyword} variant="outline">
-                                  {keyword}
-                                </Badge>
-                              ))}
-                          </div>
-                        ) : (
-                          <p className="text-sm text-emerald-600">
-                            Aucun mot-cle critique manquant.
-                          </p>
-                        )}
-                      </div>
-
-                      <div className="grid gap-3 md:grid-cols-2">
-                        <div className="space-y-2 rounded-md border p-3">
-                          <p className="text-xs font-medium uppercase">
-                            Points forts
-                          </p>
-                          {atsAnalysis.strengths.length > 0 ? (
-                            <ul className="list-disc space-y-1 pl-4 text-sm">
-                              {atsAnalysis.strengths.map((strength) => (
-                                <li key={strength}>{strength}</li>
-                              ))}
-                            </ul>
-                          ) : (
-                            <p className="text-muted-foreground text-sm">
-                              Aucun point fort detecte pour le moment.
-                            </p>
-                          )}
-                        </div>
-                        <div className="space-y-2 rounded-md border p-3">
-                          <p className="text-xs font-medium uppercase">Gaps</p>
-                          {atsAnalysis.gaps.length > 0 ? (
-                            <ul className="list-disc space-y-1 pl-4 text-sm">
-                              {atsAnalysis.gaps.map((gap) => (
-                                <li key={gap}>{gap}</li>
-                              ))}
-                            </ul>
-                          ) : (
-                            <p className="text-muted-foreground text-sm">
-                              Aucun gap critique detecte.
-                            </p>
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="space-y-2 rounded-md border p-3">
-                        <p className="text-xs font-medium uppercase">
-                          Actions recommandees
-                        </p>
-                        {atsAnalysis.recommendations.length > 0 ? (
-                          <ul className="list-disc space-y-1 pl-4 text-sm">
-                            {atsAnalysis.recommendations.map(
-                              (recommendation) => (
-                                <li key={recommendation}>{recommendation}</li>
-                              ),
-                            )}
-                          </ul>
-                        ) : (
-                          <p className="text-muted-foreground text-sm">
-                            Pas d'action supplementaire immediate.
-                          </p>
-                        )}
-                      </div>
-
-                      <p className="text-muted-foreground text-xs">
-                        Elements chiffres detectes:{" "}
-                        {atsAnalysis.details.quantifiableStatements}
-                      </p>
-
-                      <Separator />
-
-                      <div className="space-y-2">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={previewAtsSuggestions}
-                            data-testid="cv-lab-ats-preview-button"
-                          >
-                            Prévisualiser suggestions ATS
-                          </Button>
-                          <p className="text-muted-foreground text-xs">
-                            Génère une proposition de modifications avant
-                            application.
-                          </p>
-                        </div>
-
-                        {atsSuggestionPreview ? (
-                          <div
-                            className="space-y-3 rounded-md border p-3"
-                            data-testid="cv-lab-ats-suggestion-preview"
-                          >
-                            <p className="text-sm font-medium">
-                              Aperçu des modifications proposées
-                            </p>
-                            {atsSuggestionPreview.changeNotes.length > 0 ? (
-                              <ul className="list-disc space-y-1 pl-4 text-sm">
-                                {atsSuggestionPreview.changeNotes.map(
-                                  (note) => (
-                                    <li key={note}>{note}</li>
-                                  ),
-                                )}
-                              </ul>
-                            ) : null}
-
-                            {atsSuggestionDiffItems.length === 0 ? (
-                              <p className="text-muted-foreground text-sm">
-                                Aucune différence détectée.
-                              </p>
-                            ) : (
-                              <div className="space-y-2">
-                                {atsSuggestionDiffItems.map((item) => (
-                                  <div
-                                    key={item.id}
-                                    className="rounded-md border p-2"
-                                    data-testid={`cv-lab-ats-diff-${item.id}`}
-                                  >
-                                    <p className="text-xs font-medium">
-                                      {item.label}
-                                    </p>
-                                    <div className="mt-1 grid gap-2 md:grid-cols-2">
-                                      <div className="rounded-md border bg-amber-50 p-2">
-                                        <p className="text-[11px] font-medium text-amber-800 uppercase">
-                                          Avant
-                                        </p>
-                                        <p className="mt-1 text-xs text-amber-900">
-                                          {item.before}
-                                        </p>
-                                      </div>
-                                      <div className="rounded-md border bg-emerald-50 p-2">
-                                        <p className="text-[11px] font-medium text-emerald-800 uppercase">
-                                          Après
-                                        </p>
-                                        <p className="mt-1 text-xs text-emerald-900">
-                                          {item.after}
-                                        </p>
-                                      </div>
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-
-                            <div className="flex flex-wrap gap-2">
-                              <Button
-                                size="sm"
-                                onClick={applyAtsSuggestionsToDraft}
-                                data-testid="cv-lab-ats-apply-button"
-                              >
-                                Appliquer au brouillon
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => setAtsSuggestionPreview(null)}
-                              >
-                                Annuler l'aperçu
-                              </Button>
-                            </div>
-                          </div>
-                        ) : null}
-                      </div>
-                    </div>
-                  ) : (
-                    <p className="text-muted-foreground text-sm">
-                      Lance une analyse pour obtenir un score ATS, les mots-cles
-                      manquants et les recommandations de rework.
-                    </p>
-                  )}
-                </CardContent>
-              </Card>
-
-              <div className="flex flex-wrap items-center gap-2">
-                <input
-                  ref={importInputRef}
-                  type="file"
-                  accept="application/json,.json"
-                  className="hidden"
-                  onChange={handleImportInputChange}
-                />
-                <Button
-                  onClick={() => saveMutation.mutate()}
-                  disabled={saveMutation.isPending || !hasUnsavedChanges}
-                >
-                  <Save className="mr-2 size-4" />
-                  Enregistrer
-                </Button>
-                <Button
-                  variant="ghost"
-                  onClick={resetDraftFromSavedDocument}
-                  disabled={!hasUnsavedChanges}
-                >
-                  <RotateCcw className="mr-2 size-4" />
-                  Réinitialiser brouillon
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => duplicateMutation.mutate()}
-                  disabled={duplicateMutation.isPending}
-                >
-                  <Copy className="mr-2 size-4" />
-                  Dupliquer
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => exportJsonMutation.mutate()}
-                  disabled={exportJsonMutation.isPending}
-                >
-                  <Download className="mr-2 size-4" />
-                  Export JSON
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => importInputRef.current?.click()}
-                  disabled={importJsonMutation.isPending}
-                >
-                  <Upload className="mr-2 size-4" />
-                  Import JSON
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    if (!previewHtml) {
-                      toast.error("Prévisualisation non disponible");
-                      return;
-                    }
-                    const previewBlob = new Blob([previewHtml], {
-                      type: "text/html;charset=utf-8",
-                    });
-                    const previewBlobUrl =
-                      window.URL.createObjectURL(previewBlob);
-                    window.open(
-                      previewBlobUrl,
-                      "_blank",
-                      "noopener,noreferrer",
-                    );
-                    window.setTimeout(() => {
-                      window.URL.revokeObjectURL(previewBlobUrl);
-                    }, 60_000);
-                  }}
-                >
-                  <Eye className="mr-2 size-4" />
-                  Ouvrir preview
-                </Button>
-                <Button
-                  variant="outline"
-                  onClick={() => exportPdfMutation.mutate()}
-                  disabled={exportPdfMutation.isPending}
-                >
-                  <FileDown className="mr-2 size-4" />
-                  {exportPdfMutation.isPending ? "Export..." : "Export PDF"}
-                </Button>
-                {selectedDocument.archivedAt ? (
-                  <Button
-                    variant="outline"
-                    onClick={() => restoreDocumentMutation.mutate()}
-                    disabled={restoreDocumentMutation.isPending}
-                  >
-                    <RotateCcw className="mr-2 size-4" />
-                    Restaurer
-                  </Button>
-                ) : (
-                  <Button
-                    variant="destructive"
-                    onClick={() => archiveMutation.mutate()}
-                    disabled={archiveMutation.isPending}
-                  >
-                    <Trash2 className="mr-2 size-4" />
-                    Archiver
-                  </Button>
-                )}
-                <Button
-                  variant="destructive"
-                  onClick={handleDeleteDocument}
-                  disabled={deleteDocumentMutation.isPending}
-                >
-                  <Trash2 className="mr-2 size-4" />
-                  Supprimer définitivement
-                </Button>
-              </div>
-            </div>
-
-            <div className="xl:sticky xl:top-4">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-base">Prévisualisation</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground mb-2 text-xs">
-                    Format verrouillé: A4. Les sections sont traitées comme
-                    blocs unitaires pour éviter les coupes.
-                  </p>
-                  {previewError ? (
-                    <p className="text-destructive text-sm">{previewError}</p>
-                  ) : previewHtml ? (
-                    <div className="space-y-2">
-                      {isPreviewLoading ? (
-                        <p className="text-muted-foreground text-xs">
-                          Mise à jour de la prévisualisation...
-                        </p>
-                      ) : null}
-                      <iframe
-                        title="cv-preview"
-                        srcDoc={previewHtml}
-                        className="h-[900px] w-full rounded-md border bg-white"
-                      />
-                    </div>
-                  ) : (
-                    <p className="text-muted-foreground text-sm">
-                      Génération de la prévisualisation...
-                    </p>
-                  )}
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        ) : (
-          <Card>
-            <CardHeader>
-              <CardTitle>CV Lab</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground text-sm">
-                Aucun document sélectionné.
-              </p>
-            </CardContent>
-          </Card>
-        )}
-      </LayoutContent>
-    </Layout>
+    <div data-full-width className="flex flex-col gap-3">
+      <DocumentStudioLayout
+        toolbar={
+          selectedDocument && draft ? (
+            <CvLabMinimalToolbar
+              documentName={draft.name}
+              hasUnsavedChanges={hasUnsavedChanges}
+              isEditPanelOpen={isEditOpen}
+              onToggleEditPanel={() => setIsEditOpen(!isEditOpen)}
+              onSave={() => saveMutation.mutate()}
+              isSaving={saveMutation.isPending}
+              documents={documents}
+              selectedDocumentId={selectedDocumentId}
+              onSelectDocument={(id) => {
+                setSelectedDocumentId(id);
+                setIsEditOpen(true);
+                setEditTab("settings");
+              }}
+              onCreate={() => createMutation.mutate()}
+              isCreating={createMutation.isPending}
+            />
+          ) : null
+        }
+        preview={
+          selectedDocument && draft ? (
+            <CvLabPreview
+              previewHtml={previewHtml}
+              previewError={previewError}
+              isPreviewLoading={isPreviewLoading}
+              onSectionClick={handleSectionClick}
+            />
+          ) : null
+        }
+        editPanelOpen={
+          isEditOpen && Boolean(selectedDocument) && Boolean(draft)
+        }
+        onEditPanelOpenChange={setIsEditOpen}
+        editPanelTitle={
+          activeProfileSection ? "Éditer la section" : "Éditer le CV"
+        }
+        editPanelContent={
+          selectedDocument && draft ? (
+            <CvLabPanelContent
+              editPanel={editPanelContentNode}
+              recoverableLocalDraft={recoverableLocalDraft}
+              onRestoreLocalDraft={restoreRecoverableLocalDraft}
+              onDiscardLocalDraft={discardRecoverableLocalDraft}
+              onDuplicate={() => duplicateMutation.mutate()}
+              isDuplicating={duplicateMutation.isPending}
+              onExportJson={() => exportJsonMutation.mutate()}
+              isExportingJson={exportJsonMutation.isPending}
+              onImportJson={() => importInputRef.current?.click()}
+              isImportingJson={importJsonMutation.isPending}
+              importInputRef={importInputRef}
+              onImportInputChange={handleImportInputChange}
+              previewHtml={previewHtml}
+              onExportPdf={() => exportPdfMutation.mutate()}
+              isExportingPdf={exportPdfMutation.isPending}
+              isArchived={Boolean(selectedDocument.archivedAt)}
+              onArchive={() => archiveMutation.mutate()}
+              isArchiving={archiveMutation.isPending}
+              onRestore={() => restoreDocumentMutation.mutate()}
+              isRestoring={restoreDocumentMutation.isPending}
+              onDelete={handleDeleteDocument}
+              isDeleting={deleteDocumentMutation.isPending}
+              onReset={resetDraftFromSavedDocument}
+              hasUnsavedChanges={hasUnsavedChanges}
+            />
+          ) : null
+        }
+        editPanelFooter={
+          selectedDocument && draft ? (
+            <Button
+              onClick={() => saveMutation.mutate()}
+              disabled={saveMutation.isPending || !hasUnsavedChanges}
+              className="w-full"
+            >
+              Enregistrer
+            </Button>
+          ) : null
+        }
+        emptyState={
+          !selectedDocument || !draft ? (
+            <Card>
+              <CardHeader>
+                <CardTitle>CV Lab</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-muted-foreground text-sm">
+                  Aucun document sélectionné.
+                </p>
+              </CardContent>
+            </Card>
+          ) : undefined
+        }
+      />
+    </div>
   );
 }

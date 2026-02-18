@@ -11,6 +11,7 @@ export function AppContentWrapper({ children }: PropsWithChildren) {
     <div
       className={cn(
         "flex flex-1 flex-col gap-4 px-1.5 pt-0 pb-4 sm:px-2.5 lg:px-3.5",
+        state === "expanded" && "has-[[data-full-width]]:max-w-none",
         state === "expanded" && "mx-auto w-full max-w-5xl",
       )}
     >

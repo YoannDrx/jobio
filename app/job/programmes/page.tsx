@@ -4,11 +4,17 @@ import { EmptyState } from "@/components/nowts/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Layout, LayoutContent, LayoutHeader } from "@/features/page/layout";
+import {
+  Layout,
+  LayoutContent,
+  LayoutDescription,
+  LayoutHeader,
+  LayoutTitle,
+} from "@/features/page/layout";
 import { resolveActionResult } from "@/lib/actions/actions-utils";
 import { getProgrammesAction } from "@/features/programmes/programmes.action";
 import { ProgrammeGrid } from "./_components/programme-grid";
-import { BookOpen, Library, Sparkles, Unlock } from "lucide-react";
+import { BookOpen, Library, Unlock } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
@@ -50,51 +56,33 @@ export default function ProgrammesPage() {
   return (
     <Layout size="lg">
       <LayoutHeader>
-        {/* Hero section */}
-        <div className="relative w-full overflow-hidden rounded-2xl border bg-gradient-to-br from-violet-500/10 via-pink-500/5 to-orange-500/10 p-8 md:p-10">
-          <div className="relative z-10 flex max-w-2xl flex-col gap-4">
-            <div className="flex items-center gap-2">
-              <div className="flex size-10 items-center justify-center rounded-xl bg-violet-500/15">
-                <Library className="size-5 text-violet-600 dark:text-violet-400" />
-              </div>
-              <h1 className="font-caption text-2xl font-bold tracking-tight md:text-3xl">
-                Programmes LinkedIn
-              </h1>
-            </div>
-            <p className="text-muted-foreground max-w-lg text-sm leading-relaxed md:text-base">
-              Des templates de posts LinkedIn rédigés par des experts pour
-              développer ta visibilité freelance et attirer des clients.
-            </p>
-            {!isLoading && programs.length > 0 && (
-              <div className="mt-2 flex flex-wrap items-center gap-3">
-                <Badge
-                  variant="secondary"
-                  className="gap-1.5 border-none bg-violet-500/10 px-3 py-1 text-violet-600 dark:text-violet-400"
-                >
-                  <BookOpen className="size-3.5" />
-                  {totalTemplates} templates
-                </Badge>
-                <Badge
-                  variant="secondary"
-                  className="gap-1.5 border-none bg-pink-500/10 px-3 py-1 text-pink-600 dark:text-pink-400"
-                >
-                  <Sparkles className="size-3.5" />
-                  {programs.length} programmes
-                </Badge>
-                {unlockedPrograms.length > 0 && (
-                  <Badge
-                    variant="secondary"
-                    className="gap-1.5 border-none bg-emerald-500/10 px-3 py-1 text-emerald-600 dark:text-emerald-400"
-                  >
-                    <Unlock className="size-3.5" />
-                    {unlockedPrograms.length} débloqué
-                    {unlockedPrograms.length > 1 ? "s" : ""}
-                  </Badge>
-                )}
-              </div>
+        <LayoutTitle>Programmes LinkedIn</LayoutTitle>
+        <LayoutDescription>
+          Des templates de posts LinkedIn rédigés par des experts pour
+          développer ta visibilité freelance et attirer des clients.
+        </LayoutDescription>
+        {!isLoading && programs.length > 0 && (
+          <div className="mt-1 flex flex-wrap items-center gap-2">
+            <Badge variant="secondary" className="gap-1.5">
+              <BookOpen className="size-3" />
+              {totalTemplates} templates
+            </Badge>
+            <Badge variant="secondary" className="gap-1.5">
+              <Library className="size-3" />
+              {programs.length} programmes
+            </Badge>
+            {unlockedPrograms.length > 0 && (
+              <Badge
+                variant="secondary"
+                className="gap-1.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+              >
+                <Unlock className="size-3" />
+                {unlockedPrograms.length} débloqué
+                {unlockedPrograms.length > 1 ? "s" : ""}
+              </Badge>
             )}
           </div>
-        </div>
+        )}
       </LayoutHeader>
 
       <LayoutContent>

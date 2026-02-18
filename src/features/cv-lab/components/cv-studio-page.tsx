@@ -25,7 +25,7 @@ export function CvStudioPage() {
       onValueChange={async (value) => setTab(value)}
       className="flex h-full flex-col"
     >
-      <div className="border-b px-4 py-2">
+      <div className="px-4 py-2">
         <TabsList>
           <TabsTrigger value="editor" className="gap-2">
             <FileText className="size-4" />
