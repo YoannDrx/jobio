@@ -6,7 +6,7 @@ test.describe("cv-lab", () => {
   test("archive and restore a cv document", async ({ page }) => {
     const userData = await createTestAccount({
       page,
-      callbackURL: "/app",
+      callbackURL: "/job",
     });
 
     try {
@@ -51,7 +51,7 @@ test.describe("cv-lab", () => {
         },
       });
 
-      await page.goto("/app/cv-lab");
+      await page.goto("/job/cv-lab");
       await page.waitForLoadState("networkidle");
 
       await expect(page.getByRole("button", { name: "Archiver" })).toBeVisible({
@@ -72,14 +72,18 @@ test.describe("cv-lab", () => {
       });
 
       await page.getByRole("button", { name: "Archiver" }).click();
-      await expect(page.getByText("CV archivé")).toBeVisible({ timeout: 10000 });
+      await expect(page.getByText("CV archivé")).toBeVisible({
+        timeout: 10000,
+      });
 
       await page.getByTestId("cv-lab-view-filter-trigger").click();
       await page.getByRole("option", { name: "Archivés" }).click();
       await expect(page.getByText(/^Archivé$/)).toBeVisible({ timeout: 10000 });
 
       await page.getByRole("button", { name: "Restaurer" }).click();
-      await expect(page.getByText("CV restauré")).toBeVisible({ timeout: 10000 });
+      await expect(page.getByText("CV restauré")).toBeVisible({
+        timeout: 10000,
+      });
 
       await page.getByTestId("cv-lab-view-filter-trigger").click();
       await page.getByRole("option", { name: "Actifs" }).click();
@@ -102,7 +106,7 @@ test.describe("cv-lab", () => {
   test("preview updates from unsaved draft changes", async ({ page }) => {
     const userData = await createTestAccount({
       page,
-      callbackURL: "/app",
+      callbackURL: "/job",
     });
 
     try {
@@ -147,7 +151,7 @@ test.describe("cv-lab", () => {
         },
       });
 
-      await page.goto("/app/cv-lab");
+      await page.goto("/job/cv-lab");
       await page.waitForLoadState("networkidle");
 
       const cvNameInput = page.getByLabel("Nom du CV");
@@ -194,7 +198,7 @@ test.describe("cv-lab", () => {
   test("restore local draft after page reload", async ({ page }) => {
     const userData = await createTestAccount({
       page,
-      callbackURL: "/app",
+      callbackURL: "/job",
     });
 
     try {
@@ -239,7 +243,7 @@ test.describe("cv-lab", () => {
         },
       });
 
-      await page.goto("/app/cv-lab");
+      await page.goto("/job/cv-lab");
       await page.waitForLoadState("networkidle");
 
       const cvNameInput = page.getByLabel("Nom du CV");
@@ -278,7 +282,7 @@ test.describe("cv-lab", () => {
   test("compare two CV versions in studio", async ({ page }) => {
     const userData = await createTestAccount({
       page,
-      callbackURL: "/app",
+      callbackURL: "/job",
     });
 
     try {
@@ -369,7 +373,7 @@ test.describe("cv-lab", () => {
         ],
       });
 
-      await page.goto("/app/cv-lab");
+      await page.goto("/job/cv-lab");
       await page.waitForLoadState("networkidle");
 
       await expect(page.getByText("Comparateur de versions")).toBeVisible({
@@ -406,7 +410,7 @@ test.describe("cv-lab", () => {
   test("preview and apply ATS suggestions to draft", async ({ page }) => {
     const userData = await createTestAccount({
       page,
-      callbackURL: "/app",
+      callbackURL: "/job",
     });
 
     try {
@@ -455,7 +459,7 @@ test.describe("cv-lab", () => {
         },
       });
 
-      await page.goto("/app/cv-lab");
+      await page.goto("/job/cv-lab");
       await page.waitForLoadState("networkidle");
 
       await page
@@ -465,9 +469,7 @@ test.describe("cv-lab", () => {
         );
 
       await page.getByRole("button", { name: "Lancer l'analyse ATS" }).click();
-      await expect(
-        page.getByTestId("cv-lab-ats-preview-button"),
-      ).toBeVisible({
+      await expect(page.getByTestId("cv-lab-ats-preview-button")).toBeVisible({
         timeout: 10000,
       });
 

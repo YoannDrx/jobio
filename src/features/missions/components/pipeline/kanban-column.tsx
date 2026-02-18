@@ -18,12 +18,14 @@ type KanbanMission = {
   stack: string[];
   platform: { name: string } | null;
   followUps: { scheduledAt: Date }[];
+  updatedAt: Date;
 };
 
 type KanbanColumnProps = {
   status: MissionStatus;
   missions: KanbanMission[];
   count: number;
+  avgDaysInStatus?: number | null;
   onMissionClick: (missionId: string) => void;
 };
 
@@ -31,6 +33,7 @@ export function KanbanColumn({
   status,
   missions,
   count,
+  avgDaysInStatus,
   onMissionClick,
 }: KanbanColumnProps) {
   const config = MISSION_STATUS_CONFIG[status];
@@ -38,17 +41,24 @@ export function KanbanColumn({
   return (
     <div className="flex w-72 shrink-0 flex-col">
       {/* Header */}
-      <div className="mb-2 flex items-center gap-2 px-1">
-        <span
-          className={cn(
-            "inline-block size-2 rounded-full",
-            config.className.split(" ")[0],
-          )}
-        />
-        <span className="text-sm font-medium">{config.label}</span>
-        <span className="bg-muted text-muted-foreground rounded-full px-2 py-0.5 font-mono text-xs">
-          {count}
-        </span>
+      <div className="mb-2 flex flex-col gap-1 px-1">
+        <div className="flex items-center gap-2">
+          <span
+            className={cn(
+              "inline-block size-2 rounded-full",
+              config.className.split(" ")[0],
+            )}
+          />
+          <span className="text-sm font-medium">{config.label}</span>
+          <span className="bg-muted text-muted-foreground rounded-full px-2 py-0.5 font-mono text-xs">
+            {count}
+          </span>
+        </div>
+        {avgDaysInStatus !== null && avgDaysInStatus !== undefined && (
+          <span className="text-muted-foreground px-1 text-xs">
+            Moy. {avgDaysInStatus}j
+          </span>
+        )}
       </div>
 
       {/* Droppable area */}

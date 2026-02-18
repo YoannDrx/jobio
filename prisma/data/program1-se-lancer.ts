@@ -5,7 +5,7 @@ export const PROGRAM_SE_LANCER = {
     "7 templates pour faire tes premiers pas sur LinkedIn en tant que freelance IT et poser les bases de ta visibilité.",
   longDescription:
     "Tu viens de te lancer en freelance dans l'IT et tu ne sais pas par où commencer sur LinkedIn ? Ce programme gratuit t'accompagne pas à pas pour créer tes 7 premiers posts. De la présentation de ton parcours à la mise en avant de ta stack technique, chaque template est pensé pour un freelance développeur, DevOps ou data engineer qui veut se faire connaître.",
-  authorName: "Marie Dupont",
+  authorName: "Alex Martin",
   authorImage: undefined,
   price: 0,
   currency: "eur",

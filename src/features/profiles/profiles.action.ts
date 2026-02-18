@@ -124,9 +124,18 @@ export const getProfilesAction = authAction
     const profiles = await prisma.userProfile.findMany({
       where: { userId: user.id },
       orderBy: [{ isDefault: "desc" }, { createdAt: "desc" }],
+      include: {
+        clientPortals: {
+          where: { isPublic: true },
+          select: { slug: true },
+        },
+      },
     });
 
-    return profiles;
+    return profiles.map((profile) => ({
+      ...profile,
+      portalSlug: profile.clientPortals[0]?.slug ?? null,
+    }));
   });
 
 export const getProfileAction = authAction

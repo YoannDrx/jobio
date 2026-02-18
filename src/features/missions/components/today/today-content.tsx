@@ -126,6 +126,7 @@ export function TodayContent({
   const [parsedData, setParsedData] = useState<MissionParserOutput | null>(
     null,
   );
+  const [capturedUrl, setCapturedUrl] = useState("");
   const [isCreating, setIsCreating] = useState(false);
   const notificationsCheckedRef = useRef(false);
 
@@ -162,6 +163,7 @@ export function TodayContent({
 
   const handleParse = async (source: "url" | "text", content: string) => {
     setIsParsing(true);
+    setCapturedUrl(source === "url" ? content : "");
     try {
       const result = await resolveActionResult(
         parseMissionAction({ source, content }),
@@ -176,7 +178,10 @@ export function TodayContent({
     }
   };
 
-  const handleConfirmParsed = async (data: MissionParserOutput) => {
+  const handleConfirmParsed = async (
+    data: MissionParserOutput,
+    sourceUrl?: string,
+  ) => {
     setIsCreating(true);
     try {
       await resolveActionResult(
@@ -184,11 +189,15 @@ export function TodayContent({
           title: data.title,
           company: data.company ?? undefined,
           description: data.description,
+          tasksDescription: data.tasksDescription ?? undefined,
+          stackDescription: data.stackDescription ?? undefined,
+          profileDescription: data.profileDescription ?? undefined,
           stack: data.stack,
           tjm: data.tjm ?? undefined,
           duration: data.duration ?? undefined,
           workType: data.workType ?? undefined,
           location: data.location ?? undefined,
+          sourceUrl: sourceUrl ?? undefined,
         }),
       );
       toast.success("Mission créée avec succès");
@@ -203,6 +212,7 @@ export function TodayContent({
       }
 
       setParsedData(null);
+      setCapturedUrl("");
       router.refresh();
     } catch (error) {
       toast.error(
@@ -221,18 +231,31 @@ export function TodayContent({
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Quick capture */}
-      <Card>
-        <CardHeader className="pb-3">
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Rocket className="size-4" />
-            Capture rapide
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <QuickCaptureInput onParse={handleParse} isLoading={isParsing} />
-        </CardContent>
-      </Card>
+      {/* Quick capture + parsed preview : même emplacement */}
+      {parsedData ? (
+        <MissionPreview
+          data={parsedData}
+          onConfirm={handleConfirmParsed}
+          onCancel={() => {
+            setParsedData(null);
+            setCapturedUrl("");
+          }}
+          isLoading={isCreating}
+          sourceUrl={capturedUrl}
+        />
+      ) : (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <Rocket className="size-4" />
+              Capture rapide
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <QuickCaptureInput onParse={handleParse} isLoading={isParsing} />
+          </CardContent>
+        </Card>
+      )}
 
       {/* Onboarding wizard */}
       {onboardingStatus && (
@@ -250,16 +273,6 @@ export function TodayContent({
             extendedChecklistEnabled: onboardingStatus.extendedChecklistEnabled,
             isDismissed: onboardingStatus.isDismissed,
           }}
-        />
-      )}
-
-      {/* Parsed preview */}
-      {parsedData && (
-        <MissionPreview
-          data={parsedData}
-          onConfirm={handleConfirmParsed}
-          onCancel={() => setParsedData(null)}
-          isLoading={isCreating}
         />
       )}
 

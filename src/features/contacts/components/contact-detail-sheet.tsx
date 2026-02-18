@@ -34,6 +34,7 @@ import {
   Plus,
   Trash2,
   Calendar,
+  Lightbulb,
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -203,6 +204,39 @@ export function ContactDetailSheet({
         </SheetHeader>
 
         <div className="flex flex-col gap-6 p-4">
+          {/* Prochaine action suggérée */}
+          <div className="bg-muted/30 flex flex-col gap-3 rounded-lg border border-amber-200/50 p-4">
+            <div className="flex items-start gap-3">
+              <Lightbulb className="mt-0.5 size-5 flex-shrink-0 text-amber-600" />
+              <div className="flex-1">
+                <p className="text-sm font-medium">Prochaine action suggérée</p>
+                <p className="mt-1 text-sm">{relationship.nextAction}</p>
+                {relationship.daysSinceLastInteraction !== null ? (
+                  <p className="text-muted-foreground mt-2 text-xs">
+                    Dernier contact: il y a{" "}
+                    {relationship.daysSinceLastInteraction} jour
+                    {relationship.daysSinceLastInteraction > 1 ? "s" : ""}
+                  </p>
+                ) : (
+                  <p className="text-muted-foreground mt-2 text-xs">
+                    Aucun contact enregistré
+                  </p>
+                )}
+              </div>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-full"
+              onClick={() => setShowInteractionForm(true)}
+            >
+              <Plus className="size-4" />
+              Log une interaction
+            </Button>
+          </div>
+
+          <Separator />
+
           {/* Infos de contact */}
           <div className="flex flex-col gap-3">
             {contact.role && (

@@ -20,4 +20,5 @@ type NavigationLink = {
   roles?: AuthRole[];
   hidden?: boolean;
   links?: NavigationLink[];
+  tourId?: string;
 };

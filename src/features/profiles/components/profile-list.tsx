@@ -21,6 +21,7 @@ type Profile = {
   tjmTarget: number | null;
   workTypePreference: string | null;
   isDefault: boolean;
+  portalSlug?: string | null;
 };
 
 type ProfileListProps = {
@@ -45,6 +46,7 @@ export function ProfileList({ profiles, onEdit, onDelete }: ProfileListProps) {
           tjmTarget={profile.tjmTarget}
           workTypePreference={profile.workTypePreference}
           isDefault={profile.isDefault}
+          portalSlug={profile.portalSlug}
           onEdit={() => onEdit(profile)}
           onDelete={() => onDelete(profile)}
         />

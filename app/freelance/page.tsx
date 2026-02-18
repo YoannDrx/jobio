@@ -2,7 +2,15 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getBillingDashboardSnapshotAction } from "@/features/freelance/billing-documents.action";
 import { FreelanceDashboardCharts } from "@/features/freelance/components/freelance-dashboard-charts";
-import { formatCents, formatDate } from "@/features/freelance/billing-presenter";
+import { FreelanceSetupBanner } from "@/features/freelance/components/freelance-setup-banner";
+import { FreelanceOnboardingWizard } from "@/features/freelance/onboarding/freelance-onboarding-wizard";
+import { getFreelanceOnboardingStatusAction } from "@/features/freelance/onboarding/freelance-onboarding.action";
+import { FreelanceUrgentActions } from "@/features/freelance/components/freelance-urgent-actions";
+import {
+  formatCents,
+  formatDate,
+} from "@/features/freelance/billing-presenter";
+import { getBillingProfileAction } from "@/features/freelance/billing-clients.action";
 import {
   Layout,
   LayoutContent,
@@ -23,28 +31,39 @@ import {
 export default async function FreelanceDashboardPage() {
   const user = await getRequiredUser();
 
-  const [snapshot, billingClients, billingQuotes, billingInvoices] =
-    await Promise.all([
-      resolveActionResult(getBillingDashboardSnapshotAction({})).catch(() => ({
-        turnoverInvoicedCurrentMonthCents: 0,
-        outstandingCents: 0,
-        collectedCents: 0,
-        overdueCount: 0,
-        quoteToValidateCount: 0,
-        declarations: [],
-        charts: {
-          revenueTimeline: [],
-          statusBreakdown: [],
-          topClients: [],
-          declarationBreakdown: [],
-        },
-      })),
-      checkPlanLimit(user.id, "billingClients"),
-      checkPlanLimit(user.id, "billingQuotes"),
-      checkPlanLimit(user.id, "billingInvoices"),
-    ]);
+  const [
+    snapshot,
+    billingClients,
+    billingQuotes,
+    billingInvoices,
+    billingProfile,
+    onboardingStatus,
+  ] = await Promise.all([
+    resolveActionResult(getBillingDashboardSnapshotAction({})).catch(() => ({
+      turnoverInvoicedCurrentMonthCents: 0,
+      outstandingCents: 0,
+      collectedCents: 0,
+      overdueCount: 0,
+      quoteToValidateCount: 0,
+      declarations: [],
+      charts: {
+        revenueTimeline: [],
+        statusBreakdown: [],
+        topClients: [],
+        declarationBreakdown: [],
+      },
+    })),
+    checkPlanLimit(user.id, "billingClients"),
+    checkPlanLimit(user.id, "billingQuotes"),
+    checkPlanLimit(user.id, "billingInvoices"),
+    resolveActionResult(getBillingProfileAction({})).catch(() => null),
+    resolveActionResult(getFreelanceOnboardingStatusAction()).catch(() => null),
+  ]);
 
   const nextDeclaration = snapshot.declarations.at(0);
+
+  const isProfileIncomplete =
+    !billingProfile?.legalName || !billingProfile.siret;
 
   const kpis = [
     {
@@ -93,10 +112,32 @@ export default async function FreelanceDashboardPage() {
           <Badge variant="secondary">Beta</Badge>
         </div>
         <LayoutDescription>
-          Gère ta facturation de bout en bout: clients, devis, factures, paiements
-          et suivi URSSAF.
+          Gère ta facturation de bout en bout: clients, devis, factures,
+          paiements et suivi URSSAF.
         </LayoutDescription>
       </LayoutHeader>
+      {onboardingStatus &&
+      !onboardingStatus.isDismissed &&
+      !onboardingStatus.isComplete ? (
+        <LayoutContent>
+          <FreelanceOnboardingWizard status={onboardingStatus} />
+        </LayoutContent>
+      ) : onboardingStatus?.isDismissed && isProfileIncomplete ? (
+        <LayoutContent>
+          <FreelanceSetupBanner />
+        </LayoutContent>
+      ) : isProfileIncomplete && !onboardingStatus ? (
+        <LayoutContent>
+          <FreelanceSetupBanner />
+        </LayoutContent>
+      ) : null}
+      <LayoutContent>
+        <FreelanceUrgentActions
+          overdueCount={snapshot.overdueCount}
+          quoteToValidateCount={snapshot.quoteToValidateCount}
+          nextDeclaration={nextDeclaration}
+        />
+      </LayoutContent>
       <LayoutContent className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {kpis.map((kpi) => (
           <Card key={kpi.label}>
@@ -123,8 +164,8 @@ export default async function FreelanceDashboardPage() {
             {snapshot.declarations.length > 0
               ? `${snapshot.declarations.length} période(s) de déclaration ouverte(s).`
               : "Aucune période de déclaration ouverte."}{" "}
-            Les journaux d’audit, le registre clients et les workflows de devis et
-            factures sont déjà actifs.
+            Les journaux d’audit, le registre clients et les workflows de devis
+            et factures sont déjà actifs.
           </CardContent>
         </Card>
         <Card>

@@ -19,6 +19,9 @@ Tu aides l'utilisateur a :
 - Retrouver des informations sur ses missions, contacts et follow-ups
 - Donner des conseils strategiques pour sa recherche de missions freelance
 - Analyser ses statistiques et identifier les actions prioritaires
+- Consulter l'activite freelance (clients, factures, CA)
+- Acceder aux profils de l'utilisateur et leurs competences
+- Voir les relances et evenements a venir dans le calendrier
 
 Regles :
 - Reponds toujours en francais

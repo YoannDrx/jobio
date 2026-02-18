@@ -6,13 +6,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  EditSideSheet,
+  EditSideSheetBody,
+  EditSideSheetContent,
+  EditSideSheetFooter,
+  EditSideSheetHeader,
+} from "@/components/nowts/edit-side-sheet";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
@@ -109,6 +108,7 @@ type CoachSessionListItem = {
   }[];
   _count: {
     messages: number;
+    documents: number;
   };
 };
 
@@ -962,101 +962,100 @@ export function CvCoachStudio() {
         </div>
       </LayoutContent>
 
-      {/* Import Dialog */}
-      <Dialog open={importDialogOpen} onOpenChange={setImportDialogOpen}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Importer un CV existant</DialogTitle>
-            <DialogDescription>
-              Importe ton CV depuis un fichier PDF/DOCX ou colle le texte
-              directement. Le coach l&apos;analysera automatiquement.
-            </DialogDescription>
-          </DialogHeader>
-          <Tabs value={importTab} onValueChange={setImportTab}>
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="text">Texte</TabsTrigger>
-              <TabsTrigger value="file">Fichier</TabsTrigger>
-            </TabsList>
-            <TabsContent value="text" className="mt-4">
-              <Textarea
-                value={importText}
-                onChange={(e) => setImportText(e.target.value)}
-                placeholder="Colle le contenu de ton CV ici..."
-                className="min-h-[200px]"
-              />
-            </TabsContent>
-            <TabsContent value="file" className="mt-4">
-              <div
-                className={`rounded-lg border-2 border-dashed p-8 transition-colors ${
-                  fileUploadState.isDragging
-                    ? "border-primary bg-primary/5"
-                    : "border-muted-foreground/25"
-                } ${fileUploadState.files.length > 0 ? "bg-muted/50" : ""}`}
-                onDragEnter={fileUploadActions.handleDragEnter}
-                onDragLeave={fileUploadActions.handleDragLeave}
-                onDragOver={fileUploadActions.handleDragOver}
-                onDrop={fileUploadActions.handleDrop}
-              >
-                {fileUploadState.files.length > 0 ? (
-                  <div className="flex flex-col items-center gap-2">
-                    <FileText className="text-primary size-8" />
-                    <p className="text-sm font-medium">
-                      {fileUploadState.files[0].file.name}
+      {/* Import Sheet */}
+      <EditSideSheet open={importDialogOpen} onOpenChange={setImportDialogOpen}>
+        <EditSideSheetContent>
+          <EditSideSheetHeader
+            title="Importer un CV existant"
+            description="Importe ton CV depuis un fichier PDF/DOCX ou colle le texte directement. Le coach l'analysera automatiquement."
+          />
+          <EditSideSheetBody>
+            <Tabs value={importTab} onValueChange={setImportTab}>
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="text">Texte</TabsTrigger>
+                <TabsTrigger value="file">Fichier</TabsTrigger>
+              </TabsList>
+              <TabsContent value="text" className="mt-4">
+                <Textarea
+                  value={importText}
+                  onChange={(e) => setImportText(e.target.value)}
+                  placeholder="Colle le contenu de ton CV ici..."
+                  className="min-h-[200px]"
+                />
+              </TabsContent>
+              <TabsContent value="file" className="mt-4">
+                <div
+                  className={`rounded-lg border-2 border-dashed p-8 transition-colors ${
+                    fileUploadState.isDragging
+                      ? "border-primary bg-primary/5"
+                      : "border-muted-foreground/25"
+                  } ${fileUploadState.files.length > 0 ? "bg-muted/50" : ""}`}
+                  onDragEnter={fileUploadActions.handleDragEnter}
+                  onDragLeave={fileUploadActions.handleDragLeave}
+                  onDragOver={fileUploadActions.handleDragOver}
+                  onDrop={fileUploadActions.handleDrop}
+                >
+                  {fileUploadState.files.length > 0 ? (
+                    <div className="flex flex-col items-center gap-2">
+                      <FileText className="text-primary size-8" />
+                      <p className="text-sm font-medium">
+                        {fileUploadState.files[0].file.name}
+                      </p>
+                      <p className="text-muted-foreground text-xs">
+                        {(
+                          fileUploadState.files[0].file.size /
+                          1024 /
+                          1024
+                        ).toFixed(2)}{" "}
+                        Mo
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          fileUploadActions.removeFile(
+                            fileUploadState.files[0].id,
+                          )
+                        }
+                        className="text-destructive hover:text-destructive/80 mt-2 text-xs"
+                      >
+                        <X className="mr-1 inline size-3" />
+                        Supprimer
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center gap-2">
+                      <Upload className="text-muted-foreground size-8" />
+                      <p className="text-sm font-medium">
+                        Glisse-dépose ton fichier ici
+                      </p>
+                      <p className="text-muted-foreground text-xs">
+                        PDF ou DOCX, max 5 Mo
+                      </p>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="mt-2"
+                        onClick={fileUploadActions.openFileDialog}
+                      >
+                        Sélectionner un fichier
+                      </Button>
+                      <input
+                        {...fileUploadActions.getInputProps()}
+                        className="sr-only"
+                      />
+                    </div>
+                  )}
+                  {fileUploadState.errors.length > 0 && (
+                    <p className="text-destructive mt-2 text-center text-xs">
+                      {fileUploadState.errors[0]}
                     </p>
-                    <p className="text-muted-foreground text-xs">
-                      {(
-                        fileUploadState.files[0].file.size /
-                        1024 /
-                        1024
-                      ).toFixed(2)}{" "}
-                      Mo
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        fileUploadActions.removeFile(
-                          fileUploadState.files[0].id,
-                        )
-                      }
-                      className="text-destructive hover:text-destructive/80 mt-2 text-xs"
-                    >
-                      <X className="mr-1 inline size-3" />
-                      Supprimer
-                    </button>
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center gap-2">
-                    <Upload className="text-muted-foreground size-8" />
-                    <p className="text-sm font-medium">
-                      Glisse-dépose ton fichier ici
-                    </p>
-                    <p className="text-muted-foreground text-xs">
-                      PDF ou DOCX, max 5 Mo
-                    </p>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="mt-2"
-                      onClick={fileUploadActions.openFileDialog}
-                    >
-                      Sélectionner un fichier
-                    </Button>
-                    <input
-                      {...fileUploadActions.getInputProps()}
-                      className="sr-only"
-                    />
-                  </div>
-                )}
-                {fileUploadState.errors.length > 0 && (
-                  <p className="text-destructive mt-2 text-center text-xs">
-                    {fileUploadState.errors[0]}
-                  </p>
-                )}
-              </div>
-            </TabsContent>
-          </Tabs>
-          <DialogFooter>
+                  )}
+                </div>
+              </TabsContent>
+            </Tabs>
+          </EditSideSheetBody>
+          <EditSideSheetFooter>
             <Button
               variant="outline"
               onClick={() => setImportDialogOpen(false)}
@@ -1085,9 +1084,9 @@ export function CvCoachStudio() {
                 </>
               )}
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </EditSideSheetFooter>
+        </EditSideSheetContent>
+      </EditSideSheet>
     </Layout>
   );
 }
@@ -1177,9 +1176,19 @@ function SessionsSidebar({
               >
                 <div className="flex items-center justify-between gap-2">
                   <p className="truncate text-sm font-medium">{session.name}</p>
-                  <Badge variant="secondary" className="shrink-0">
-                    {session.completenessScore}%
-                  </Badge>
+                  <div className="flex items-center gap-1">
+                    {session._count.documents > 0 ? (
+                      <Badge
+                        variant="outline"
+                        className="shrink-0 border-violet-300 bg-violet-50 text-violet-700 dark:border-violet-700 dark:bg-violet-950 dark:text-violet-300"
+                      >
+                        {session._count.documents} CV
+                      </Badge>
+                    ) : null}
+                    <Badge variant="secondary" className="shrink-0">
+                      {session.completenessScore}%
+                    </Badge>
+                  </div>
                 </div>
                 <p className="text-muted-foreground mt-1 truncate text-xs">
                   {session.goalRole ?? "Rôle non défini"}

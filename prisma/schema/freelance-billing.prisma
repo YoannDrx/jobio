@@ -270,9 +270,10 @@ model BillingQuote {
   acceptedAt DateTime?
   refusedAt  DateTime?
 
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  deletedAt  DateTime?
+  shareToken String?   @unique
 
   user     User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
   client   BillingClient         @relation(fields: [clientId], references: [id], onDelete: Restrict)
@@ -354,9 +355,10 @@ model BillingInvoice {
   issuedAt DateTime?
   paidAt   DateTime?
 
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  deletedAt DateTime?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  deletedAt  DateTime?
+  shareToken String?   @unique
 
   user        User                       @relation(fields: [userId], references: [id], onDelete: Cascade)
   client      BillingClient              @relation(fields: [clientId], references: [id], onDelete: Restrict)

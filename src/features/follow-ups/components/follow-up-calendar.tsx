@@ -25,6 +25,7 @@ type FollowUpForCalendar = {
 
 type FollowUpCalendarProps = {
   followUps: FollowUpForCalendar[];
+  onDayClick?: (date: Date) => void;
 };
 
 const MONTH_NAMES = [
@@ -51,7 +52,10 @@ const TYPE_COLORS: Record<string, string> = {
   MEETING: "bg-orange-500",
 };
 
-export function FollowUpCalendar({ followUps }: FollowUpCalendarProps) {
+export function FollowUpCalendar({
+  followUps,
+  onDayClick,
+}: FollowUpCalendarProps) {
   const now = new Date();
   const [currentMonth, setCurrentMonth] = useState(now.getMonth());
   const [currentYear, setCurrentYear] = useState(now.getFullYear());
@@ -150,11 +154,17 @@ export function FollowUpCalendar({ followUps }: FollowUpCalendarProps) {
           return (
             <div
               key={idx}
+              onClick={() => {
+                if (day && onDayClick) {
+                  onDayClick(new Date(currentYear, currentMonth, day));
+                }
+              }}
               className={cn(
                 "flex aspect-square flex-col items-start justify-start overflow-hidden rounded-lg border p-2 transition-colors",
                 day === null
                   ? "border-transparent bg-transparent"
                   : "border-border bg-background hover:bg-muted cursor-default",
+                onDayClick && day && "cursor-pointer",
                 isTodayDate &&
                   "border-primary bg-primary/5 ring-primary ring-1",
               )}

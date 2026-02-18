@@ -97,7 +97,7 @@ export const GET = route.handler(async (req) => {
         return sendPushNotification(userId, {
           title: "Relances du jour",
           body,
-          url: "/app/prospection",
+          url: "/job/prospection",
         });
       },
     );
@@ -118,7 +118,7 @@ export const GET = route.handler(async (req) => {
         sendPushNotification(userId, {
           title: "Relances en retard",
           body: `${count} relance${count > 1 ? "s" : ""} en retard`,
-          url: "/app/prospection",
+          url: "/job/prospection",
         }),
     );
     await Promise.all(overdueNotifications);
@@ -138,7 +138,7 @@ export const GET = route.handler(async (req) => {
         sendPushNotification(userId, {
           title: "Missions sans activité",
           body: `${count} mission${count > 1 ? "s" : ""} sans activité depuis 7+ jours`,
-          url: "/app/prospection",
+          url: "/job/prospection",
         }),
     );
     await Promise.all(staleNotifications);

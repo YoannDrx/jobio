@@ -262,5 +262,107 @@ export function createChatTools(userId: string) {
         };
       },
     }),
+
+    getFreelanceOverview: tool({
+      description:
+        "Obtenir une vue d'ensemble de l'activite freelance : clients actifs, factures en attente, CA du mois en cours",
+      inputSchema: z.object({}),
+      execute: async () => {
+        const [clients, pendingInvoices, monthRevenue] = await Promise.all([
+          prisma.billingClient.count({
+            where: { userId, deletedAt: null },
+          }),
+          prisma.billingInvoice.count({
+            where: { userId, status: "ISSUED", deletedAt: null },
+          }),
+          prisma.billingInvoice.aggregate({
+            where: {
+              userId,
+              status: { in: ["ISSUED", "PAID"] },
+              deletedAt: null,
+              issuedAt: {
+                gte: new Date(
+                  new Date().getFullYear(),
+                  new Date().getMonth(),
+                  1,
+                ),
+              },
+            },
+            _sum: { totalCents: true },
+          }),
+        ]);
+        return {
+          totalClients: clients,
+          pendingInvoices,
+          monthRevenueCents: monthRevenue._sum.totalCents ?? 0,
+        };
+      },
+    }),
+
+    getProfilesOverview: tool({
+      description:
+        "Obtenir un resume de tous les profils de l'utilisateur avec leurs competences principales",
+      inputSchema: z.object({}),
+      execute: async () => {
+        const profiles = await prisma.userProfile.findMany({
+          where: { userId },
+          select: {
+            id: true,
+            name: true,
+            headline: true,
+            skills: true,
+            tjmTarget: true,
+            isDefault: true,
+          },
+        });
+        return {
+          profiles: profiles.map((p) => ({
+            name: p.name,
+            headline: p.headline,
+            tjmTarget: p.tjmTarget,
+            isDefault: p.isDefault,
+            skills: Array.isArray(p.skills)
+              ? (p.skills as { name: string }[]).map((s) => s.name).slice(0, 5)
+              : [],
+          })),
+          count: profiles.length,
+        };
+      },
+    }),
+
+    getCalendarOverview: tool({
+      description:
+        "Obtenir les relances et evenements a venir dans les 7 prochains jours",
+      inputSchema: z.object({}),
+      execute: async () => {
+        const nextWeek = new Date();
+        nextWeek.setDate(nextWeek.getDate() + 7);
+        const followUps = await prisma.followUp.findMany({
+          where: {
+            userId,
+            completedAt: null,
+            scheduledAt: { lte: nextWeek },
+          },
+          orderBy: { scheduledAt: "asc" },
+          take: 15,
+          include: {
+            mission: { select: { title: true, company: true } },
+          },
+        });
+        const overdue = followUps.filter((f) => f.isOverdue);
+        return {
+          upcoming: followUps.map((f) => ({
+            title: f.title,
+            type: f.type,
+            scheduledAt: f.scheduledAt,
+            isOverdue: f.isOverdue,
+            mission: f.mission.title,
+            company: f.mission.company,
+          })),
+          overdueCount: overdue.length,
+          totalCount: followUps.length,
+        };
+      },
+    }),
   };
 }

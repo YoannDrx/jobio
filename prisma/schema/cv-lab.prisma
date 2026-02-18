@@ -47,16 +47,20 @@ model CvLabDocument {
   sectionOrder     Json?
   hiddenSections   Json?
 
+  coachSessionId String?
+
   archivedAt DateTime?
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
 
-  user     User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  profile  UserProfile            @relation(fields: [profileId], references: [id], onDelete: Cascade)
-  versions CvLabDocumentVersion[]
+  user         User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  profile      UserProfile            @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  coachSession CvLabCoachSession?     @relation(fields: [coachSessionId], references: [id], onDelete: SetNull)
+  versions     CvLabDocumentVersion[]
 
   @@index([userId, updatedAt])
   @@index([profileId])
+  @@index([coachSessionId])
   @@map("cv_lab_document")
 }
 
@@ -101,9 +105,10 @@ model CvLabCoachSession {
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
 
-  user     User                @relation(fields: [userId], references: [id], onDelete: Cascade)
-  profile  UserProfile?        @relation(fields: [profileId], references: [id], onDelete: SetNull)
-  messages CvLabCoachMessage[]
+  user      User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  profile   UserProfile?        @relation(fields: [profileId], references: [id], onDelete: SetNull)
+  messages  CvLabCoachMessage[]
+  documents CvLabDocument[]
 
   @@index([userId, updatedAt])
   @@index([profileId])

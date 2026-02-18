@@ -26,6 +26,7 @@ import {
   Clock,
   CreditCard,
   XCircle,
+  Zap,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -90,7 +91,14 @@ export function UserBilling(props: {
         </LoadingButton>
 
         {subscription.status === "trialing" ? (
-          <></>
+          <Button
+            className="w-full sm:w-auto"
+            onClick={() => manageSubscriptionMutation.mutate()}
+            disabled={manageSubscriptionMutation.isPending}
+          >
+            <Zap className="mr-2 size-4" />
+            Passer à Pro
+          </Button>
         ) : subscription.status === "active" ? (
           <>
             {!subscription.cancelAtPeriodEnd && (
@@ -111,6 +119,26 @@ export function UserBilling(props: {
         )}
       </LayoutActions>
       <LayoutContent className="flex flex-col gap-4">
+        {subscription.status === "trialing" && (
+          <Card className="border-amber-200 bg-amber-50 dark:border-amber-900/30 dark:bg-amber-950/20">
+            <CardContent className="flex flex-col gap-3 p-6">
+              <div className="flex items-center gap-3">
+                <Clock className="size-5 text-amber-600 dark:text-amber-400" />
+                <div className="flex-1">
+                  <p className="font-semibold text-amber-900 dark:text-amber-100">
+                    Période d'essai — Expire dans {daysRemaining} jour
+                    {daysRemaining > 1 ? "s" : ""}
+                  </p>
+                  <p className="text-sm text-amber-800 dark:text-amber-200">
+                    Finalise ton abonnement avant la fin de la période d'essai
+                    pour ne pas perdre l'accès à tes données.
+                  </p>
+                </div>
+              </div>
+              <Progress value={trialProgress} className="h-2" />
+            </CardContent>
+          </Card>
+        )}
         {/* Status Information */}
         <Card>
           <CardHeader className="flex flex-row items-center gap-4 space-y-0">
@@ -118,16 +146,6 @@ export function UserBilling(props: {
             <CardTitle>{statusConfig.description}</CardTitle>
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
-            {subscription.status === "trialing" && (
-              <div className="mt-1 space-y-1">
-                <div className="flex items-center justify-between text-sm">
-                  <Typography>
-                    Période d'essai : {daysRemaining} jours restants
-                  </Typography>
-                </div>
-                <Progress value={trialProgress} className="h-2" />
-              </div>
-            )}
             {subscription.cancelAtPeriodEnd && (
               <Typography variant="muted">
                 Ton abonnement se terminera le{" "}

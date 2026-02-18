@@ -38,7 +38,7 @@ export default async function SubscriptionSuccessPage() {
                 <Link href="/account/billing">Gérer l&apos;abonnement</Link>
               </Button>
               <Button asChild variant="outline">
-                <Link href="/app">Aller au tableau de bord</Link>
+                <Link href="/job">Aller au tableau de bord</Link>
               </Button>
             </div>
           </div>

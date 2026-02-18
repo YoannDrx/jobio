@@ -8,6 +8,9 @@ export const missionParserOutputSchema = z.object({
   company: z.string().nullable(),
   companyConfidence: confidenceLevelSchema,
   description: z.string(),
+  tasksDescription: z.string().nullable(),
+  stackDescription: z.string().nullable(),
+  profileDescription: z.string().nullable(),
   stack: z.array(z.string()),
   stackConfidence: confidenceLevelSchema,
   tjm: z.number().nullable(),
@@ -31,6 +34,9 @@ Ton rôle est d'extraire les informations structurées d'une annonce de mission.
 - **title** : Le titre de la mission (string). Si absent, génère un titre concis à partir du contenu.
 - **company** : Le nom de l'entreprise cliente (string ou null si non mentionné).
 - **description** : Un résumé clair et concis de la mission en 2-3 phrases (string).
+- **tasksDescription** : Les missions et responsabilités principales du poste, rédigées en paragraphe structuré (2-5 phrases). Décrit ce que le freelance va concrètement faire au quotidien. Null si aucune information sur les tâches.
+- **stackDescription** : Description de l'environnement technique en paragraphe (2-4 phrases). Va au-delà des simples tags : contexte d'utilisation, architecture, outils de CI/CD, etc. Null si pas d'info technique suffisante.
+- **profileDescription** : Profil recherché en paragraphe (2-4 phrases). Inclut l'expérience requise, les soft skills attendus, les certifications ou niveaux d'expertise. Null si le profil n'est pas décrit.
 - **stack** : Un tableau des technologies, langages et outils mentionnés (string[]). Normalise les noms (ex: "ReactJS" -> "React", "node" -> "Node.js").
 - **tjm** : Le Taux Journalier Moyen en euros (number ou null si non mentionné). Si une fourchette est donnée, prends la moyenne.
 - **duration** : La durée de la mission (string ou null si non mentionnée). Exemples : "3 mois", "6 mois renouvelable", "12 mois".

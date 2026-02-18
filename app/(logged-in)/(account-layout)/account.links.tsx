@@ -48,7 +48,7 @@ const ACCOUNT_LINKS: NavigationGroup[] = [
     title: "Application",
     links: [
       {
-        href: "/app",
+        href: "/job",
         Icon: LayoutDashboard,
         label: "Tableau de bord",
       },

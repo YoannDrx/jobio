@@ -10,7 +10,9 @@ import type {
   Language,
   Project,
 } from "@/features/profiles/profiles.schema";
-import { Pencil, Trash2 } from "lucide-react";
+import { formatDateFr } from "@/lib/format-date-fr";
+import { Pencil, Trash2, Globe } from "lucide-react";
+import Link from "next/link";
 
 type ProfileCardProps = {
   name: string;
@@ -23,6 +25,7 @@ type ProfileCardProps = {
   tjmTarget?: number | null;
   workTypePreference?: string | null;
   isDefault: boolean;
+  portalSlug?: string | null;
   onEdit?: () => void;
   onDelete?: () => void;
 };
@@ -44,6 +47,7 @@ export function ProfileCard({
   tjmTarget,
   workTypePreference,
   isDefault,
+  portalSlug,
   onEdit,
   onDelete,
 }: ProfileCardProps) {
@@ -113,10 +117,34 @@ export function ProfileCard({
         )}
 
         {experiencesArray.length > 0 && (
-          <p className="text-muted-foreground text-sm">
-            {experiencesArray.length} expérience
-            {experiencesArray.length > 1 ? "s" : ""}
-          </p>
+          <div className="flex flex-col gap-1">
+            <p className="text-muted-foreground text-sm font-medium">
+              {experiencesArray.length} expérience
+              {experiencesArray.length > 1 ? "s" : ""}
+            </p>
+            {experiencesArray.map((exp, i) => (
+              <div
+                key={i}
+                className="text-muted-foreground flex items-center gap-2 text-xs"
+              >
+                <span>
+                  {exp.title}
+                  {exp.company ? ` - ${exp.company}` : ""}
+                </span>
+                {exp.startDate && (
+                  <span>
+                    {formatDateFr(exp.startDate)}
+                    {exp.endDate ? ` - ${formatDateFr(exp.endDate)}` : ""}
+                  </span>
+                )}
+                {!exp.endDate && (
+                  <Badge className="border-none bg-green-500/10 text-xs text-green-600 dark:text-green-400">
+                    En poste
+                  </Badge>
+                )}
+              </div>
+            ))}
+          </div>
         )}
 
         {educationArray.length > 0 && (
@@ -127,10 +155,31 @@ export function ProfileCard({
         )}
 
         {projectsArray.length > 0 && (
-          <p className="text-muted-foreground text-sm">
-            {projectsArray.length} projet
-            {projectsArray.length > 1 ? "s" : ""}
-          </p>
+          <div className="flex flex-col gap-1">
+            <p className="text-muted-foreground text-sm font-medium">
+              {projectsArray.length} projet
+              {projectsArray.length > 1 ? "s" : ""}
+            </p>
+            {projectsArray.map((proj, i) => (
+              <div
+                key={i}
+                className="text-muted-foreground flex items-center gap-2 text-xs"
+              >
+                <span>{proj.name}</span>
+                {proj.startDate && (
+                  <span>
+                    {formatDateFr(proj.startDate)}
+                    {proj.endDate ? ` - ${formatDateFr(proj.endDate)}` : ""}
+                  </span>
+                )}
+                {!proj.endDate && (
+                  <Badge className="border-none bg-green-500/10 text-xs text-green-600 dark:text-green-400">
+                    En cours
+                  </Badge>
+                )}
+              </div>
+            ))}
+          </div>
         )}
 
         {languagesArray.length > 0 && (
@@ -158,6 +207,15 @@ export function ProfileCard({
           <Badge variant="outline" className="w-fit text-xs">
             {WORK_TYPE_LABELS[workTypePreference] ?? workTypePreference}
           </Badge>
+        )}
+
+        {portalSlug && (
+          <Button variant="outline" size="sm" asChild>
+            <Link href={`/p/${portalSlug}`} target="_blank">
+              <Globe className="mr-2 size-4" />
+              Voir ma page publique
+            </Link>
+          </Button>
         )}
       </CardContent>
     </Card>

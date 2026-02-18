@@ -18,6 +18,7 @@ import {
   Building2,
   Check,
   Clock,
+  Link,
   MapPin,
   Monitor,
   X,
@@ -54,9 +55,10 @@ function ConfidenceBadge({ level }: { level: ConfidenceLevel }) {
 
 type MissionPreviewProps = {
   data: MissionParserOutput;
-  onConfirm: (data: MissionParserOutput) => void;
+  onConfirm: (data: MissionParserOutput, sourceUrl?: string) => void;
   onCancel: () => void;
   isLoading?: boolean;
+  sourceUrl?: string;
 };
 
 export function MissionPreview({
@@ -64,8 +66,10 @@ export function MissionPreview({
   onConfirm,
   onCancel,
   isLoading,
+  sourceUrl: initialSourceUrl = "",
 }: MissionPreviewProps) {
   const [edited, setEdited] = useState<MissionParserOutput>(data);
+  const [editedUrl, setEditedUrl] = useState(initialSourceUrl);
 
   const update = <K extends keyof MissionParserOutput>(
     key: K,
@@ -96,6 +100,18 @@ export function MissionPreview({
             ))}
           </div>
         )}
+
+        <div className="flex flex-col gap-1">
+          <label className="text-muted-foreground flex items-center gap-1 text-sm font-medium">
+            <Link className="size-3" /> URL de l&apos;annonce
+          </label>
+          <Input
+            value={editedUrl}
+            onChange={(e) => setEditedUrl(e.target.value)}
+            placeholder="https://..."
+            type="url"
+          />
+        </div>
 
         <div className="flex flex-col gap-1">
           <label className="text-muted-foreground text-sm font-medium">
@@ -140,7 +156,45 @@ export function MissionPreview({
           <Textarea
             value={edited.description}
             onChange={(e) => update("description", e.target.value)}
+            rows={2}
+          />
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <label className="text-muted-foreground text-sm font-medium">
+            Tes missions
+          </label>
+          <Textarea
+            value={edited.tasksDescription ?? ""}
+            onChange={(e) => update("tasksDescription", e.target.value || null)}
             rows={3}
+            placeholder="Ce que tu vas concrètement faire au quotidien..."
+          />
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <label className="text-muted-foreground text-sm font-medium">
+            Stack technique
+          </label>
+          <Textarea
+            value={edited.stackDescription ?? ""}
+            onChange={(e) => update("stackDescription", e.target.value || null)}
+            rows={2}
+            placeholder="Contexte technique, architecture, outils..."
+          />
+        </div>
+
+        <div className="flex flex-col gap-1">
+          <label className="text-muted-foreground text-sm font-medium">
+            Profil recherché
+          </label>
+          <Textarea
+            value={edited.profileDescription ?? ""}
+            onChange={(e) =>
+              update("profileDescription", e.target.value || null)
+            }
+            rows={2}
+            placeholder="Expérience requise, soft skills attendus..."
           />
         </div>
 
@@ -213,7 +267,10 @@ export function MissionPreview({
         <Button variant="outline" onClick={onCancel}>
           Annuler
         </Button>
-        <LoadingButton loading={isLoading} onClick={() => onConfirm(edited)}>
+        <LoadingButton
+          loading={isLoading}
+          onClick={() => onConfirm(edited, editedUrl || undefined)}
+        >
           <Check className="size-4" />
           Confirmer et créer
         </LoadingButton>

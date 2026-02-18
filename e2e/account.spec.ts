@@ -100,10 +100,10 @@ test.describe("account", () => {
         email: userData.email,
         password: newPassword,
       },
-      callbackURL: "/app",
+      callbackURL: "/job",
     });
 
-    await page.waitForURL(/\/app/, { timeout: 10000 });
+    await page.waitForURL(/\/job/, { timeout: 10000 });
 
     const user = await prisma.user.findUnique({
       where: { email: userData.email },

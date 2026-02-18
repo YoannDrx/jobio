@@ -117,6 +117,7 @@ export const createCvCoachVariantAction = authAction
           "certifications",
         ]) as Prisma.InputJsonValue,
         hiddenSections: toJson([]) as Prisma.InputJsonValue,
+        coachSessionId: parsedInput.sessionId,
       },
     });
 

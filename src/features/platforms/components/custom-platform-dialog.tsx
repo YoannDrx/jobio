@@ -2,12 +2,12 @@
 
 import { Button } from "@/components/ui/button";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  EditSideSheet,
+  EditSideSheetBody,
+  EditSideSheetContent,
+  EditSideSheetFooter,
+  EditSideSheetHeader,
+} from "@/components/nowts/edit-side-sheet";
 import {
   Form,
   FormControl,
@@ -33,17 +33,17 @@ const customPlatformSchema = z.object({
   logoUrl: z.string().url().optional().or(z.literal("")),
 });
 
-type CustomPlatformDialogProps = {
+type CustomPlatformSheetProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess: () => void;
 };
 
-export function CustomPlatformDialog({
+export function CustomPlatformSheet({
   open,
   onOpenChange,
   onSuccess,
-}: CustomPlatformDialogProps) {
+}: CustomPlatformSheetProps) {
   const form = useZodForm({
     schema: customPlatformSchema,
     defaultValues: { name: "", website: "", logoUrl: "" },
@@ -67,91 +67,91 @@ export function CustomPlatformDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Ajouter une plateforme</DialogTitle>
-          <DialogDescription>
-            Ajoutez une plateforme qui n'est pas dans la liste.
-          </DialogDescription>
-        </DialogHeader>
+    <EditSideSheet open={open} onOpenChange={onOpenChange}>
+      <EditSideSheetContent>
+        <EditSideSheetHeader
+          title="Ajouter une plateforme"
+          description="Ajoutez une plateforme qui n'est pas dans la liste."
+        />
         <Form
           form={form}
           onSubmit={handleSubmit}
-          className="flex flex-col gap-4"
+          className="flex flex-1 flex-col"
         >
-          <FormField
-            control={form.control}
-            name="name"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Nom *</FormLabel>
-                <FormControl>
-                  <Input placeholder="Ex: Ma Plateforme" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="website"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Site web</FormLabel>
-                <FormControl>
-                  <Input placeholder="https://www.exemple.com" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          <EditSideSheetBody>
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Nom *</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Ex: Ma Plateforme" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="website"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Site web</FormLabel>
+                  <FormControl>
+                    <Input placeholder="https://www.exemple.com" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
-          <FormItem>
-            <FormLabel>Logo</FormLabel>
-            <Tabs
-              value={logoTab}
-              onValueChange={(v) => setLogoTab(v as "url" | "upload")}
-            >
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="url">URL</TabsTrigger>
-                <TabsTrigger value="upload">Upload</TabsTrigger>
-              </TabsList>
-              <TabsContent value="url" className="mt-2">
-                <FormField
-                  control={form.control}
-                  name="logoUrl"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormControl>
-                        <Input
-                          placeholder="https://exemple.com/logo.png"
-                          {...field}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </TabsContent>
-              <TabsContent value="upload" className="mt-2">
-                <div className="flex items-center gap-4">
-                  <ImageFormItem
-                    imageUrl={logoUrl}
-                    onChange={(url) => form.setValue("logoUrl", url)}
-                    className="size-20"
+            <FormItem>
+              <FormLabel>Logo</FormLabel>
+              <Tabs
+                value={logoTab}
+                onValueChange={(v) => setLogoTab(v as "url" | "upload")}
+              >
+                <TabsList className="grid w-full grid-cols-2">
+                  <TabsTrigger value="url">URL</TabsTrigger>
+                  <TabsTrigger value="upload">Upload</TabsTrigger>
+                </TabsList>
+                <TabsContent value="url" className="mt-2">
+                  <FormField
+                    control={form.control}
+                    name="logoUrl"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                          <Input
+                            placeholder="https://exemple.com/logo.png"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
-                  <p className="text-muted-foreground text-xs">
-                    Cliquez sur la zone pour uploader une image
-                    <br />
-                    (PNG, JPG - max 1MB)
-                  </p>
-                </div>
-              </TabsContent>
-            </Tabs>
-          </FormItem>
+                </TabsContent>
+                <TabsContent value="upload" className="mt-2">
+                  <div className="flex items-center gap-4">
+                    <ImageFormItem
+                      imageUrl={logoUrl}
+                      onChange={(url) => form.setValue("logoUrl", url)}
+                      className="size-20"
+                    />
+                    <p className="text-muted-foreground text-xs">
+                      Cliquez sur la zone pour uploader une image
+                      <br />
+                      (PNG, JPG - max 1MB)
+                    </p>
+                  </div>
+                </TabsContent>
+              </Tabs>
+            </FormItem>
+          </EditSideSheetBody>
 
-          <div className="flex justify-end gap-2">
+          <EditSideSheetFooter>
             <Button
               type="button"
               variant="outline"
@@ -162,9 +162,9 @@ export function CustomPlatformDialog({
             <LoadingButton type="submit" loading={form.formState.isSubmitting}>
               Ajouter
             </LoadingButton>
-          </div>
+          </EditSideSheetFooter>
         </Form>
-      </DialogContent>
-    </Dialog>
+      </EditSideSheetContent>
+    </EditSideSheet>
   );
 }

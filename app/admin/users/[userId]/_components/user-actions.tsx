@@ -48,7 +48,10 @@ export function UserActions({ user }: UserActionsProps) {
       `Action sensible: ${actionLabel}\nTape CONFIRMER pour continuer.`,
     ) === "CONFIRMER";
 
-  const logAdminAction = async (action: string, metadata?: Record<string, unknown>) => {
+  const logAdminAction = async (
+    action: string,
+    metadata?: Record<string, unknown>,
+  ) => {
     try {
       await resolveActionResult(
         createAdminAuditAction({
@@ -80,7 +83,7 @@ export function UserActions({ user }: UserActionsProps) {
     },
     onSuccess: () => {
       toast.success("Impersonation démarrée");
-      router.push("/app");
+      router.push("/job");
     },
     onError: (error: Error) => {
       toast.error(`Impossible d'impersonate l'utilisateur: ${error.message}`);

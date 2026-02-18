@@ -12,7 +12,7 @@ test.describe("admin", () => {
   test("verify admin dashboard work", async ({ page }) => {
     const user = await createTestAccount({
       page,
-      callbackURL: "/app",
+      callbackURL: "/job",
       admin: true,
     });
     await signOutAccount({ page });
@@ -43,14 +43,17 @@ test.describe("admin", () => {
 
     await expect(page).toHaveURL(/\/admin\/users/, { timeout: 10000 });
 
-    await page.getByRole("link", { name: /Feedback|Feedbacks/i }).first().click();
+    await page
+      .getByRole("link", { name: /Feedback|Feedbacks/i })
+      .first()
+      .click();
     await expect(page).toHaveURL(/\/admin\/feedback/, { timeout: 10000 });
   });
 
   test("open user detail and verify admin 360 cards", async ({ page }) => {
     const adminUser = await createTestAccount({
       page,
-      callbackURL: "/app",
+      callbackURL: "/job",
       admin: true,
     });
 
@@ -68,7 +71,9 @@ test.describe("admin", () => {
     await page.waitForLoadState("networkidle");
 
     const userCellLink = page
-      .getByRole("link", { name: new RegExp(escapeRegex(adminUser.email), "i") })
+      .getByRole("link", {
+        name: new RegExp(escapeRegex(adminUser.email), "i"),
+      })
       .first();
     await expect(userCellLink).toBeVisible({ timeout: 10000 });
     await userCellLink.click();
@@ -89,14 +94,10 @@ test.describe("admin", () => {
     await expect(page.getByText(/Santé facturation/i)).toBeVisible({
       timeout: 10000,
     });
-    await expect(
-      page.getByText(/Playbook support facturation/i),
-    ).toBeVisible({
+    await expect(page.getByText(/Playbook support facturation/i)).toBeVisible({
       timeout: 10000,
     });
-    await expect(
-      page.getByText(/Score de risque facturation/i),
-    ).toBeVisible({
+    await expect(page.getByText(/Score de risque facturation/i)).toBeVisible({
       timeout: 10000,
     });
     await expect(

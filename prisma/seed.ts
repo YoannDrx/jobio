@@ -810,6 +810,13 @@ async function main() {
   );
   logger.info(`Created ${users.length} additional users`);
 
+  // Stripe Price IDs mapping from env vars
+  const STRIPE_PRICE_MAP: Record<string, string | undefined> = {
+    "attirer-clients": process.env.STRIPE_PROGRAM_ATTIRER_PRICE_ID,
+    "personal-branding": process.env.STRIPE_PROGRAM_BRANDING_PRICE_ID,
+    "exploser-croissance": process.env.STRIPE_PROGRAM_CROISSANCE_PRICE_ID,
+  };
+
   // Seed LinkedIn programs and templates
   for (const programData of LINKEDIN_PROGRAMS_DATA) {
     const { templates, ...programFields } = programData;
@@ -818,6 +825,8 @@ async function main() {
       "authorImage" in programFields
         ? (programFields as { authorImage?: string }).authorImage
         : undefined;
+
+    const stripePriceId = STRIPE_PRICE_MAP[programFields.slug];
 
     // eslint-disable-next-line no-await-in-loop
     const program = await prisma.linkedInProgram.upsert({
@@ -833,6 +842,7 @@ async function main() {
         isFree: programFields.isFree,
         templateCount: programFields.templateCount,
         order: programFields.order,
+        ...(stripePriceId ? { stripePriceId } : {}),
       },
       create: {
         id: nanoid(11),
@@ -847,6 +857,7 @@ async function main() {
         isFree: programFields.isFree,
         templateCount: programFields.templateCount,
         order: programFields.order,
+        ...(stripePriceId ? { stripePriceId } : {}),
       },
     });
 

@@ -5,10 +5,15 @@ import { LoadingButton } from "@/features/form/submit-button";
 import type { CreateProfileInput } from "@/features/profiles/profiles.schema";
 import { resolveActionResult } from "@/lib/actions/actions-utils";
 import { useFileUpload, formatBytes } from "@/hooks/use-file-upload";
-import { FileUp, X } from "lucide-react";
+import { FileUp, HelpCircle, X } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { importLinkedInPdfAction } from "../import-linkedin-pdf.action";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 
 type LinkedInPdfImportProps = {
   onImport: (data: Partial<CreateProfileInput>) => void;
@@ -54,6 +59,31 @@ export function LinkedInPdfImport({ onImport }: LinkedInPdfImportProps) {
 
   return (
     <div className="flex flex-col gap-3">
+      <Popover>
+        <PopoverTrigger asChild>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="w-fit gap-1.5"
+          >
+            <HelpCircle className="size-4" />
+            Comment obtenir le PDF ?
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent align="start" className="w-80 text-sm">
+          <ol className="flex list-decimal flex-col gap-1.5 pl-4">
+            <li>Ouvre ton profil LinkedIn</li>
+            <li>
+              Clique sur &quot;Plus&quot; &rarr; &quot;Enregistrer au format
+              PDF&quot;
+            </li>
+            <li>Télécharge le PDF</li>
+            <li>Importe le PDF dans Jobio</li>
+          </ol>
+        </PopoverContent>
+      </Popover>
+
       {!selectedFile ? (
         <div
           role="button"

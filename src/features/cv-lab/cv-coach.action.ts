@@ -118,9 +118,7 @@ const parseMissingItems = (value: unknown): CvCoachMissingItem[] => {
   return parsed.data;
 };
 
-const parseInconsistencies = (
-  value: unknown,
-): CvCoachInconsistency[] => {
+const parseInconsistencies = (value: unknown): CvCoachInconsistency[] => {
   const parsed = cvCoachInconsistencySchema.array().safeParse(value);
   if (!parsed.success) {
     return [];
@@ -140,9 +138,7 @@ const parseNextQuestions = (value: unknown): string[] => {
     .slice(0, 6);
 };
 
-const parseSourceEvidence = (
-  value: unknown,
-): CvCoachSourceEvidenceItem[] => {
+const parseSourceEvidence = (value: unknown): CvCoachSourceEvidenceItem[] => {
   const parsed = cvCoachSourceEvidenceItemSchema.array().safeParse(value);
   if (!parsed.success) {
     return [];
@@ -290,6 +286,7 @@ export const listCvCoachSessionsAction = authAction
         _count: {
           select: {
             messages: true,
+            documents: true,
           },
         },
       },

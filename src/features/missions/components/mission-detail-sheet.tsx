@@ -42,6 +42,14 @@ const SendEmailDialog = dynamic(
   { ssr: false },
 );
 
+const MissionTjmNegotiation = dynamic(
+  async () =>
+    import("@/features/missions/components/mission-tjm-negotiation").then(
+      (m) => m.MissionTjmNegotiation,
+    ),
+  { ssr: false },
+);
+
 type MissionDetailSheetProps = {
   mission: MissionWithRelations | null;
   open: boolean;
@@ -155,6 +163,19 @@ export function MissionDetailSheet({
           <MissionDetailInfo mission={mission} />
 
           <Separator />
+
+          {mission.tjm && (
+            <>
+              <MissionTjmNegotiation
+                missionId={mission.id}
+                tjm={mission.tjm}
+                missionTitle={mission.title}
+                company={mission.company}
+              />
+
+              <Separator />
+            </>
+          )}
 
           <MissionDetailFollowUps mission={mission} onRefresh={onRefresh} />
 

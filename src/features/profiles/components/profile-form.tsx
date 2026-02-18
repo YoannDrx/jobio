@@ -224,7 +224,7 @@ export function ProfileForm({
                       <FormItem className="flex-1">
                         <FormControl>
                           <Input
-                            placeholder="Début (ex: 2022-01)"
+                            placeholder="Début (ex: janvier 2022)"
                             {...field}
                             value={field.value ?? ""}
                           />
@@ -236,19 +236,38 @@ export function ProfileForm({
                   <FormField
                     control={form.control}
                     name={`experiences.${index}.endDate`}
-                    render={({ field }) => (
-                      <FormItem className="flex-1">
-                        <FormControl>
-                          <Input
-                            placeholder="Fin (ex: 2024-06)"
-                            {...field}
-                            value={field.value ?? ""}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
+                    render={({ field }) => {
+                      const isCurrentlyWorking = !form.watch(
+                        `experiences.${index}.endDate`,
+                      );
+                      return (
+                        <FormItem className="flex-1">
+                          <FormControl>
+                            <Input
+                              placeholder="Fin (ex: juin 2024)"
+                              {...field}
+                              value={field.value ?? ""}
+                              disabled={isCurrentlyWorking}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      );
+                    }}
                   />
+                </div>
+                <div className="flex items-center gap-2">
+                  <Switch
+                    checked={!form.watch(`experiences.${index}.endDate`)}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        form.setValue(`experiences.${index}.endDate`, "");
+                      }
+                    }}
+                  />
+                  <span className="text-muted-foreground text-sm">
+                    Encore en poste
+                  </span>
                 </div>
                 <FormField
                   control={form.control}
@@ -288,8 +307,6 @@ export function ProfileForm({
               education.append({
                 degree: "",
                 school: "",
-                field: "",
-                description: "",
               })
             }
           >
@@ -338,22 +355,6 @@ export function ProfileForm({
                 <div className="flex gap-2">
                   <FormField
                     control={form.control}
-                    name={`education.${index}.field`}
-                    render={({ field }) => (
-                      <FormItem className="flex-1">
-                        <FormControl>
-                          <Input
-                            placeholder="Domaine d'étude"
-                            {...field}
-                            value={field.value ?? ""}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
                     name={`education.${index}.startDate`}
                     render={({ field }) => (
                       <FormItem className="flex-1">
@@ -385,23 +386,6 @@ export function ProfileForm({
                     )}
                   />
                 </div>
-                <FormField
-                  control={form.control}
-                  name={`education.${index}.description`}
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormControl>
-                        <Textarea
-                          placeholder="Description, activités, mentions..."
-                          rows={2}
-                          {...field}
-                          value={field.value ?? ""}
-                        />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
                 {index < education.fields.length - 1 && <hr className="my-1" />}
               </div>
             ))}
@@ -644,7 +628,7 @@ export function ProfileForm({
                       <FormItem className="flex-1">
                         <FormControl>
                           <Input
-                            placeholder="Début (ex: 2022-01)"
+                            placeholder="Début (ex: janvier 2022)"
                             {...field}
                             value={field.value ?? ""}
                           />
@@ -660,7 +644,7 @@ export function ProfileForm({
                       <FormItem className="flex-1">
                         <FormControl>
                           <Input
-                            placeholder="Fin (ex: 2024-06)"
+                            placeholder="Fin (ex: juin 2024)"
                             {...field}
                             value={field.value ?? ""}
                           />

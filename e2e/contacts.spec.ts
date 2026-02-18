@@ -6,11 +6,11 @@ test.describe("contacts", () => {
   test("create and view a contact", async ({ page }) => {
     const userData = await createTestAccount({
       page,
-      callbackURL: "/app",
+      callbackURL: "/job",
     });
 
     // Navigate to contacts page
-    await page.goto("/app/contacts");
+    await page.goto("/job/contacts");
     await page.waitForLoadState("networkidle");
 
     // Click on create contact button

@@ -25,11 +25,13 @@ const FREELANCE_LINKS: NavigationGroup[] = [
         href: FREELANCE_PATH,
         Icon: LayoutDashboard,
         label: "Dashboard",
+        tourId: "freelance-dashboard",
       },
       {
         href: `${FREELANCE_PATH}/insights`,
         Icon: BarChart3,
         label: "URSSAF & activité",
+        tourId: "freelance-insights",
       },
       {
         href: `${FREELANCE_PATH}/registers`,
@@ -51,16 +53,19 @@ const FREELANCE_LINKS: NavigationGroup[] = [
         href: `${FREELANCE_PATH}/invoices`,
         Icon: Receipt,
         label: "Factures",
+        tourId: "freelance-invoices",
       },
       {
         href: `${FREELANCE_PATH}/quotes`,
         Icon: FileClock,
         label: "Devis",
+        tourId: "freelance-quotes",
       },
       {
         href: `${FREELANCE_PATH}/clients`,
         Icon: Users,
         label: "Clients",
+        tourId: "freelance-clients",
       },
       {
         href: `${FREELANCE_PATH}/credit-notes`,
@@ -71,6 +76,7 @@ const FREELANCE_LINKS: NavigationGroup[] = [
         href: `${FREELANCE_PATH}/payments`,
         Icon: HandCoins,
         label: "Paiements",
+        tourId: "freelance-payments",
       },
     ],
   },

@@ -5,7 +5,7 @@ export const PROGRAM_PERSONAL_BRANDING = {
     "12 templates pour construire une image forte sur LinkedIn et te démarquer des autres freelances IT.",
   longDescription:
     "Sur LinkedIn, les freelances qui attirent le plus de missions sont ceux qui ont une marque personnelle forte. Ce programme te donne 12 templates pour raconter ton histoire, partager tes convictions et construire une image mémorable. Du storytelling au manifeste, chaque format est pensé pour créer une connexion authentique avec ton audience.",
-  authorName: "Camille Roux",
+  authorName: "Emma Duval",
   price: 3900,
   currency: "eur",
   isFree: false,
