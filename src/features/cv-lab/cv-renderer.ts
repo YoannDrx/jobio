@@ -66,6 +66,95 @@ const THEMES: Record<
   },
 };
 
+type TemplateStyle = {
+  cvBorderRadius: string;
+  sectionBorderRadius: string;
+  sectionBorder: string;
+  sectionBackground: string;
+  sectionPadding: string;
+  headerPadding: string;
+  headerBackground: string;
+  headerBorderBottom: string;
+  sectionTitleExtra: string;
+  bodyPadding: string;
+  contentGap: string;
+  baseFontSize: string;
+  itemSpacing: string;
+};
+
+const TEMPLATE_STYLES: Record<RenderableDocument["template"], TemplateStyle> = {
+  CLASSIC: {
+    cvBorderRadius: "16px",
+    sectionBorderRadius: "12px",
+    sectionBorder:
+      "1px solid color-mix(in srgb, var(--muted) 14%, transparent)",
+    sectionBackground: "color-mix(in srgb, var(--surface) 95%, white)",
+    sectionPadding: "14px 16px",
+    headerPadding: "28px",
+    headerBackground:
+      "linear-gradient(120deg, color-mix(in srgb, var(--accent) 12%, var(--surface)) 0%, var(--surface) 48%)",
+    headerBorderBottom:
+      "1px solid color-mix(in srgb, var(--muted) 18%, transparent)",
+    sectionTitleExtra: "",
+    bodyPadding: "28px",
+    contentGap: "16px",
+    baseFontSize: "13px",
+    itemSpacing: "12px",
+  },
+  EXECUTIVE: {
+    cvBorderRadius: "0",
+    sectionBorderRadius: "0",
+    sectionBorder:
+      "1px solid color-mix(in srgb, var(--muted) 18%, transparent)",
+    sectionBackground: "var(--surface)",
+    sectionPadding: "16px 18px",
+    headerPadding: "32px 28px",
+    headerBackground: "var(--surface)",
+    headerBorderBottom: "3px solid var(--accent)",
+    sectionTitleExtra:
+      "border-left: 3px solid var(--accent); padding-left: 10px; font-size: 13px; letter-spacing: 0.1em;",
+    bodyPadding: "28px",
+    contentGap: "16px",
+    baseFontSize: "13px",
+    itemSpacing: "12px",
+  },
+  COMPACT: {
+    cvBorderRadius: "8px",
+    sectionBorderRadius: "0",
+    sectionBorder: "none",
+    sectionBackground: "transparent",
+    sectionPadding: "10px 0",
+    headerPadding: "20px 24px",
+    headerBackground:
+      "linear-gradient(120deg, color-mix(in srgb, var(--accent) 8%, var(--surface)) 0%, var(--surface) 48%)",
+    headerBorderBottom:
+      "1px solid color-mix(in srgb, var(--muted) 22%, transparent)",
+    sectionTitleExtra: "",
+    bodyPadding: "20px",
+    contentGap: "8px",
+    baseFontSize: "12px",
+    itemSpacing: "8px",
+  },
+  TWO_COLUMN: {
+    cvBorderRadius: "16px",
+    sectionBorderRadius: "12px",
+    sectionBorder:
+      "1px solid color-mix(in srgb, var(--muted) 14%, transparent)",
+    sectionBackground: "color-mix(in srgb, var(--surface) 95%, white)",
+    sectionPadding: "14px 16px",
+    headerPadding: "28px",
+    headerBackground:
+      "linear-gradient(120deg, color-mix(in srgb, var(--accent) 12%, var(--surface)) 0%, var(--surface) 48%)",
+    headerBorderBottom:
+      "1px solid color-mix(in srgb, var(--muted) 18%, transparent)",
+    sectionTitleExtra: "",
+    bodyPadding: "28px",
+    contentGap: "16px",
+    baseFontSize: "13px",
+    itemSpacing: "12px",
+  },
+};
+
 const sanitizeHex = (value: string) =>
   /^#[0-9a-fA-F]{6}$/.test(value) ? value : "#0f172a";
 
@@ -317,6 +406,7 @@ export const renderCvLabHtml = (
   );
   const accentColor = sanitizeHex(document.accentColor);
   const theme = THEMES[document.theme];
+  const templateStyle = TEMPLATE_STYLES[document.template];
   const pageSize = "A4";
   const headline = document.headlineOverride ?? profile.headline;
   const title = document.targetRole
@@ -389,21 +479,20 @@ export const renderCvLabHtml = (
       margin: 1.25cm;
     }
     body {
-      padding: 28px;
+      padding: ${templateStyle.bodyPadding};
     }
     .cv {
       max-width: 920px;
       margin: 0 auto;
       border: 1px solid color-mix(in srgb, var(--muted) 18%, transparent);
-      border-radius: 16px;
+      border-radius: ${templateStyle.cvBorderRadius};
       overflow: hidden;
       background: var(--surface);
     }
     .header {
-      padding: 28px;
-      border-bottom: 1px solid color-mix(in srgb, var(--muted) 18%, transparent);
-      background:
-        linear-gradient(120deg, color-mix(in srgb, var(--accent) 12%, var(--surface)) 0%, var(--surface) 48%);
+      padding: ${templateStyle.headerPadding};
+      border-bottom: ${templateStyle.headerBorderBottom};
+      background: ${templateStyle.headerBackground};
     }
     .header h1 {
       margin: 0;
@@ -436,9 +525,9 @@ export const renderCvLabHtml = (
       align-items: center;
     }
     .content {
-      padding: 24px 28px 28px;
+      padding: 24px ${templateStyle.bodyPadding} ${templateStyle.bodyPadding};
       display: grid;
-      gap: 16px;
+      gap: ${templateStyle.contentGap};
       ${
         isTwoColumn
           ? "grid-template-columns: minmax(0, 2fr) minmax(240px, 0.9fr);"
@@ -447,28 +536,30 @@ export const renderCvLabHtml = (
     }
     .main, .sidebar {
       display: grid;
-      gap: 14px;
+      gap: ${templateStyle.contentGap};
       align-content: start;
     }
     .section {
-      border: 1px solid color-mix(in srgb, var(--muted) 14%, transparent);
-      background: color-mix(in srgb, var(--surface) 95%, white);
-      border-radius: 12px;
-      padding: 14px 16px;
+      border: ${templateStyle.sectionBorder};
+      background: ${templateStyle.sectionBackground};
+      border-radius: ${templateStyle.sectionBorderRadius};
+      padding: ${templateStyle.sectionPadding};
       break-inside: avoid;
       page-break-inside: avoid;
       -webkit-column-break-inside: avoid;
     }
+    ${document.template === "COMPACT" ? `.section + .section { border-top: 1px solid color-mix(in srgb, var(--muted) 18%, transparent); }` : ""}
     .section h3 {
       margin: 0 0 10px 0;
       font-size: 12px;
       text-transform: uppercase;
       letter-spacing: 0.08em;
       color: color-mix(in srgb, var(--accent) 74%, var(--text));
+      ${templateStyle.sectionTitleExtra}
     }
     .item + .item {
-      margin-top: 12px;
-      padding-top: 12px;
+      margin-top: ${templateStyle.itemSpacing};
+      padding-top: ${templateStyle.itemSpacing};
       border-top: 1px dashed color-mix(in srgb, var(--muted) 22%, transparent);
     }
     .item {
@@ -493,7 +584,7 @@ export const renderCvLabHtml = (
     }
     .paragraph {
       margin: 8px 0 0 0;
-      font-size: 13px;
+      font-size: ${templateStyle.baseFontSize};
       color: var(--text);
       white-space: pre-wrap;
       orphans: 3;
@@ -502,7 +593,7 @@ export const renderCvLabHtml = (
     .list {
       margin: 0;
       padding-left: 18px;
-      font-size: 13px;
+      font-size: ${templateStyle.baseFontSize};
       display: grid;
       gap: 5px;
     }

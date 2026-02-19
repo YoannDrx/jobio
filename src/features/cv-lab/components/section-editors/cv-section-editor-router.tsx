@@ -8,6 +8,7 @@ import { CvSectionEditorEducation } from "./cv-section-editor-education";
 import { CvSectionEditorProjects } from "./cv-section-editor-projects";
 import { CvSectionEditorLanguages } from "./cv-section-editor-languages";
 import { CvSectionEditorCertifications } from "./cv-section-editor-certifications";
+import { Info } from "lucide-react";
 
 type CvProfile = {
   id: string;
@@ -124,9 +125,27 @@ export function CvSectionEditorRouter({
     }
   };
 
+  const isProfileSection = [
+    "experiences",
+    "skills",
+    "education",
+    "projects",
+    "languages",
+    "certifications",
+  ].includes(section);
+
   return (
     <div className="flex flex-col gap-4">
       <p className="text-sm font-semibold">{title}</p>
+      {isProfileSection ? (
+        <div className="flex items-start gap-2 rounded-md border border-blue-200 bg-blue-50 p-3 dark:border-blue-900 dark:bg-blue-950">
+          <Info className="mt-0.5 size-4 shrink-0 text-blue-600 dark:text-blue-400" />
+          <p className="text-xs text-blue-800 dark:text-blue-300">
+            Ces informations proviennent de votre profil. Les modifications
+            seront répercutées sur tous les CV utilisant ce profil.
+          </p>
+        </div>
+      ) : null}
       {renderEditor()}
     </div>
   );

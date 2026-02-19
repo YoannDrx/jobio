@@ -161,6 +161,13 @@ type BillingDocumentStudioProps = {
   onSubmit?: () => void;
   showEditorPanel?: boolean;
   readOnlyPreview?: boolean;
+  toolbar?: React.ReactNode;
+  bottomContent?: React.ReactNode;
+  externalPanelOpen?: boolean;
+  onExternalPanelOpenChange?: (open: boolean) => void;
+  externalPanelTitle?: string;
+  externalPanelContent?: React.ReactNode;
+  externalPanelFooter?: React.ReactNode;
 };
 
 type StudioSection =
@@ -217,10 +224,25 @@ export function BillingDocumentStudio({
   onSubmit,
   showEditorPanel = true,
   readOnlyPreview = false,
+  toolbar: toolbarProp,
+  bottomContent,
+  externalPanelOpen,
+  onExternalPanelOpenChange,
+  externalPanelTitle,
+  externalPanelContent,
+  externalPanelFooter,
 }: BillingDocumentStudioProps) {
   const [activeStudioSection, setActiveStudioSection] =
     useState<StudioSection>("lines");
-  const [isPanelOpen, setIsPanelOpen] = useState(showEditorPanel);
+  const [internalPanelOpen, setInternalPanelOpen] = useState(showEditorPanel);
+
+  const useExternalPanel = externalPanelOpen !== undefined;
+  const isPanelOpen = useExternalPanel ? externalPanelOpen : internalPanelOpen;
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
+  const noop = () => {};
+  const setIsPanelOpen = useExternalPanel
+    ? (onExternalPanelOpenChange ?? noop)
+    : setInternalPanelOpen;
 
   const selectedClientName = useMemo(() => {
     return (
@@ -285,76 +307,94 @@ export function BillingDocumentStudio({
       ) : null}
       <DocumentStudioLayout
         toolbar={null}
+        bottomContent={bottomContent}
         preview={
-          <BillingStudioPreview
-            activeSection={activeStudioSection}
-            onSectionClick={activateSection}
-            issuer={issuer}
-            clients={clients}
-            selectedClientId={selectedClientId}
-            onSelectedClientIdChange={onSelectedClientIdChange}
-            selectedClient={selectedClient}
-            issueDate={issueDate}
-            onIssueDateChange={onIssueDateChange}
-            secondaryDate={secondaryDate}
-            onSecondaryDateChange={onSecondaryDateChange}
-            currency={currency}
-            onCurrencyChange={onCurrencyChange}
-            lines={lines}
-            onLineChange={onLineChange}
-            onRemoveLine={onRemoveLine}
-            notes={notes}
-            onNotesChange={onNotesChange}
-            terms={terms}
-            onTermsChange={onTermsChange}
-            totals={totals}
-            computeLineTotals={computeLineTotals}
-            options={options}
-            documentTemplateId={documentTemplateId}
-            documentPrimaryColor={documentPrimaryColor}
-            documentAccentColor={documentAccentColor}
-            readOnly={readOnlyPreview}
-            showEditorPanel={isPanelOpen}
-          />
+          <div className="flex w-full flex-col items-center">
+            {toolbarProp ? (
+              <div className="mb-2 flex w-full max-w-[794px] justify-end">
+                {toolbarProp}
+              </div>
+            ) : null}
+            <BillingStudioPreview
+              activeSection={activeStudioSection}
+              onSectionClick={activateSection}
+              issuer={issuer}
+              clients={clients}
+              selectedClientId={selectedClientId}
+              onSelectedClientIdChange={onSelectedClientIdChange}
+              selectedClient={selectedClient}
+              issueDate={issueDate}
+              onIssueDateChange={onIssueDateChange}
+              secondaryDate={secondaryDate}
+              onSecondaryDateChange={onSecondaryDateChange}
+              currency={currency}
+              onCurrencyChange={onCurrencyChange}
+              lines={lines}
+              onLineChange={onLineChange}
+              onRemoveLine={onRemoveLine}
+              notes={notes}
+              onNotesChange={onNotesChange}
+              terms={terms}
+              onTermsChange={onTermsChange}
+              totals={totals}
+              computeLineTotals={computeLineTotals}
+              options={options}
+              documentTemplateId={documentTemplateId}
+              documentPrimaryColor={documentPrimaryColor}
+              documentAccentColor={documentAccentColor}
+              readOnly={readOnlyPreview}
+              showEditorPanel={isPanelOpen}
+            />
+          </div>
         }
         editPanelOpen={isPanelOpen}
         onEditPanelOpenChange={setIsPanelOpen}
-        editPanelTitle="Panneau d'édition"
+        editPanelTitle={
+          useExternalPanel && externalPanelTitle
+            ? externalPanelTitle
+            : "Panneau d'édition"
+        }
         editPanelContent={
-          <BillingStudioEditPanel
-            activeSection={activeStudioSection}
-            creationMode={creationMode}
-            onCreationModeChange={onCreationModeChange}
-            language={language}
-            onLanguageChange={onLanguageChange}
-            documentTemplateId={documentTemplateId}
-            onDocumentTemplateChange={onDocumentTemplateChange}
-            options={options}
-            onOptionsChange={onOptionsChange}
-            clients={clients}
-            selectedClientId={selectedClientId}
-            onSelectedClientIdChange={onSelectedClientIdChange}
-            selectedClientName={selectedClientName}
-            issueDate={issueDate}
-            onIssueDateChange={onIssueDateChange}
-            secondaryDate={secondaryDate}
-            onSecondaryDateChange={onSecondaryDateChange}
-            secondaryDateLabel={secondaryDateLabel}
-            currency={currency}
-            onCurrencyChange={onCurrencyChange}
-            catalogItems={catalogItems}
-            selectedCatalogItemId={selectedCatalogItemId}
-            onCatalogSelection={onCatalogSelection}
-            onAddLine={onAddLine}
-            notes={notes}
-            onNotesChange={onNotesChange}
-            terms={terms}
-            onTermsChange={onTermsChange}
-            readOnly={readOnlyPreview}
-          />
+          useExternalPanel && externalPanelContent ? (
+            externalPanelContent
+          ) : (
+            <BillingStudioEditPanel
+              activeSection={activeStudioSection}
+              creationMode={creationMode}
+              onCreationModeChange={onCreationModeChange}
+              language={language}
+              onLanguageChange={onLanguageChange}
+              documentTemplateId={documentTemplateId}
+              onDocumentTemplateChange={onDocumentTemplateChange}
+              options={options}
+              onOptionsChange={onOptionsChange}
+              clients={clients}
+              selectedClientId={selectedClientId}
+              onSelectedClientIdChange={onSelectedClientIdChange}
+              selectedClientName={selectedClientName}
+              issueDate={issueDate}
+              onIssueDateChange={onIssueDateChange}
+              secondaryDate={secondaryDate}
+              onSecondaryDateChange={onSecondaryDateChange}
+              secondaryDateLabel={secondaryDateLabel}
+              currency={currency}
+              onCurrencyChange={onCurrencyChange}
+              catalogItems={catalogItems}
+              selectedCatalogItemId={selectedCatalogItemId}
+              onCatalogSelection={onCatalogSelection}
+              onAddLine={onAddLine}
+              notes={notes}
+              onNotesChange={onNotesChange}
+              terms={terms}
+              onTermsChange={onTermsChange}
+              readOnly={readOnlyPreview}
+            />
+          )
         }
         editPanelFooter={
-          onSubmit ? (
+          useExternalPanel && externalPanelFooter ? (
+            externalPanelFooter
+          ) : onSubmit ? (
             <Button
               type="button"
               size="lg"

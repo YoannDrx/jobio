@@ -92,6 +92,7 @@ import {
   Mail,
   PencilLine,
   Plus,
+  Save,
   Send,
   Trash2,
   XCircle,
@@ -1157,6 +1158,33 @@ export function FreelanceInvoicesManager() {
       <BillingDocumentStudio
         id="invoice-create-card"
         title="Nouvelle facture"
+        toolbar={
+          <div className="flex items-center justify-end gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={handleSaveEdit}
+              disabled={!isEditOpen || !canSaveEdit || isSavingEdit}
+            >
+              {isSavingEdit ? (
+                <Loader2 className="mr-1 size-3.5 animate-spin" />
+              ) : (
+                <Save className="mr-1 size-3.5" />
+              )}
+              Enregistrer
+            </Button>
+            <Button
+              size="sm"
+              variant={isEditOpen ? "secondary" : "outline"}
+              onClick={() => {
+                setIsEditOpen(!isEditOpen);
+              }}
+            >
+              <PencilLine className="mr-1 size-3.5" />
+              {isEditOpen ? "Fermer" : "Éditer"}
+            </Button>
+          </div>
+        }
         documentLabel="Facture"
         secondaryDateLabel="Échéance"
         issuer={billingProfile}
@@ -1231,427 +1259,447 @@ export function FreelanceInvoicesManager() {
         canSubmit={canCreateInvoice}
         submitLabel="Créer la facture brouillon"
         onSubmit={handleCreateInvoice}
-      />
+        externalPanelOpen={isEditOpen ? true : undefined}
+        onExternalPanelOpenChange={(open) => {
+          if (!open) setIsEditOpen(false);
+        }}
+        externalPanelTitle="Éditer la facture"
+        externalPanelContent={
+          isEditOpen ? (
+            <div className="flex flex-col gap-4">
+              <p className="text-muted-foreground text-xs">
+                Ajuste les lignes, les dates et les mentions à tout moment.
+              </p>
 
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between gap-3">
-          <CardTitle>Factures</CardTitle>
-          <div className="flex flex-wrap items-center gap-2">
-            <Button
-              type="button"
-              size="sm"
-              variant={viewMode === "table" ? "default" : "outline"}
-              onClick={() => {
-                setViewMode("table");
-              }}
-            >
-              Vue tableau
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              variant={viewMode === "cards" ? "default" : "outline"}
-              onClick={() => {
-                setViewMode("cards");
-              }}
-            >
-              Vue cards
-            </Button>
-            <FreelanceInvoicesImportSheet
-              onImported={async () => {
-                await loadData();
-              }}
-            />
-            {selectedInvoiceIds.length > 0 ? (
-              <>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  onClick={() => {
-                    setPendingBulkInvoiceOperation("ISSUE");
-                    setBulkInvoiceReason("Émission groupée depuis le tableau");
-                  }}
-                >
-                  Émettre ({selectedInvoiceIds.length})
-                </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="outline"
-                  onClick={() => {
-                    setPendingBulkInvoiceOperation("CANCEL");
-                    setBulkInvoiceReason(
-                      "Annulation groupée depuis le tableau",
-                    );
-                  }}
-                >
-                  Annuler ({selectedInvoiceIds.length})
-                </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  variant="destructive"
-                  onClick={() => {
-                    setPendingBulkInvoiceOperation("DELETE");
-                    setBulkInvoiceReason("Suppression groupée owner override");
-                  }}
-                >
-                  Supprimer ({selectedInvoiceIds.length})
-                </Button>
-              </>
-            ) : null}
-          </div>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="text-muted-foreground flex items-center gap-2 text-sm">
-              <Loader2 className="size-4 animate-spin" />
-              Chargement des factures...
-            </div>
-          ) : invoices.length === 0 ? (
-            <p className="text-muted-foreground text-sm">
-              Aucune facture pour le moment.
-            </p>
-          ) : viewMode === "table" ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-10">
-                    <Checkbox
-                      checked={areAllInvoicesSelected}
-                      onCheckedChange={(checked) => {
-                        handleToggleAllInvoices(Boolean(checked));
-                      }}
-                      aria-label="Sélectionner toutes les factures"
-                    />
-                  </TableHead>
-                  <TableHead>Numéro</TableHead>
-                  <TableHead>Client</TableHead>
-                  <TableHead>Statut</TableHead>
-                  <TableHead>Émission</TableHead>
-                  <TableHead>Échéance</TableHead>
-                  <TableHead>Montant HT</TableHead>
-                  <TableHead>Montant TTC</TableHead>
-                  <TableHead>Payé</TableHead>
-                  <TableHead>Reste dû</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {invoices.map((invoice) => (
-                  <TableRow key={invoice.id}>
-                    <TableCell>
-                      <Checkbox
-                        checked={selectedInvoiceIds.includes(invoice.id)}
-                        onCheckedChange={(checked) => {
-                          handleToggleInvoiceSelection(
-                            invoice.id,
-                            Boolean(checked),
+              <Select value={editClientId} onValueChange={setEditClientId}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Client" />
+                </SelectTrigger>
+                <SelectContent>
+                  {clients.map((client) => (
+                    <SelectItem key={client.id} value={client.id}>
+                      {client.displayName}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Input
+                placeholder="Devise"
+                maxLength={3}
+                value={editCurrency}
+                onChange={(event) => {
+                  setEditCurrency(event.target.value.toUpperCase());
+                }}
+              />
+
+              <Select
+                value={editDocumentTemplate}
+                onValueChange={(value) => {
+                  setEditDocumentTemplate(value as BillingDocumentTemplateId);
+                }}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Template" />
+                </SelectTrigger>
+                <SelectContent>
+                  {BILLING_DOCUMENT_TEMPLATES.map((template) => (
+                    <SelectItem
+                      key={`edit-template-${template.id}`}
+                      value={template.id}
+                    >
+                      {template.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <Input
+                type="date"
+                value={editIssueDate}
+                onChange={(event) => {
+                  setEditIssueDate(event.target.value);
+                }}
+              />
+
+              <Input
+                type="date"
+                value={editDueDate}
+                onChange={(event) => {
+                  setEditDueDate(event.target.value);
+                }}
+              />
+
+              <div className="flex flex-col gap-2">
+                <p className="text-sm font-medium">Lignes de la facture</p>
+                <div className="flex flex-col gap-2">
+                  {editLines.map((line, index) => (
+                    <div
+                      key={line.key}
+                      className="flex flex-col gap-2 rounded-md border p-3"
+                    >
+                      <Input
+                        placeholder={`Description ligne ${index + 1}`}
+                        value={line.description}
+                        onChange={(event) => {
+                          handleUpdateLine(
+                            line.key,
+                            "description",
+                            event.target.value,
                           );
                         }}
-                        aria-label={`Sélectionner ${invoice.number ?? invoice.id}`}
                       />
-                    </TableCell>
-                    <TableCell className="font-medium">
-                      {invoice.number ?? "Brouillon"}
-                    </TableCell>
-                    <TableCell>{invoice.client.displayName}</TableCell>
-                    <TableCell>
-                      <Badge variant={statusVariant[invoice.status]}>
-                        {invoiceStatusLabel[invoice.status]}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{formatDate(invoice.issueDate)}</TableCell>
-                    <TableCell>{formatDate(invoice.dueDate)}</TableCell>
-                    <TableCell>{formatCents(invoice.subtotalCents)}</TableCell>
-                    <TableCell>{formatCents(invoice.totalCents)}</TableCell>
-                    <TableCell>{formatCents(invoice.paidCents)}</TableCell>
-                    <TableCell>{formatCents(invoice.balanceCents)}</TableCell>
-                    <TableCell>{renderInvoiceActions(invoice)}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          ) : (
-            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-              {invoices.map((invoice) => (
-                <Card key={invoice.id} className="border-2">
-                  <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <CardTitle className="text-base">
-                          {invoice.number ?? "Brouillon"}
-                        </CardTitle>
-                        <p className="text-muted-foreground text-xs">
-                          {invoice.client.displayName}
-                        </p>
+                      <div className="grid grid-cols-2 gap-2">
+                        <Input
+                          type="number"
+                          min="0.1"
+                          step="0.1"
+                          placeholder="Qté"
+                          value={line.quantity}
+                          onChange={(event) => {
+                            handleUpdateLine(
+                              line.key,
+                              "quantity",
+                              event.target.value,
+                            );
+                          }}
+                        />
+                        <Select
+                          value={line.unit}
+                          onValueChange={(value) => {
+                            handleUpdateLine(line.key, "unit", value);
+                          }}
+                        >
+                          <SelectTrigger className="w-full">
+                            <SelectValue placeholder="Unité" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {billingStudioUnitOptions.map((unit) => (
+                              <SelectItem
+                                key={`edit-${unit.value}`}
+                                value={unit.value}
+                              >
+                                {unit.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </div>
-                      <Badge variant={statusVariant[invoice.status]}>
-                        {invoiceStatusLabel[invoice.status]}
-                      </Badge>
+                      <div className="grid grid-cols-3 gap-2">
+                        <Input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          placeholder="PU (€)"
+                          value={line.unitPrice}
+                          onChange={(event) => {
+                            handleUpdateLine(
+                              line.key,
+                              "unitPrice",
+                              event.target.value,
+                            );
+                          }}
+                        />
+                        <Input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          placeholder="TVA %"
+                          value={line.vatRate}
+                          onChange={(event) => {
+                            handleUpdateLine(
+                              line.key,
+                              "vatRate",
+                              event.target.value,
+                            );
+                          }}
+                        />
+                        <Input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          placeholder="Remise %"
+                          value={line.discountPercent}
+                          onChange={(event) => {
+                            handleUpdateLine(
+                              line.key,
+                              "discountPercent",
+                              event.target.value,
+                            );
+                          }}
+                        />
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          handleRemoveLine(line.key);
+                        }}
+                        disabled={editLines.length <= 1}
+                      >
+                        <Trash2 className="mr-1 size-3.5" />
+                        Supprimer
+                      </Button>
                     </div>
-                  </CardHeader>
-                  <CardContent className="space-y-2 text-sm">
-                    <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">Émission</span>
-                      <span>{formatDate(invoice.issueDate)}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">Échéance</span>
-                      <span>{formatDate(invoice.dueDate)}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">Montant TTC</span>
-                      <span className="font-medium">
-                        {formatCents(invoice.totalCents)}
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">Payé</span>
-                      <span>{formatCents(invoice.paidCents)}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">Reste dû</span>
-                      <span>{formatCents(invoice.balanceCents)}</span>
-                    </div>
-                    <div className="pt-2">
-                      {renderInvoiceActions(invoice, true)}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      <Sheet open={isEditOpen} onOpenChange={setIsEditOpen}>
-        <FreelanceSideSheetContent>
-          <FreelanceSideSheetHeader>
-            <SheetTitle>Éditer la facture</SheetTitle>
-            <SheetDescription>
-              Ajuste les lignes, les dates et les mentions à tout moment.
-            </SheetDescription>
-          </FreelanceSideSheetHeader>
-
-          <FreelanceSideSheetBody className="grid gap-4 xl:grid-cols-2">
-            <Select value={editClientId} onValueChange={setEditClientId}>
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Client" />
-              </SelectTrigger>
-              <SelectContent>
-                {clients.map((client) => (
-                  <SelectItem key={client.id} value={client.id}>
-                    {client.displayName}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Input
-              placeholder="Devise"
-              maxLength={3}
-              value={editCurrency}
-              onChange={(event) => {
-                setEditCurrency(event.target.value.toUpperCase());
-              }}
-            />
-
-            <Select
-              value={editDocumentTemplate}
-              onValueChange={(value) => {
-                setEditDocumentTemplate(value as BillingDocumentTemplateId);
-              }}
-            >
-              <SelectTrigger className="w-full">
-                <SelectValue placeholder="Template" />
-              </SelectTrigger>
-              <SelectContent>
-                {BILLING_DOCUMENT_TEMPLATES.map((template) => (
-                  <SelectItem
-                    key={`edit-template-${template.id}`}
-                    value={template.id}
-                  >
-                    {template.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Input
-              type="date"
-              value={editIssueDate}
-              onChange={(event) => {
-                setEditIssueDate(event.target.value);
-              }}
-            />
-
-            <Input
-              type="date"
-              value={editDueDate}
-              onChange={(event) => {
-                setEditDueDate(event.target.value);
-              }}
-            />
-
-            <div className="space-y-2 md:col-span-2">
-              <p className="text-sm font-medium">Lignes de la facture</p>
-              <div className="space-y-2">
-                {editLines.map((line, index) => (
-                  <div
-                    key={line.key}
-                    className="grid gap-2 rounded-md border p-3 md:grid-cols-[1.6fr_0.7fr_1fr_0.9fr_0.8fr_0.8fr_auto]"
-                  >
-                    <Input
-                      placeholder={`Description ligne ${index + 1}`}
-                      value={line.description}
-                      onChange={(event) => {
-                        handleUpdateLine(
-                          line.key,
-                          "description",
-                          event.target.value,
-                        );
-                      }}
-                    />
-                    <Input
-                      type="number"
-                      min="0.1"
-                      step="0.1"
-                      placeholder="Qté"
-                      value={line.quantity}
-                      onChange={(event) => {
-                        handleUpdateLine(
-                          line.key,
-                          "quantity",
-                          event.target.value,
-                        );
-                      }}
-                    />
-                    <Select
-                      value={line.unit}
-                      onValueChange={(value) => {
-                        handleUpdateLine(line.key, "unit", value);
-                      }}
-                    >
-                      <SelectTrigger className="w-full">
-                        <SelectValue placeholder="Unité" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {billingStudioUnitOptions.map((unit) => (
-                          <SelectItem
-                            key={`edit-${unit.value}`}
-                            value={unit.value}
-                          >
-                            {unit.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <Input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      placeholder="PU (€)"
-                      value={line.unitPrice}
-                      onChange={(event) => {
-                        handleUpdateLine(
-                          line.key,
-                          "unitPrice",
-                          event.target.value,
-                        );
-                      }}
-                    />
-                    <Input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      placeholder="TVA %"
-                      value={line.vatRate}
-                      onChange={(event) => {
-                        handleUpdateLine(
-                          line.key,
-                          "vatRate",
-                          event.target.value,
-                        );
-                      }}
-                    />
-                    <Input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      placeholder="Remise %"
-                      value={line.discountPercent}
-                      onChange={(event) => {
-                        handleUpdateLine(
-                          line.key,
-                          "discountPercent",
-                          event.target.value,
-                        );
-                      }}
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => {
-                        handleRemoveLine(line.key);
-                      }}
-                      disabled={editLines.length <= 1}
-                      aria-label="Supprimer la ligne"
-                    >
-                      <Trash2 className="size-4" />
-                    </Button>
-                  </div>
-                ))}
+                  ))}
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleAddLine}
+                >
+                  <Plus className="mr-1 size-3.5" />
+                  Ajouter une ligne
+                </Button>
               </div>
-              <Button type="button" variant="outline" onClick={handleAddLine}>
-                <Plus className="size-4" />
-                Ajouter une ligne
-              </Button>
+
+              <Textarea
+                rows={3}
+                placeholder="Notes (optionnel)"
+                value={editNotes}
+                onChange={(event) => {
+                  setEditNotes(event.target.value);
+                }}
+              />
+              <Textarea
+                rows={3}
+                placeholder="Conditions (optionnel)"
+                value={editTerms}
+                onChange={(event) => {
+                  setEditTerms(event.target.value);
+                }}
+              />
             </div>
-
-            <Textarea
-              rows={5}
-              placeholder="Notes (optionnel)"
-              value={editNotes}
-              onChange={(event) => {
-                setEditNotes(event.target.value);
-              }}
-            />
-            <Textarea
-              rows={5}
-              placeholder="Conditions (optionnel)"
-              value={editTerms}
-              onChange={(event) => {
-                setEditTerms(event.target.value);
-              }}
-            />
-          </FreelanceSideSheetBody>
-
-          <FreelanceSideSheetFooter>
+          ) : undefined
+        }
+        externalPanelFooter={
+          isEditOpen ? (
             <Button
               type="button"
-              variant="outline"
-              onClick={() => {
-                setIsEditOpen(false);
-              }}
-            >
-              Annuler
-            </Button>
-            <Button
-              type="button"
+              className="w-full"
               onClick={handleSaveEdit}
               disabled={!canSaveEdit || isSavingEdit}
             >
               {isSavingEdit ? (
-                <Loader2 className="size-4 animate-spin" />
+                <Loader2 className="mr-1 size-4 animate-spin" />
               ) : null}
               Enregistrer
             </Button>
-          </FreelanceSideSheetFooter>
-        </FreelanceSideSheetContent>
-      </Sheet>
+          ) : undefined
+        }
+        bottomContent={
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between gap-3">
+              <CardTitle>Factures</CardTitle>
+              <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={viewMode === "table" ? "default" : "outline"}
+                  onClick={() => {
+                    setViewMode("table");
+                  }}
+                >
+                  Vue tableau
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={viewMode === "cards" ? "default" : "outline"}
+                  onClick={() => {
+                    setViewMode("cards");
+                  }}
+                >
+                  Vue cards
+                </Button>
+                <FreelanceInvoicesImportSheet
+                  onImported={async () => {
+                    await loadData();
+                  }}
+                />
+                {selectedInvoiceIds.length > 0 ? (
+                  <>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setPendingBulkInvoiceOperation("ISSUE");
+                        setBulkInvoiceReason(
+                          "Émission groupée depuis le tableau",
+                        );
+                      }}
+                    >
+                      Émettre ({selectedInvoiceIds.length})
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setPendingBulkInvoiceOperation("CANCEL");
+                        setBulkInvoiceReason(
+                          "Annulation groupée depuis le tableau",
+                        );
+                      }}
+                    >
+                      Annuler ({selectedInvoiceIds.length})
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="destructive"
+                      onClick={() => {
+                        setPendingBulkInvoiceOperation("DELETE");
+                        setBulkInvoiceReason(
+                          "Suppression groupée owner override",
+                        );
+                      }}
+                    >
+                      Supprimer ({selectedInvoiceIds.length})
+                    </Button>
+                  </>
+                ) : null}
+              </div>
+            </CardHeader>
+            <CardContent>
+              {isLoading ? (
+                <div className="text-muted-foreground flex items-center gap-2 text-sm">
+                  <Loader2 className="size-4 animate-spin" />
+                  Chargement des factures...
+                </div>
+              ) : invoices.length === 0 ? (
+                <p className="text-muted-foreground text-sm">
+                  Aucune facture pour le moment.
+                </p>
+              ) : viewMode === "table" ? (
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-10">
+                        <Checkbox
+                          checked={areAllInvoicesSelected}
+                          onCheckedChange={(checked) => {
+                            handleToggleAllInvoices(Boolean(checked));
+                          }}
+                          aria-label="Sélectionner toutes les factures"
+                        />
+                      </TableHead>
+                      <TableHead>Numéro</TableHead>
+                      <TableHead>Client</TableHead>
+                      <TableHead>Statut</TableHead>
+                      <TableHead>Émission</TableHead>
+                      <TableHead>Échéance</TableHead>
+                      <TableHead>Montant HT</TableHead>
+                      <TableHead>Montant TTC</TableHead>
+                      <TableHead>Payé</TableHead>
+                      <TableHead>Reste dû</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {invoices.map((invoice) => (
+                      <TableRow key={invoice.id}>
+                        <TableCell>
+                          <Checkbox
+                            checked={selectedInvoiceIds.includes(invoice.id)}
+                            onCheckedChange={(checked) => {
+                              handleToggleInvoiceSelection(
+                                invoice.id,
+                                Boolean(checked),
+                              );
+                            }}
+                            aria-label={`Sélectionner ${invoice.number ?? invoice.id}`}
+                          />
+                        </TableCell>
+                        <TableCell className="font-medium">
+                          {invoice.number ?? "Brouillon"}
+                        </TableCell>
+                        <TableCell>{invoice.client.displayName}</TableCell>
+                        <TableCell>
+                          <Badge variant={statusVariant[invoice.status]}>
+                            {invoiceStatusLabel[invoice.status]}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>{formatDate(invoice.issueDate)}</TableCell>
+                        <TableCell>{formatDate(invoice.dueDate)}</TableCell>
+                        <TableCell>
+                          {formatCents(invoice.subtotalCents)}
+                        </TableCell>
+                        <TableCell>{formatCents(invoice.totalCents)}</TableCell>
+                        <TableCell>{formatCents(invoice.paidCents)}</TableCell>
+                        <TableCell>
+                          {formatCents(invoice.balanceCents)}
+                        </TableCell>
+                        <TableCell>{renderInvoiceActions(invoice)}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              ) : (
+                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                  {invoices.map((invoice) => (
+                    <Card key={invoice.id} className="border-2">
+                      <CardHeader className="pb-3">
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <CardTitle className="text-base">
+                              {invoice.number ?? "Brouillon"}
+                            </CardTitle>
+                            <p className="text-muted-foreground text-xs">
+                              {invoice.client.displayName}
+                            </p>
+                          </div>
+                          <Badge variant={statusVariant[invoice.status]}>
+                            {invoiceStatusLabel[invoice.status]}
+                          </Badge>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="space-y-2 text-sm">
+                        <div className="flex items-center justify-between">
+                          <span className="text-muted-foreground">
+                            Émission
+                          </span>
+                          <span>{formatDate(invoice.issueDate)}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-muted-foreground">
+                            Échéance
+                          </span>
+                          <span>{formatDate(invoice.dueDate)}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-muted-foreground">
+                            Montant TTC
+                          </span>
+                          <span className="font-medium">
+                            {formatCents(invoice.totalCents)}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-muted-foreground">Payé</span>
+                          <span>{formatCents(invoice.paidCents)}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-muted-foreground">
+                            Reste dû
+                          </span>
+                          <span>{formatCents(invoice.balanceCents)}</span>
+                        </div>
+                        <div className="pt-2">
+                          {renderInvoiceActions(invoice, true)}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        }
+      />
 
       <Sheet
         open={isPaymentOpen}

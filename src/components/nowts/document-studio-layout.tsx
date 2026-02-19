@@ -7,6 +7,7 @@ import type { ReactNode } from "react";
 type DocumentStudioLayoutProps = {
   toolbar: ReactNode;
   preview: ReactNode;
+  bottomContent?: ReactNode;
   editPanelOpen: boolean;
   onEditPanelOpenChange: (open: boolean) => void;
   editPanelTitle: string;
@@ -19,6 +20,7 @@ type DocumentStudioLayoutProps = {
 export function DocumentStudioLayout({
   toolbar,
   preview,
+  bottomContent,
   editPanelOpen,
   onEditPanelOpenChange,
   editPanelTitle,
@@ -44,6 +46,7 @@ export function DocumentStudioLayout({
         <div className="flex flex-col gap-3">
           {toolbar}
           <div className="flex justify-center py-4">{preview}</div>
+          {bottomContent}
         </div>
       </div>
 

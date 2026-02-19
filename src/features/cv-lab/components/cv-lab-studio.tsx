@@ -44,7 +44,7 @@ import {
 import { dialogManager } from "@/features/dialog-manager/dialog-manager";
 import { toast } from "sonner";
 import { z } from "zod";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, PencilLine, Save } from "lucide-react";
 import { CvSectionEditorRouter } from "./section-editors/cv-section-editor-router";
 
 type CvProfile = {
@@ -1720,10 +1720,6 @@ export function CvLabStudio() {
             <CvLabMinimalToolbar
               documentName={draft.name}
               hasUnsavedChanges={hasUnsavedChanges}
-              isEditPanelOpen={isEditOpen}
-              onToggleEditPanel={() => setIsEditOpen(!isEditOpen)}
-              onSave={() => saveMutation.mutate()}
-              isSaving={saveMutation.isPending}
               documents={documents}
               selectedDocumentId={selectedDocumentId}
               onSelectDocument={(id) => {
@@ -1738,12 +1734,33 @@ export function CvLabStudio() {
         }
         preview={
           selectedDocument && draft ? (
-            <CvLabPreview
-              previewHtml={previewHtml}
-              previewError={previewError}
-              isPreviewLoading={isPreviewLoading}
-              onSectionClick={handleSectionClick}
-            />
+            <div className="flex w-full flex-col items-center">
+              <div className="mb-2 flex w-full max-w-[794px] justify-end gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => saveMutation.mutate()}
+                  disabled={saveMutation.isPending || !hasUnsavedChanges}
+                >
+                  <Save className="mr-1 size-3.5" />
+                  Enregistrer
+                </Button>
+                <Button
+                  size="sm"
+                  variant={isEditOpen ? "secondary" : "outline"}
+                  onClick={() => setIsEditOpen(!isEditOpen)}
+                >
+                  <PencilLine className="mr-1 size-3.5" />
+                  {isEditOpen ? "Fermer" : "Éditer"}
+                </Button>
+              </div>
+              <CvLabPreview
+                previewHtml={previewHtml}
+                previewError={previewError}
+                isPreviewLoading={isPreviewLoading}
+                onSectionClick={handleSectionClick}
+              />
+            </div>
           ) : null
         }
         editPanelOpen={

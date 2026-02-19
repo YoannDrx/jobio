@@ -117,7 +117,7 @@ export function CvLabPanelContent({
 
       <Separator />
 
-      <Collapsible>
+      <Collapsible defaultOpen>
         <CollapsibleTrigger className="flex w-full items-center justify-between py-1 text-sm font-medium">
           Actions
           <ChevronDown className="size-4 transition-transform [[data-state=open]>&]:rotate-180" />

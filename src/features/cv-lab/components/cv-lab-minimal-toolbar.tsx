@@ -8,7 +8,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import { ChevronDown, PencilLine, Plus, Save } from "lucide-react";
+import { ChevronDown, Plus } from "lucide-react";
 import { useState } from "react";
 import { dialogManager } from "@/features/dialog-manager/dialog-manager";
 
@@ -23,10 +23,6 @@ type CvDocumentListItem = {
 type CvLabMinimalToolbarProps = {
   documentName: string;
   hasUnsavedChanges: boolean;
-  isEditPanelOpen: boolean;
-  onToggleEditPanel: () => void;
-  onSave: () => void;
-  isSaving: boolean;
   documents: CvDocumentListItem[];
   selectedDocumentId: string | null;
   onSelectDocument: (id: string) => void;
@@ -37,10 +33,6 @@ type CvLabMinimalToolbarProps = {
 export function CvLabMinimalToolbar({
   documentName,
   hasUnsavedChanges,
-  isEditPanelOpen,
-  onToggleEditPanel,
-  onSave,
-  isSaving,
   documents,
   selectedDocumentId,
   onSelectDocument,
@@ -137,24 +129,6 @@ export function CvLabMinimalToolbar({
             Non sauvegardé
           </Badge>
         ) : null}
-      </div>
-      <div className="flex items-center gap-2">
-        <Button
-          size="sm"
-          onClick={onSave}
-          disabled={isSaving || !hasUnsavedChanges}
-        >
-          <Save className="mr-1 size-3.5" />
-          Enregistrer
-        </Button>
-        <Button
-          size="sm"
-          variant={isEditPanelOpen ? "secondary" : "outline"}
-          onClick={onToggleEditPanel}
-        >
-          <PencilLine className="mr-1 size-3.5" />
-          {isEditPanelOpen ? "Fermer" : "Éditer"}
-        </Button>
       </div>
     </div>
   );
