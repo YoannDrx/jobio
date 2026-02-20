@@ -170,6 +170,7 @@ export default function PipelinePage() {
     limit: number;
     remaining: number;
   } | null>(null);
+  const [currentPlan, setCurrentPlan] = useState("free");
 
   // Capture flow
   const [isParsing, setIsParsing] = useState(false);
@@ -198,6 +199,7 @@ export default function PipelinePage() {
     try {
       const limits = await resolveActionResult(checkAllLimitsAction());
       setMissionLimits(limits.missions);
+      setCurrentPlan(limits.plan);
     } catch (error) {
       toast.error(
         error instanceof Error
@@ -737,6 +739,7 @@ export default function PipelinePage() {
             limit={missionLimits.limit}
             remaining={missionLimits.remaining}
             featureLabel="missions actives"
+            currentPlan={currentPlan}
           />
         )}
 

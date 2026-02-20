@@ -10,6 +10,12 @@ export async function checkAndIncrementAIQuota(userId: string): Promise<void> {
   const month = now.getMonth() + 1;
   const year = now.getFullYear();
 
+  const subscription = await prisma.subscription.findUnique({
+    where: { referenceId: userId },
+  });
+  const limits = getPlanLimits(subscription?.plan);
+  const requestsLimit = limits.aiRequestsPerMonth;
+
   await prisma.aIMonthlyQuota.upsert({
     where: {
       userId_month_year: { userId, month, year },
@@ -22,7 +28,7 @@ export async function checkAndIncrementAIQuota(userId: string): Promise<void> {
       month,
       year,
       requestsUsed: 1,
-      requestsLimit: 999,
+      requestsLimit,
     },
   });
 
@@ -33,11 +39,7 @@ export async function checkAndIncrementAIQuota(userId: string): Promise<void> {
   });
 
   if (quota) {
-    const subscription = await prisma.subscription.findUnique({
-      where: { referenceId: userId },
-    });
-    const limits = getPlanLimits(subscription?.plan);
-    const limit = limits.aiRequestsPerMonth;
+    const limit = requestsLimit;
 
     if (
       quota.requestsUsed >= Math.floor(limit * 0.8) &&

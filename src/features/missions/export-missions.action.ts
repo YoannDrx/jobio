@@ -1,6 +1,7 @@
 "use server";
 
 import { authAction } from "@/lib/actions/safe-actions";
+import { enforcePlanFeature } from "@/lib/plan-limits";
 import { prisma } from "@/lib/prisma";
 import {
   MISSION_STATUS_LABELS,
@@ -11,6 +12,7 @@ import { exportMissionFilterSchema } from "./missions.schema";
 export const exportMissionsAction = authAction
   .inputSchema(exportMissionFilterSchema)
   .action(async ({ parsedInput: filters, ctx: { user } }) => {
+    await enforcePlanFeature(user.id, "csvExport");
     const where: Record<string, unknown> = {
       userId: user.id,
       deletedAt: null,

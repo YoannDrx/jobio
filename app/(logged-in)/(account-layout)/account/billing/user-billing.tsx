@@ -34,6 +34,16 @@ import { openStripePortalAction } from "./billing.action";
 
 type UsageData = Record<string, { used: number; limit: number }>;
 
+const BOOLEAN_LIMIT_KEYS = new Set([
+  "cvTemplatesAll",
+  "cvCoachAI",
+  "atsScoring",
+  "autoFollowUps",
+  "csvExport",
+  "aiEmailGeneration",
+  "aiLinkedinAudit",
+]);
+
 export function UserBilling(props: {
   subscription: UserActiveSubscription;
   usage: UsageData;
@@ -199,6 +209,7 @@ export function UserBilling(props: {
                 LIMITS_CONFIG[key as keyof typeof LIMITS_CONFIG];
 
               const Icon = limitConfig.icon;
+              const isBoolean = BOOLEAN_LIMIT_KEYS.has(key);
               const used =
                 (usage[key] as { used: number; limit: number } | undefined)
                   ?.used ?? 0;
@@ -213,11 +224,19 @@ export function UserBilling(props: {
                         {limitConfig.getLabel(total)}
                       </Typography>
                     </div>
-                    <Typography variant="muted" className="text-xs">
-                      {used.toLocaleString()} / {total.toLocaleString()}
-                    </Typography>
+                    {isBoolean ? (
+                      <Typography variant="muted" className="text-xs">
+                        {total >= 1 ? "Inclus" : "Non inclus"}
+                      </Typography>
+                    ) : (
+                      <Typography variant="muted" className="text-xs">
+                        {used.toLocaleString()} / {total.toLocaleString()}
+                      </Typography>
+                    )}
                   </div>
-                  <Progress value={percentage} className="h-1" />
+                  {!isBoolean && (
+                    <Progress value={percentage} className="h-1" />
+                  )}
                   <Typography variant="muted" className="text-xs">
                     {limitConfig.description}
                   </Typography>

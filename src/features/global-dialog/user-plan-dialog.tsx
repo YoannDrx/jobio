@@ -15,11 +15,10 @@ export const UserPlanDialog = () => {
       <DialogContent className="max-h-[90vh] max-w-3xl overflow-auto px-8 py-6 lg:px-16 lg:py-14">
         <DialogHeader className="w-full text-center">
           <DialogTitle className="text-center font-bold lg:text-3xl">
-            Choose a plan and start growing
+            Choisis ton plan
           </DialogTitle>
           <DialogDescription className="text-center">
-            To unlock full access to our features, choose a plan and start
-            growing your business.
+            Pour débloquer toutes les fonctionnalités, choisis un plan adapté.
           </DialogDescription>
         </DialogHeader>
         <div className="mt-8 flex w-full justify-center gap-4 max-md:flex-col lg:mt-12 lg:gap-8 xl:gap-12">

@@ -31,6 +31,15 @@ export const POST = authRoute
   .handler(async (_req, { body, ctx }) => {
     const user = ctx.user;
 
+    const { checkPlanFeature } = await import("@/lib/plan-limits");
+    const hasCvCoach = await checkPlanFeature(user.id, "cvCoachAI");
+    if (!hasCvCoach) {
+      return new Response(
+        "CV Coach IA non disponible avec ton plan actuel. Passe en Ultra pour y accéder.",
+        { status: 403 },
+      );
+    }
+
     const session = await prisma.cvLabCoachSession.findFirst({
       where: {
         id: body.sessionId,

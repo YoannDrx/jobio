@@ -23,6 +23,33 @@ import { toast } from "sonner";
 import { LoadingButton } from "../form/submit-button";
 import { upgradeUserAction } from "./plans.action";
 
+const BOOLEAN_FEATURES = new Set([
+  "cvTemplatesAll",
+  "cvCoachAI",
+  "atsScoring",
+  "autoFollowUps",
+  "csvExport",
+  "aiEmailGeneration",
+  "aiLinkedinAudit",
+]);
+
+const NUMERIC_FEATURES = [
+  "missions",
+  "profiles",
+  "contacts",
+  "platforms",
+  "companies",
+  "billingClients",
+  "billingQuotes",
+  "billingInvoices",
+  "billingCatalogItems",
+  "aiRequestsPerMonth",
+  "analyticsHistoryDays",
+  "cvDocuments",
+  "sequences",
+  "messageTemplates",
+];
+
 export function PricingCard({
   plan,
   isYearly,
@@ -124,31 +151,53 @@ export function PricingCard({
           </h4>
 
           <ul className="space-y-5">
-            {/* Generate features from limits object */}
-            {Object.entries(plan.limits).map(([key, value]) => {
-              const limitConfig =
-                LIMITS_CONFIG[key as keyof typeof LIMITS_CONFIG];
+            {plan.name === "pro" && (
+              <li className="text-primary text-sm font-medium italic">
+                Tout le plan Free +
+              </li>
+            )}
+            {plan.name === "ultra" && (
+              <li className="text-primary text-sm font-medium italic">
+                Tout le plan Pro +
+              </li>
+            )}
 
-              const Icon = limitConfig.icon;
+            {Object.entries(plan.limits)
+              .filter(([key, value]) => {
+                const isBoolean = BOOLEAN_FEATURES.has(key);
+                const isNumeric = NUMERIC_FEATURES.includes(key);
 
-              return (
-                <li key={key} className="flex items-start">
-                  <div className="text-primary mt-0.5 mr-3 size-5 shrink-0">
-                    <Icon className="size-5" />
-                  </div>
-                  <div>
-                    <p className="font-medium">
-                      {limitConfig.getLabel(value as number)}
-                    </p>
-                    <p className="text-muted-foreground text-sm">
-                      {limitConfig.description}
-                    </p>
-                  </div>
-                </li>
-              );
-            })}
+                if (isBoolean) {
+                  return (value as number) >= 1;
+                }
+                if (isNumeric) {
+                  return (value as number) > 0;
+                }
+                return true;
+              })
+              .map(([key, value]) => {
+                const limitConfig =
+                  LIMITS_CONFIG[key as keyof typeof LIMITS_CONFIG];
 
-            {/* Additional features based on plan */}
+                const Icon = limitConfig.icon;
+
+                return (
+                  <li key={key} className="flex items-start">
+                    <div className="text-primary mt-0.5 mr-3 size-5 shrink-0">
+                      <Icon className="size-5" />
+                    </div>
+                    <div>
+                      <p className="font-medium">
+                        {limitConfig.getLabel(value as number)}
+                      </p>
+                      <p className="text-muted-foreground text-sm">
+                        {limitConfig.description}
+                      </p>
+                    </div>
+                  </li>
+                );
+              })}
+
             {ADDITIONAL_FEATURES[
               plan.name as keyof typeof ADDITIONAL_FEATURES
             ].map((feature, index) => {

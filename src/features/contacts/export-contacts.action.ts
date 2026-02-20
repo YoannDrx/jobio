@@ -1,10 +1,12 @@
 "use server";
 
 import { authAction } from "@/lib/actions/safe-actions";
+import { enforcePlanFeature } from "@/lib/plan-limits";
 import { prisma } from "@/lib/prisma";
 
 export const exportContactsAction = authAction.action(
   async ({ ctx: { user } }) => {
+    await enforcePlanFeature(user.id, "csvExport");
     const contacts = await prisma.contact.findMany({
       where: { userId: user.id, deletedAt: null },
       include: {

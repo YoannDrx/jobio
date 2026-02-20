@@ -47,6 +47,9 @@ export default async function OrgBillingPage() {
     billingQuotes,
     billingInvoices,
     billingCatalogItems,
+    cvDocuments,
+    sequences,
+    messageTemplates,
   ] = await Promise.all([
     checkPlanLimit(user.id, "missions"),
     checkPlanLimit(user.id, "profiles"),
@@ -57,6 +60,9 @@ export default async function OrgBillingPage() {
     checkPlanLimit(user.id, "billingQuotes"),
     checkPlanLimit(user.id, "billingInvoices"),
     checkPlanLimit(user.id, "billingCatalogItems"),
+    checkPlanLimit(user.id, "cvDocuments"),
+    checkPlanLimit(user.id, "sequences"),
+    checkPlanLimit(user.id, "messageTemplates"),
   ]);
 
   const usage = {
@@ -69,6 +75,9 @@ export default async function OrgBillingPage() {
     billingQuotes,
     billingInvoices,
     billingCatalogItems,
+    cvDocuments,
+    sequences,
+    messageTemplates,
   };
 
   return <UserBilling subscription={subscription} usage={usage} />;

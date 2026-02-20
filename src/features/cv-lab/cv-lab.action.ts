@@ -4,6 +4,7 @@ import { Prisma } from "@/generated/prisma";
 import { authAction } from "@/lib/actions/safe-actions";
 import { ApplicationError } from "@/lib/errors/application-error";
 import { prisma } from "@/lib/prisma";
+import { enforcePlanLimit, enforcePlanFeature } from "@/lib/plan-limits";
 import { z } from "zod";
 import {
   createCvLabDocumentSchema,
@@ -218,6 +219,8 @@ export const getCvLabDocumentAction = authAction
 export const createCvLabDocumentAction = authAction
   .inputSchema(createCvLabDocumentSchema)
   .action(async ({ parsedInput, ctx: { user } }) => {
+    await enforcePlanLimit(user.id, "cvDocuments");
+
     const ownedProfile = await ensureOwnedProfile(
       user.id,
       parsedInput.profileId,
@@ -345,6 +348,8 @@ export const duplicateCvLabDocumentAction = authAction
     }),
   )
   .action(async ({ parsedInput, ctx: { user } }) => {
+    await enforcePlanLimit(user.id, "cvDocuments");
+
     const source = await prisma.cvLabDocument.findFirst({
       where: {
         id: parsedInput.id,
@@ -640,6 +645,8 @@ export const analyzeCvLabAtsAction = authAction
     }),
   )
   .action(async ({ parsedInput, ctx: { user } }) => {
+    await enforcePlanFeature(user.id, "atsScoring");
+
     const document = await prisma.cvLabDocument.findFirst({
       where: {
         id: parsedInput.documentId,

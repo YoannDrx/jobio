@@ -153,6 +153,7 @@ export default function ContactsPage() {
     limit: number;
     remaining: number;
   } | null>(null);
+  const [currentPlan, setCurrentPlan] = useState("free");
 
   // Dialog create/edit
   const [showForm, setShowForm] = useState(false);
@@ -221,6 +222,7 @@ export default function ContactsPage() {
   useEffect(() => {
     void resolveActionResult(checkAllLimitsAction()).then((limits) => {
       setContactLimits(limits.contacts);
+      setCurrentPlan(limits.plan);
     });
     void resolveActionResult(getTagsAction()).then((tags) => {
       setAvailableTags(tags);
@@ -406,6 +408,7 @@ export default function ContactsPage() {
             limit={contactLimits.limit}
             remaining={contactLimits.remaining}
             featureLabel="contacts"
+            currentPlan={currentPlan}
           />
         )}
 

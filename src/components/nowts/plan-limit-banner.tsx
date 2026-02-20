@@ -2,6 +2,10 @@
 
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import {
+  getPlanLimitMessage,
+  getPlanUpgradeButtonText,
+} from "@/lib/plan-limits";
 import { AlertTriangle, XCircle } from "lucide-react";
 import Link from "next/link";
 
@@ -10,6 +14,7 @@ type PlanLimitBannerProps = {
   limit: number;
   remaining: number;
   featureLabel: string;
+  currentPlan?: string;
 };
 
 export function PlanLimitBanner({
@@ -17,10 +22,13 @@ export function PlanLimitBanner({
   limit,
   remaining,
   featureLabel,
+  currentPlan = "free",
 }: PlanLimitBannerProps) {
   if (remaining > 3 || limit >= 999999) return null;
 
   const isExhausted = remaining === 0;
+  const upgradeMessage = getPlanLimitMessage(currentPlan, isExhausted);
+  const buttonText = getPlanUpgradeButtonText(currentPlan);
 
   return (
     <Alert
@@ -35,8 +43,8 @@ export function PlanLimitBanner({
         )}
         <AlertDescription>
           {isExhausted
-            ? `Limite atteinte : ${used}/${limit} ${featureLabel}. Passe en Pro pour continuer.`
-            : `Il te reste ${remaining} ${featureLabel} sur ${limit}. Passe en Pro pour en avoir plus.`}
+            ? `Limite atteinte : ${used}/${limit} ${featureLabel}. ${upgradeMessage}`
+            : `Il te reste ${remaining} ${featureLabel} sur ${limit}. ${upgradeMessage}`}
         </AlertDescription>
       </div>
       <Button
@@ -44,7 +52,7 @@ export function PlanLimitBanner({
         variant={isExhausted ? "destructive" : "outline"}
         asChild
       >
-        <Link href="/app/account/billing">Passer en Pro</Link>
+        <Link href="/app/account/billing">{buttonText}</Link>
       </Button>
     </Alert>
   );

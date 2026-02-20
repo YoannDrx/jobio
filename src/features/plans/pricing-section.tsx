@@ -77,7 +77,7 @@ export function Pricing() {
           <p className="text-muted-foreground mt-2">
             Besoin d'un plan sur mesure ?{" "}
             <Link
-              href="/contact"
+              href="mailto:hello@jobio.fr"
               className="text-primary font-medium hover:underline"
             >
               Contacte-nous

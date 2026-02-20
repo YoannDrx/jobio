@@ -14,6 +14,7 @@ import DemoSequence from "@/features/landing/demos/demo-sequence";
 import { LandingHeader } from "@/features/landing/landing-header";
 import { NewsletterSection } from "@/features/landing/newsletter-section";
 import { Footer } from "@/features/layout/footer";
+import { PricingComparisonTable } from "@/features/plans/pricing-comparison-table";
 import { Pricing } from "@/features/plans/pricing-section";
 import { absoluteUrl, buildMarketingMetadata } from "@/lib/seo";
 import { SiteConfig } from "@/site-config";
@@ -342,6 +343,7 @@ export default function HomePage() {
 
         <section id="pricing">
           <Pricing />
+          <PricingComparisonTable />
         </section>
 
         <section className="mx-auto w-full max-w-6xl px-4 py-14 lg:px-8 lg:py-20">
@@ -391,10 +393,10 @@ export default function HomePage() {
                   Créer mon compte
                 </Link>
                 <Link
-                  href="/docs"
+                  href="/about"
                   className={buttonVariants({ size: "lg", variant: "outline" })}
                 >
-                  Lire la doc
+                  En savoir plus
                 </Link>
               </div>
             </div>
