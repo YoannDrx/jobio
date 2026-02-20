@@ -4,6 +4,12 @@ import { ZodRouteError } from "@/lib/errors/zod-route-error";
 import { renderCvLabHtml } from "@/features/cv-lab/cv-renderer";
 import { generateCvPdfBuffer } from "@/features/cv-lab/cv-pdf";
 import {
+  resolveCvContent,
+  resolveCvContentFromProfile,
+  resolveMasterCvContent,
+} from "@/features/cv-lab/cv-content-resolver";
+import type { ResolvedCvContent } from "@/features/cv-lab/cv-content-resolver";
+import {
   CV_LAB_PAGE_SIZES,
   CV_LAB_SECTIONS,
   CV_LAB_TEMPLATES,
@@ -14,7 +20,8 @@ import { z } from "zod";
 const renderModeSchema = z.enum(["preview", "pdf"]);
 
 const querySchema = z.object({
-  documentId: z.string().min(1),
+  documentId: z.string().min(1).optional(),
+  masterCvId: z.string().min(1).optional(),
   mode: renderModeSchema.optional().default("preview"),
   download: z.coerce.boolean().optional().default(false),
 });
@@ -26,7 +33,10 @@ const cvLabSnapshotSchema = z.object({
   template: z.enum(CV_LAB_TEMPLATES).optional(),
   theme: z.enum(CV_LAB_THEMES).optional(),
   pageSize: z.enum(CV_LAB_PAGE_SIZES).optional(),
-  accentColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).optional(),
+  accentColor: z
+    .string()
+    .regex(/^#[0-9a-fA-F]{6}$/)
+    .optional(),
   fontFamily: z.string().trim().min(2).max(40).optional(),
   headlineOverride: z.string().trim().max(180).nullable().optional(),
   summaryOverride: z.string().trim().max(1400).nullable().optional(),
@@ -34,7 +44,11 @@ const cvLabSnapshotSchema = z.object({
   hiddenSections: z.array(z.enum(CV_LAB_SECTIONS)).optional(),
 });
 
-const bodySchema = querySchema.extend({
+const bodySchema = z.object({
+  documentId: z.string().min(1).optional(),
+  masterCvId: z.string().min(1).optional(),
+  mode: renderModeSchema.optional().default("preview"),
+  download: z.coerce.boolean().optional().default(false),
   snapshot: cvLabSnapshotSchema.optional(),
 });
 
@@ -50,7 +64,9 @@ const normalizeSectionOrder = (value: unknown) => {
     );
 
   const unique = Array.from(new Set(sectionOrder));
-  const remaining = CV_LAB_SECTIONS.filter((section) => !unique.includes(section));
+  const remaining = CV_LAB_SECTIONS.filter(
+    (section) => !unique.includes(section),
+  );
 
   return [...unique, ...remaining];
 };
@@ -71,7 +87,7 @@ const normalizeHiddenSections = (value: unknown) => {
   ) as (typeof CV_LAB_SECTIONS)[number][];
 };
 
-const pickOverride = <T,>(value: T | undefined, fallback: T) => {
+const pickOverride = <T>(value: T | undefined, fallback: T) => {
   if (value !== undefined) {
     return value;
   }
@@ -87,6 +103,7 @@ const getOwnedDocument = async (userId: string, documentId: string) => {
     },
     include: {
       profile: true,
+      masterCv: true,
     },
   });
 
@@ -115,6 +132,22 @@ const resolveProfileForSnapshot = async (params: {
   return profile;
 };
 
+const resolveContent = (
+  document: Awaited<ReturnType<typeof getOwnedDocument>>,
+): ResolvedCvContent => {
+  const documentOverrides = {
+    contentOverrides: document.contentOverrides,
+    hiddenItems: document.hiddenItems,
+    personalInfo: document.personalInfo,
+  };
+
+  if (document.masterCv) {
+    return resolveCvContent(document.masterCv, documentOverrides);
+  }
+
+  return resolveCvContentFromProfile(document.profile, documentOverrides);
+};
+
 const renderDocumentResponse = async (params: {
   mode: z.infer<typeof renderModeSchema>;
   download: boolean;
@@ -123,7 +156,9 @@ const renderDocumentResponse = async (params: {
   const safeName = params.document.name
     .replace(/[^a-zA-Z0-9-_]+/g, "-")
     .toLowerCase();
-  const html = renderCvLabHtml(params.document, params.document.profile, {
+
+  const content = resolveContent(params.document);
+  const html = renderCvLabHtml(params.document, content, {
     autoPrint: false,
   });
 
@@ -190,7 +225,10 @@ const buildDocumentFromSnapshot = async (params: {
     template: pickOverride(snapshot.template, params.document.template),
     theme: pickOverride(snapshot.theme, params.document.theme),
     pageSize: "A4" as const,
-    accentColor: pickOverride(snapshot.accentColor, params.document.accentColor),
+    accentColor: pickOverride(
+      snapshot.accentColor,
+      params.document.accentColor,
+    ),
     fontFamily: pickOverride(snapshot.fontFamily, params.document.fontFamily),
     headlineOverride: pickOverride(
       snapshot.headlineOverride,
@@ -205,26 +243,128 @@ const buildDocumentFromSnapshot = async (params: {
   };
 };
 
-export const GET = authRoute.query(querySchema).handler(async (_req, { query, ctx }) => {
-  const document = await getOwnedDocument(ctx.user.id, query.documentId);
-  return renderDocumentResponse({
-    mode: query.mode,
-    download: query.download,
-    document,
-  });
-});
-
-export const POST = authRoute.body(bodySchema).handler(async (_req, { body, ctx }) => {
-  const document = await getOwnedDocument(ctx.user.id, body.documentId);
-  const documentWithSnapshot = await buildDocumentFromSnapshot({
-    userId: ctx.user.id,
-    document,
-    snapshot: body.snapshot,
+const getOwnedMasterCv = async (userId: string, masterCvId: string) => {
+  const masterCv = await prisma.masterCv.findFirst({
+    where: {
+      id: masterCvId,
+      userId,
+    },
   });
 
-  return renderDocumentResponse({
-    mode: body.mode,
-    download: body.download,
-    document: documentWithSnapshot,
+  if (!masterCv) {
+    throw new ZodRouteError("CV Master introuvable", 404);
+  }
+
+  return masterCv;
+};
+
+const renderMasterCvResponse = async (params: {
+  mode: z.infer<typeof renderModeSchema>;
+  download: boolean;
+  masterCv: Awaited<ReturnType<typeof getOwnedMasterCv>>;
+}) => {
+  const safeName = params.masterCv.fullName
+    .replace(/[^a-zA-Z0-9-_]+/g, "-")
+    .toLowerCase();
+
+  const content = resolveMasterCvContent(params.masterCv);
+
+  const mockDocument = {
+    name: params.masterCv.fullName,
+    targetRole: params.masterCv.headline,
+    template: "CLASSIC" as const,
+    theme: "MINIMAL" as const,
+    pageSize: "A4" as const,
+    accentColor: "#2563eb",
+    fontFamily: "Inter",
+    headlineOverride: null,
+    summaryOverride: null,
+    sectionOrder: [...CV_LAB_SECTIONS],
+    hiddenSections: [] as (typeof CV_LAB_SECTIONS)[number][],
+  };
+
+  const html = renderCvLabHtml(mockDocument, content, {
+    autoPrint: false,
   });
-});
+
+  if (params.mode === "pdf") {
+    try {
+      const pdf = await generateCvPdfBuffer(html);
+      const pdfArrayBuffer = new ArrayBuffer(pdf.byteLength);
+      new Uint8Array(pdfArrayBuffer).set(pdf);
+
+      return new Response(pdfArrayBuffer, {
+        headers: {
+          "Content-Type": "application/pdf",
+          "Cache-Control": "private, max-age=0, must-revalidate",
+          "Content-Disposition": `${params.download ? "attachment" : "inline"}; filename="${safeName || "cv"}.pdf"`,
+        },
+      });
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Impossible de générer le PDF";
+      throw new ZodRouteError(message, 503);
+    }
+  }
+
+  return new Response(html, {
+    headers: {
+      "Content-Type": "text/html; charset=utf-8",
+      "Cache-Control": "private, max-age=0, must-revalidate",
+    },
+  });
+};
+
+export const GET = authRoute
+  .query(querySchema)
+  .handler(async (_req, { query, ctx }) => {
+    if (query.masterCvId) {
+      const masterCv = await getOwnedMasterCv(ctx.user.id, query.masterCvId);
+      return renderMasterCvResponse({
+        mode: query.mode,
+        download: query.download,
+        masterCv,
+      });
+    }
+
+    if (!query.documentId) {
+      throw new ZodRouteError("documentId ou masterCvId requis", 400);
+    }
+
+    const document = await getOwnedDocument(ctx.user.id, query.documentId);
+    return renderDocumentResponse({
+      mode: query.mode,
+      download: query.download,
+      document,
+    });
+  });
+
+export const POST = authRoute
+  .body(bodySchema)
+  .handler(async (_req, { body, ctx }) => {
+    if (body.masterCvId) {
+      const masterCv = await getOwnedMasterCv(ctx.user.id, body.masterCvId);
+      return renderMasterCvResponse({
+        mode: body.mode,
+        download: body.download,
+        masterCv,
+      });
+    }
+
+    if (!body.documentId) {
+      throw new ZodRouteError("documentId ou masterCvId requis", 400);
+    }
+
+    const document = await getOwnedDocument(ctx.user.id, body.documentId);
+    const documentWithSnapshot = await buildDocumentFromSnapshot({
+      userId: ctx.user.id,
+      document,
+      snapshot: body.snapshot,
+    });
+
+    return renderDocumentResponse({
+      mode: body.mode,
+      download: body.download,
+      document: documentWithSnapshot,
+    });
+  });

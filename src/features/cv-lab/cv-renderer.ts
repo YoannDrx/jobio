@@ -1,20 +1,6 @@
-import type { CvLabDocument, UserProfile } from "@/generated/prisma";
+import type { CvLabDocument } from "@/generated/prisma";
 import { CV_LAB_SECTIONS, type CvLabSection } from "./cv-lab.schema";
-
-type RenderableProfile = Pick<
-  UserProfile,
-  | "name"
-  | "headline"
-  | "bio"
-  | "skills"
-  | "experiences"
-  | "education"
-  | "certifications"
-  | "languages"
-  | "projects"
-  | "tjmTarget"
-  | "zone"
->;
+import type { ResolvedCvContent } from "./cv-content-resolver";
 
 type RenderableDocument = Pick<
   CvLabDocument,
@@ -203,9 +189,6 @@ const normalizeSections = (
   };
 };
 
-const asArray = <T>(value: unknown): T[] =>
-  Array.isArray(value) ? (value as T[]) : [];
-
 const sectionTitle: Record<CvLabSection, string> = {
   summary: "Profil",
   experiences: "Expériences",
@@ -216,33 +199,22 @@ const sectionTitle: Record<CvLabSection, string> = {
   certifications: "Certifications",
 };
 
-const renderSummary = (
-  profile: RenderableProfile,
-  summaryOverride: string | null,
-): string => {
-  const summary = summaryOverride ?? profile.bio;
+const renderSummary = (content: ResolvedCvContent): string => {
+  const summary = content.summary;
   if (!summary) return "";
   return `<p class="paragraph">${escapeHtml(summary)}</p>`;
 };
 
-const renderExperiences = (profile: RenderableProfile): string => {
-  const experiences = asArray<{
-    title?: string;
-    company?: string;
-    startDate?: string;
-    endDate?: string;
-    description?: string;
-  }>(profile.experiences);
+const renderExperiences = (content: ResolvedCvContent): string => {
+  if (content.experiences.length === 0) return "";
 
-  if (experiences.length === 0) return "";
-
-  return experiences
+  return content.experiences
     .map(
       (experience) => `
         <article class="item">
-          <h4>${escapeHtml(experience.title ?? "Expérience")}</h4>
+          <h4>${escapeHtml(experience.title)}</h4>
           <p class="meta">
-            ${escapeHtml(experience.company ?? "")}
+            ${escapeHtml(experience.company)}
             ${experience.startDate ? ` · ${escapeHtml(experience.startDate)}` : ""}
             ${experience.endDate ? ` - ${escapeHtml(experience.endDate)}` : ""}
           </p>
@@ -253,15 +225,14 @@ const renderExperiences = (profile: RenderableProfile): string => {
     .join("");
 };
 
-const renderSkills = (profile: RenderableProfile): string => {
-  const skills = asArray<{ name?: string; level?: string }>(profile.skills);
-  if (skills.length === 0) return "";
+const renderSkills = (content: ResolvedCvContent): string => {
+  if (content.skills.length === 0) return "";
 
   return `<div class="badges">
-    ${skills
+    ${content.skills
       .map(
         (skill) =>
-          `<span class="badge">${escapeHtml(skill.name ?? "Compétence")}${
+          `<span class="badge">${escapeHtml(skill.name)}${
             skill.level ? `<small>${escapeHtml(skill.level)}</small>` : ""
           }</span>`,
       )
@@ -269,19 +240,14 @@ const renderSkills = (profile: RenderableProfile): string => {
   </div>`;
 };
 
-const renderProjects = (profile: RenderableProfile): string => {
-  const projects = asArray<{
-    name?: string;
-    description?: string;
-    url?: string;
-  }>(profile.projects);
-  if (projects.length === 0) return "";
+const renderProjects = (content: ResolvedCvContent): string => {
+  if (content.projects.length === 0) return "";
 
-  return projects
+  return content.projects
     .map(
       (project) => `
       <article class="item">
-        <h4>${escapeHtml(project.name ?? "Projet")}</h4>
+        <h4>${escapeHtml(project.name)}</h4>
         ${
           project.url
             ? `<p class="meta"><a href="${escapeHtml(project.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(project.url)}</a></p>`
@@ -292,50 +258,46 @@ const renderProjects = (profile: RenderableProfile): string => {
             ? `<p class="paragraph">${escapeHtml(project.description)}</p>`
             : ""
         }
+        ${
+          project.technologies && project.technologies.length > 0
+            ? `<div class="badges" style="margin-top:6px;">${project.technologies.map((tech) => `<span class="badge">${escapeHtml(tech)}</span>`).join("")}</div>`
+            : ""
+        }
       </article>
     `,
     )
     .join("");
 };
 
-const renderEducation = (profile: RenderableProfile): string => {
-  const education = asArray<{
-    degree?: string;
-    school?: string;
-    startDate?: string;
-    endDate?: string;
-    year?: string;
-  }>(profile.education);
-  if (education.length === 0) return "";
+const renderEducation = (content: ResolvedCvContent): string => {
+  if (content.education.length === 0) return "";
 
-  return education
+  return content.education
     .map(
       (entry) => `
       <article class="item">
-        <h4>${escapeHtml(entry.degree ?? "Diplôme")}</h4>
+        <h4>${escapeHtml(entry.degree)}</h4>
         <p class="meta">
-          ${escapeHtml(entry.school ?? "")}
+          ${escapeHtml(entry.institution)}
+          ${entry.field ? ` · ${escapeHtml(entry.field)}` : ""}
           ${entry.startDate ? ` · ${escapeHtml(entry.startDate)}` : ""}
           ${entry.endDate ? ` - ${escapeHtml(entry.endDate)}` : ""}
-          ${entry.year ? ` · ${escapeHtml(entry.year)}` : ""}
         </p>
+        ${entry.description ? `<p class="paragraph">${escapeHtml(entry.description)}</p>` : ""}
       </article>
     `,
     )
     .join("");
 };
 
-const renderLanguages = (profile: RenderableProfile): string => {
-  const languages = asArray<{ name?: string; level?: string }>(
-    profile.languages,
-  );
-  if (languages.length === 0) return "";
+const renderLanguages = (content: ResolvedCvContent): string => {
+  if (content.languages.length === 0) return "";
 
   return `<ul class="list">
-    ${languages
+    ${content.languages
       .map(
         (language) =>
-          `<li>${escapeHtml(language.name ?? "Langue")}${
+          `<li>${escapeHtml(language.name)}${
             language.level ? ` · ${escapeHtml(language.level)}` : ""
           }</li>`,
       )
@@ -343,46 +305,50 @@ const renderLanguages = (profile: RenderableProfile): string => {
   </ul>`;
 };
 
-const renderCertifications = (profile: RenderableProfile): string => {
-  const certifications = asArray<{
-    name?: string;
-    issuer?: string;
-    issueDate?: string;
-  }>(profile.certifications);
-  if (certifications.length === 0) return "";
+const renderCertifications = (content: ResolvedCvContent): string => {
+  if (content.certifications.length === 0) return "";
 
   return `<ul class="list">
-    ${certifications
+    ${content.certifications
       .map(
         (certification) =>
-          `<li>${escapeHtml(certification.name ?? "Certification")}${
+          `<li>${escapeHtml(certification.name)}${
             certification.issuer ? ` · ${escapeHtml(certification.issuer)}` : ""
-          }${certification.issueDate ? ` (${escapeHtml(certification.issueDate)})` : ""}</li>`,
+          }${certification.date ? ` (${escapeHtml(certification.date)})` : ""}</li>`,
       )
       .join("")}
   </ul>`;
 };
 
+const renderHobbies = (content: ResolvedCvContent): string => {
+  if (content.hobbies.length === 0) return "";
+
+  return `<div class="badges">
+    ${content.hobbies
+      .map((hobby) => `<span class="badge">${escapeHtml(hobby)}</span>`)
+      .join("")}
+  </div>`;
+};
+
 const renderSection = (
   section: CvLabSection,
-  profile: RenderableProfile,
-  summaryOverride: string | null,
+  content: ResolvedCvContent,
 ): string => {
   switch (section) {
     case "summary":
-      return renderSummary(profile, summaryOverride);
+      return renderSummary(content);
     case "experiences":
-      return renderExperiences(profile);
+      return renderExperiences(content);
     case "skills":
-      return renderSkills(profile);
+      return renderSkills(content);
     case "projects":
-      return renderProjects(profile);
+      return renderProjects(content);
     case "education":
-      return renderEducation(profile);
+      return renderEducation(content);
     case "languages":
-      return renderLanguages(profile);
+      return renderLanguages(content);
     case "certifications":
-      return renderCertifications(profile);
+      return renderCertifications(content);
     default:
       return "";
   }
@@ -397,7 +363,7 @@ type RenderOptions = {
 
 export const renderCvLabHtml = (
   document: RenderableDocument,
-  profile: RenderableProfile,
+  content: ResolvedCvContent,
   options?: RenderOptions,
 ) => {
   const { order, hidden } = normalizeSections(
@@ -407,8 +373,7 @@ export const renderCvLabHtml = (
   const accentColor = sanitizeHex(document.accentColor);
   const theme = THEMES[document.theme];
   const templateStyle = TEMPLATE_STYLES[document.template];
-  const pageSize = "A4";
-  const headline = document.headlineOverride ?? profile.headline;
+  const headline = document.headlineOverride ?? content.headline;
   const title = document.targetRole
     ? `${document.name} · ${document.targetRole}`
     : document.name;
@@ -416,16 +381,26 @@ export const renderCvLabHtml = (
   const sectionBlocks = order
     .filter((section) => !hidden.has(section))
     .map((section) => {
-      const content = renderSection(section, profile, document.summaryOverride);
-      if (!content) return "";
+      const sectionContent = renderSection(section, content);
+      if (!sectionContent) return "";
       return `
         <section class="section" data-section="${section}">
           <h3>${sectionTitle[section]}</h3>
-          ${content}
+          ${sectionContent}
         </section>
       `;
     })
     .filter(Boolean);
+
+  const hasHobbies = content.hobbies.length > 0;
+  const hobbiesBlock = hasHobbies
+    ? `<section class="section" data-section="hobbies">
+        <h3>Centres d'intérêt</h3>
+        ${renderHobbies(content)}
+      </section>`
+    : "";
+
+  const hasDriverLicenses = content.driverLicenses.length > 0;
 
   const isTwoColumn = document.template === "TWO_COLUMN";
 
@@ -441,15 +416,49 @@ export const renderCvLabHtml = (
     : sectionBlocks.join("");
 
   const sidebarContent = isTwoColumn
-    ? sectionBlocks
-        .filter((block) => {
+    ? [
+        ...sectionBlocks.filter((block) => {
           const section = /data-section="([^"]+)"/.exec(block)?.[1] as
             | CvLabSection
             | undefined;
           return section ? sectionShouldBeSidebar(section) : false;
-        })
+        }),
+        hobbiesBlock,
+      ]
+        .filter(Boolean)
         .join("")
     : "";
+
+  const mainContentWithHobbies = isTwoColumn
+    ? mainContent
+    : [mainContent, hobbiesBlock].filter(Boolean).join("");
+
+  const photoHtml = content.photoUrl
+    ? `<img src="${escapeHtml(content.photoUrl)}" alt="" class="header-photo" />`
+    : "";
+
+  const metaItems: string[] = [];
+  if (document.targetRole) {
+    metaItems.push(
+      `<span class="chip">${escapeHtml(document.targetRole)}</span>`,
+    );
+  }
+  if (content.email) {
+    metaItems.push(`<span>${escapeHtml(content.email)}</span>`);
+  }
+  if (content.phone) {
+    metaItems.push(`<span>${escapeHtml(content.phone)}</span>`);
+  }
+  if (content.city) {
+    metaItems.push(`<span>${escapeHtml(content.city)}</span>`);
+  }
+  if (hasDriverLicenses) {
+    metaItems.push(
+      ...content.driverLicenses.map(
+        (license) => `<span class="chip">${escapeHtml(license)}</span>`,
+      ),
+    );
+  }
 
   return `<!DOCTYPE html>
 <html lang="fr">
@@ -475,8 +484,8 @@ export const renderCvLabHtml = (
       line-height: 1.5;
     }
     @page {
-      size: ${pageSize};
-      margin: 1.25cm;
+      size: 210mm 297mm;
+      margin: 12mm 15mm;
     }
     body {
       padding: ${templateStyle.bodyPadding};
@@ -489,18 +498,32 @@ export const renderCvLabHtml = (
       overflow: hidden;
       background: var(--surface);
     }
-    .header {
+    header {
       padding: ${templateStyle.headerPadding};
       border-bottom: ${templateStyle.headerBorderBottom};
       background: ${templateStyle.headerBackground};
+      display: flex;
+      gap: 20px;
+      align-items: flex-start;
     }
-    .header h1 {
+    .header-photo {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      object-fit: cover;
+      flex-shrink: 0;
+    }
+    .header-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .header-info h1 {
       margin: 0;
       font-size: 34px;
       line-height: 1.1;
       letter-spacing: -0.03em;
     }
-    .header h2 {
+    .header-info h2 {
       margin: 6px 0 0 0;
       color: var(--muted);
       font-size: 20px;
@@ -513,6 +536,7 @@ export const renderCvLabHtml = (
       gap: 12px;
       color: var(--muted);
       font-size: 13px;
+      align-items: center;
     }
     .chip {
       display: inline-flex;
@@ -534,7 +558,7 @@ export const renderCvLabHtml = (
           : "grid-template-columns: minmax(0, 1fr);"
       }
     }
-    .main, .sidebar {
+    main, aside {
       display: grid;
       gap: ${templateStyle.contentGap};
       align-content: start;
@@ -555,6 +579,8 @@ export const renderCvLabHtml = (
       text-transform: uppercase;
       letter-spacing: 0.08em;
       color: color-mix(in srgb, var(--accent) 74%, var(--text));
+      break-after: avoid;
+      page-break-after: avoid;
       ${templateStyle.sectionTitleExtra}
     }
     .item + .item {
@@ -645,6 +671,10 @@ export const renderCvLabHtml = (
         break-inside: avoid;
         page-break-inside: avoid;
       }
+      h3 {
+        break-after: avoid;
+        page-break-after: avoid;
+      }
       a[href]:after {
         content: "";
       }
@@ -653,25 +683,23 @@ export const renderCvLabHtml = (
 </head>
 <body>
   <div class="cv">
-    <header class="header">
-      <h1>${escapeHtml(profile.name)}</h1>
-      <h2>${escapeHtml(headline)}</h2>
-      <div class="meta-line">
-        ${document.targetRole ? `<span class="chip">${escapeHtml(document.targetRole)}</span>` : ""}
-        ${profile.zone ? `<span>${escapeHtml(profile.zone)}</span>` : ""}
-        ${profile.tjmTarget ? `<span>TJM ${escapeHtml(String(profile.tjmTarget))}€</span>` : ""}
-        <span>CV ${escapeHtml(document.name)}</span>
+    <header data-section="header">
+      ${photoHtml}
+      <div class="header-info">
+        <h1>${escapeHtml(content.fullName)}</h1>
+        ${headline ? `<h2>${escapeHtml(headline)}</h2>` : ""}
+        ${metaItems.length > 0 ? `<div class="meta-line">${metaItems.join("")}</div>` : ""}
       </div>
     </header>
     <div class="content">
-      <main class="main">
-        ${mainContent}
+      <main>
+        ${mainContentWithHobbies}
       </main>
-      ${isTwoColumn ? `<aside class="sidebar">${sidebarContent}</aside>` : ""}
+      ${isTwoColumn ? `<aside>${sidebarContent}</aside>` : ""}
     </div>
   </div>
   <style>
-    [data-section]:hover, .header:hover {
+    [data-section]:hover, header:hover {
       outline: 2px solid rgba(59, 130, 246, 0.5);
       outline-offset: 2px;
       cursor: pointer;
@@ -681,7 +709,7 @@ export const renderCvLabHtml = (
   <script>
     document.addEventListener('click', function(e) {
       var section = e.target.closest('[data-section]');
-      var header = e.target.closest('.header');
+      var header = e.target.closest('header');
       var target = section ? section.dataset.section : (header ? 'header' : null);
       if (target && window.parent !== window) {
         window.parent.postMessage({ type: 'cv-section-click', section: target }, '*');

@@ -10,6 +10,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { updateProfileAction } from "@/features/profiles/profiles.action";
+import { updateCvLabDocumentAction } from "@/features/cv-lab/cv-lab.action";
+import type { ContentOverrideItem } from "@/features/cv-lab/cv-lab.schema";
 import { skillSchema, type Skill } from "@/features/profiles/profiles.schema";
 import { resolveActionResult } from "@/lib/actions/actions-utils";
 import { Plus, Trash2 } from "lucide-react";
@@ -25,6 +27,9 @@ type CvProfile = {
 type CvSectionEditorSkillsProps = {
   profile: CvProfile;
   onProfileSaved: () => Promise<void>;
+  documentId?: string;
+  overrides?: ContentOverrideItem[];
+  onOverridesSaved?: () => Promise<void>;
 };
 
 const SKILL_LEVEL_LABELS: Record<string, string> = {
@@ -52,6 +57,9 @@ const parseSkills = (value: unknown): Skill[] => {
 export function CvSectionEditorSkills({
   profile,
   onProfileSaved,
+  documentId,
+  overrides,
+  onOverridesSaved,
 }: CvSectionEditorSkillsProps) {
   const [items, setItems] = useState<Skill[]>(() =>
     parseSkills(profile.skills),
@@ -80,11 +88,32 @@ export function CvSectionEditorSkills({
     }
     setIsSaving(true);
     try {
-      await resolveActionResult(
-        updateProfileAction({ id: profile.id, skills: validated.data }),
-      );
-      toast.success("Compétences sauvegardées");
-      await onProfileSaved();
+      if (documentId && onOverridesSaved) {
+        const overrideItems: ContentOverrideItem[] = validated.data.map(
+          (item, index) => ({
+            masterItemId: `skill-${index}`,
+            name: item.name,
+            level: item.level,
+          }),
+        );
+        await resolveActionResult(
+          updateCvLabDocumentAction({
+            id: documentId,
+            contentOverrides: {
+              ...({} as Record<string, ContentOverrideItem[]>),
+              skills: overrideItems,
+            },
+          }),
+        );
+        toast.success("Compétences sauvegardées (ce CV)");
+        await onOverridesSaved();
+      } else {
+        await resolveActionResult(
+          updateProfileAction({ id: profile.id, skills: validated.data }),
+        );
+        toast.success("Compétences sauvegardées");
+        await onProfileSaved();
+      }
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Erreur de sauvegarde",
@@ -96,6 +125,11 @@ export function CvSectionEditorSkills({
 
   return (
     <div className="flex flex-col gap-3">
+      {overrides && overrides.length > 0 && (
+        <p className="text-muted-foreground text-xs">
+          {overrides.length} override(s) applique(s) sur ce CV.
+        </p>
+      )}
       {items.map((item, index) => (
         <div key={index} className="flex items-center gap-2">
           <div className="flex flex-1 flex-col gap-1">

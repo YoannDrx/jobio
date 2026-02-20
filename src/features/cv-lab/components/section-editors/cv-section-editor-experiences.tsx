@@ -5,6 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { updateProfileAction } from "@/features/profiles/profiles.action";
+import { updateCvLabDocumentAction } from "@/features/cv-lab/cv-lab.action";
+import type { ContentOverrideItem } from "@/features/cv-lab/cv-lab.schema";
 import {
   experienceSchema,
   type Experience,
@@ -23,6 +25,9 @@ type CvProfile = {
 type CvSectionEditorExperiencesProps = {
   profile: CvProfile;
   onProfileSaved: () => Promise<void>;
+  documentId?: string;
+  overrides?: ContentOverrideItem[];
+  onOverridesSaved?: () => Promise<void>;
 };
 
 const parseExperiences = (value: unknown): Experience[] => {
@@ -36,6 +41,9 @@ const parseExperiences = (value: unknown): Experience[] => {
 export function CvSectionEditorExperiences({
   profile,
   onProfileSaved,
+  documentId,
+  overrides,
+  onOverridesSaved,
 }: CvSectionEditorExperiencesProps) {
   const [items, setItems] = useState<Experience[]>(() =>
     parseExperiences(profile.experiences),
@@ -71,19 +79,41 @@ export function CvSectionEditorExperiences({
   const handleSave = async () => {
     const validated = z.array(experienceSchema).safeParse(items);
     if (!validated.success) {
-      toast.error("Données invalides. Vérifiez les champs requis.");
+      toast.error("Donnees invalides. Verifiez les champs requis.");
       return;
     }
     setIsSaving(true);
     try {
-      await resolveActionResult(
-        updateProfileAction({
-          id: profile.id,
-          experiences: validated.data,
-        }),
-      );
-      toast.success("Expériences sauvegardées");
-      await onProfileSaved();
+      if (documentId && onOverridesSaved) {
+        const overrideItems: ContentOverrideItem[] = validated.data.map(
+          (item, index) => ({
+            masterItemId: `exp-${index}`,
+            title: item.title,
+            company: item.company,
+            description: item.description,
+          }),
+        );
+        await resolveActionResult(
+          updateCvLabDocumentAction({
+            id: documentId,
+            contentOverrides: {
+              ...({} as Record<string, ContentOverrideItem[]>),
+              experiences: overrideItems,
+            },
+          }),
+        );
+        toast.success("Experiences sauvegardees (ce CV)");
+        await onOverridesSaved();
+      } else {
+        await resolveActionResult(
+          updateProfileAction({
+            id: profile.id,
+            experiences: validated.data,
+          }),
+        );
+        toast.success("Experiences sauvegardees");
+        await onProfileSaved();
+      }
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Erreur de sauvegarde",
@@ -95,6 +125,11 @@ export function CvSectionEditorExperiences({
 
   return (
     <div className="flex flex-col gap-3">
+      {overrides && overrides.length > 0 && (
+        <p className="text-muted-foreground text-xs">
+          {overrides.length} override(s) applique(s) sur ce CV.
+        </p>
+      )}
       {items.map((item, index) => (
         <div key={index} className="rounded-md border">
           <button
@@ -105,7 +140,7 @@ export function CvSectionEditorExperiences({
             }
           >
             <span>
-              {item.title || item.company || `Expérience ${index + 1}`}
+              {item.title || item.company || `Experience ${index + 1}`}
             </span>
             {expandedIndex === index ? (
               <ChevronUp className="size-4" />
@@ -135,7 +170,7 @@ export function CvSectionEditorExperiences({
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <div className="flex flex-col gap-1">
-                  <Label>Date début</Label>
+                  <Label>Date debut</Label>
                   <Input
                     value={item.startDate ?? ""}
                     placeholder="2020-01"
@@ -179,10 +214,10 @@ export function CvSectionEditorExperiences({
       ))}
       <Button variant="outline" size="sm" onClick={addItem}>
         <Plus className="mr-1 size-3.5" />
-        Ajouter une expérience
+        Ajouter une experience
       </Button>
       <Button onClick={handleSave} disabled={isSaving}>
-        {isSaving ? "Sauvegarde..." : "Sauvegarder les expériences"}
+        {isSaving ? "Sauvegarde..." : "Sauvegarder les experiences"}
       </Button>
     </div>
   );

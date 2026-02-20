@@ -28,6 +28,37 @@ enum CvLabCoachMessageRole {
   ASSISTANT
 }
 
+model MasterCv {
+  id     String @id @default(nanoid(11))
+  userId String @unique
+
+  fullName       String
+  headline       String?
+  summary        String?
+  email          String?
+  phone          String?
+  city           String?
+  photoUrl       String?
+
+  hobbies        Json?
+  driverLicenses Json?
+
+  experiences    Json?
+  skills         Json?
+  education      Json?
+  projects       Json?
+  languages      Json?
+  certifications Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  documents CvLabDocument[]
+
+  @@map("master_cv")
+}
+
 model CvLabDocument {
   id        String @id @default(nanoid(11))
   userId    String
@@ -47,6 +78,11 @@ model CvLabDocument {
   sectionOrder     Json?
   hiddenSections   Json?
 
+  masterCvId       String?
+  contentOverrides Json?
+  hiddenItems      Json?
+  personalInfo     Json?
+
   coachSessionId String?
 
   archivedAt DateTime?
@@ -55,11 +91,13 @@ model CvLabDocument {
 
   user         User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
   profile      UserProfile            @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  masterCv     MasterCv?              @relation(fields: [masterCvId], references: [id], onDelete: SetNull)
   coachSession CvLabCoachSession?     @relation(fields: [coachSessionId], references: [id], onDelete: SetNull)
   versions     CvLabDocumentVersion[]
 
   @@index([userId, updatedAt])
   @@index([profileId])
+  @@index([masterCvId])
   @@index([coachSessionId])
   @@map("cv_lab_document")
 }

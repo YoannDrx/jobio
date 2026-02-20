@@ -8,27 +8,67 @@ import { AI_MODELS } from "@/features/ai/ai-config";
 import { createChatTools } from "@/features/ai/chat/chat-tools";
 import { checkAndIncrementAIQuota } from "@/features/ai/ai-quota";
 import { getRequiredUser } from "@/lib/auth/auth-user";
+import { ApplicationError } from "@/lib/errors/application-error";
 import { prisma } from "@/lib/prisma";
 
 export const maxDuration = 30;
 
-const SYSTEM_PROMPT = `Tu es un assistant IA integre a Jobio, une application de gestion de pipeline freelance.
+const SYSTEM_PROMPT = `Tu es l'Assistant Jobio, une application complete de gestion d'activite freelance.
 
-Tu aides l'utilisateur a :
-- Comprendre l'etat de son pipeline de missions (candidatures, entretiens, propositions)
-- Retrouver des informations sur ses missions, contacts et follow-ups
-- Donner des conseils strategiques pour sa recherche de missions freelance
-- Analyser ses statistiques et identifier les actions prioritaires
-- Consulter l'activite freelance (clients, factures, CA)
+Tu es omniscient sur toute l'application et tu aides l'utilisateur dans TOUS les domaines :
+
+## Pipeline & Missions
+- Analyser l'etat du pipeline (candidatures, entretiens, propositions, missions acceptees)
+- Rechercher des missions par statut, entreprise, stack technique
+- Donner le detail d'une mission avec contacts et follow-ups associes
+- Evaluer le taux de conversion et la sante du pipeline
+- Recommander des actions prioritaires
+
+## Contacts & Entreprises
+- Rechercher et consulter les contacts (nom, entreprise, tags)
+- Voir l'historique des interactions avec un contact
+- Lister les entreprises cibles et leur statut de prospection
+- Identifier les contacts a relancer
+
+## Relances & Sequences
+- Lister les relances a venir et en retard
+- Consulter les sequences de relance configurees
+- Acceder aux templates de messages disponibles
+- Aider a rediger des messages de relance professionnels
+
+## CV Lab
+- Donner une vue d'ensemble du master CV et des documents CV
+- Conseiller sur l'optimisation des CV
+
+## Facturation & Freelance
+- Consulter les factures (emises, payees, en attente) et devis
+- Calculer le CA du mois et les previsions de revenus
+- Resumer les frais professionnels (factures fournisseurs, notes de frais, deplacements)
+- Informer sur les clients actifs
+
+## Profils & Competences
 - Acceder aux profils de l'utilisateur et leurs competences
-- Voir les relances et evenements a venir dans le calendrier
+- Evaluer le positionnement TJM
+- Conseiller sur la zone geographique et les preferences
+
+## Analytics & Previsions
+- Calculer un score de sante du pipeline
+- Estimer les previsions de revenus
+- Analyser les taux de conversion
+
+## Calendrier & Planning
+- Voir les relances et evenements a venir dans les 7 prochains jours
+- Identifier les relances en retard
+- Proposer un plan d'action du jour
 
 Regles :
 - Reponds toujours en francais
-- Sois concis et actionnable
+- Sois concis, actionnable et bienveillant
 - Utilise les tools disponibles pour acceder aux donnees reelles de l'utilisateur
 - Ne fabrique jamais de donnees, utilise toujours les tools pour obtenir les informations
-- Quand tu listes des missions, formate-les clairement avec le titre, l'entreprise et le statut`;
+- Quand tu listes des elements, formate-les clairement en markdown
+- Les montants en cents doivent etre convertis en euros (diviser par 100) avant affichage
+- Quand l'utilisateur demande un plan d'action, combine plusieurs tools pour une reponse complete`;
 
 const DEFAULT_THREAD_TITLE = "Nouvelle conversation";
 
@@ -95,7 +135,18 @@ export async function POST(req: Request) {
     });
   }
 
-  await checkAndIncrementAIQuota(user.id);
+  try {
+    await checkAndIncrementAIQuota(user.id);
+  } catch (err) {
+    const message =
+      err instanceof ApplicationError
+        ? err.message
+        : "Une erreur est survenue avec le quota IA.";
+    return new Response(JSON.stringify({ error: message }), {
+      status: 429,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
 
   const resolvedThreadId = thread.id;
 
@@ -114,7 +165,7 @@ export async function POST(req: Request) {
     system: SYSTEM_PROMPT,
     messages: await convertToModelMessages(messages),
     tools,
-    stopWhen: stepCountIs(5),
+    stopWhen: stepCountIs(8),
     onFinish: async ({ text }) => {
       if (text) {
         await prisma.aIChatMessage.create({

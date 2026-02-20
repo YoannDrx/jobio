@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { updateProfileAction } from "@/features/profiles/profiles.action";
+import { updateCvLabDocumentAction } from "@/features/cv-lab/cv-lab.action";
+import type { ContentOverrideItem } from "@/features/cv-lab/cv-lab.schema";
 import {
   certificationSchema,
   type Certification,
@@ -22,6 +24,9 @@ type CvProfile = {
 type CvSectionEditorCertificationsProps = {
   profile: CvProfile;
   onProfileSaved: () => Promise<void>;
+  documentId?: string;
+  overrides?: ContentOverrideItem[];
+  onOverridesSaved?: () => Promise<void>;
 };
 
 const parseCertifications = (value: unknown): Certification[] => {
@@ -35,6 +40,9 @@ const parseCertifications = (value: unknown): Certification[] => {
 export function CvSectionEditorCertifications({
   profile,
   onProfileSaved,
+  documentId,
+  overrides,
+  onOverridesSaved,
 }: CvSectionEditorCertificationsProps) {
   const [items, setItems] = useState<Certification[]>(() =>
     parseCertifications(profile.certifications),
@@ -68,14 +76,36 @@ export function CvSectionEditorCertifications({
     }
     setIsSaving(true);
     try {
-      await resolveActionResult(
-        updateProfileAction({
-          id: profile.id,
-          certifications: validated.data,
-        }),
-      );
-      toast.success("Certifications sauvegardées");
-      await onProfileSaved();
+      if (documentId && onOverridesSaved) {
+        const overrideItems: ContentOverrideItem[] = validated.data.map(
+          (item, index) => ({
+            masterItemId: `cert-${index}`,
+            name: item.name,
+            issuer: item.issuer,
+            date: item.issueDate,
+          }),
+        );
+        await resolveActionResult(
+          updateCvLabDocumentAction({
+            id: documentId,
+            contentOverrides: {
+              ...({} as Record<string, ContentOverrideItem[]>),
+              certifications: overrideItems,
+            },
+          }),
+        );
+        toast.success("Certifications sauvegardées (ce CV)");
+        await onOverridesSaved();
+      } else {
+        await resolveActionResult(
+          updateProfileAction({
+            id: profile.id,
+            certifications: validated.data,
+          }),
+        );
+        toast.success("Certifications sauvegardées");
+        await onProfileSaved();
+      }
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Erreur de sauvegarde",
@@ -87,6 +117,11 @@ export function CvSectionEditorCertifications({
 
   return (
     <div className="flex flex-col gap-3">
+      {overrides && overrides.length > 0 && (
+        <p className="text-muted-foreground text-xs">
+          {overrides.length} override(s) applique(s) sur ce CV.
+        </p>
+      )}
       {items.map((item, index) => (
         <div key={index} className="rounded-md border">
           <button

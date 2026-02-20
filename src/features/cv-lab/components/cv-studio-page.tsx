@@ -2,22 +2,23 @@
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useQueryState, parseAsString } from "nuqs";
-import { FileText, Sparkles } from "lucide-react";
+import { BookOpen, FileText, Sparkles } from "lucide-react";
 import { CvLabStudio } from "./cv-lab-studio";
 import { CvCoachStudio } from "./cv-coach-studio";
+import { MasterCvEditor } from "./master-cv-editor";
 
-const TAB_VALUES = ["editor", "coach"] as const;
+const TAB_VALUES = ["master", "editor", "coach"] as const;
 type TabValue = (typeof TAB_VALUES)[number];
 
 export function CvStudioPage() {
   const [tab, setTab] = useQueryState(
     "tab",
-    parseAsString.withDefault("editor"),
+    parseAsString.withDefault("master"),
   );
 
   const activeTab: TabValue = TAB_VALUES.includes(tab as TabValue)
     ? (tab as TabValue)
-    : "editor";
+    : "master";
 
   return (
     <Tabs
@@ -27,9 +28,13 @@ export function CvStudioPage() {
     >
       <div className="px-4 py-2">
         <TabsList>
+          <TabsTrigger value="master" className="gap-2">
+            <BookOpen className="size-4" />
+            CV Master
+          </TabsTrigger>
           <TabsTrigger value="editor" className="gap-2">
             <FileText className="size-4" />
-            Éditeur CV
+            Mes CVs
           </TabsTrigger>
           <TabsTrigger value="coach" className="gap-2">
             <Sparkles className="size-4" />
@@ -37,6 +42,9 @@ export function CvStudioPage() {
           </TabsTrigger>
         </TabsList>
       </div>
+      <TabsContent value="master" className="mt-0 flex-1">
+        <MasterCvEditor />
+      </TabsContent>
       <TabsContent value="editor" className="mt-0 flex-1">
         <CvLabStudio />
       </TabsContent>

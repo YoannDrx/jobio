@@ -15,6 +15,7 @@ type DocumentStudioLayoutProps = {
   editPanelFooter?: ReactNode;
   editPanelWidth?: number;
   emptyState?: ReactNode;
+  contentMode?: "centered" | "full";
 };
 
 export function DocumentStudioLayout({
@@ -28,6 +29,7 @@ export function DocumentStudioLayout({
   editPanelFooter,
   editPanelWidth = 420,
   emptyState,
+  contentMode = "centered",
 }: DocumentStudioLayoutProps) {
   const isMobile = useIsMobile();
 
@@ -45,7 +47,15 @@ export function DocumentStudioLayout({
       >
         <div className="flex flex-col gap-3">
           {toolbar}
-          <div className="flex justify-center py-4">{preview}</div>
+          <div
+            className={
+              contentMode === "full"
+                ? "flex flex-1 flex-col p-4"
+                : "flex justify-center py-4"
+            }
+          >
+            {preview}
+          </div>
           {bottomContent}
         </div>
       </div>

@@ -5,6 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { updateProfileAction } from "@/features/profiles/profiles.action";
+import { updateCvLabDocumentAction } from "@/features/cv-lab/cv-lab.action";
+import type { ContentOverrideItem } from "@/features/cv-lab/cv-lab.schema";
 import {
   educationSchema,
   type Education,
@@ -23,6 +25,9 @@ type CvProfile = {
 type CvSectionEditorEducationProps = {
   profile: CvProfile;
   onProfileSaved: () => Promise<void>;
+  documentId?: string;
+  overrides?: ContentOverrideItem[];
+  onOverridesSaved?: () => Promise<void>;
 };
 
 const parseEducation = (value: unknown): Education[] => {
@@ -36,6 +41,9 @@ const parseEducation = (value: unknown): Education[] => {
 export function CvSectionEditorEducation({
   profile,
   onProfileSaved,
+  documentId,
+  overrides,
+  onOverridesSaved,
 }: CvSectionEditorEducationProps) {
   const [items, setItems] = useState<Education[]>(() =>
     parseEducation(profile.education),
@@ -79,11 +87,34 @@ export function CvSectionEditorEducation({
     }
     setIsSaving(true);
     try {
-      await resolveActionResult(
-        updateProfileAction({ id: profile.id, education: validated.data }),
-      );
-      toast.success("Formation sauvegardée");
-      await onProfileSaved();
+      if (documentId && onOverridesSaved) {
+        const overrideItems: ContentOverrideItem[] = validated.data.map(
+          (item, index) => ({
+            masterItemId: `edu-${index}`,
+            institution: item.school,
+            degree: item.degree,
+            field: item.field,
+            description: item.description,
+          }),
+        );
+        await resolveActionResult(
+          updateCvLabDocumentAction({
+            id: documentId,
+            contentOverrides: {
+              ...({} as Record<string, ContentOverrideItem[]>),
+              education: overrideItems,
+            },
+          }),
+        );
+        toast.success("Formation sauvegardée (ce CV)");
+        await onOverridesSaved();
+      } else {
+        await resolveActionResult(
+          updateProfileAction({ id: profile.id, education: validated.data }),
+        );
+        toast.success("Formation sauvegardée");
+        await onProfileSaved();
+      }
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Erreur de sauvegarde",
@@ -95,6 +126,11 @@ export function CvSectionEditorEducation({
 
   return (
     <div className="flex flex-col gap-3">
+      {overrides && overrides.length > 0 && (
+        <p className="text-muted-foreground text-xs">
+          {overrides.length} override(s) applique(s) sur ce CV.
+        </p>
+      )}
       {items.map((item, index) => (
         <div key={index} className="rounded-md border">
           <button

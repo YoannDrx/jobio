@@ -14,6 +14,10 @@ import {
   updateCvLabDocumentSchema,
 } from "./cv-lab.schema";
 import { analyzeCvAts } from "./cv-ats";
+import {
+  resolveCvContent,
+  resolveCvContentFromProfile,
+} from "./cv-content-resolver";
 
 type CvLabDocumentForSnapshot = {
   id: string;
@@ -29,6 +33,10 @@ type CvLabDocumentForSnapshot = {
   summaryOverride: string | null;
   sectionOrder: Prisma.JsonValue;
   hiddenSections: Prisma.JsonValue;
+  masterCvId?: string | null;
+  contentOverrides?: Prisma.JsonValue;
+  hiddenItems?: Prisma.JsonValue;
+  personalInfo?: Prisma.JsonValue;
 };
 
 type CvLabProfileForSnapshot = {
@@ -69,7 +77,9 @@ const normalizeSectionOrder = (value: unknown) => {
     );
 
   const unique = Array.from(new Set(sectionOrder));
-  const remaining = CV_LAB_SECTIONS.filter((section) => !unique.includes(section));
+  const remaining = CV_LAB_SECTIONS.filter(
+    (section) => !unique.includes(section),
+  );
   return [...unique, ...remaining];
 };
 
@@ -99,8 +109,7 @@ const buildExperienceLines = (value: unknown): string[] => {
     .map((item) => {
       if (!item || typeof item !== "object") return "";
       const data = item as Record<string, unknown>;
-      const title =
-        typeof data.title === "string" ? data.title.trim() : "";
+      const title = typeof data.title === "string" ? data.title.trim() : "";
       const company =
         typeof data.company === "string" ? data.company.trim() : "";
       const description =
@@ -134,6 +143,10 @@ const buildVersionSnapshot = (
   summaryOverride: document.summaryOverride,
   sectionOrder: normalizeSectionOrder(document.sectionOrder),
   hiddenSections: normalizeHiddenSections(document.hiddenSections),
+  masterCvId: document.masterCvId ?? null,
+  contentOverrides: document.contentOverrides ?? null,
+  hiddenItems: document.hiddenItems ?? null,
+  personalInfo: document.personalInfo ?? null,
   ...(profile
     ? {
         profileSnapshot: {
@@ -167,10 +180,7 @@ export const listCvLabDocumentsAction = authAction
           },
         },
       },
-      orderBy: [
-        { archivedAt: "asc" },
-        { updatedAt: "desc" },
-      ],
+      orderBy: [{ archivedAt: "asc" }, { updatedAt: "desc" }],
     });
 
     return documents.map((document) => ({
@@ -190,6 +200,7 @@ export const getCvLabDocumentAction = authAction
       },
       include: {
         profile: true,
+        masterCv: true,
       },
     });
 
@@ -207,7 +218,10 @@ export const getCvLabDocumentAction = authAction
 export const createCvLabDocumentAction = authAction
   .inputSchema(createCvLabDocumentSchema)
   .action(async ({ parsedInput, ctx: { user } }) => {
-    const ownedProfile = await ensureOwnedProfile(user.id, parsedInput.profileId);
+    const ownedProfile = await ensureOwnedProfile(
+      user.id,
+      parsedInput.profileId,
+    );
 
     const createdDocument = await prisma.cvLabDocument.create({
       data: {
@@ -224,6 +238,16 @@ export const createCvLabDocumentAction = authAction
         summaryOverride: parsedInput.summaryOverride ?? null,
         sectionOrder: toJsonArray(parsedInput.sectionOrder),
         hiddenSections: toJsonArray(parsedInput.hiddenSections),
+        masterCvId: parsedInput.masterCvId ?? null,
+        contentOverrides: parsedInput.contentOverrides
+          ? (parsedInput.contentOverrides as unknown as Prisma.InputJsonValue)
+          : Prisma.JsonNull,
+        hiddenItems: parsedInput.hiddenItems
+          ? (parsedInput.hiddenItems as unknown as Prisma.InputJsonValue)
+          : Prisma.JsonNull,
+        personalInfo: parsedInput.personalInfo
+          ? (parsedInput.personalInfo as unknown as Prisma.InputJsonValue)
+          : Prisma.JsonNull,
       },
     });
 
@@ -285,6 +309,28 @@ export const updateCvLabDocumentAction = authAction
         hiddenSections:
           parsedInput.hiddenSections !== undefined
             ? toJsonArray(parsedInput.hiddenSections)
+            : undefined,
+        masterCvId:
+          parsedInput.masterCvId !== undefined
+            ? parsedInput.masterCvId
+            : undefined,
+        contentOverrides:
+          parsedInput.contentOverrides !== undefined
+            ? parsedInput.contentOverrides
+              ? (parsedInput.contentOverrides as unknown as Prisma.InputJsonValue)
+              : Prisma.JsonNull
+            : undefined,
+        hiddenItems:
+          parsedInput.hiddenItems !== undefined
+            ? parsedInput.hiddenItems
+              ? (parsedInput.hiddenItems as unknown as Prisma.InputJsonValue)
+              : Prisma.JsonNull
+            : undefined,
+        personalInfo:
+          parsedInput.personalInfo !== undefined
+            ? parsedInput.personalInfo
+              ? (parsedInput.personalInfo as unknown as Prisma.InputJsonValue)
+              : Prisma.JsonNull
             : undefined,
       },
     });
@@ -481,7 +527,12 @@ export const createCvLabVersionAction = authAction
   });
 
 export const listCvLabVersionsAction = authAction
-  .inputSchema(z.object({ documentId: z.string().min(1), limit: z.number().min(1).max(50).default(15) }))
+  .inputSchema(
+    z.object({
+      documentId: z.string().min(1),
+      limit: z.number().min(1).max(50).default(15),
+    }),
+  )
   .action(async ({ parsedInput, ctx: { user } }) => {
     const document = await prisma.cvLabDocument.findFirst({
       where: {
@@ -596,6 +647,7 @@ export const analyzeCvLabAtsAction = authAction
       },
       include: {
         profile: true,
+        masterCv: true,
       },
     });
 
@@ -603,25 +655,15 @@ export const analyzeCvLabAtsAction = authAction
       throw new ApplicationError("Document CV introuvable");
     }
 
-    let profile = document.profile;
-    if (
-      parsedInput.snapshot?.profileId &&
-      parsedInput.snapshot.profileId !== document.profileId
-    ) {
-      await ensureOwnedProfile(user.id, parsedInput.snapshot.profileId);
-      const selectedProfile = await prisma.userProfile.findFirst({
-        where: {
-          id: parsedInput.snapshot.profileId,
-          userId: user.id,
-        },
-      });
+    const documentOverrides = {
+      contentOverrides: document.contentOverrides,
+      hiddenItems: document.hiddenItems,
+      personalInfo: document.personalInfo,
+    };
 
-      if (!selectedProfile) {
-        throw new ApplicationError("Profil introuvable");
-      }
-
-      profile = selectedProfile;
-    }
+    const content = document.masterCv
+      ? resolveCvContent(document.masterCv, documentOverrides)
+      : resolveCvContentFromProfile(document.profile, documentOverrides);
 
     const normalizedSectionOrder = parsedInput.snapshot?.sectionOrder
       ? normalizeSectionOrder(parsedInput.snapshot.sectionOrder)
@@ -631,7 +673,7 @@ export const analyzeCvLabAtsAction = authAction
       : normalizeHiddenSections(document.hiddenSections);
 
     return analyzeCvAts({
-      profile,
+      content,
       document: {
         ...document,
         targetRole: parsedInput.snapshot?.targetRole ?? document.targetRole,

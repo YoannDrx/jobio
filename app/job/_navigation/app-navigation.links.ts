@@ -2,7 +2,6 @@ import type { NavigationGroup } from "@/features/navigation/navigation.type";
 import {
   BarChart3,
   BookOpen,
-  BotIcon,
   CalendarCheck,
   CalendarClock,
   CalendarDays,
@@ -70,7 +69,6 @@ export const APP_LINKS: NavigationGroup[] = [
         Icon: BookOpen,
         label: "Programmes",
       },
-      { href: `${APP_PATH}/ai`, Icon: BotIcon, label: "Chat IA" },
       { href: `${APP_PATH}/analytics`, Icon: BarChart3, label: "Analytics" },
       { href: "/freelance", Icon: Receipt, label: "Facturation" },
     ],

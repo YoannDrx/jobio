@@ -49,6 +49,7 @@ model User {
   cvLabDocumentVersions              CvLabDocumentVersion[]
   cvLabCoachSessions                 CvLabCoachSession[]
   cvLabCoachMessages                 CvLabCoachMessage[]
+  masterCv                           MasterCv?
   billingProfile                     BillingProfile?
   billingClients                     BillingClient[]
   billingClientContacts              BillingClientContact[]

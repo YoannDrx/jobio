@@ -1,5 +1,9 @@
 "use client";
 
+import type {
+  ContentOverrides,
+  PersonalInfoOverrides,
+} from "@/features/cv-lab/cv-lab.schema";
 import { CvSectionEditorHeader } from "./cv-section-editor-header";
 import { CvSectionEditorSummary } from "./cv-section-editor-summary";
 import { CvSectionEditorExperiences } from "./cv-section-editor-experiences";
@@ -8,7 +12,7 @@ import { CvSectionEditorEducation } from "./cv-section-editor-education";
 import { CvSectionEditorProjects } from "./cv-section-editor-projects";
 import { CvSectionEditorLanguages } from "./cv-section-editor-languages";
 import { CvSectionEditorCertifications } from "./cv-section-editor-certifications";
-import { Info } from "lucide-react";
+import { Info, PenLine } from "lucide-react";
 
 type CvProfile = {
   id: string;
@@ -34,13 +38,17 @@ type CvSectionEditorRouterProps = {
   draft: Draft;
   onDraftChange: (patch: Partial<Draft>) => void;
   onProfileSaved: () => Promise<void>;
+  documentId?: string;
+  contentOverrides?: ContentOverrides;
+  personalInfo?: PersonalInfoOverrides;
+  onOverridesSaved?: () => Promise<void>;
 };
 
 const SECTION_TITLES: Record<string, string> = {
-  header: "En-tête / Identité",
-  summary: "Résumé",
-  experiences: "Expériences",
-  skills: "Compétences",
+  header: "En-tete / Identite",
+  summary: "Resume",
+  experiences: "Experiences",
+  skills: "Competences",
   education: "Formation",
   projects: "Projets",
   languages: "Langues",
@@ -53,8 +61,13 @@ export function CvSectionEditorRouter({
   draft,
   onDraftChange,
   onProfileSaved,
+  documentId,
+  contentOverrides,
+  personalInfo,
+  onOverridesSaved,
 }: CvSectionEditorRouterProps) {
   const title = SECTION_TITLES[section] ?? section;
+  const isOverrideMode = Boolean(documentId);
 
   const renderEditor = () => {
     switch (section) {
@@ -64,6 +77,9 @@ export function CvSectionEditorRouter({
             profile={profile}
             draft={draft}
             onDraftChange={onDraftChange}
+            documentId={documentId}
+            personalInfo={personalInfo}
+            onOverridesSaved={onOverridesSaved}
           />
         );
       case "summary":
@@ -79,6 +95,9 @@ export function CvSectionEditorRouter({
           <CvSectionEditorExperiences
             profile={profile}
             onProfileSaved={onProfileSaved}
+            documentId={documentId}
+            overrides={contentOverrides?.experiences}
+            onOverridesSaved={onOverridesSaved}
           />
         );
       case "skills":
@@ -86,6 +105,9 @@ export function CvSectionEditorRouter({
           <CvSectionEditorSkills
             profile={profile}
             onProfileSaved={onProfileSaved}
+            documentId={documentId}
+            overrides={contentOverrides?.skills}
+            onOverridesSaved={onOverridesSaved}
           />
         );
       case "education":
@@ -93,6 +115,9 @@ export function CvSectionEditorRouter({
           <CvSectionEditorEducation
             profile={profile}
             onProfileSaved={onProfileSaved}
+            documentId={documentId}
+            overrides={contentOverrides?.education}
+            onOverridesSaved={onOverridesSaved}
           />
         );
       case "projects":
@@ -100,6 +125,9 @@ export function CvSectionEditorRouter({
           <CvSectionEditorProjects
             profile={profile}
             onProfileSaved={onProfileSaved}
+            documentId={documentId}
+            overrides={contentOverrides?.projects}
+            onOverridesSaved={onOverridesSaved}
           />
         );
       case "languages":
@@ -107,6 +135,9 @@ export function CvSectionEditorRouter({
           <CvSectionEditorLanguages
             profile={profile}
             onProfileSaved={onProfileSaved}
+            documentId={documentId}
+            overrides={contentOverrides?.languages}
+            onOverridesSaved={onOverridesSaved}
           />
         );
       case "certifications":
@@ -114,12 +145,15 @@ export function CvSectionEditorRouter({
           <CvSectionEditorCertifications
             profile={profile}
             onProfileSaved={onProfileSaved}
+            documentId={documentId}
+            overrides={contentOverrides?.certifications}
+            onOverridesSaved={onOverridesSaved}
           />
         );
       default:
         return (
           <p className="text-muted-foreground text-sm">
-            Section "{section}" non reconnue.
+            Section &quot;{section}&quot; non reconnue.
           </p>
         );
     }
@@ -138,13 +172,23 @@ export function CvSectionEditorRouter({
     <div className="flex flex-col gap-4">
       <p className="text-sm font-semibold">{title}</p>
       {isProfileSection ? (
-        <div className="flex items-start gap-2 rounded-md border border-blue-200 bg-blue-50 p-3 dark:border-blue-900 dark:bg-blue-950">
-          <Info className="mt-0.5 size-4 shrink-0 text-blue-600 dark:text-blue-400" />
-          <p className="text-xs text-blue-800 dark:text-blue-300">
-            Ces informations proviennent de votre profil. Les modifications
-            seront répercutées sur tous les CV utilisant ce profil.
-          </p>
-        </div>
+        isOverrideMode ? (
+          <div className="flex items-start gap-2 rounded-md border border-amber-200 bg-amber-50 p-3 dark:border-amber-900 dark:bg-amber-950">
+            <PenLine className="mt-0.5 size-4 shrink-0 text-amber-600 dark:text-amber-400" />
+            <p className="text-xs text-amber-800 dark:text-amber-300">
+              Modifications locales a ce CV. Le CV Master n&apos;est pas
+              affecte.
+            </p>
+          </div>
+        ) : (
+          <div className="flex items-start gap-2 rounded-md border border-blue-200 bg-blue-50 p-3 dark:border-blue-900 dark:bg-blue-950">
+            <Info className="mt-0.5 size-4 shrink-0 text-blue-600 dark:text-blue-400" />
+            <p className="text-xs text-blue-800 dark:text-blue-300">
+              Ces informations proviennent de votre profil. Les modifications
+              seront repercutees sur tous les CV utilisant ce profil.
+            </p>
+          </div>
+        )
       ) : null}
       {renderEditor()}
     </div>

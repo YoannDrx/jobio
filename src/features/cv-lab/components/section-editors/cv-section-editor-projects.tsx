@@ -5,6 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { updateProfileAction } from "@/features/profiles/profiles.action";
+import { updateCvLabDocumentAction } from "@/features/cv-lab/cv-lab.action";
+import type { ContentOverrideItem } from "@/features/cv-lab/cv-lab.schema";
 import {
   projectSchema,
   type Project,
@@ -23,6 +25,9 @@ type CvProfile = {
 type CvSectionEditorProjectsProps = {
   profile: CvProfile;
   onProfileSaved: () => Promise<void>;
+  documentId?: string;
+  overrides?: ContentOverrideItem[];
+  onOverridesSaved?: () => Promise<void>;
 };
 
 const parseProjects = (value: unknown): Project[] => {
@@ -36,6 +41,9 @@ const parseProjects = (value: unknown): Project[] => {
 export function CvSectionEditorProjects({
   profile,
   onProfileSaved,
+  documentId,
+  overrides,
+  onOverridesSaved,
 }: CvSectionEditorProjectsProps) {
   const [items, setItems] = useState<Project[]>(() =>
     parseProjects(profile.projects),
@@ -72,11 +80,33 @@ export function CvSectionEditorProjects({
     }
     setIsSaving(true);
     try {
-      await resolveActionResult(
-        updateProfileAction({ id: profile.id, projects: validated.data }),
-      );
-      toast.success("Projets sauvegardés");
-      await onProfileSaved();
+      if (documentId && onOverridesSaved) {
+        const overrideItems: ContentOverrideItem[] = validated.data.map(
+          (item, index) => ({
+            masterItemId: `proj-${index}`,
+            name: item.name,
+            description: item.description,
+            url: item.url,
+          }),
+        );
+        await resolveActionResult(
+          updateCvLabDocumentAction({
+            id: documentId,
+            contentOverrides: {
+              ...({} as Record<string, ContentOverrideItem[]>),
+              projects: overrideItems,
+            },
+          }),
+        );
+        toast.success("Projets sauvegardés (ce CV)");
+        await onOverridesSaved();
+      } else {
+        await resolveActionResult(
+          updateProfileAction({ id: profile.id, projects: validated.data }),
+        );
+        toast.success("Projets sauvegardés");
+        await onProfileSaved();
+      }
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Erreur de sauvegarde",
@@ -88,6 +118,11 @@ export function CvSectionEditorProjects({
 
   return (
     <div className="flex flex-col gap-3">
+      {overrides && overrides.length > 0 && (
+        <p className="text-muted-foreground text-xs">
+          {overrides.length} override(s) applique(s) sur ce CV.
+        </p>
+      )}
       {items.map((item, index) => (
         <div key={index} className="rounded-md border">
           <button
