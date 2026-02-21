@@ -106,6 +106,8 @@ export const getTemplatesAction = authAction
 export const duplicateTemplateAction = authAction
   .inputSchema(z.object({ id: z.string() }))
   .action(async ({ parsedInput: { id }, ctx: { user } }) => {
+    await enforcePlanLimit(user.id, "messageTemplates");
+
     const template = await prisma.messageTemplate.findFirst({
       where: { id, OR: [{ userId: user.id }, { isSystem: true }] },
     });

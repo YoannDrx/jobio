@@ -10,6 +10,17 @@ import { PricingCard } from "./pricing-card";
 
 export function Pricing() {
   const [isYearly, setIsYearly] = useState(false);
+  const maxYearlyDiscount = Math.max(
+    ...AUTH_PLANS.filter((plan) => plan.price > 0 && plan.yearlyPrice)
+      .map((plan) => {
+        const yearlyPrice = plan.yearlyPrice ?? plan.price * 12;
+        const annualCost = plan.price * 12;
+        if (annualCost <= 0) return 0;
+        return Math.round(((annualCost - yearlyPrice) / annualCost) * 100);
+      })
+      .filter((discount) => discount > 0),
+    0,
+  );
 
   return (
     <section className="from-background to-muted/20 w-full bg-gradient-to-b py-12 md:py-24 lg:py-32">
@@ -53,7 +64,7 @@ export function Pricing() {
                 variant="outline"
                 className="border-primary/20 bg-primary/10 text-primary ml-2"
               >
-                -20%
+                -{maxYearlyDiscount}%
               </Badge>
             </div>
           </div>

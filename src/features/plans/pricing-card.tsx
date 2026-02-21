@@ -230,10 +230,20 @@ export function PricingCard({
             plan.isPopular ? "bg-primary hover:bg-primary/90" : "",
           )}
           onClick={() => {
+            if (plan.price === 0) {
+              if (session?.user) {
+                window.location.href = "/job";
+                return;
+              }
+              window.location.href = "/auth/signup";
+              return;
+            }
+
             if (!session?.user) {
               toast.error("Connecte-toi pour changer ton plan");
               return;
             }
+
             upgradeUser({
               plan: plan.name,
               annual: isYearly,
@@ -243,7 +253,9 @@ export function PricingCard({
           }}
         >
           {plan.price === 0
-            ? "Commencer"
+            ? session?.user
+              ? "Accéder à Jobio"
+              : "Commencer gratuitement"
             : isYearly
               ? "S'abonner à l'année"
               : "S'abonner au mois"}

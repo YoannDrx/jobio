@@ -52,7 +52,7 @@ export function PlanLimitBanner({
         variant={isExhausted ? "destructive" : "outline"}
         asChild
       >
-        <Link href="/app/account/billing">{buttonText}</Link>
+        <Link href="/account/billing">{buttonText}</Link>
       </Button>
     </Alert>
   );

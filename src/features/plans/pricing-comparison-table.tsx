@@ -4,6 +4,7 @@ import { Check, X } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Typography } from "@/components/nowts/typography";
 import { cn } from "@/lib/utils";
+import { Fragment } from "react";
 
 type Feature = {
   name: string;
@@ -41,7 +42,7 @@ const categories: Category[] = [
     name: "Automatisation",
     features: [
       { name: "Relances auto", free: false, pro: true, ultra: true },
-      { name: "Séquences", free: "0", pro: "3", ultra: "Illimité" },
+      { name: "Séquences", free: false, pro: "3", ultra: "Illimité" },
       { name: "Templates messages", free: "3", pro: "20", ultra: "Illimité" },
       { name: "Export CSV", free: false, pro: true, ultra: true },
     ],
@@ -146,39 +147,39 @@ export function PricingComparisonTable() {
             </tr>
           </thead>
           <tbody>
-            {categories.map((category, categoryIdx) => (
-              <tr key={categoryIdx}>
-                <td
-                  colSpan={4}
-                  className="bg-muted/20 border-t border-b px-4 py-3"
-                >
-                  <Typography variant="h3" className="text-sm">
-                    {category.name}
-                  </Typography>
-                </td>
-              </tr>
-            ))}
-            {categories.map((category) =>
-              category.features.map((feature, featureIdx) => (
-                <tr
-                  key={`${category.name}-${featureIdx}`}
-                  className="hover:bg-muted/30 border-b transition-colors"
-                >
-                  <td className="px-4 py-4">
-                    <Typography variant="muted">{feature.name}</Typography>
-                  </td>
-                  <td className={cn("px-4 py-4 text-center", "bg-muted/5")}>
-                    <FeatureValue value={feature.free} />
-                  </td>
-                  <td className={cn("px-4 py-4 text-center", "bg-primary/5")}>
-                    <FeatureValue value={feature.pro} />
-                  </td>
-                  <td className={cn("px-4 py-4 text-center", "bg-muted/5")}>
-                    <FeatureValue value={feature.ultra} />
+            {categories.map((category) => (
+              <Fragment key={category.name}>
+                <tr>
+                  <td
+                    colSpan={4}
+                    className="bg-muted/20 border-t border-b px-4 py-3"
+                  >
+                    <Typography variant="h3" className="text-sm">
+                      {category.name}
+                    </Typography>
                   </td>
                 </tr>
-              )),
-            )}
+                {category.features.map((feature, featureIdx) => (
+                  <tr
+                    key={`${category.name}-${featureIdx}`}
+                    className="hover:bg-muted/30 border-b transition-colors"
+                  >
+                    <td className="px-4 py-4">
+                      <Typography variant="muted">{feature.name}</Typography>
+                    </td>
+                    <td className={cn("px-4 py-4 text-center", "bg-muted/5")}>
+                      <FeatureValue value={feature.free} />
+                    </td>
+                    <td className={cn("px-4 py-4 text-center", "bg-primary/5")}>
+                      <FeatureValue value={feature.pro} />
+                    </td>
+                    <td className={cn("px-4 py-4 text-center", "bg-muted/5")}>
+                      <FeatureValue value={feature.ultra} />
+                    </td>
+                  </tr>
+                ))}
+              </Fragment>
+            ))}
           </tbody>
         </table>
       </div>

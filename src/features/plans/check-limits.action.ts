@@ -21,3 +21,14 @@ export const checkAllLimitsAction = authAction.action(
     return { missions, contacts, profiles, plan };
   },
 );
+
+export const getCurrentPlanAction = authAction.action(async ({ ctx: { user } }) => {
+  const subscription = await prisma.subscription.findUnique({
+    where: { referenceId: user.id },
+    select: { plan: true },
+  });
+
+  return {
+    plan: subscription?.plan ?? "free",
+  };
+});

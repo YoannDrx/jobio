@@ -44,6 +44,8 @@ const BOOLEAN_LIMIT_KEYS = new Set([
   "aiLinkedinAudit",
 ]);
 
+const DISPLAY_ONLY_LIMIT_KEYS = new Set(["analyticsHistoryDays"]);
+
 export function UserBilling(props: {
   subscription: UserActiveSubscription;
   usage: UsageData;
@@ -210,10 +212,14 @@ export function UserBilling(props: {
 
               const Icon = limitConfig.icon;
               const isBoolean = BOOLEAN_LIMIT_KEYS.has(key);
+              const isDisplayOnly = DISPLAY_ONLY_LIMIT_KEYS.has(key);
               const used =
                 (usage[key] as { used: number; limit: number } | undefined)
                   ?.used ?? 0;
-              const percentage = (used / total) * 100;
+              const percentage =
+                !isBoolean && !isDisplayOnly && total > 0
+                  ? (used / total) * 100
+                  : 0;
 
               return (
                 <div key={key} className="flex flex-col gap-2">
@@ -228,13 +234,17 @@ export function UserBilling(props: {
                       <Typography variant="muted" className="text-xs">
                         {total >= 1 ? "Inclus" : "Non inclus"}
                       </Typography>
+                    ) : isDisplayOnly ? (
+                      <Typography variant="muted" className="text-xs">
+                        Limite du plan
+                      </Typography>
                     ) : (
                       <Typography variant="muted" className="text-xs">
                         {used.toLocaleString()} / {total.toLocaleString()}
                       </Typography>
                     )}
                   </div>
-                  {!isBoolean && (
+                  {!isBoolean && !isDisplayOnly && (
                     <Progress value={percentage} className="h-1" />
                   )}
                   <Typography variant="muted" className="text-xs">
