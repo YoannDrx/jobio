@@ -85,6 +85,26 @@ async function getUserPlanInfo(userId: string) {
   };
 }
 
+type PlanResolution = {
+  plan?: string;
+  limits?: PlanLimit;
+};
+
+const resolvePlanInfo = async (
+  userId: string,
+  resolution?: PlanResolution,
+): Promise<{ plan: string; limits: PlanLimit }> => {
+  if (resolution?.plan || resolution?.limits) {
+    const resolvedPlan = resolution.plan ?? "free";
+    return {
+      plan: resolvedPlan,
+      limits: resolution.limits ?? getPlanLimits(resolvedPlan),
+    };
+  }
+
+  return getUserPlanInfo(userId);
+};
+
 export function getUpgradeMessage(plan: string): string {
   if (plan === "free") return "Passe en Pro pour débloquer";
   if (plan === "pro") return "Passe en Ultra pour débloquer";
@@ -94,13 +114,15 @@ export function getUpgradeMessage(plan: string): string {
 export async function checkPlanLimit(
   userId: string,
   feature: LimitFeature,
+  resolution?: PlanResolution,
 ): Promise<{
+  plan: string;
   allowed: boolean;
   used: number;
   limit: number;
   remaining: number;
 }> {
-  const { limits } = await getUserPlanInfo(userId);
+  const { plan, limits } = await resolvePlanInfo(userId, resolution);
   const limit = limits[feature as keyof PlanLimit];
 
   let used: number;
@@ -194,6 +216,7 @@ export async function checkPlanLimit(
   }
 
   return {
+    plan,
     allowed: used < limit,
     used,
     limit,
@@ -204,16 +227,24 @@ export async function checkPlanLimit(
 export async function enforcePlanLimit(
   userId: string,
   feature: LimitFeature,
-): Promise<void> {
-  const { plan } = await getUserPlanInfo(userId);
-  const result = await checkPlanLimit(userId, feature);
+  resolution?: PlanResolution,
+): Promise<{
+  plan: string;
+  allowed: boolean;
+  used: number;
+  limit: number;
+  remaining: number;
+}> {
+  const result = await checkPlanLimit(userId, feature, resolution);
   if (!result.allowed) {
     const featureLabel = LIMIT_FEATURE_LABELS[feature];
-    const upgrade = getUpgradeMessage(plan);
+    const upgrade = getUpgradeMessage(result.plan);
     throw new ApplicationError(
       `Limite atteinte : ${result.used}/${result.limit} ${featureLabel}. ${upgrade}.`,
     );
   }
+
+  return result;
 }
 
 export async function checkPlanFeature(
