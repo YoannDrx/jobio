@@ -18,6 +18,7 @@ import {
 } from "@/features/cv-lab/cv-coach.schema";
 import { preserveLockedFields } from "@/features/cv-lab/cv-coach-locked-fields";
 import { logger } from "@/lib/logger";
+import { enforceRateLimit } from "@/lib/security/rate-limit";
 
 export const maxDuration = 60;
 
@@ -30,6 +31,23 @@ export const POST = authRoute
   .body(bodySchema)
   .handler(async (_req, { body, ctx }) => {
     const user = ctx.user;
+    const rateLimit = await enforceRateLimit({
+      key: `cv-coach:${user.id}`,
+      limit: 20,
+      windowSeconds: 60,
+    });
+
+    if (!rateLimit.allowed) {
+      return new Response(
+        "Trop de messages envoyés rapidement. Réessaie dans quelques secondes.",
+        {
+          status: 429,
+          headers: {
+            "Retry-After": String(rateLimit.retryAfterSeconds),
+          },
+        },
+      );
+    }
 
     const { checkPlanFeature } = await import("@/lib/plan-limits");
     const hasCvCoach = await checkPlanFeature(user.id, "cvCoachAI");

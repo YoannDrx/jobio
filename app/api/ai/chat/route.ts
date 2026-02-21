@@ -10,6 +10,7 @@ import { checkAndIncrementAIQuota } from "@/features/ai/ai-quota";
 import { getRequiredUser } from "@/lib/auth/auth-user";
 import { ApplicationError } from "@/lib/errors/application-error";
 import { prisma } from "@/lib/prisma";
+import { enforceRateLimit } from "@/lib/security/rate-limit";
 
 export const maxDuration = 30;
 
@@ -91,6 +92,27 @@ function buildThreadPreviewTitle(source: string): string {
 
 export async function POST(req: Request) {
   const user = await getRequiredUser();
+  const rateLimit = await enforceRateLimit({
+    key: `ai-chat:${user.id}`,
+    limit: 30,
+    windowSeconds: 60,
+  });
+
+  if (!rateLimit.allowed) {
+    return new Response(
+      JSON.stringify({
+        error:
+          "Trop de requêtes IA en peu de temps. Réessaie dans quelques secondes.",
+      }),
+      {
+        status: 429,
+        headers: {
+          "Content-Type": "application/json",
+          "Retry-After": String(rateLimit.retryAfterSeconds),
+        },
+      },
+    );
+  }
 
   const payload = await req.json().catch(() => null);
   if (!payload || typeof payload !== "object") {
