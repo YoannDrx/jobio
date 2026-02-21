@@ -40,6 +40,7 @@ type CvLabEditPanelProps = {
   draft: Draft;
   onDraftChange: (patch: Partial<Draft>) => void;
   profiles: CvProfile[];
+  canUseAllCvTemplates: boolean;
   onToggleSection: (section: CvLabSection, visible: boolean) => void;
   onMoveSection: (section: CvLabSection, direction: "up" | "down") => void;
   versions: {
@@ -81,6 +82,7 @@ export function CvLabEditPanel({
   draft,
   onDraftChange,
   profiles,
+  canUseAllCvTemplates,
   onToggleSection,
   onMoveSection,
   versions,
@@ -128,6 +130,7 @@ export function CvLabEditPanel({
           draft={draft}
           onDraftChange={onDraftChange}
           profiles={profiles}
+          canUseAllCvTemplates={canUseAllCvTemplates}
         />
       </TabsContent>
 

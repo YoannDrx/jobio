@@ -34,6 +34,7 @@ export function CvLabStudio() {
     previewHtml,
     previewError,
     isPreviewLoading,
+    canUseAllCvTemplates,
     compareLeftVersionId,
     setCompareLeftVersionId,
     compareRightReference,
@@ -151,6 +152,7 @@ export function CvLabStudio() {
           draft={draft}
           onDraftChange={handleDraftChange}
           profiles={profiles}
+          canUseAllCvTemplates={canUseAllCvTemplates}
           onToggleSection={handleToggleSection}
           onMoveSection={moveSection}
           versions={versions}

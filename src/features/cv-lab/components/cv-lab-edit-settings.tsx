@@ -60,13 +60,19 @@ type CvLabEditSettingsProps = {
   draft: Draft;
   onDraftChange: (patch: Partial<Draft>) => void;
   profiles: CvProfile[];
+  canUseAllCvTemplates: boolean;
 };
 
 export function CvLabEditSettings({
   draft,
   onDraftChange,
   profiles,
+  canUseAllCvTemplates,
 }: CvLabEditSettingsProps) {
+  const templateOptions = canUseAllCvTemplates
+    ? [...CV_LAB_TEMPLATES]
+    : Array.from(new Set(["CLASSIC", draft.template])) as CvLabTemplate[];
+
   return (
     <div className="grid gap-4 md:grid-cols-2">
       <div className="flex flex-col gap-2">
@@ -120,13 +126,18 @@ export function CvLabEditSettings({
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            {CV_LAB_TEMPLATES.map((template) => (
+            {templateOptions.map((template) => (
               <SelectItem key={template} value={template}>
                 {TEMPLATE_LABELS[template]}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
+        {!canUseAllCvTemplates && (
+          <p className="text-muted-foreground text-xs">
+            Les templates avancés sont disponibles à partir du plan Pro.
+          </p>
+        )}
       </div>
 
       <div className="flex flex-col gap-2">

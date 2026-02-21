@@ -66,6 +66,22 @@ const ensureOwnedProfile = async (userId: string, profileId: string) => {
   return profile;
 };
 
+const enforceCvTemplateLimit = async (
+  userId: string,
+  template: string,
+  options?: { allowIfCurrentTemplate?: string | null },
+) => {
+  if (template === "CLASSIC") {
+    return;
+  }
+
+  if (options?.allowIfCurrentTemplate === template) {
+    return;
+  }
+
+  await enforcePlanFeature(userId, "cvTemplatesAll");
+};
+
 const normalizeSectionOrder = (value: unknown) => {
   if (!Array.isArray(value)) {
     return [...CV_LAB_SECTIONS];
@@ -220,6 +236,7 @@ export const createCvLabDocumentAction = authAction
   .inputSchema(createCvLabDocumentSchema)
   .action(async ({ parsedInput, ctx: { user } }) => {
     await enforcePlanLimit(user.id, "cvDocuments");
+    await enforceCvTemplateLimit(user.id, parsedInput.template);
 
     const ownedProfile = await ensureOwnedProfile(
       user.id,
@@ -282,6 +299,12 @@ export const updateCvLabDocumentAction = authAction
 
     if (parsedInput.profileId) {
       await ensureOwnedProfile(user.id, parsedInput.profileId);
+    }
+
+    if (parsedInput.template) {
+      await enforceCvTemplateLimit(user.id, parsedInput.template, {
+        allowIfCurrentTemplate: current.template,
+      });
     }
 
     const updated = await prisma.cvLabDocument.update({
@@ -368,6 +391,8 @@ export const duplicateCvLabDocumentAction = authAction
     if (!source) {
       throw new ApplicationError("Document CV introuvable");
     }
+
+    await enforceCvTemplateLimit(user.id, source.template);
 
     const copy = await prisma.cvLabDocument.create({
       data: {
@@ -567,10 +592,25 @@ export const listCvLabVersionsAction = authAction
 export const restoreCvLabVersionAction = authAction
   .inputSchema(restoreCvLabVersionSchema)
   .action(async ({ parsedInput, ctx: { user } }) => {
+    const document = await prisma.cvLabDocument.findFirst({
+      where: {
+        id: parsedInput.documentId,
+        userId: user.id,
+      },
+      select: {
+        id: true,
+        template: true,
+      },
+    });
+
+    if (!document) {
+      throw new ApplicationError("Document CV introuvable");
+    }
+
     const version = await prisma.cvLabDocumentVersion.findFirst({
       where: {
         id: parsedInput.versionId,
-        documentId: parsedInput.documentId,
+        documentId: document.id,
         userId: user.id,
       },
       select: {
@@ -600,11 +640,15 @@ export const restoreCvLabVersionAction = authAction
       })
       .parse(version.snapshot);
 
+    await enforceCvTemplateLimit(user.id, snapshot.template, {
+      allowIfCurrentTemplate: document.template,
+    });
+
     await ensureOwnedProfile(user.id, snapshot.profileId);
 
     await prisma.cvLabDocument.update({
       where: {
-        id: parsedInput.documentId,
+        id: document.id,
       },
       data: {
         profileId: snapshot.profileId,

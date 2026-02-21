@@ -13,6 +13,7 @@ import { toast } from "sonner";
 import { dialogManager } from "@/features/dialog-manager/dialog-manager";
 import { resolveActionResult } from "@/lib/actions/actions-utils";
 import { getProfilesAction } from "@/features/profiles/profiles.action";
+import { getCurrentPlanAction } from "@/features/plans/check-limits.action";
 import {
   analyzeCvLabAtsAction,
   archiveCvLabDocumentAction,
@@ -72,6 +73,7 @@ export function useCvLabStudio() {
   const [previewHtml, setPreviewHtml] = useState<string | null>(null);
   const [previewError, setPreviewError] = useState<string | null>(null);
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
+  const [canUseAllCvTemplates, setCanUseAllCvTemplates] = useState(false);
   const [compareLeftVersionId, setCompareLeftVersionId] = useState("");
   const [compareRightReference, setCompareRightReference] = useState(
     CV_LAB_VERSION_COMPARE_CURRENT,
@@ -130,13 +132,14 @@ export function useCvLabStudio() {
 
   const reloadData = useCallback(
     async (nextSelectedId?: string | null) => {
-      const [profileRows, documentRows] = await Promise.all([
+      const [profileRows, documentRows, planInfo] = await Promise.all([
         resolveActionResult(getProfilesAction({})),
         resolveActionResult(
           listCvLabDocumentsAction({
             includeArchived: false,
           }),
         ),
+        resolveActionResult(getCurrentPlanAction()),
       ]);
 
       const normalizedProfiles = profileRows.map((profile) => ({
@@ -152,6 +155,7 @@ export function useCvLabStudio() {
         certifications: profile.certifications,
       }));
       const normalizedDocuments = documentRows as unknown as CvDocument[];
+      setCanUseAllCvTemplates(planInfo.plan !== "free");
       const visibleDocuments = filterDocumentsByView(normalizedDocuments);
 
       setProfiles(normalizedProfiles);
@@ -1053,6 +1057,7 @@ export function useCvLabStudio() {
     previewHtml,
     previewError,
     isPreviewLoading,
+    canUseAllCvTemplates,
     compareLeftVersionId,
     setCompareLeftVersionId,
     compareRightReference,
