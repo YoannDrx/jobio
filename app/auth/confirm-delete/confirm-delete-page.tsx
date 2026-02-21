@@ -7,6 +7,7 @@ import {
   CardDescription,
   CardFooter,
   CardHeader,
+  CardTitle,
 } from "@/components/ui/card";
 import { LoadingButton } from "@/features/form/submit-button";
 import { authClient } from "@/lib/auth-client";
@@ -82,9 +83,7 @@ export function ConfirmDeletePage({
             </AvatarFallback>
           </Avatar>
         </div>
-        <CardHeader className="text-center">
-          Confirm Account Deletion
-        </CardHeader>
+        <CardTitle className="text-center">Confirm Account Deletion</CardTitle>
 
         <CardDescription className="text-center">
           Are you sure you want to delete your account? This action is permanent

@@ -14,12 +14,12 @@ export const handleRootRedirect = (request: NextRequest) => {
   if (!session) return null;
 
   const url = request.nextUrl.clone();
-  url.pathname = "/app";
+  url.pathname = "/job";
   return NextResponse.redirect(url);
 };
 
 export const isAppRoute = (pathname: string) => {
-  return pathname.startsWith("/app");
+  return pathname.startsWith("/job");
 };
 
 export const isAdminRoute = (pathname: string) => {
