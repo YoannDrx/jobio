@@ -29,7 +29,13 @@ export function DialogComponent(props: { dialog: Dialog }) {
   if (dialog.type === "custom") {
     return (
       <AlertDialog open={true}>
-        <AlertDialogContent>{dialog.children}</AlertDialogContent>
+        <AlertDialogContent>
+          <AlertDialogHeader className="sr-only">
+            <AlertDialogTitle>Dialog</AlertDialogTitle>
+            <AlertDialogDescription>Contenu du dialog</AlertDialogDescription>
+          </AlertDialogHeader>
+          {dialog.children}
+        </AlertDialogContent>
       </AlertDialog>
     );
   }

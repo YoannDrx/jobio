@@ -609,7 +609,7 @@ export function UserMonitoringCard({
                           <a
                             href={invoice.hostedInvoiceUrl}
                             target="_blank"
-                            rel="noreferrer"
+                            rel="noopener noreferrer"
                             className="text-primary underline-offset-4 hover:underline"
                           >
                             {invoice.id}
@@ -926,11 +926,11 @@ export function UserMonitoringCard({
                     item.referenceId.startsWith("in_") &&
                     invoiceHostedUrlById.get(item.referenceId) ? (
                       <Button size="sm" variant="outline" asChild>
-                        <a
-                          href={invoiceHostedUrlById.get(item.referenceId) ?? undefined}
-                          target="_blank"
-                          rel="noreferrer"
-                        >
+                          <a
+                            href={invoiceHostedUrlById.get(item.referenceId) ?? undefined}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
                           Ouvrir facture Stripe
                         </a>
                       </Button>

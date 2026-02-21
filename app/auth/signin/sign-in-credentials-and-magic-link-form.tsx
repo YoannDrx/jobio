@@ -13,7 +13,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { LoadingButton } from "@/features/form/submit-button";
 import { authClient } from "@/lib/auth-client";
-import { getCallbackUrl } from "@/lib/auth/auth-utils";
+import { getCallbackUrl, sanitizeCallbackUrl } from "@/lib/auth/auth-utils";
 import { unwrapSafePromise } from "@/lib/promises";
 import { useMutation } from "@tanstack/react-query";
 import Link from "next/link";
@@ -31,6 +31,7 @@ type LoginCredentialsFormType = z.infer<typeof LoginCredentialsFormScheme>;
 export const SignInCredentialsAndMagicLinkForm = (props: {
   callbackUrl?: string;
 }) => {
+  const safeDefaultCallbackUrl = sanitizeCallbackUrl(props.callbackUrl, "/job");
   const form = useZodForm({
     schema: LoginCredentialsFormScheme,
     defaultValues: {
@@ -57,7 +58,7 @@ export const SignInCredentialsAndMagicLinkForm = (props: {
         return unwrapSafePromise(
           authClient.signIn.magicLink({
             email: values.email,
-            callbackURL: getCallbackUrl(props.callbackUrl ?? "/job"),
+            callbackURL: getCallbackUrl(safeDefaultCallbackUrl),
           }),
         );
       }
@@ -66,7 +67,7 @@ export const SignInCredentialsAndMagicLinkForm = (props: {
       toast.error(error.message);
     },
     onSuccess: () => {
-      const callbackUrl = getCallbackUrl(props.callbackUrl ?? "/job");
+      const callbackUrl = getCallbackUrl(safeDefaultCallbackUrl);
       const newUrl =
         window.location.origin +
         (isUsingCredentials ? callbackUrl : "/auth/verify");

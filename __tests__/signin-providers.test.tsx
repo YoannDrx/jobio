@@ -108,6 +108,26 @@ describe("SignInCredentialsAndMagicLinkForm", () => {
     expect(window.location.href).toBe("http://localhost:3000/dashboard");
   });
 
+  it("should ignore unsafe callback URL and fallback to /job", async () => {
+    const { user } = setup(
+      <SignInCredentialsAndMagicLinkForm callbackUrl="https://evil.com" />,
+    );
+
+    await user.type(screen.getByLabelText(/email/i), "test@example.com");
+    await user.type(screen.getByLabelText(/password/i), "password123");
+    await user.click(screen.getByRole("button", { name: /sign in$/i }));
+
+    await waitFor(() => {
+      expect(authClient.signIn.email).toHaveBeenCalledWith({
+        email: "test@example.com",
+        password: "password123",
+        rememberMe: true,
+      });
+    });
+
+    expect(window.location.href).toBe("http://localhost:3000/job");
+  });
+
   it("should submit with magic link and redirect to verify page", async () => {
     const { user } = setup(<SignInCredentialsAndMagicLinkForm />);
 

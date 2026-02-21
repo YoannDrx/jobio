@@ -211,7 +211,7 @@ export function ProfileCard({
 
         {portalSlug && (
           <Button variant="outline" size="sm" asChild>
-            <Link href={`/p/${portalSlug}`} target="_blank">
+            <Link href={`/p/${portalSlug}`} target="_blank" rel="noopener noreferrer">
               <Globe className="mr-2 size-4" />
               Voir ma page publique
             </Link>

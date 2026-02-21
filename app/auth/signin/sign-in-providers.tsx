@@ -2,6 +2,7 @@
 
 import { Divider } from "@/components/nowts/divider";
 import { Typography } from "@/components/nowts/typography";
+import { sanitizeCallbackUrl } from "@/lib/auth/auth-utils";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -17,12 +18,14 @@ export const SignInProviders = ({
 }) => {
   const searchParams = useSearchParams();
   const callbackUrlParams = searchParams.get("callbackUrl");
-
-  callbackUrl ??= callbackUrlParams as string;
+  const safeCallbackUrl = sanitizeCallbackUrl(
+    callbackUrl ?? callbackUrlParams,
+    "/job",
+  );
 
   return (
     <div className="flex flex-col gap-4 lg:gap-6">
-      <SignInCredentialsAndMagicLinkForm callbackUrl={callbackUrl} />
+      <SignInCredentialsAndMagicLinkForm callbackUrl={safeCallbackUrl} />
       {providers.length > 0 && <Divider>or</Divider>}
 
       <div
@@ -33,10 +36,10 @@ export const SignInProviders = ({
       >
         {/* ℹ️ Add provider you want to support here */}
         {providers.includes("github") && (
-          <ProviderButton providerId="github" callbackUrl={callbackUrl} />
+          <ProviderButton providerId="github" callbackUrl={safeCallbackUrl} />
         )}
         {providers.includes("google") && (
-          <ProviderButton providerId="google" callbackUrl={callbackUrl} />
+          <ProviderButton providerId="google" callbackUrl={safeCallbackUrl} />
         )}
       </div>
 
@@ -45,7 +48,7 @@ export const SignInProviders = ({
         <Typography
           variant="link"
           as={Link}
-          href={`/auth/signup?callbackUrl=${callbackUrl}`}
+          href={`/auth/signup?callbackUrl=${encodeURIComponent(safeCallbackUrl)}`}
         >
           Sign up
         </Typography>

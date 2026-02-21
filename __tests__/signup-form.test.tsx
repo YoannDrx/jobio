@@ -118,4 +118,30 @@ describe("SignUpCredentialsForm", () => {
     // Check if redirected to custom URL
     expect(window.location.href).toBe("http://localhost:3000/dashboard");
   });
+
+  it("should ignore unsafe callback URL from searchParams", async () => {
+    Object.defineProperty(window, "location", {
+      value: {
+        origin: "http://localhost:3000",
+        href: "http://localhost:3000/auth/signup?callbackUrl=https://evil.com",
+        search: "?callbackUrl=https://evil.com",
+      },
+      writable: true,
+    });
+
+    const { user } = setup(<SignUpCredentialsForm />);
+
+    await user.type(screen.getByLabelText(/name/i), "John Doe");
+    await user.type(screen.getByLabelText(/email/i), "john@example.com");
+    await user.type(screen.getByLabelText(/^password$/i), "password123");
+    await user.type(screen.getByLabelText(/verify password/i), "password123");
+
+    await user.click(screen.getByRole("button", { name: /sign up/i }));
+
+    await waitFor(() => {
+      expect(authClient.signUp.email).toHaveBeenCalled();
+    });
+
+    expect(window.location.href).toBe("http://localhost:3000/job");
+  });
 });
