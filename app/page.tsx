@@ -23,8 +23,10 @@ import {
   Bot,
   ChartNoAxesCombined,
   Clock3,
+  FileText,
   Layers3,
   ListChecks,
+  Receipt,
   Sparkles,
   Target,
 } from "lucide-react";
@@ -119,6 +121,39 @@ const workflow = [
     title: "Optimisation",
     detail:
       "Tu analyses tes résultats, identifies les plateformes rentables et ajustes ton process.",
+  },
+];
+
+const productSuites = [
+  {
+    icon: Target,
+    title: "Prospection & Dashboard",
+    bullets: [
+      "Pipeline missions (Kanban + liste + filtres avancés)",
+      "CRM contacts avec interactions et scoring relationnel",
+      "Relances manuelles + automatiques + séquences",
+      "Analytics de conversion, vélocité et performance plateformes",
+    ],
+  },
+  {
+    icon: FileText,
+    title: "CV Studio IA",
+    bullets: [
+      "CV Master centralisé par profil freelance",
+      "Éditeur CV Lab multi-documents avec versions",
+      "ATS scoring et recommandations d’amélioration",
+      "Coach CV IA (plan Ultra) + export PDF",
+    ],
+  },
+  {
+    icon: Receipt,
+    title: "Freelance Billing",
+    bullets: [
+      "Clients, devis, factures, paiements et catalogue",
+      "Registres exports et suivi déclaratif",
+      "Dépenses (factures, notes de frais, trajets)",
+      "Prévision IA de trésorerie et conformité",
+    ],
   },
 ];
 
@@ -335,6 +370,37 @@ export default function HomePage() {
                     <Badge variant="outline">{index + 1}</Badge>
                   </div>
                   <p className="text-muted-foreground text-sm">{item.detail}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </section>
+
+        <section className="mx-auto w-full max-w-7xl px-4 py-12 lg:px-8 lg:py-16">
+          <div className="mb-6 max-w-3xl">
+            <Badge className="mb-3">Suites produit</Badge>
+            <h2 className="font-caption text-3xl font-semibold tracking-tight sm:text-4xl">
+              Jobio couvre tout le cycle freelance, de la mission à la facture.
+            </h2>
+          </div>
+          <div className="grid gap-4 lg:grid-cols-3">
+            {productSuites.map((suite) => (
+              <Card key={suite.title} className="border-border/70">
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center gap-2 text-base">
+                    <suite.icon className="text-primary size-4" />
+                    {suite.title}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ul className="space-y-2 text-sm">
+                    {suite.bullets.map((bullet) => (
+                      <li key={bullet} className="flex items-start gap-2">
+                        <ListChecks className="text-primary mt-0.5 size-4 shrink-0" />
+                        <span className="text-muted-foreground">{bullet}</span>
+                      </li>
+                    ))}
+                  </ul>
                 </CardContent>
               </Card>
             ))}

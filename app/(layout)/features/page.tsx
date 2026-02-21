@@ -9,8 +9,10 @@ import {
   Bell,
   CalendarCheck,
   Check,
+  FileText,
   Globe,
   Kanban,
+  Receipt,
   Sparkles,
   UserCircle,
   Users,
@@ -38,7 +40,7 @@ const featureSections: FeatureSection[] = [
     description:
       "Visualise et pilote ton cycle de vente du premier contact a la signature.",
     bullets: [
-      "Vue Kanban drag & drop avec colonnes personnalisables",
+      "Vue Kanban + liste pour piloter chaque mission",
       "Capture rapide de missions avec parsing IA",
       "Scoring automatique des opportunites",
       "Filtres avances et export CSV",
@@ -62,7 +64,7 @@ const featureSections: FeatureSection[] = [
     description: "Ne rate plus jamais une relance au bon moment.",
     bullets: [
       "Calendrier de relances avec vue timeline",
-      "5 types de relances configurables",
+      "4 types de relances configurables",
       "Snooze et report en un clic",
       "Sequences de relance automatisees",
     ],
@@ -86,6 +88,31 @@ const featureSections: FeatureSection[] = [
       "Parsing automatique des offres de missions",
       "Scoring predictif des opportunites",
       "Generation d'emails de prospection personnalises",
+      "Audit LinkedIn et strategie quotidienne assistee",
+    ],
+  },
+  {
+    icon: FileText,
+    title: "CV Studio IA",
+    description:
+      "Construis et adaptes tes CV selon les missions cibles, avec assistance IA.",
+    bullets: [
+      "CV Master centralise par profil freelance",
+      "CV Lab multi-documents avec versions",
+      "ATS scoring et recommandations actionnables",
+      "Coach CV IA et export PDF",
+    ],
+  },
+  {
+    icon: Receipt,
+    title: "Freelance Billing",
+    description:
+      "Gere l'administratif freelance: clients, devis, factures, paiements et registres.",
+    bullets: [
+      "Gestion clients, catalogue, devis et factures",
+      "Paiements, avoirs et exports de registres",
+      "Module depenses (factures, notes de frais, trajets)",
+      "Insights de conformite et prevision IA",
     ],
   },
   {
