@@ -85,7 +85,7 @@ describe("SignUpCredentialsForm", () => {
     });
 
     // Check if redirect happened
-    expect(window.location.href).toBe("http://localhost:3000/app");
+    expect(window.location.href).toBe("http://localhost:3000/job");
   });
 
   it("should use custom callback URL from searchParams", async () => {
