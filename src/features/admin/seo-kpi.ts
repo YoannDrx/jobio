@@ -10,6 +10,25 @@ const DAY_IN_MS = 24 * 60 * 60 * 1000;
 const SEARCH_METRICS_STALE_AFTER_DAYS = 8;
 const LOW_CTR_REFRESH_THRESHOLD = 0.02;
 const LOW_CTR_MIN_IMPRESSIONS = 200;
+const FOLLOW_UP_DUE_WINDOW_DAYS = 7;
+const CONTENT_REFRESH_TRACKER = [
+  {
+    path: "/blog/structurer-prospection-freelance-2026",
+    refreshedAt: "2026-02-22",
+  },
+  {
+    path: "/blog/crm-freelance-criteres-stack-minimale",
+    refreshedAt: "2026-02-22",
+  },
+  {
+    path: "/blog/5-conseils-prospection-freelance",
+    refreshedAt: "2026-02-22",
+  },
+  {
+    path: "/blog/optimiser-profil-linkedin-freelance",
+    refreshedAt: "2026-02-22",
+  },
+] as const;
 
 export const REQUIRED_PUBLIC_PAGES = [
   "/",
@@ -61,6 +80,18 @@ export type SeoContentRefreshCandidate = {
   reason: string;
 };
 
+export type SeoContentRefreshFollowUp = {
+  path: string;
+  refreshedAt: string;
+  ageDays: number;
+  milestone: "J+14" | "J+30" | "J+60";
+  status: "waiting" | "due" | "overdue";
+  clicks: number | null;
+  impressions: number | null;
+  ctr: number | null;
+  detail: string;
+};
+
 export type SeoSearchPerformanceSummary = {
   status: SeoSearchMetricsState["status"];
   source: SeoSearchMetricsState["source"];
@@ -81,6 +112,7 @@ export type SeoSearchPerformanceSummary = {
   indexedPrivatePages: number | null;
   topQueries: SeoTopQuerySummary[];
   contentRefreshCandidates: SeoContentRefreshCandidate[];
+  refreshFollowUps: SeoContentRefreshFollowUp[];
 };
 
 export type SeoKpiSummary = {
@@ -182,6 +214,71 @@ const buildContentRefreshCandidates = (
     .sort((a, b) => b.impressions - a.impressions)
     .slice(0, 5);
 
+const resolveRefreshMilestone = (
+  ageDays: number,
+): { milestone: "J+14" | "J+30" | "J+60"; targetDays: number } => {
+  if (ageDays < 30) {
+    return { milestone: "J+14", targetDays: 14 };
+  }
+
+  if (ageDays < 60) {
+    return { milestone: "J+30", targetDays: 30 };
+  }
+
+  return { milestone: "J+60", targetDays: 60 };
+};
+
+const buildRefreshFollowUps = (
+  snapshot: SeoSearchSnapshot,
+  now: Date,
+): SeoContentRefreshFollowUp[] => {
+  const topPagesByPath = new Map(
+    (snapshot.topPages ?? []).map((page) => [page.path, page] as const),
+  );
+
+  return CONTENT_REFRESH_TRACKER.map((trackedPage) => {
+    const refreshedAt = new Date(`${trackedPage.refreshedAt}T00:00:00.000Z`);
+    const ageDays = Number.isFinite(refreshedAt.getTime())
+      ? Math.max(0, Math.floor((now.getTime() - refreshedAt.getTime()) / DAY_IN_MS))
+      : 0;
+    const { milestone, targetDays } = resolveRefreshMilestone(ageDays);
+    const pageMetrics = topPagesByPath.get(trackedPage.path);
+    const daysAfterTarget = ageDays - targetDays;
+    const status: SeoContentRefreshFollowUp["status"] =
+      daysAfterTarget < 0
+        ? "waiting"
+        : daysAfterTarget <= FOLLOW_UP_DUE_WINDOW_DAYS
+          ? "due"
+          : "overdue";
+
+    const detail =
+      status === "waiting"
+        ? `${milestone} à préparer dans ${Math.abs(daysAfterTarget)} jours.`
+        : status === "due"
+          ? `${milestone} à traiter maintenant (échéance atteinte).`
+          : `${milestone} en retard de ${daysAfterTarget - FOLLOW_UP_DUE_WINDOW_DAYS} jours.`;
+
+    return {
+      path: trackedPage.path,
+      refreshedAt: trackedPage.refreshedAt,
+      ageDays,
+      milestone,
+      status,
+      clicks: pageMetrics?.clicks ?? null,
+      impressions: pageMetrics?.impressions ?? null,
+      ctr: pageMetrics ? roundOneDecimal(pageMetrics.ctr * 100) : null,
+      detail,
+    };
+  }).sort((a, b) => {
+    const rank = (value: SeoContentRefreshFollowUp["status"]) => {
+      if (value === "overdue") return 0;
+      if (value === "due") return 1;
+      return 2;
+    };
+    return rank(a.status) - rank(b.status);
+  });
+};
+
 const buildSearchPerformanceSummary = (
   searchMetricsState: SeoSearchMetricsState,
   now: Date,
@@ -207,6 +304,7 @@ const buildSearchPerformanceSummary = (
       indexedPrivatePages: null,
       topQueries: [],
       contentRefreshCandidates: [],
+      refreshFollowUps: [],
     };
   }
 
@@ -257,6 +355,7 @@ const buildSearchPerformanceSummary = (
       position: query.position ?? null,
     })),
     contentRefreshCandidates: buildContentRefreshCandidates(current),
+    refreshFollowUps: buildRefreshFollowUps(current, now),
   };
 };
 
@@ -461,6 +560,25 @@ export const computeSeoKpiSummary = ({
     recommendedActions.push(
       `Planifier un refresh SEO des contenus à faible CTR: ${pages}.`,
     );
+  }
+
+  if (searchPerformance.status === "configured") {
+    const dueFollowUps = searchPerformance.refreshFollowUps.filter(
+      (item) => item.status === "due",
+    ).length;
+    const overdueFollowUps = searchPerformance.refreshFollowUps.filter(
+      (item) => item.status === "overdue",
+    ).length;
+
+    if (overdueFollowUps > 0) {
+      recommendedActions.push(
+        `Traiter le suivi post-refresh SEO en retard (${overdueFollowUps} checkpoint(s) J+14/J+30/J+60).`,
+      );
+    } else if (dueFollowUps > 0) {
+      recommendedActions.push(
+        `Exécuter les checkpoints post-refresh SEO à échéance (${dueFollowUps} checkpoint(s) à traiter).`,
+      );
+    }
   }
 
   if (recommendedActions.length === 0) {

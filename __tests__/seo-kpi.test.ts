@@ -307,6 +307,75 @@ describe("computeSeoKpiSummary", () => {
     );
   });
 
+  it("tracks refresh follow-up checkpoints after content updates", () => {
+    const summary = computeSeoKpiSummary({
+      sitemapEntries: REQUIRED_PUBLIC_PAGES.map((path) => ({
+        url: toAbsoluteUrl(path),
+      })),
+      robotsRules: {
+        userAgent: "*",
+        allow: "/",
+        disallow: [...EXPECTED_PRIVATE_DISALLOWS],
+      },
+      posts: [
+        {
+          slug: "recent-1",
+          title: "Recent 1",
+          description: "Recent post",
+          date: "2026-02-18",
+          tags: [],
+          content: "",
+          readingTime: 4,
+        },
+      ],
+      searchMetricsState: {
+        status: "configured",
+        source: "env_json",
+        payload: {
+          current: {
+            provider: "google_search_console",
+            capturedAt: "2026-03-10T09:00:00.000Z",
+            period: {
+              from: "2026-02-10",
+              to: "2026-03-10",
+              label: "28 derniers jours",
+            },
+            totals: {
+              clicks: 300,
+              impressions: 7000,
+              ctr: 0.042,
+              averagePosition: 14.8,
+            },
+            topPages: [
+              {
+                path: "/blog/structurer-prospection-freelance-2026",
+                clicks: 14,
+                impressions: 620,
+                ctr: 0.022,
+              },
+            ],
+          },
+        },
+        error: null,
+      },
+      now: new Date("2026-03-10T00:00:00.000Z"),
+    });
+
+    const followUp = summary.searchPerformance.refreshFollowUps.find(
+      (item) => item.path === "/blog/structurer-prospection-freelance-2026",
+    );
+
+    expect(summary.searchPerformance.refreshFollowUps.length).toBeGreaterThanOrEqual(4);
+    expect(followUp?.milestone).toBe("J+14");
+    expect(followUp?.status).toBe("due");
+    expect(followUp?.ctr).toBe(2.2);
+    expect(
+      summary.recommendedActions.some((action) =>
+        action.includes("checkpoints post-refresh SEO"),
+      ),
+    ).toBe(true);
+  });
+
   it("marks search metrics as warning when payload is invalid", () => {
     const summary = computeSeoKpiSummary({
       sitemapEntries: REQUIRED_PUBLIC_PAGES.map((path) => ({

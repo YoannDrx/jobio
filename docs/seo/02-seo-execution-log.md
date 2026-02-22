@@ -229,6 +229,20 @@
   - augmenter la clarté des intros et des prochaines actions
   - renforcer les liens internes vers pages à conversion.
 
+## 2026-02-22 - Wave 16 (post-refresh checkpoints in Ops)
+
+- Suivi post-refresh SEO implémenté dans l'admin Ops:
+  - `src/features/admin/seo-kpi.ts`
+  - nouvelles données `refreshFollowUps` (J+14 / J+30 / J+60)
+  - statuts automatiques: `waiting`, `due`, `overdue`
+  - recommandations automatiques associées selon échéances
+- UI admin enrichie:
+  - `app/admin/ops/page.tsx`
+  - nouveau tableau "Suivi post-refresh contenu (J+14 / J+30 / J+60)"
+  - visibilité par page: date refresh, âge, checkpoint, statut, CTR/impressions, détail
+- Tests:
+  - `__tests__/seo-kpi.test.ts` enrichi (cas de checkpoint post-refresh à échéance)
+
 ## Prochaine wave recommandée
 
 - Exécuter la connexion GSC/Bing et soumettre `sitemap.xml` en prod.

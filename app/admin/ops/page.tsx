@@ -70,6 +70,18 @@ const sourceLabel = (
 const snapshotFreshnessVariant = (isStale: boolean) =>
   isStale ? "destructive" : "secondary";
 
+const refreshFollowUpVariant = (status: "waiting" | "due" | "overdue") => {
+  if (status === "waiting") return "outline";
+  if (status === "due") return "secondary";
+  return "destructive";
+};
+
+const refreshFollowUpLabel = (status: "waiting" | "due" | "overdue") => {
+  if (status === "waiting") return "À venir";
+  if (status === "due") return "À traiter";
+  return "En retard";
+};
+
 export default async function AdminOpsPage() {
   await getRequiredAdmin();
 
@@ -398,6 +410,56 @@ export default async function AdminOpsPage() {
                                 <TableCell>{candidate.clicks}</TableCell>
                                 <TableCell>{candidate.ctr}%</TableCell>
                                 <TableCell>{candidate.reason}</TableCell>
+                              </TableRow>
+                            ),
+                          )}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  ) : null}
+
+                  {seoSummary.searchPerformance.refreshFollowUps.length > 0 ? (
+                    <div className="space-y-2">
+                      <p className="text-sm font-medium">
+                        Suivi post-refresh contenu (J+14 / J+30 / J+60)
+                      </p>
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Page</TableHead>
+                            <TableHead>Refresh</TableHead>
+                            <TableHead>Âge</TableHead>
+                            <TableHead>Checkpoint</TableHead>
+                            <TableHead>Statut</TableHead>
+                            <TableHead>CTR</TableHead>
+                            <TableHead>Impressions</TableHead>
+                            <TableHead>Détail</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {seoSummary.searchPerformance.refreshFollowUps.map(
+                            (followUp) => (
+                              <TableRow key={followUp.path}>
+                                <TableCell className="max-w-[260px] truncate font-medium">
+                                  {followUp.path}
+                                </TableCell>
+                                <TableCell>{followUp.refreshedAt}</TableCell>
+                                <TableCell>{followUp.ageDays}j</TableCell>
+                                <TableCell>{followUp.milestone}</TableCell>
+                                <TableCell>
+                                  <Badge
+                                    variant={refreshFollowUpVariant(
+                                      followUp.status,
+                                    )}
+                                  >
+                                    {refreshFollowUpLabel(followUp.status)}
+                                  </Badge>
+                                </TableCell>
+                                <TableCell>
+                                  {followUp.ctr === null ? "-" : `${followUp.ctr}%`}
+                                </TableCell>
+                                <TableCell>{followUp.impressions ?? "-"}</TableCell>
+                                <TableCell className="text-xs">{followUp.detail}</TableCell>
                               </TableRow>
                             ),
                           )}
