@@ -65,6 +65,20 @@ export default function BlogPage() {
     })),
   };
 
+  const blogItemListJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "ItemList",
+    name: "Articles blog Jobio",
+    itemListOrder: "https://schema.org/ItemListOrderDescending",
+    numberOfItems: blogPosts.length,
+    itemListElement: blogPosts.map((post, index) => ({
+      "@type": "ListItem",
+      position: index + 1,
+      url: absoluteUrl(`/blog/${post.slug}`),
+      name: post.title,
+    })),
+  };
+
   return (
     <>
       <BreadcrumbStructuredData
@@ -76,6 +90,10 @@ export default function BlogPage() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(blogCollectionJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(blogItemListJsonLd) }}
       />
       <PublicPageShell
         badge="Blog"

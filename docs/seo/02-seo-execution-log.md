@@ -312,6 +312,18 @@
   - clarifier le rôle SEO de `/features` et `/docs`
   - renforcer la compréhension des intentions cibles par les moteurs
 
+## 2026-02-22 - Wave 22 (blog structured data depth)
+
+- Enrichissement des données structurées blog:
+  - `app/(layout)/blog/page.tsx`
+  - ajout d'un schéma `ItemList` des articles (positions + URLs)
+  - `app/(layout)/blog/[slug]/page.tsx`
+  - ajout de `wordCount`, `keywords` sur `BlogPosting`
+  - ajout d'un schéma `WebPage` pour la page article
+- Objectif:
+  - améliorer l'interprétation des pages de contenu et de la hiérarchie blog
+  - augmenter la robustesse sémantique des pages éditoriales
+
 ## Prochaine wave recommandée
 
 - Exécuter la connexion GSC/Bing et soumettre `sitemap.xml` en prod.

@@ -54,6 +54,12 @@ export default async function BlogPostPage({ params }: PageProps) {
   }
 
   const postUrl = absoluteUrl(`/blog/${post.slug}`);
+  const postWordCount = post.content
+    .replace(/<[^>]*>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim()
+    .split(" ")
+    .filter(Boolean).length;
   const suggestedPosts = blogPosts
     .filter((item) => item.slug !== post.slug)
     .slice(0, 2);
@@ -81,6 +87,8 @@ export default async function BlogPostPage({ params }: PageProps) {
     description: post.description,
     datePublished: post.date,
     dateModified: post.date,
+    wordCount: postWordCount,
+    keywords: post.tags,
     mainEntityOfPage: postUrl,
     author: {
       "@type": "Organization",
@@ -94,6 +102,21 @@ export default async function BlogPostPage({ params }: PageProps) {
         url: absoluteUrl("/images/logo-icon.svg"),
       },
     },
+  };
+
+  const blogPostWebPageJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    name: post.title,
+    url: postUrl,
+    inLanguage: "fr-FR",
+    description: post.description,
+    isPartOf: {
+      "@type": "WebSite",
+      name: SiteConfig.title,
+      url: SiteConfig.prodUrl,
+    },
+    about: post.tags,
   };
 
   const breadcrumbJsonLd = {
@@ -126,6 +149,10 @@ export default async function BlogPostPage({ params }: PageProps) {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(blogPostWebPageJsonLd) }}
       />
       <script
         type="application/ld+json"
