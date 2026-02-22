@@ -1,10 +1,15 @@
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
-import { getAllBlogSlugs, getBlogPost } from "@/features/blog/blog-data";
+import {
+  blogPosts,
+  getAllBlogSlugs,
+  getBlogPost,
+} from "@/features/blog/blog-data";
 import {
   PublicPageShell,
   PublicSection,
 } from "@/features/layout/public-page-shell";
+import { RelatedResourcesSection } from "@/features/layout/related-resources-section";
 import { absoluteUrl, buildMarketingMetadata } from "@/lib/seo";
 import { SiteConfig } from "@/site-config";
 import { ArrowLeft, Calendar, Clock } from "lucide-react";
@@ -49,6 +54,26 @@ export default async function BlogPostPage({ params }: PageProps) {
   }
 
   const postUrl = absoluteUrl(`/blog/${post.slug}`);
+  const suggestedPosts = blogPosts
+    .filter((item) => item.slug !== post.slug)
+    .slice(0, 2);
+
+  const relatedResources = [
+    ...suggestedPosts.map((item) => ({
+      href: `/blog/${item.slug}` as const,
+      title: item.title,
+      description: item.description,
+      ctaLabel: "Lire l'article",
+    })),
+    {
+      href: "/#pricing" as const,
+      title: "Plans et limites Jobio",
+      description:
+        "Passe de la théorie à l'exécution avec le plan adapté à ton volume.",
+      ctaLabel: "Voir les tarifs",
+    },
+  ];
+
   const articleJsonLd = {
     "@context": "https://schema.org",
     "@type": "BlogPosting",
@@ -158,6 +183,13 @@ export default async function BlogPostPage({ params }: PageProps) {
               Voir tous les articles
             </Link>
           </div>
+
+          <RelatedResourcesSection
+            title="Lectures liées"
+            description="Continue avec des contenus complémentaires et le bon plan d'exécution."
+            resources={relatedResources}
+            className="mt-2"
+          />
         </div>
       </PublicPageShell>
     </>

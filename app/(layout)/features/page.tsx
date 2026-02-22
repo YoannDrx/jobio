@@ -3,6 +3,7 @@ import {
   PublicPageShell,
   PublicSection,
 } from "@/features/layout/public-page-shell";
+import { RelatedResourcesSection } from "@/features/layout/related-resources-section";
 import { buildMarketingMetadata } from "@/lib/seo";
 import { SiteConfig } from "@/site-config";
 import {
@@ -150,6 +151,30 @@ const featureSections: FeatureSection[] = [
   },
 ];
 
+const relatedResources = [
+  {
+    href: "/docs" as const,
+    title: "Guide d'exécution",
+    description:
+      "Mets en place ton workflow quotidien de prospection avec la documentation opérationnelle.",
+    ctaLabel: "Lire les docs",
+  },
+  {
+    href: "/blog" as const,
+    title: "Conseils terrain",
+    description:
+      "Explore les retours d'expérience freelance sur prospection, LinkedIn et négociation.",
+    ctaLabel: "Voir le blog",
+  },
+  {
+    href: "/#pricing" as const,
+    title: "Plans & limites",
+    description:
+      "Compare Free, Pro et Ultra pour choisir les capacités adaptées à ton volume.",
+    ctaLabel: "Comparer les plans",
+  },
+];
+
 export default function FeaturesPage() {
   return (
     <>
@@ -189,6 +214,12 @@ export default function FeaturesPage() {
             </PublicSection>
           ))}
         </div>
+        <RelatedResourcesSection
+          title="Pour aller plus loin"
+          description="Relie les fonctionnalités à ton setup, ton apprentissage et ton plan."
+          resources={relatedResources}
+          className="mt-4"
+        />
       </PublicPageShell>
     </>
   );

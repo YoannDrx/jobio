@@ -1,6 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { BreadcrumbStructuredData } from "@/components/seo/breadcrumb-structured-data";
 import { blogPosts } from "@/features/blog/blog-data";
+import { RelatedResourcesSection } from "@/features/layout/related-resources-section";
 import {
   PublicPageShell,
   PublicSection,
@@ -22,6 +23,30 @@ export const metadata: Metadata = buildMarketingMetadata({
     },
   },
 });
+
+const relatedResources = [
+  {
+    href: "/docs" as const,
+    title: "Mode d'emploi Jobio",
+    description:
+      "Transforme les conseils du blog en routine exécutable avec les workflows docs.",
+    ctaLabel: "Ouvrir la doc",
+  },
+  {
+    href: "/features" as const,
+    title: "Fonctionnalités en détail",
+    description:
+      "Relie chaque stratégie à une capacité produit concrète dans Jobio.",
+    ctaLabel: "Explorer les fonctionnalités",
+  },
+  {
+    href: "/#pricing" as const,
+    title: "Plans Free, Pro, Ultra",
+    description:
+      "Vérifie les limites de plan avant de déployer ton process de prospection.",
+    ctaLabel: "Comparer les plans",
+  },
+];
 
 export default function BlogPage() {
   const blogCollectionJsonLd = {
@@ -93,6 +118,12 @@ export default function BlogPage() {
             </Link>
           ))}
         </div>
+        <RelatedResourcesSection
+          title="Ressources liées"
+          description="Connecte ces contenus à ton exécution produit."
+          resources={relatedResources}
+          className="mt-4"
+        />
       </PublicPageShell>
     </>
   );

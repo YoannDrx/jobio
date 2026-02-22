@@ -62,8 +62,20 @@
   - `docs/seo/03-search-console-bing-runbook.md`
   - `docs/seo/04-intent-map-content-backlog.md`
 
+## 2026-02-22 - Wave 6 (internal linking module)
+
+- Nouveau composant de maillage interne:
+  - `src/features/layout/related-resources-section.tsx`
+- Intégration du bloc "Ressources liées" sur:
+  - `app/(layout)/features/page.tsx`
+  - `app/(layout)/docs/page.tsx`
+  - `app/(layout)/blog/page.tsx`
+  - `app/(layout)/blog/[slug]/page.tsx`
+- Test unitaire du composant:
+  - `__tests__/related-resources-section.test.tsx`
+
 ## Prochaine wave recommandée
 
 - Exécuter la connexion GSC/Bing et soumettre `sitemap.xml`.
 - Publier 2 premiers contenus du backlog (S1-S2).
-- Ajouter un module "ressources liées" partagé sur blog/docs/features.
+- Ajouter un suivi KPI SEO hebdo dans l'admin (clics, CTR, indexation).

@@ -2,6 +2,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { BreadcrumbStructuredData } from "@/components/seo/breadcrumb-structured-data";
 import { PublicPageShell, PublicSection } from "@/features/layout/public-page-shell";
+import { RelatedResourcesSection } from "@/features/layout/related-resources-section";
 import { buildMarketingMetadata } from "@/lib/seo";
 import { SiteConfig } from "@/site-config";
 import {
@@ -76,6 +77,30 @@ const workflows = [
       "Identifier les statuts bloquants",
       "Adapter séquences et templates",
     ],
+  },
+];
+
+const relatedResources = [
+  {
+    href: "/features" as const,
+    title: "Cartographie des fonctionnalités",
+    description:
+      "Visualise rapidement tout ce que Jobio couvre: pipeline, IA, CV Studio et billing.",
+    ctaLabel: "Voir les fonctionnalités",
+  },
+  {
+    href: "/blog" as const,
+    title: "Playbooks freelance",
+    description:
+      "Passe de la théorie à la pratique avec des guides prospection et négociation.",
+    ctaLabel: "Lire les articles",
+  },
+  {
+    href: "/#pricing" as const,
+    title: "Choisir le bon plan",
+    description:
+      "Aligne ton volume d'usage avec les limites Free, Pro et Ultra.",
+    ctaLabel: "Comparer les plans",
   },
 ];
 
@@ -296,6 +321,12 @@ export default function DocsPage() {
           </div>
         </div>
       </PublicSection>
+      <RelatedResourcesSection
+        title="Ressources complémentaires"
+        description="Continue ton onboarding avec les pages les plus utiles."
+        resources={relatedResources}
+        className="mt-4"
+      />
       </PublicPageShell>
     </>
   );
