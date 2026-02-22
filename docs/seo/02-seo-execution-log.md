@@ -162,8 +162,29 @@
   - `docs/seo/04-intent-map-content-backlog.md`
   - Sprint S3-S4 marqué comme réalisé.
 
+## 2026-02-22 - Wave 12 (content S5-S6 + freshness guardrail)
+
+- Publication / refresh contenus backlog S5-S6:
+  - `src/features/blog/blog-data.ts`
+  - `/blog/tableau-de-bord-freelance-kpi-hebdomadaires`
+  - `/blog/comment-fixer-son-tjm` (refresh title + contenu + maillage interne)
+- Maillage éditorial renforcé dans les nouveaux contenus:
+  - liens vers `/features`, `/docs`, `/#pricing`
+- Garder l'Ops SEO actionnable quand la collecte devient obsolète:
+  - `src/features/admin/seo-kpi.ts`
+  - ajout d'un signal de fraîcheur snapshot (`snapshotAgeDays`, `isSnapshotStale`)
+  - warning + action recommandée si snapshot trop ancien
+  - `app/admin/ops/page.tsx`
+  - affichage d'un badge "snapshot frais/stale" dans le bloc acquisition
+- Tests:
+  - `__tests__/seo-kpi.test.ts` enrichi (cas snapshot stale)
+- Backlog éditorial mis à jour:
+  - `docs/seo/04-intent-map-content-backlog.md`
+  - Sprint S5-S6 marqué comme réalisé (item docs déjà livré précédemment).
+
 ## Prochaine wave recommandée
 
 - Exécuter la connexion GSC/Bing et soumettre `sitemap.xml` en prod.
 - Planifier l'appel régulier de `POST /api/cron/seo-search-metrics-sync` (daily/weekly).
-- Publier les contenus S5-S6 (TJM + KPI dashboard freelance) et renforcer le maillage blog -> docs -> pricing.
+- Publier les contenus S7-S8 (facturation freelance + pipeline lead -> contrat signé).
+- Mettre à jour les 4 contenus les plus performants (refresh title, intro, CTA, maillage).

@@ -46,9 +46,9 @@ Owner: Growth + Product Marketing
 
 ## Sprint S5-S6
 
-1. Publier guide long: `Fixer son TJM et négocier sans se brader`.
-2. Publier article: `Tableau de bord freelance: KPI à suivre chaque semaine`.
-3. Ajouter section "ressources liées" en bas de `/docs`.
+1. ✅ Publier guide long: `Fixer son TJM et négocier sans se brader` (`/blog/comment-fixer-son-tjm`).
+2. ✅ Publier article: `Tableau de bord freelance: KPI à suivre chaque semaine` (`/blog/tableau-de-bord-freelance-kpi-hebdomadaires`).
+3. ✅ Ajouter section "ressources liées" en bas de `/docs` (livré via module `RelatedResourcesSection`).
 
 ## Sprint S7-S8
 

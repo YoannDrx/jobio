@@ -152,6 +152,109 @@ export const blogPosts: BlogPost[] = [
 `,
   },
   {
+    slug: "tableau-de-bord-freelance-kpi-hebdomadaires",
+    title: "Tableau de bord freelance: KPI a suivre chaque semaine",
+    description:
+      "Le tableau de bord minimal pour piloter ta prospection freelance avec les bons KPI hebdo et prendre des decisions data-driven.",
+    date: "2026-02-22",
+    tags: ["KPI", "Dashboard", "Freelance"],
+    readingTime: 9,
+    content: `
+<h2>Pourquoi un tableau de bord hebdomadaire change ton business freelance</h2>
+<p>Sans pilotage, la prospection devient emotionnelle: tu acceleres quand tu stresses, tu ralentis quand tu as une mission. Le resultat est instable. Un tableau de bord hebdomadaire te force a piloter par les signaux reels, pas par l'impression du moment.</p>
+<p>L'objectif n'est pas de tracker 50 metrics. L'objectif est d'avoir 8 a 12 KPI actionnables qui te disent ou intervenir cette semaine.</p>
+
+<h2>Les 5 blocs KPI a suivre en priorite</h2>
+<h3>1) Acquisition</h3>
+<ul>
+<li><strong>Nouveaux leads qualifies / semaine</strong></li>
+<li><strong>Taux de reponse premier contact</strong></li>
+<li><strong>Canal le plus performant</strong> (LinkedIn, plateforme, referral)</li>
+</ul>
+
+<h3>2) Pipeline</h3>
+<ul>
+<li><strong>Nombre d'opportunites actives</strong></li>
+<li><strong>Opportunites sans prochaine action</strong></li>
+<li><strong>Age moyen des deals par etape</strong></li>
+</ul>
+
+<h3>3) Conversion</h3>
+<ul>
+<li><strong>Taux lead -> call</strong></li>
+<li><strong>Taux call -> proposition</strong></li>
+<li><strong>Taux proposition -> signature</strong></li>
+</ul>
+
+<h3>4) Pricing</h3>
+<ul>
+<li><strong>TJM moyen negocie</strong></li>
+<li><strong>Ecart TJM demande vs TJM signe</strong></li>
+<li><strong>Taux de remise accordee</strong></li>
+</ul>
+
+<h3>5) Cash & operations</h3>
+<ul>
+<li><strong>CA signe a 30 jours</strong></li>
+<li><strong>Factures emises et encaissees</strong></li>
+<li><strong>DSO (delai moyen d'encaissement)</strong></li>
+</ul>
+
+<h2>Le dashboard minimal (et suffisant)</h2>
+<p>Tu peux commencer avec 10 KPI seulement:</p>
+<ul>
+<li>Leads qualifies / semaine</li>
+<li>Taux de reponse</li>
+<li>Calls bookes</li>
+<li>Taux lead -> call</li>
+<li>Propositions envoyees</li>
+<li>Taux proposition -> signature</li>
+<li>TJM moyen signe</li>
+<li>Pipeline ponderé (valeur x probabilite)</li>
+<li>CA encaisse ce mois</li>
+<li>Jours de runway (si objectif de tresorerie)</li>
+</ul>
+<p>Avec ces 10 indicateurs, tu vois deja si ton systeme commercial est sain ou en train de se degrader.</p>
+
+<h2>Comment lire les KPI pour agir vite</h2>
+<p>Chaque KPI doit etre relie a une action precise. Exemples:</p>
+<ul>
+<li><strong>Taux de reponse en baisse:</strong> revoir ciblage et accroche des messages</li>
+<li><strong>Beaucoup d'opportunites sans prochaine action:</strong> imposer une hygiene pipeline quotidienne</li>
+<li><strong>TJM moyen qui baisse:</strong> retravailler argumentaire valeur et qualification budget</li>
+<li><strong>Cycle de vente qui s'allonge:</strong> renforcer cadence de relances et clarifier les next steps</li>
+</ul>
+<p>Un KPI sans action associee est juste une statistique decorative.</p>
+
+<h2>Rituel hebdo recommande (45 minutes)</h2>
+<p><strong>Bloc 1 - 15 min:</strong> lecture des KPI et detection des ecarts.</p>
+<p><strong>Bloc 2 - 20 min:</strong> priorisation de 3 actions max pour la semaine.</p>
+<p><strong>Bloc 3 - 10 min:</strong> nettoyage pipeline (next action, dates, statut).</p>
+<p>Ce rituel est plus utile qu'un gros reporting mensuel fait trop tard.</p>
+
+<h2>Erreurs frequentes a eviter</h2>
+<ul>
+<li>Suivre trop de KPI et n'en utiliser aucun pour decider</li>
+<li>Confondre volume d'activite et progression commerciale</li>
+<li>Mesurer uniquement l'acquisition et ignorer conversion + cash</li>
+<li>Modifier son process chaque semaine sans periode de test minimale</li>
+</ul>
+
+<h2>Stack operationnelle pour industrialiser</h2>
+<p>Pour rendre ce pilotage fiable, il faut connecter CRM, relances, analytics et facturation. C'est ce lien entre acquisition, conversion et cash qui cree une activite previsible.</p>
+<p>Tu peux voir la structure produit complete sur <a href="/features">/features</a>, transformer ces KPI en process dans <a href="/docs">/docs</a>, puis verifier les limites de plan sur <a href="/#pricing">/#pricing</a>.</p>
+
+<h2>Plan d'implementation en 7 jours</h2>
+<p><strong>Jour 1:</strong> selectionner 10 KPI max.</p>
+<p><strong>Jour 2:</strong> definir les seuils d'alerte.</p>
+<p><strong>Jour 3:</strong> nettoyer pipeline et tags source.</p>
+<p><strong>Jour 4-5:</strong> instrumenter reporting hebdo.</p>
+<p><strong>Jour 6:</strong> revue pilote et ajustements.</p>
+<p><strong>Jour 7:</strong> verrouiller le rituel hebdomadaire dans ton agenda.</p>
+<p>Le but final: moins d'intuition brute, plus de decisions systematiques.</p>
+`,
+  },
+  {
     slug: "structurer-prospection-freelance-2026",
     title: "Comment structurer sa prospection freelance en 2026",
     description:
@@ -436,75 +539,79 @@ export const blogPosts: BlogPost[] = [
   },
   {
     slug: "comment-fixer-son-tjm",
-    title: "Comment fixer et negocier son TJM en freelance tech",
+    title: "Fixer son TJM et negocier sans se brader",
     description:
-      "Methode complete pour calculer son Taux Journalier Moyen, le justifier face aux clients et negocier avec confiance.",
-    date: "2026-01-28",
-    tags: ["TJM", "Negociation", "Freelance"],
-    readingTime: 7,
+      "Cadre concret pour definir un TJM rentable, le defendre en negociation et augmenter son prix sans casser sa conversion.",
+    date: "2026-02-22",
+    tags: ["TJM", "Negociation", "Freelance", "Pricing"],
+    readingTime: 9,
     content: `
-<h2>Comprendre ce qu'est vraiment le TJM</h2>
-<p>Le Taux Journalier Moyen (TJM) est le prix que vous facturez pour une journee de travail en tant que freelance. C'est l'indicateur central de votre activite : il determine votre chiffre d'affaires, votre rentabilite et votre positionnement sur le marche.</p>
-<p>Beaucoup de freelances fixent leur TJM en se basant uniquement sur ce qu'ils voient autour d'eux ou sur leur ancien salaire converti. C'est une erreur. Votre TJM doit refleter la valeur que vous apportez a vos clients, pas simplement couvrir vos charges.</p>
+<h2>Le TJM n'est pas juste un prix: c'est ton systeme de positionnement</h2>
+<p>Beaucoup de freelances fixent leur TJM en copiant le marche ou en convertissant leur ancien salaire. Ca produit des tarifs fragiles en negociation. Un TJM robuste repose sur trois couches: rentabilite, valeur creee, et coherence avec ton positionnement.</p>
+<p>Le but n'est pas "facturer le plus possible". Le but est de facturer juste, avec une marge saine et une conversion stable.</p>
 
-<h2>La methode de calcul en 4 etapes</h2>
-<p><strong>Etape 1 : Definir votre revenu net cible</strong></p>
-<p>Commencez par determiner le revenu net annuel que vous souhaitez vous verser. Prenez en compte votre niveau de vie, vos projets personnels et votre epargne. Soyez realiste mais ambitieux.</p>
-
-<p><strong>Etape 2 : Ajouter vos charges</strong></p>
-<p>En freelance, vos charges representent generalement entre 40% et 55% de votre chiffre d'affaires selon votre statut juridique. Incluez :</p>
+<h2>Definir 3 niveaux de TJM au lieu d'un seul chiffre</h2>
 <ul>
-<li>Cotisations sociales (URSSAF, retraite, prevoyance)</li>
-<li>Mutuelle et assurance RC Pro</li>
-<li>Comptabilite et frais bancaires</li>
-<li>Materiel, logiciels et abonnements</li>
-<li>Espace de coworking ou bureau</li>
-<li>Formation continue</li>
+<li><strong>TJM plancher:</strong> en dessous, la mission detruit ta rentabilite.</li>
+<li><strong>TJM cible:</strong> ton niveau standard pour les missions qualifiees.</li>
+<li><strong>TJM ambition:</strong> tarif pour contexte exigeant (urgence, expertise rare, impact eleve).</li>
 </ul>
+<p>Cette grille te donne de la flexibilite en negociation sans tomber dans la braderie.</p>
 
-<p><strong>Etape 3 : Estimer vos jours facturables</strong></p>
-<p>Un freelance ne facture pas 365 jours par an. Deduisez les week-ends, vacances, jours feries, jours de prospection, formation et intercontrat. En moyenne, un freelance tech facture entre 180 et 220 jours par an.</p>
+<h2>Calcul rapide du TJM plancher</h2>
+<p>Formule simple: <strong>TJM plancher = (revenu net cible + charges + reserve risque) / jours facturables</strong>.</p>
+<p>Exemple: revenu net 70k, charges 52k, reserve risque 8k, 195 jours facturables. TJM plancher = 130k / 195 = 666 euros.</p>
+<p>Ce chiffre n'est pas ton argument commercial. C'est ta limite interne.</p>
 
-<p><strong>Etape 4 : Calculer votre TJM plancher</strong></p>
-<p>La formule : TJM = (Revenu net cible + Charges) / Nombre de jours facturables</p>
-<p>Exemple concret : pour un revenu net de 60 000 euros avec 45% de charges et 200 jours facturables, le TJM plancher est de (60 000 + 49 000) / 200 = 545 euros/jour. C'est votre minimum, pas votre objectif.</p>
-
-<h2>Positionner son TJM sur le marche</h2>
-<p>Le TJM plancher est un point de depart. Votre tarif reel doit aussi prendre en compte votre positionnement marche. Plusieurs facteurs influencent la fourchette :</p>
+<h2>Passer du TJM plancher au TJM cible</h2>
+<p>Ton TJM cible depend de la valeur business livree, pas seulement de ton temps. Ajuste selon:</p>
 <ul>
-<li><strong>Seniorite :</strong> un freelance avec 8+ ans d'experience peut facturer 30 a 50% de plus qu'un profil de 3 ans</li>
-<li><strong>Specialisation :</strong> les expertises rares (securite, data engineering, DevOps avance) commandent des TJM plus eleves</li>
-<li><strong>Secteur client :</strong> la finance et la sante paient generalement plus que le e-commerce ou les startups early-stage</li>
-<li><strong>Localisation :</strong> les missions parisiennes sont en moyenne 15 a 25% plus elevees que les missions en region</li>
-<li><strong>Type de mission :</strong> une mission de conseil ou d'architecture se facture plus qu'une mission de production pure</li>
+<li>impact attendu (revenu, cout, delai, risque)</li>
+<li>niveau d'incertitude technique</li>
+<li>niveau de seniorite demande sur la mission</li>
+<li>rareté de l'expertise sur le marche</li>
 </ul>
-<p>Consultez les barometres de TJM (Malt, Comet, Free-Work) pour vous situer. Visez le quartile superieur de votre categorie si votre profil le justifie.</p>
+<p>Plus l'impact est critique et le risque eleve, plus ton TJM cible doit monter.</p>
 
-<h2>Les strategies de negociation</h2>
-<p>La negociation du TJM est un moment cle qui determine la rentabilite de votre mission. Voici les principes a retenir :</p>
-<p><strong>Ne jamais donner son prix en premier.</strong> Demandez d'abord le budget prevu par le client. Si le client insiste, donnez une fourchette haute. Il est toujours plus facile de descendre que de remonter.</p>
-<p><strong>Justifier par la valeur, pas par le cout.</strong> Ne dites pas "je facture 650 euros parce que j'ai des charges". Dites "sur ma derniere mission similaire, j'ai permis a l'equipe de livrer 3 semaines plus tot que prevu, ce qui a genere 80K euros de revenus supplementaires".</p>
-<p><strong>Avoir un BATNA solide.</strong> Le BATNA (Best Alternative To a Negotiated Agreement) est votre meilleure alternative si la negociation echoue. Si vous avez d'autres opportunites en cours, vous negociez avec plus de serenite et de fermete.</p>
+<h2>Negocier sans se brader: script pratique</h2>
+<p><strong>1) Qualifier avant de chiffrer.</strong> Budget, urgence, sponsor, criteres de succes.</p>
+<p><strong>2) Ancrer sur la valeur.</strong> "Sur des contextes similaires, j'ai reduit X de Y% en Z semaines."</p>
+<p><strong>3) Donner une fourchette.</strong> Positionne ton TJM cible en milieu-haut.</p>
+<p><strong>4) Echanger concession contre concession.</strong> Si tu descends sur le prix, obtiens scope, engagement ou delai plus favorable.</p>
+<p><strong>5) Clore proprement.</strong> Si le budget est hors zone viable, refuse sans detruire la relation.</p>
 
-<h2>Quand et comment augmenter son TJM</h2>
-<p>Votre TJM n'est pas fixe dans le marbre. Prevoyez de le revaluer regulierement :</p>
+<h2>Les remises intelligentes (et les remises toxiques)</h2>
+<p>Une remise peut etre saine si elle est conditionnee:</p>
 <ul>
-<li><strong>A chaque nouvelle mission :</strong> c'est le moment le plus naturel pour ajuster votre tarif a la hausse</li>
-<li><strong>Apres une certification ou formation significative :</strong> une nouvelle competence justifie une revalorisation</li>
-<li><strong>Tous les 12 mois sur une mission longue :</strong> negociez une clause de revalorisation annuelle dans vos contrats</li>
-<li><strong>Quand votre taux d'occupation depasse 90% :</strong> si vous refusez des missions, c'est que votre prix est trop bas</li>
+<li>engagement minimum de duree</li>
+<li>scope stabilise</li>
+<li>paiement rapide</li>
+<li>volume garanti</li>
 </ul>
-<p>Augmentez par paliers de 5 a 10%. Une hausse trop brutale peut effrayer les clients, meme si elle est justifiee. La progression reguliere est plus efficace qu'un rattrapage soudain.</p>
+<p>Une remise toxique est une remise "pour faire plaisir" sans contrepartie concrete.</p>
 
-<h2>Les erreurs a eviter absolument</h2>
-<p>Pour conclure, voici les pieges les plus courants dans la gestion du TJM :</p>
+<h2>Quand augmenter ton TJM</h2>
 <ul>
-<li><strong>Casser ses prix pour decrocher une mission :</strong> vous creez un precedent difficile a corriger et signalez un manque de confiance</li>
-<li><strong>Ne pas differencier ses tarifs :</strong> une mission de 2 jours et une mission de 6 mois n'ont pas le meme TJM. Facturez plus cher les missions courtes</li>
-<li><strong>Oublier les frais annexes :</strong> deplacements, materiel specifique, astreintes doivent etre factures en plus du TJM</li>
-<li><strong>Comparer son TJM au salaire :</strong> un TJM de 500 euros ne correspond pas a un salaire de 500 euros par jour. Les charges, l'intercontrat et les risques changent completement l'equation</li>
+<li>ton taux d'occupation depasse 85-90% pendant plusieurs mois</li>
+<li>ta conversion reste stable malgre une hausse test</li>
+<li>tu as renforce ton expertise ou ton niveau de responsabilite</li>
+<li>la mission demande un niveau de criticite superieur</li>
 </ul>
-<p>Votre TJM est le reflet de votre valeur percue. Investissez dans votre expertise, votre visibilite et votre capacite a demontrer des resultats concrets : votre tarif suivra naturellement.</p>
+<p>Augmente par paliers (5 a 10%) et mesure l'effet sur conversion et marge.</p>
+
+<h2>Mettre le pricing sous pilotage</h2>
+<p>Ton TJM doit etre suivi dans ton dashboard hebdo: taux de remise, TJM demande, TJM signe, marge estimee, cycle de vente. Sans mesures, tu negocies a l'instinct.</p>
+<p>Pour outiller ce pilotage, relie ton pricing a ton pipeline sur <a href="/features">/features</a>, execute les routines dans <a href="/docs">/docs</a> et verifie les capacites par plan sur <a href="/#pricing">/#pricing</a>.</p>
+
+<h2>Checklist avant d'envoyer une proposition</h2>
+<ul>
+<li>Mon TJM est dans ma zone cible ou ambition</li>
+<li>La proposition explicite clairement la valeur business</li>
+<li>Les concessions eventuelles ont une contrepartie</li>
+<li>Le scope est defini pour limiter les glissements</li>
+<li>Le plan de revalorisation est anticipe si mission longue</li>
+</ul>
+<p>Le bon TJM est celui que tu peux defender avec coherence, pas celui que tu affiches avec anxiete.</p>
 `,
   },
 ];

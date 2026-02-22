@@ -149,8 +149,83 @@ describe("computeSeoKpiSummary", () => {
     expect(summary.searchPerformance.status).toBe("configured");
     expect(summary.searchPerformance.clicks).toBe(560);
     expect(summary.searchPerformance.clicksDeltaPercent).toBe(12);
+    expect(summary.searchPerformance.snapshotAgeDays).toBe(0);
+    expect(summary.searchPerformance.isSnapshotStale).toBe(false);
     expect(summary.searchPerformance.topQueries).toHaveLength(1);
     expect(summary.checklist.every((item) => item.status === "ok")).toBe(true);
+  });
+
+  it("flags stale search snapshots for refresh", () => {
+    const summary = computeSeoKpiSummary({
+      sitemapEntries: REQUIRED_PUBLIC_PAGES.map((path) => ({
+        url: toAbsoluteUrl(path),
+      })),
+      robotsRules: {
+        userAgent: "*",
+        allow: "/",
+        disallow: [...EXPECTED_PRIVATE_DISALLOWS],
+      },
+      posts: [
+        {
+          slug: "recent-1",
+          title: "Recent 1",
+          description: "Recent post",
+          date: "2026-02-18",
+          tags: [],
+          content: "",
+          readingTime: 4,
+        },
+        {
+          slug: "recent-2",
+          title: "Recent 2",
+          description: "Recent post",
+          date: "2026-02-16",
+          tags: [],
+          content: "",
+          readingTime: 4,
+        },
+      ],
+      searchMetricsState: {
+        status: "configured",
+        source: "redis_cache",
+        payload: {
+          current: {
+            provider: "combined",
+            capturedAt: "2026-02-10T09:00:00.000Z",
+            period: {
+              from: "2026-01-13",
+              to: "2026-02-10",
+              label: "28 derniers jours",
+            },
+            totals: {
+              clicks: 400,
+              impressions: 9000,
+              ctr: 0.044,
+              averagePosition: 16.2,
+            },
+            indexedPages: {
+              public: 39,
+              private: 0,
+            },
+          },
+        },
+        error: null,
+      },
+      now: new Date("2026-02-22T00:00:00.000Z"),
+    });
+
+    const metricsChecklist = summary.checklist.find(
+      (item) => item.id === "external-search-metrics",
+    );
+
+    expect(summary.searchPerformance.snapshotAgeDays).toBe(11);
+    expect(summary.searchPerformance.isSnapshotStale).toBe(true);
+    expect(metricsChecklist?.status).toBe("warning");
+    expect(
+      summary.recommendedActions.some((action) =>
+        action.includes("refresh des métriques SEO"),
+      ),
+    ).toBe(true);
   });
 
   it("marks search metrics as warning when payload is invalid", () => {

@@ -7,6 +7,7 @@ import { SiteConfig } from "@/site-config";
 import type { MetadataRoute } from "next";
 
 const DAY_IN_MS = 24 * 60 * 60 * 1000;
+const SEARCH_METRICS_STALE_AFTER_DAYS = 8;
 
 export const REQUIRED_PUBLIC_PAGES = [
   "/",
@@ -56,6 +57,8 @@ export type SeoSearchPerformanceSummary = {
   provider: SeoSearchSnapshot["provider"] | null;
   periodLabel: string | null;
   capturedAt: string | null;
+  snapshotAgeDays: number | null;
+  isSnapshotStale: boolean;
   error: string | null;
   clicks: number | null;
   impressions: number | null;
@@ -145,6 +148,7 @@ const toPeriodLabel = (from: string, to: string, label?: string): string => {
 
 const buildSearchPerformanceSummary = (
   searchMetricsState: SeoSearchMetricsState,
+  now: Date,
 ): SeoSearchPerformanceSummary => {
   if (searchMetricsState.status !== "configured" || !searchMetricsState.payload) {
     return {
@@ -153,6 +157,8 @@ const buildSearchPerformanceSummary = (
       provider: null,
       periodLabel: null,
       capturedAt: null,
+      snapshotAgeDays: null,
+      isSnapshotStale: false,
       error: searchMetricsState.error,
       clicks: null,
       impressions: null,
@@ -168,6 +174,15 @@ const buildSearchPerformanceSummary = (
   }
 
   const { current, previous } = searchMetricsState.payload;
+  const capturedAtDate = new Date(current.capturedAt);
+  const snapshotAgeDays = Number.isFinite(capturedAtDate.getTime())
+    ? Math.max(
+        0,
+        Math.floor((now.getTime() - capturedAtDate.getTime()) / DAY_IN_MS),
+      )
+    : null;
+  const isSnapshotStale =
+    snapshotAgeDays !== null && snapshotAgeDays >= SEARCH_METRICS_STALE_AFTER_DAYS;
 
   return {
     status: "configured",
@@ -179,6 +194,8 @@ const buildSearchPerformanceSummary = (
       current.period.label,
     ),
     capturedAt: current.capturedAt,
+    snapshotAgeDays,
+    isSnapshotStale,
     error: null,
     clicks: current.totals.clicks,
     impressions: current.totals.impressions,
@@ -255,7 +272,7 @@ export const computeSeoKpiSummary = ({
 
   const hasRssInSitemap = sitemapUrls.has(toAbsoluteUrl("/rss.xml"));
 
-  const searchPerformance = buildSearchPerformanceSummary(searchMetricsState);
+  const searchPerformance = buildSearchPerformanceSummary(searchMetricsState, now);
 
   const searchMetricsChecklistStatus: SeoChecklistStatus =
     searchPerformance.status !== "configured"
@@ -266,6 +283,8 @@ export const computeSeoKpiSummary = ({
         : searchPerformance.clicksDeltaPercent !== null &&
             searchPerformance.clicksDeltaPercent <= -30
           ? "warning"
+          : searchPerformance.isSnapshotStale
+            ? "warning"
           : "ok";
 
   const searchMetricsChecklistDetail =
@@ -276,6 +295,9 @@ export const computeSeoKpiSummary = ({
         : searchPerformance.indexedPrivatePages !== null &&
             searchPerformance.indexedPrivatePages > 0
           ? `${searchPerformance.indexedPrivatePages} page(s) privée(s) signalée(s) indexée(s) par la source SEO.`
+          : searchPerformance.isSnapshotStale &&
+              searchPerformance.snapshotAgeDays !== null
+            ? `Snapshot SEO obsolète (${searchPerformance.snapshotAgeDays} jours). Rafraîchir la collecte.`
           : searchPerformance.clicks === null || searchPerformance.impressions === null
             ? "Source SEO configurée, mais aucune métrique exploitable n'a été trouvée."
             : `${searchPerformance.clicks} clics / ${searchPerformance.impressions} impressions (${searchPerformance.periodLabel ?? "période non précisée"}).`;
@@ -377,6 +399,16 @@ export const computeSeoKpiSummary = ({
   ) {
     recommendedActions.push(
       "Traiter en priorité l'indexation de pages privées détectée via Search Console/Bing.",
+    );
+  }
+
+  if (
+    searchPerformance.status === "configured" &&
+    searchPerformance.isSnapshotStale &&
+    searchPerformance.snapshotAgeDays !== null
+  ) {
+    recommendedActions.push(
+      `Déclencher un refresh des métriques SEO (snapshot âgé de ${searchPerformance.snapshotAgeDays} jours).`,
     );
   }
 

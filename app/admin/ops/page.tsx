@@ -67,6 +67,9 @@ const sourceLabel = (
   return "Aucune";
 };
 
+const snapshotFreshnessVariant = (isStale: boolean) =>
+  isStale ? "destructive" : "secondary";
+
 export default async function AdminOpsPage() {
   await getRequiredAdmin();
 
@@ -248,6 +251,18 @@ export default async function AdminOpsPage() {
                 <Badge variant="outline">
                   Source: {sourceLabel(seoSummary.searchPerformance.source)}
                 </Badge>
+                {seoSummary.searchPerformance.snapshotAgeDays !== null ? (
+                  <Badge
+                    variant={snapshotFreshnessVariant(
+                      seoSummary.searchPerformance.isSnapshotStale,
+                    )}
+                  >
+                    {seoSummary.searchPerformance.isSnapshotStale
+                      ? "Snapshot obsolete"
+                      : "Snapshot frais"}{" "}
+                    ({seoSummary.searchPerformance.snapshotAgeDays}j)
+                  </Badge>
+                ) : null}
                 {seoSummary.searchPerformance.capturedAt ? (
                   <p className="text-muted-foreground text-xs">
                     Snapshot:{" "}
@@ -362,6 +377,10 @@ export default async function AdminOpsPage() {
                   Configure{" "}
                   <code className="rounded bg-muted px-1 py-0.5">
                     SEO_SEARCH_METRICS_JSON
+                  </code>{" "}
+                  ou{" "}
+                  <code className="rounded bg-muted px-1 py-0.5">
+                    SEO_SEARCH_METRICS_ENDPOINT
                   </code>{" "}
                   ou{" "}
                   <code className="rounded bg-muted px-1 py-0.5">
