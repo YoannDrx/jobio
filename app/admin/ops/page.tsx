@@ -371,6 +371,40 @@ export default async function AdminOpsPage() {
                       Aucune requête détaillée fournie dans la source externe.
                     </p>
                   )}
+
+                  {seoSummary.searchPerformance.contentRefreshCandidates.length > 0 ? (
+                    <div className="space-y-2">
+                      <p className="text-sm font-medium">
+                        Candidats refresh contenu SEO
+                      </p>
+                      <Table>
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Page</TableHead>
+                            <TableHead>Impressions</TableHead>
+                            <TableHead>Clics</TableHead>
+                            <TableHead>CTR</TableHead>
+                            <TableHead>Raison</TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                          {seoSummary.searchPerformance.contentRefreshCandidates.map(
+                            (candidate) => (
+                              <TableRow key={candidate.path}>
+                                <TableCell className="font-medium">
+                                  {candidate.path}
+                                </TableCell>
+                                <TableCell>{candidate.impressions}</TableCell>
+                                <TableCell>{candidate.clicks}</TableCell>
+                                <TableCell>{candidate.ctr}%</TableCell>
+                                <TableCell>{candidate.reason}</TableCell>
+                              </TableRow>
+                            ),
+                          )}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  ) : null}
                 </>
               ) : (
                 <p className="text-muted-foreground text-sm">

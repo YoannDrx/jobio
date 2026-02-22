@@ -203,9 +203,22 @@
   - `docs/seo/04-intent-map-content-backlog.md`
   - Items S7-S8 (1,2) marqués comme réalisés.
 
+## 2026-02-22 - Wave 14 (SEO refresh candidates in Ops)
+
+- Détection automatique des contenus à rafraîchir dans l'admin Ops:
+  - `src/features/admin/seo-kpi.ts`
+  - extraction de candidats refresh depuis `topPages` (focus pages blog)
+  - critère initial: CTR faible sur impressions élevées
+  - action recommandée dédiée ajoutée dans la checklist d'actions
+- UI admin enrichie:
+  - `app/admin/ops/page.tsx`
+  - nouveau tableau "Candidats refresh contenu SEO" (page, impressions, clics, CTR, raison)
+- Tests:
+  - `__tests__/seo-kpi.test.ts` enrichi (cas candidat refresh faible CTR)
+
 ## Prochaine wave recommandée
 
 - Exécuter la connexion GSC/Bing et soumettre `sitemap.xml` en prod.
 - Planifier l'appel régulier de `POST /api/cron/seo-search-metrics-sync` (daily/weekly).
 - Mettre à jour les 4 contenus les plus performants (refresh title, intro, CTA, maillage).
-- Ajouter un reporting SEO "content refresh candidates" basé sur clics/CTR/position dans l'admin Ops.
+- Ajouter une boucle de suivi post-refresh (J+14/J+30) pour mesurer l'impact des updates sur CTR/clics.

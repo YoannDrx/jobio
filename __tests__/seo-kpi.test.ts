@@ -152,6 +152,7 @@ describe("computeSeoKpiSummary", () => {
     expect(summary.searchPerformance.snapshotAgeDays).toBe(0);
     expect(summary.searchPerformance.isSnapshotStale).toBe(false);
     expect(summary.searchPerformance.topQueries).toHaveLength(1);
+    expect(summary.searchPerformance.contentRefreshCandidates).toHaveLength(0);
     expect(summary.checklist.every((item) => item.status === "ok")).toBe(true);
   });
 
@@ -226,6 +227,84 @@ describe("computeSeoKpiSummary", () => {
         action.includes("refresh des métriques SEO"),
       ),
     ).toBe(true);
+  });
+
+  it("suggests refresh candidates when blog pages have low CTR", () => {
+    const summary = computeSeoKpiSummary({
+      sitemapEntries: REQUIRED_PUBLIC_PAGES.map((path) => ({
+        url: toAbsoluteUrl(path),
+      })),
+      robotsRules: {
+        userAgent: "*",
+        allow: "/",
+        disallow: [...EXPECTED_PRIVATE_DISALLOWS],
+      },
+      posts: [
+        {
+          slug: "recent-1",
+          title: "Recent 1",
+          description: "Recent post",
+          date: "2026-02-18",
+          tags: [],
+          content: "",
+          readingTime: 4,
+        },
+        {
+          slug: "recent-2",
+          title: "Recent 2",
+          description: "Recent post",
+          date: "2026-02-16",
+          tags: [],
+          content: "",
+          readingTime: 4,
+        },
+      ],
+      searchMetricsState: {
+        status: "configured",
+        source: "env_json",
+        payload: {
+          current: {
+            provider: "google_search_console",
+            capturedAt: "2026-02-22T09:00:00.000Z",
+            period: {
+              from: "2026-01-26",
+              to: "2026-02-22",
+              label: "28 derniers jours",
+            },
+            totals: {
+              clicks: 560,
+              impressions: 12000,
+              ctr: 0.046,
+              averagePosition: 15.4,
+            },
+            topPages: [
+              {
+                path: "/blog/facturation-freelance-devis-factures-conformite",
+                clicks: 10,
+                impressions: 900,
+                ctr: 0.011,
+              },
+              {
+                path: "/features",
+                clicks: 15,
+                impressions: 600,
+                ctr: 0.025,
+              },
+            ],
+          },
+        },
+        error: null,
+      },
+      now: new Date("2026-02-22T00:00:00.000Z"),
+    });
+
+    expect(summary.searchPerformance.contentRefreshCandidates).toHaveLength(1);
+    expect(summary.searchPerformance.contentRefreshCandidates[0]?.path).toBe(
+      "/blog/facturation-freelance-devis-factures-conformite",
+    );
+    expect(summary.recommendedActions.some((action) => action.includes("faible CTR"))).toBe(
+      true,
+    );
   });
 
   it("marks search metrics as warning when payload is invalid", () => {

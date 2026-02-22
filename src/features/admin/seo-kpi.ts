@@ -8,6 +8,8 @@ import type { MetadataRoute } from "next";
 
 const DAY_IN_MS = 24 * 60 * 60 * 1000;
 const SEARCH_METRICS_STALE_AFTER_DAYS = 8;
+const LOW_CTR_REFRESH_THRESHOLD = 0.02;
+const LOW_CTR_MIN_IMPRESSIONS = 200;
 
 export const REQUIRED_PUBLIC_PAGES = [
   "/",
@@ -51,6 +53,14 @@ export type SeoTopQuerySummary = {
   position: number | null;
 };
 
+export type SeoContentRefreshCandidate = {
+  path: string;
+  clicks: number;
+  impressions: number;
+  ctr: number;
+  reason: string;
+};
+
 export type SeoSearchPerformanceSummary = {
   status: SeoSearchMetricsState["status"];
   source: SeoSearchMetricsState["source"];
@@ -70,6 +80,7 @@ export type SeoSearchPerformanceSummary = {
   indexedPublicPages: number | null;
   indexedPrivatePages: number | null;
   topQueries: SeoTopQuerySummary[];
+  contentRefreshCandidates: SeoContentRefreshCandidate[];
 };
 
 export type SeoKpiSummary = {
@@ -146,6 +157,31 @@ const toPeriodLabel = (from: string, to: string, label?: string): string => {
   return `${from} -> ${to}`;
 };
 
+const buildContentRefreshCandidates = (
+  snapshot: SeoSearchSnapshot,
+): SeoContentRefreshCandidate[] =>
+  (snapshot.topPages ?? [])
+    .filter((page) => page.path.startsWith("/blog/"))
+    .map((page) => {
+      if (
+        page.impressions >= LOW_CTR_MIN_IMPRESSIONS &&
+        page.ctr <= LOW_CTR_REFRESH_THRESHOLD
+      ) {
+        return {
+          path: page.path,
+          clicks: page.clicks,
+          impressions: page.impressions,
+          ctr: roundOneDecimal(page.ctr * 100),
+          reason: "CTR faible sur forte impression",
+        };
+      }
+
+      return null;
+    })
+    .filter((candidate): candidate is SeoContentRefreshCandidate => candidate !== null)
+    .sort((a, b) => b.impressions - a.impressions)
+    .slice(0, 5);
+
 const buildSearchPerformanceSummary = (
   searchMetricsState: SeoSearchMetricsState,
   now: Date,
@@ -170,6 +206,7 @@ const buildSearchPerformanceSummary = (
       indexedPublicPages: null,
       indexedPrivatePages: null,
       topQueries: [],
+      contentRefreshCandidates: [],
     };
   }
 
@@ -219,6 +256,7 @@ const buildSearchPerformanceSummary = (
       ctr: roundOneDecimal(query.ctr * 100),
       position: query.position ?? null,
     })),
+    contentRefreshCandidates: buildContentRefreshCandidates(current),
   };
 };
 
@@ -409,6 +447,19 @@ export const computeSeoKpiSummary = ({
   ) {
     recommendedActions.push(
       `Déclencher un refresh des métriques SEO (snapshot âgé de ${searchPerformance.snapshotAgeDays} jours).`,
+    );
+  }
+
+  if (
+    searchPerformance.status === "configured" &&
+    searchPerformance.contentRefreshCandidates.length > 0
+  ) {
+    const pages = searchPerformance.contentRefreshCandidates
+      .slice(0, 3)
+      .map((candidate) => candidate.path)
+      .join(", ");
+    recommendedActions.push(
+      `Planifier un refresh SEO des contenus à faible CTR: ${pages}.`,
     );
   }
 
