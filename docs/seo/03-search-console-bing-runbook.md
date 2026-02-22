@@ -103,6 +103,19 @@ Checklist d'activation:
    - deltas période vs période visibles
 4. Corriger immédiatement si statut "Invalide" (JSON malformé ou schéma non conforme).
 
+## 5.2) Collector automatisé (endpoint -> cache)
+
+- Route cron disponible:
+  - `POST /api/cron/seo-search-metrics-sync`
+- Sécurité:
+  - header `Authorization: Bearer <CRON_SECRET>`
+- Fonctionnement:
+  - lit `SEO_SEARCH_METRICS_ENDPOINT`
+  - récupère le snapshot JSON
+  - valide le schéma
+  - stocke dans un cache Redis (TTL 14 jours)
+- Dans `/admin/ops`, la source affichée devient `Redis cache` quand ce flux est utilisé.
+
 ## 6) Alertes opérationnelles (SLO SEO)
 
 - Alerte P1:

@@ -40,9 +40,9 @@ Owner: Growth + Product Marketing
 
 ## Sprint S3-S4
 
-1. Publier guide long: `Guide complet du CV freelance compatible ATS`.
-2. Publier article: `Relances freelance: cadence, templates et erreurs`.
-3. Ajouter liens contextuels blog -> `/features` + `/#pricing`.
+1. ✅ Publier guide long: `Guide complet du CV freelance compatible ATS` (`/blog/guide-cv-freelance-compatible-ats`).
+2. ✅ Publier article: `Relances freelance: cadence, templates et erreurs` (`/blog/relances-freelance-cadence-templates-erreurs`).
+3. ✅ Ajouter liens contextuels blog -> `/features` + `/#pricing` (dans les contenus S3-S4).
 
 ## Sprint S5-S6
 

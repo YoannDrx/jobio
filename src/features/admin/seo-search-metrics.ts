@@ -1,6 +1,10 @@
 import { env } from "@/lib/env";
 import { readFile } from "node:fs/promises";
 import { z } from "zod";
+import {
+  getSeoSearchMetricsCacheRaw,
+  setSeoSearchMetricsCacheRaw,
+} from "./seo-search-metrics-cache";
 
 const DEFAULT_ENDPOINT_TIMEOUT_MS = 8_000;
 
@@ -54,7 +58,12 @@ const seoSearchMetricsPayloadSchema = z.object({
 export type SeoSearchSnapshot = z.infer<typeof seoSnapshotSchema>;
 export type SeoSearchMetricsPayload = z.infer<typeof seoSearchMetricsPayloadSchema>;
 
-export type SeoSearchMetricsSource = "env_json" | "endpoint" | "file" | "none";
+export type SeoSearchMetricsSource =
+  | "env_json"
+  | "redis_cache"
+  | "endpoint"
+  | "file"
+  | "none";
 
 export type SeoSearchMetricsState = {
   status: "configured" | "not_configured" | "invalid";
@@ -63,9 +72,40 @@ export type SeoSearchMetricsState = {
   error: string | null;
 };
 
+export type SeoSearchMetricsSyncResult = {
+  success: boolean;
+  source: "endpoint";
+  payload: SeoSearchMetricsPayload | null;
+  error: string | null;
+};
+
 const parsePayload = (rawValue: string): SeoSearchMetricsPayload => {
   const parsedJson: unknown = JSON.parse(rawValue);
   return seoSearchMetricsPayloadSchema.parse(parsedJson);
+};
+
+const loadFromCache = async (): Promise<SeoSearchMetricsState | null> => {
+  const rawCachedPayload = await getSeoSearchMetricsCacheRaw();
+
+  if (!rawCachedPayload) {
+    return null;
+  }
+
+  try {
+    return {
+      status: "configured",
+      source: "redis_cache",
+      payload: parsePayload(rawCachedPayload),
+      error: null,
+    };
+  } catch (error) {
+    return {
+      status: "invalid",
+      source: "redis_cache",
+      payload: null,
+      error: error instanceof Error ? error.message : "Cache SEO invalide",
+    };
+  }
 };
 
 const loadFromEndpoint = async (
@@ -108,10 +148,13 @@ const loadFromEndpoint = async (
     const rawContent = await response.text();
 
     try {
+      const payload = parsePayload(rawContent);
+      await setSeoSearchMetricsCacheRaw(JSON.stringify(payload));
+
       return {
         status: "configured",
         source: "endpoint",
-        payload: parsePayload(rawContent),
+        payload,
         error: null,
       };
     } catch (error) {
@@ -156,6 +199,37 @@ const loadFromFile = async (filePath: string): Promise<SeoSearchMetricsState> =>
   }
 };
 
+export const syncSeoSearchMetricsCacheFromEndpoint = async (): Promise<SeoSearchMetricsSyncResult> => {
+  const endpointUrl = env.SEO_SEARCH_METRICS_ENDPOINT?.trim();
+
+  if (!endpointUrl) {
+    return {
+      success: false,
+      source: "endpoint",
+      payload: null,
+      error: "SEO_SEARCH_METRICS_ENDPOINT is not configured",
+    };
+  }
+
+  const endpointState = await loadFromEndpoint(endpointUrl);
+
+  if (endpointState.status !== "configured" || !endpointState.payload) {
+    return {
+      success: false,
+      source: "endpoint",
+      payload: null,
+      error: endpointState.error ?? "Unable to sync SEO metrics",
+    };
+  }
+
+  return {
+    success: true,
+    source: "endpoint",
+    payload: endpointState.payload,
+    error: null,
+  };
+};
+
 export const loadSeoSearchMetricsState = async (): Promise<SeoSearchMetricsState> => {
   const fromEnv = env.SEO_SEARCH_METRICS_JSON?.trim();
 
@@ -177,16 +251,35 @@ export const loadSeoSearchMetricsState = async (): Promise<SeoSearchMetricsState
     }
   }
 
+  const cachedState = await loadFromCache();
+  if (cachedState?.status === "configured") {
+    return cachedState;
+  }
+
   const fromEndpoint = env.SEO_SEARCH_METRICS_ENDPOINT?.trim();
 
   if (fromEndpoint) {
-    return loadFromEndpoint(fromEndpoint);
+    const endpointState = await loadFromEndpoint(fromEndpoint);
+
+    if (endpointState.status === "configured") {
+      return endpointState;
+    }
+
+    if (cachedState?.status === "invalid") {
+      return cachedState;
+    }
+
+    return endpointState;
   }
 
   const fromFile = env.SEO_SEARCH_METRICS_FILE?.trim();
 
   if (fromFile) {
     return loadFromFile(fromFile);
+  }
+
+  if (cachedState?.status === "invalid") {
+    return cachedState;
   }
 
   return {

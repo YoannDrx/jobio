@@ -10,6 +10,148 @@ export type BlogPost = {
 
 export const blogPosts: BlogPost[] = [
   {
+    slug: "guide-cv-freelance-compatible-ats",
+    title: "Guide complet du CV freelance compatible ATS",
+    description:
+      "Methode complete pour construire un CV freelance lisible par les ATS, credible pour les recruteurs, et aligne sur les missions ciblees.",
+    date: "2026-02-22",
+    tags: ["CV ATS", "Freelance", "Positionnement"],
+    readingTime: 10,
+    content: `
+<h2>Pourquoi un CV ATS est critique pour un freelance tech</h2>
+<p>Un bon CV freelance ne sert pas seulement a convaincre un humain. Il doit aussi passer les filtres ATS utilises par de nombreuses entreprises et cabinets. Si ton CV n'est pas correctement structure, tu peux etre ecarte avant meme la lecture du contenu.</p>
+<p>L'objectif n'est pas de "tricher" avec l'ATS. L'objectif est de rendre ton experience lisible, precise, et coherente avec les besoins de la mission.</p>
+
+<h2>Les erreurs qui font chuter un CV dans un ATS</h2>
+<ul>
+<li>Utiliser des layouts tres graphiques avec colonnes complexes</li>
+<li>Remplacer les intitulés standards par des titres flous</li>
+<li>Sous-detailler les resultats mesurables sur les missions</li>
+<li>Lister trop de competences sans contexte d'usage</li>
+<li>Ne pas adapter le CV au vocabulaire de la fiche mission</li>
+</ul>
+<p>Ces erreurs reduisent la compatibilite ATS et la comprehension humaine en meme temps.</p>
+
+<h2>Structure recommandee d'un CV freelance ATS-friendly</h2>
+<p>Une structure simple et robuste:</p>
+<ul>
+<li><strong>Header:</strong> nom, role, zone geographique, contacts</li>
+<li><strong>Pitch:</strong> proposition de valeur en 3-4 lignes</li>
+<li><strong>Competences:</strong> stack principale + secondaires</li>
+<li><strong>Experiences:</strong> contexte, actions, impact mesure</li>
+<li><strong>Projets:</strong> references pertinentes pour la mission cible</li>
+<li><strong>Formation/Certifications:</strong> uniquement ce qui apporte de la credibilite</li>
+</ul>
+<p>Le point le plus important: chaque section doit servir une decision de recrutement.</p>
+
+<h2>Comment adapter un CV a une mission en 20 minutes</h2>
+<p><strong>Etape 1:</strong> extraire les mots cles de la fiche mission (stack, enjeux, livrables).</p>
+<p><strong>Etape 2:</strong> classer tes experiences selon la proximite avec ces enjeux.</p>
+<p><strong>Etape 3:</strong> reecrire les bullets d'experience en mode impact (avant/apres, KPI, delai, volume).</p>
+<p><strong>Etape 4:</strong> verifier que les mots cles essentiels apparaissent naturellement.</p>
+<p><strong>Etape 5:</strong> export PDF propre et verif rapide ATS.</p>
+<p>Tu ne dois pas refaire un CV de zero a chaque fois. Tu dois reconfigurer une base solide.</p>
+
+<h2>Exemple de bullet orientee impact</h2>
+<p>Version faible: "Developpement frontend React."</p>
+<p>Version forte: "Refonte frontend React d'un espace client B2B, reduction du temps de chargement de 38% et baisse des tickets support de 22% en 2 mois."</p>
+<p>Un ATS comprend mieux la seconde version, et un humain la retient mieux aussi.</p>
+
+<h2>Lien entre CV, prospection et pricing</h2>
+<p>Un CV adapte augmente ton taux de conversion sur les missions qualifiees. C'est directement connecte a ta prospection: meilleurs messages, meilleurs entretiens, meilleure negociation.</p>
+<p>Pour aligner ton workflow complet, combine:</p>
+<ul>
+<li>CV cible par mission</li>
+<li>relances cadencees</li>
+<li>suivi pipeline et conversion</li>
+</ul>
+<p>Tu peux relier ces briques dans <a href="/features">/features</a> et verifier les limites par plan via <a href="/#pricing">/#pricing</a>.</p>
+
+<h2>Checklist finale avant envoi</h2>
+<ul>
+<li>Le titre correspond au role cible</li>
+<li>Les mots cles essentiels sont presents sans bourrage</li>
+<li>Chaque experience contient un impact mesurable</li>
+<li>Le document reste lisible en texte brut</li>
+<li>Le PDF est propre et coherent</li>
+</ul>
+<p>Un CV ATS compatible est un outil de vente. Traite-le comme un asset commercial, pas comme un document administratif.</p>
+`,
+  },
+  {
+    slug: "relances-freelance-cadence-templates-erreurs",
+    title: "Relances freelance: cadence, templates et erreurs",
+    description:
+      "Cadence de relance, exemples de templates et anti-patterns a eviter pour augmenter les reponses sans abimer la relation client.",
+    date: "2026-02-22",
+    tags: ["Relances", "Prospection", "Templates"],
+    readingTime: 9,
+    content: `
+<h2>La relance est le levier le plus rentable de la prospection freelance</h2>
+<p>Beaucoup de freelances abandonnent trop vite apres un premier message. Pourtant, une part significative des opportunites se debloquent apres 2 a 4 interactions utiles. La relance n'est pas du spam: c'est du suivi professionnel.</p>
+<p>La difference se joue sur la cadence et la valeur apportee a chaque contact.</p>
+
+<h2>Cadence recommandee sur 14 jours</h2>
+<ul>
+<li><strong>J0:</strong> premier message ultra cible</li>
+<li><strong>J+3:</strong> relance courte, rappel du contexte</li>
+<li><strong>J+7:</strong> relance avec angle nouveau (cas, benchmark, proposition)</li>
+<li><strong>J+14:</strong> message de cloture elegant avec porte ouverte</li>
+</ul>
+<p>Au-dela, passe en nurture (suivi faible frequence) au lieu de pousser en boucle.</p>
+
+<h2>3 templates de relance utiles</h2>
+<h3>Template 1 - rappel contextualise (J+3)</h3>
+<p>"Bonjour {{prenom}}, je me permets un suivi rapide suite a mon message sur {{sujet}}. Je pense pouvoir t'aider sur {{enjeu}} avec un demarrage rapide si besoin."</p>
+
+<h3>Template 2 - valeur concrete (J+7)</h3>
+<p>"Je te partage un retour terrain: sur une mission similaire, on a reduit {{kpi}} en {{delai}}. Si utile, je peux te proposer un plan d'action en 3 etapes."</p>
+
+<h3>Template 3 - cloture propre (J+14)</h3>
+<p>"Je clos la boucle pour ne pas surcharger ta boite. Si le sujet {{enjeu}} redevient prioritaire, je suis dispo pour en parler rapidement."</p>
+
+<h2>Erreurs frequentes qui tuent les reponses</h2>
+<ul>
+<li>Relancer sans nouvel element de valeur</li>
+<li>Utiliser un ton passif-agressif ("je me permets de revenir encore")</li>
+<li>Envoyer trop de messages trop rapproches</li>
+<li>Ne pas personnaliser selon le contexte du prospect</li>
+<li>Continuer a relancer un lead non qualifie</li>
+</ul>
+<p>Une bonne relance est specifique, utile, concise.</p>
+
+<h2>Comment industrialiser sans perdre la personnalisation</h2>
+<p>Le bon modele est hybride:</p>
+<ul>
+<li>des templates de base par scenario (cold, warm, post-call)</li>
+<li>des variables contextuelles (enjeu, stack, timing)</li>
+<li>une revue hebdo pour supprimer les messages qui performent mal</li>
+</ul>
+<p>Tu gagnes en vitesse sans tomber dans l'automatisation aveugle.</p>
+
+<h2>KPI a suivre pour piloter tes relances</h2>
+<ul>
+<li><strong>Taux de reponse apres relance 1</strong></li>
+<li><strong>Taux de reponse apres relance 2</strong></li>
+<li><strong>Taux de meeting obtenu</strong></li>
+<li><strong>Delai moyen entre premier contact et call</strong></li>
+</ul>
+<p>Le but n'est pas d'envoyer plus. Le but est d'obtenir plus de conversations qualifiees.</p>
+
+<h2>Relier relances, pipeline et conversion</h2>
+<p>Une cadence solide n'a de valeur que si elle est connectee au pipeline: prochaine action, date, statut, motif de blocage. C'est ce qui te permet d'identifier ou ca casse et corriger vite.</p>
+<p>Pour aligner process et outils, consulte <a href="/features">/features</a> et compare les capacites Free/Pro/Ultra sur <a href="/#pricing">/#pricing</a>.</p>
+
+<h2>Plan d'action en une semaine</h2>
+<p><strong>Jour 1:</strong> definir 3 templates de base.</p>
+<p><strong>Jour 2:</strong> segmenter tes leads (chaud, tiede, froid).</p>
+<p><strong>Jour 3-5:</strong> executer la cadence sur un lot pilote.</p>
+<p><strong>Jour 6:</strong> mesurer taux de reponse et rdv.</p>
+<p><strong>Jour 7:</strong> ajuster les templates et supprimer le bruit.</p>
+<p>En 7 jours, tu peux transformer une prospection reactive en routine previsible.</p>
+`,
+  },
+  {
     slug: "structurer-prospection-freelance-2026",
     title: "Comment structurer sa prospection freelance en 2026",
     description:

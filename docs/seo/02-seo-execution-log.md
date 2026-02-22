@@ -141,8 +141,29 @@
 - Tests:
   - `__tests__/seo-search-metrics.test.ts` étendu (mode endpoint + erreurs HTTP)
 
+## 2026-02-22 - Wave 11 (metrics collector + content S3-S4)
+
+- Collector SEO automatisé (endpoint -> Redis cache):
+  - `src/features/admin/seo-search-metrics-cache.ts`
+  - `src/features/admin/seo-search-metrics.ts`
+  - route cron `app/api/cron/seo-search-metrics-sync/route.ts`
+- Surface admin Ops:
+  - source `Redis cache` affichée dans `app/admin/ops/page.tsx`
+- Configuration:
+  - `.env-template`
+  - `src/lib/env.ts`
+- Test loader/sync enrichi:
+  - `__tests__/seo-search-metrics.test.ts`
+- Publication des contenus S3-S4:
+  - `/blog/guide-cv-freelance-compatible-ats`
+  - `/blog/relances-freelance-cadence-templates-erreurs`
+  - source: `src/features/blog/blog-data.ts`
+- Roadmap contenu mise à jour:
+  - `docs/seo/04-intent-map-content-backlog.md`
+  - Sprint S3-S4 marqué comme réalisé.
+
 ## Prochaine wave recommandée
 
 - Exécuter la connexion GSC/Bing et soumettre `sitemap.xml` en prod.
-- Brancher un endpoint de collecte réel (export automatisé GSC/Bing) derrière `SEO_SEARCH_METRICS_ENDPOINT`.
-- Publier les contenus S3-S4 (guide CV ATS + article relances) et mailler vers `/features` + `/#pricing`.
+- Planifier l'appel régulier de `POST /api/cron/seo-search-metrics-sync` (daily/weekly).
+- Publier les contenus S5-S6 (TJM + KPI dashboard freelance) et renforcer le maillage blog -> docs -> pricing.

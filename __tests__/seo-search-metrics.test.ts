@@ -49,6 +49,7 @@ const loadState = async ({
   fileError,
   fetchResponse,
   fetchError,
+  cacheRaw,
 }: {
   envValues: {
     SEO_SEARCH_METRICS_JSON?: string;
@@ -61,6 +62,7 @@ const loadState = async ({
   fileError?: Error;
   fetchResponse?: MockFetchResponse;
   fetchError?: Error;
+  cacheRaw?: string | null;
 }) => {
   const readFileMock = fileError
     ? vi.fn().mockRejectedValue(fileError)
@@ -77,6 +79,9 @@ const loadState = async ({
     });
   }
 
+  const getCacheMock = vi.fn().mockResolvedValue(cacheRaw ?? null);
+  const setCacheMock = vi.fn().mockResolvedValue(undefined);
+
   vi.stubGlobal("fetch", fetchMock);
 
   vi.doMock("@/lib/env", () => ({
@@ -87,6 +92,11 @@ const loadState = async ({
       SEO_SEARCH_METRICS_BEARER_TOKEN: envValues.SEO_SEARCH_METRICS_BEARER_TOKEN,
       SEO_SEARCH_METRICS_TIMEOUT_MS: envValues.SEO_SEARCH_METRICS_TIMEOUT_MS,
     },
+  }));
+
+  vi.doMock("@/features/admin/seo-search-metrics-cache", () => ({
+    getSeoSearchMetricsCacheRaw: getCacheMock,
+    setSeoSearchMetricsCacheRaw: setCacheMock,
   }));
 
   vi.doMock("node:fs/promises", () => ({
@@ -100,14 +110,17 @@ const loadState = async ({
 
   return {
     state: await seoMetricsModule.loadSeoSearchMetricsState(),
+    sync: seoMetricsModule.syncSeoSearchMetricsCacheFromEndpoint,
     readFileMock,
     fetchMock,
+    getCacheMock,
+    setCacheMock,
   };
 };
 
 describe("loadSeoSearchMetricsState", () => {
   it("returns not_configured when no source is provided", async () => {
-    const { state, readFileMock, fetchMock } = await loadState({
+    const { state, readFileMock, fetchMock, getCacheMock } = await loadState({
       envValues: {},
     });
 
@@ -115,10 +128,11 @@ describe("loadSeoSearchMetricsState", () => {
     expect(state.source).toBe("none");
     expect(readFileMock).not.toHaveBeenCalled();
     expect(fetchMock).not.toHaveBeenCalled();
+    expect(getCacheMock).toHaveBeenCalledTimes(1);
   });
 
   it("loads valid payload from env JSON", async () => {
-    const { state, readFileMock, fetchMock } = await loadState({
+    const { state, readFileMock, fetchMock, getCacheMock } = await loadState({
       envValues: {
         SEO_SEARCH_METRICS_JSON: validPayload,
       },
@@ -129,6 +143,20 @@ describe("loadSeoSearchMetricsState", () => {
     expect(state.payload?.current.totals.clicks).toBe(560);
     expect(readFileMock).not.toHaveBeenCalled();
     expect(fetchMock).not.toHaveBeenCalled();
+    expect(getCacheMock).not.toHaveBeenCalled();
+  });
+
+  it("uses redis cache when available", async () => {
+    const { state, fetchMock, readFileMock } = await loadState({
+      envValues: {},
+      cacheRaw: validPayload,
+    });
+
+    expect(state.status).toBe("configured");
+    expect(state.source).toBe("redis_cache");
+    expect(state.payload?.current.provider).toBe("google_search_console");
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(readFileMock).not.toHaveBeenCalled();
   });
 
   it("returns invalid when env JSON is malformed", async () => {
@@ -143,8 +171,8 @@ describe("loadSeoSearchMetricsState", () => {
     expect(state.error).toBeTruthy();
   });
 
-  it("loads payload from endpoint when configured", async () => {
-    const { state, fetchMock, readFileMock } = await loadState({
+  it("loads payload from endpoint when cache is empty", async () => {
+    const { state, fetchMock, readFileMock, setCacheMock } = await loadState({
       envValues: {
         SEO_SEARCH_METRICS_ENDPOINT: "https://example.com/seo-snapshot",
         SEO_SEARCH_METRICS_BEARER_TOKEN: "secret-token",
@@ -155,6 +183,7 @@ describe("loadSeoSearchMetricsState", () => {
         status: 200,
         body: validPayload,
       },
+      cacheRaw: null,
     });
 
     expect(state.status).toBe("configured");
@@ -162,6 +191,7 @@ describe("loadSeoSearchMetricsState", () => {
     expect(state.payload?.current.totals.impressions).toBe(12000);
     expect(readFileMock).not.toHaveBeenCalled();
     expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(setCacheMock).toHaveBeenCalledTimes(1);
 
     const options = fetchMock.mock.calls[0][1];
     const headers = options?.headers as Headers;
@@ -185,17 +215,39 @@ describe("loadSeoSearchMetricsState", () => {
     expect(state.error).toContain("503");
   });
 
-  it("loads payload from file when file path is configured", async () => {
+  it("loads payload from file when endpoint is absent", async () => {
     const { state, readFileMock, fetchMock } = await loadState({
       envValues: {
         SEO_SEARCH_METRICS_FILE: "/tmp/seo-metrics.json",
       },
       fileContent: validPayload,
+      cacheRaw: null,
     });
 
     expect(state.status).toBe("configured");
     expect(state.source).toBe("file");
     expect(readFileMock).toHaveBeenCalledWith("/tmp/seo-metrics.json", "utf-8");
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("syncs cache from endpoint", async () => {
+    const { sync, setCacheMock } = await loadState({
+      envValues: {
+        SEO_SEARCH_METRICS_ENDPOINT: "https://example.com/seo-snapshot",
+      },
+      fetchResponse: {
+        ok: true,
+        status: 200,
+        body: validPayload,
+      },
+      cacheRaw: null,
+    });
+
+    const result = await sync();
+
+    expect(result.success).toBe(true);
+    expect(result.source).toBe("endpoint");
+    expect(result.payload?.current.provider).toBe("google_search_console");
+    expect(setCacheMock).toHaveBeenCalled();
   });
 });

@@ -57,8 +57,11 @@ const formatCtr = (value: number | null) => {
   return `${value}%`;
 };
 
-const sourceLabel = (source: "env_json" | "endpoint" | "file" | "none") => {
+const sourceLabel = (
+  source: "env_json" | "redis_cache" | "endpoint" | "file" | "none",
+) => {
   if (source === "env_json") return "ENV JSON";
+  if (source === "redis_cache") return "Redis cache";
   if (source === "endpoint") return "Endpoint";
   if (source === "file") return "Fichier";
   return "Aucune";
