@@ -288,6 +288,19 @@
 - Tests:
   - `__tests__/next-prerender-interrupted.test.ts` ajouté
 
+## 2026-02-22 - Wave 20 (SEO sync freshness monitoring in admin ops)
+
+- Monitoring de fraîcheur du pipeline de sync SEO:
+  - `src/features/admin/seo-sync-health.ts` (helpers latest run / latest success / freshness)
+  - seuil d'alerte: sync succès > 48h => état obsolète
+- UI Ops enrichie:
+  - `app/admin/ops/page.tsx`
+  - affichage "dernier succès sync" + "dernier run sync"
+  - badge dynamique: `Sync fraîche` / `Sync obsolète` / `Aucune sync`
+  - alerte contextuelle quand la source (`endpoint`/`redis_cache`) nécessite une sync et que la fraîcheur est insuffisante
+- Tests:
+  - `__tests__/seo-sync-health.test.ts` ajouté
+
 ## Prochaine wave recommandée
 
 - Exécuter la connexion GSC/Bing et soumettre `sitemap.xml` en prod.

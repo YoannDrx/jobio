@@ -21,6 +21,12 @@ import {
 import Link from "next/link";
 import { getAdminFeatureFlags, getCronJobRuns, getOpsIncidentSummary } from "../_actions/ops";
 import { getSeoKpiSummary } from "../_actions/seo";
+import {
+  computeSeoSyncFreshness,
+  formatSyncAge,
+  getLatestSeoSyncRun,
+  getLatestSeoSyncSuccessRun,
+} from "@/features/admin/seo-sync-health";
 import { FeatureFlagToggleButton } from "./_components/feature-flag-toggle-button";
 import { SyncSeoMetricsButton } from "./_components/sync-seo-metrics-button";
 import { SyncFeatureFlagsButton } from "./_components/sync-feature-flags-button";
@@ -83,6 +89,18 @@ const refreshFollowUpLabel = (status: "waiting" | "due" | "overdue") => {
   return "En retard";
 };
 
+const seoSyncFreshnessVariant = (status: "fresh" | "stale" | "missing") => {
+  if (status === "fresh") return "secondary";
+  if (status === "stale") return "destructive";
+  return "outline";
+};
+
+const seoSyncFreshnessLabel = (status: "fresh" | "stale" | "missing") => {
+  if (status === "fresh") return "Sync fraîche";
+  if (status === "stale") return "Sync obsolète";
+  return "Aucune sync";
+};
+
 export default async function AdminOpsPage() {
   await getRequiredAdmin();
 
@@ -95,6 +113,14 @@ export default async function AdminOpsPage() {
 
   const runningJobs = cronRuns.filter((run) => run.status === "RUNNING").length;
   const failedJobs = cronRuns.filter((run) => run.status === "FAILED").length;
+  const latestSeoSyncRun = getLatestSeoSyncRun(cronRuns);
+  const latestSeoSyncSuccessRun = getLatestSeoSyncSuccessRun(cronRuns);
+  const seoSyncFreshness = computeSeoSyncFreshness(
+    latestSeoSyncSuccessRun?.startedAt ?? null,
+  );
+  const requiresSeoSyncCron =
+    seoSummary.searchPerformance.source === "endpoint" ||
+    seoSummary.searchPerformance.source === "redis_cache";
 
   return (
     <Layout size="xl">
@@ -283,7 +309,39 @@ export default async function AdminOpsPage() {
                     {formatDateTime(new Date(seoSummary.searchPerformance.capturedAt))}
                   </p>
                 ) : null}
+                {requiresSeoSyncCron ? (
+                  <>
+                    <Badge variant={seoSyncFreshnessVariant(seoSyncFreshness.status)}>
+                      {seoSyncFreshnessLabel(seoSyncFreshness.status)}
+                    </Badge>
+                    <p className="text-muted-foreground text-xs">
+                      Dernier succès sync:{" "}
+                      {latestSeoSyncSuccessRun
+                        ? `${formatDateTime(latestSeoSyncSuccessRun.startedAt)} (${formatSyncAge(seoSyncFreshness.ageHours)})`
+                        : "aucun"}
+                    </p>
+                    <p className="text-muted-foreground text-xs">
+                      Dernier run sync:{" "}
+                      {latestSeoSyncRun
+                        ? `${formatDateTime(latestSeoSyncRun.startedAt)} (${latestSeoSyncRun.status})`
+                        : "aucun"}
+                    </p>
+                  </>
+                ) : (
+                  <Badge variant="outline">Sync cron non requise</Badge>
+                )}
               </div>
+
+              {requiresSeoSyncCron && seoSyncFreshness.status !== "fresh" ? (
+                <div className="rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-xs">
+                  La collecte SEO automatique semble en retard. Lance
+                  "Synchroniser SEO" puis vérifie le cron
+                  <code className="mx-1 rounded bg-muted px-1 py-0.5">
+                    /api/cron/seo-search-metrics-sync
+                  </code>
+                  .
+                </div>
+              ) : null}
 
               {seoSummary.searchPerformance.status === "configured" ? (
                 <>
