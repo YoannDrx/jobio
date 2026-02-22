@@ -113,6 +113,7 @@ export default async function AdminOpsPage() {
 
   const runningJobs = cronRuns.filter((run) => run.status === "RUNNING").length;
   const failedJobs = cronRuns.filter((run) => run.status === "FAILED").length;
+  const hasCronSecret = Boolean(process.env.CRON_SECRET?.trim());
   const latestSeoSyncRun = getLatestSeoSyncRun(cronRuns);
   const latestSeoSyncSuccessRun = getLatestSeoSyncSuccessRun(cronRuns);
   const seoSyncFreshness = computeSeoSyncFreshness(
@@ -311,6 +312,11 @@ export default async function AdminOpsPage() {
                 ) : null}
                 {requiresSeoSyncCron ? (
                   <>
+                    <Badge variant={hasCronSecret ? "secondary" : "destructive"}>
+                      {hasCronSecret
+                        ? "CRON_SECRET configuré"
+                        : "CRON_SECRET manquant"}
+                    </Badge>
                     <Badge variant={seoSyncFreshnessVariant(seoSyncFreshness.status)}>
                       {seoSyncFreshnessLabel(seoSyncFreshness.status)}
                     </Badge>
@@ -340,6 +346,16 @@ export default async function AdminOpsPage() {
                     /api/cron/seo-search-metrics-sync
                   </code>
                   .
+                </div>
+              ) : null}
+
+              {!hasCronSecret ? (
+                <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-xs">
+                  Les routes cron sont inaccessibles tant que
+                  <code className="mx-1 rounded bg-muted px-1 py-0.5">
+                    CRON_SECRET
+                  </code>
+                  n'est pas configuré côté serveur.
                 </div>
               ) : null}
 

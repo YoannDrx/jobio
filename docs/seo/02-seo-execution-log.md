@@ -354,6 +354,16 @@
 - Tests:
   - `__tests__/cron-auth.test.ts`
 
+## 2026-02-22 - Wave 25 (ops visibility for cron secret)
+
+- Admin Ops enrichi avec l'état de configuration cron:
+  - `app/admin/ops/page.tsx`
+  - badge explicite `CRON_SECRET configuré/manquant`
+  - alerte dédiée si secret absent (impact direct sur les routes cron)
+- Objectif:
+  - réduire le temps de diagnostic des incidents "cron ne tourne pas"
+  - rendre la configuration prod SEO plus observable pour l'équipe
+
 ## Prochaine wave recommandée
 
 - Exécuter la connexion GSC/Bing et soumettre `sitemap.xml` en prod.
