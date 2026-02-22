@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/table";
 import Link from "next/link";
 import { getAdminFeatureFlags, getCronJobRuns, getOpsIncidentSummary } from "../_actions/ops";
+import { getSeoKpiSummary } from "../_actions/seo";
 import { FeatureFlagToggleButton } from "./_components/feature-flag-toggle-button";
 import { SyncFeatureFlagsButton } from "./_components/sync-feature-flags-button";
 
@@ -39,13 +40,17 @@ const statusVariant = (
   return "destructive";
 };
 
+const seoChecklistVariant = (status: "ok" | "warning") =>
+  status === "ok" ? "secondary" : "outline";
+
 export default async function AdminOpsPage() {
   await getRequiredAdmin();
 
-  const [flags, cronRuns, incidentSummary] = await Promise.all([
+  const [flags, cronRuns, incidentSummary, seoSummary] = await Promise.all([
     getAdminFeatureFlags(),
     getCronJobRuns(30),
     getOpsIncidentSummary(),
+    getSeoKpiSummary(),
   ]);
 
   const runningJobs = cronRuns.filter((run) => run.status === "RUNNING").length;
@@ -103,6 +108,113 @@ export default async function AdminOpsPage() {
             </CardContent>
           </Card>
         </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>SEO hebdo - KPI opérationnels</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-4">
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium">
+                    URLs publiques sitemap
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-2xl font-semibold">
+                    {seoSummary.sitemapPublicUrlsCount}
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium">
+                    Couverture robots privées
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-2xl font-semibold">
+                    {seoSummary.disallowCoveragePercent}%
+                  </p>
+                  <p className="text-muted-foreground text-xs">
+                    {seoSummary.blockedPrivateRoutesCount}/
+                    {seoSummary.blockedPrivateRoutesCount +
+                      seoSummary.missingPrivateDisallows.length} préfixes
+                    bloqués
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium">
+                    Articles publiés (30j)
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-2xl font-semibold">
+                    {seoSummary.blogPostsLast30Days}
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium">
+                    Dernier article
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-2xl font-semibold">
+                    {seoSummary.daysSinceLatestBlogPost === null
+                      ? "-"
+                      : `${seoSummary.daysSinceLatestBlogPost} j`}
+                  </p>
+                  <p className="text-muted-foreground text-xs">
+                    depuis la dernière publication
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Contrôle</TableHead>
+                  <TableHead>Statut</TableHead>
+                  <TableHead>Détail</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {seoSummary.checklist.map((item) => (
+                  <TableRow key={item.id}>
+                    <TableCell className="font-medium">{item.label}</TableCell>
+                    <TableCell>
+                      <Badge variant={seoChecklistVariant(item.status)}>
+                        {item.status === "ok" ? "OK" : "Action"}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-sm">{item.detail}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+
+            <div className="rounded-lg border p-3">
+              <p className="mb-2 text-sm font-medium">Actions recommandées</p>
+              <ul className="space-y-1 text-sm">
+                {seoSummary.recommendedActions.map((action) => (
+                  <li key={action}>• {action}</li>
+                ))}
+              </ul>
+              <p className="text-muted-foreground mt-3 text-xs">
+                Référence runbook: docs/seo/03-search-console-bing-runbook.md
+              </p>
+            </div>
+          </CardContent>
+        </Card>
 
         <Card>
           <CardHeader>

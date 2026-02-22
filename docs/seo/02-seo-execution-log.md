@@ -74,8 +74,21 @@
 - Test unitaire du composant:
   - `__tests__/related-resources-section.test.tsx`
 
+## 2026-02-22 - Wave 7 (admin SEO KPI monitor)
+
+- Nouveau calculateur KPI SEO:
+  - `src/features/admin/seo-kpi.ts`
+- Nouvelle action serveur pour consolider les signaux SEO:
+  - `app/admin/_actions/seo.ts`
+- Intégration d'un bloc "SEO hebdo" sur:
+  - `app/admin/ops/page.tsx`
+  - KPIs: couverture sitemap, blocage robots privé, cadence éditoriale, fraîcheur blog
+  - checklist automatique + actions recommandées
+- Test unitaire du calculateur:
+  - `__tests__/seo-kpi.test.ts`
+
 ## Prochaine wave recommandée
 
 - Exécuter la connexion GSC/Bing et soumettre `sitemap.xml`.
 - Publier 2 premiers contenus du backlog (S1-S2).
-- Ajouter un suivi KPI SEO hebdo dans l'admin (clics, CTR, indexation).
+- Connecter les métriques Search Console réelles (clics/impressions/CTR) dans ce module admin.
