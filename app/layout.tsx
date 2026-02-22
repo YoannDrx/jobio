@@ -30,6 +30,9 @@ export const metadata: Metadata = {
   publisher: SiteConfig.company.name,
   alternates: {
     canonical: SiteConfig.prodUrl,
+    types: {
+      "application/rss+xml": absoluteUrl("/rss.xml"),
+    },
   },
   openGraph: {
     title: SiteConfig.title,

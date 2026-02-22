@@ -8,12 +8,12 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { LandingHeader } from "@/features/landing/landing-header";
+import { LazyLandingDemo } from "@/features/landing/demos/lazy-landing-demo";
 import { NewsletterSection } from "@/features/landing/newsletter-section";
 import { Footer } from "@/features/layout/footer";
 import { PricingComparisonTable } from "@/features/plans/pricing-comparison-table";
 import { Pricing } from "@/features/plans/pricing-section";
 import { absoluteUrl, buildMarketingMetadata } from "@/lib/seo";
-import { cn } from "@/lib/utils";
 import { SiteConfig } from "@/site-config";
 import {
   ArrowRight,
@@ -28,35 +28,6 @@ import {
   Target,
 } from "lucide-react";
 import Link from "next/link";
-import dynamic from "next/dynamic";
-
-const DemoKanban = dynamic(
-  async () => import("@/features/landing/demos/demo-kanban"),
-  {
-    loading: () => <DemoCardSkeleton className="h-[196px]" />,
-  },
-);
-
-const DemoScoreRing = dynamic(
-  async () => import("@/features/landing/demos/demo-score-ring"),
-  {
-    loading: () => <DemoCardSkeleton className="h-[236px]" />,
-  },
-);
-
-const DemoSequence = dynamic(
-  async () => import("@/features/landing/demos/demo-sequence"),
-  {
-    loading: () => <DemoCardSkeleton className="h-[220px]" />,
-  },
-);
-
-const DemoAnalytics = dynamic(
-  async () => import("@/features/landing/demos/demo-analytics"),
-  {
-    loading: () => <DemoCardSkeleton className="h-[268px]" />,
-  },
-);
 
 export const metadata = buildMarketingMetadata({
   title: SiteConfig.title,
@@ -297,7 +268,10 @@ export default function HomePage() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="p-3 sm:p-4">
-                  <DemoKanban />
+                  <LazyLandingDemo
+                    demo="kanban"
+                    skeletonClassName="h-[196px]"
+                  />
                 </CardContent>
               </Card>
               <div className="grid gap-4">
@@ -308,7 +282,10 @@ export default function HomePage() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <DemoScoreRing />
+                    <LazyLandingDemo
+                      demo="score-ring"
+                      skeletonClassName="h-[236px]"
+                    />
                   </CardContent>
                 </Card>
                 <Card className="border-white/30 bg-white/80 backdrop-blur-md dark:border-white/10 dark:bg-black/25">
@@ -318,7 +295,10 @@ export default function HomePage() {
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <DemoSequence />
+                    <LazyLandingDemo
+                      demo="sequence"
+                      skeletonClassName="h-[220px]"
+                    />
                   </CardContent>
                 </Card>
               </div>
@@ -367,7 +347,10 @@ export default function HomePage() {
                 <CardTitle className="text-sm">Analytics exploitable</CardTitle>
               </CardHeader>
               <CardContent className="p-3">
-                <DemoAnalytics />
+                <LazyLandingDemo
+                  demo="analytics"
+                  skeletonClassName="h-[268px]"
+                />
               </CardContent>
             </Card>
             <Card className="border-border/70 bg-gradient-to-br from-cyan-500/10 via-transparent to-emerald-500/10">
@@ -528,17 +511,5 @@ function StatCard({ value, label }: { value: string; label: string }) {
         <p className="text-muted-foreground mt-1 text-xs">{label}</p>
       </CardContent>
     </Card>
-  );
-}
-
-function DemoCardSkeleton({ className }: { className?: string }) {
-  return (
-    <div
-      className={cn(
-        "border-border/50 bg-card/70 animate-pulse rounded-xl border",
-        className,
-      )}
-      aria-hidden="true"
-    />
   );
 }
