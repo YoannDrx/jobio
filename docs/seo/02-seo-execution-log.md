@@ -216,9 +216,22 @@
 - Tests:
   - `__tests__/seo-kpi.test.ts` enrichi (cas candidat refresh faible CTR)
 
+## 2026-02-22 - Wave 15 (content refresh S7-S8 item 3 + stronger CTA mesh)
+
+- Refresh éditorial de 4 contenus existants (title/intro/CTA/maillage):
+  - `src/features/blog/blog-data.ts`
+  - `/blog/structurer-prospection-freelance-2026` (title/description + CTA final + lien `/docs`)
+  - `/blog/crm-freelance-criteres-stack-minimale` (title/description + CTA final + lien `/docs`)
+  - `/blog/5-conseils-prospection-freelance` (refresh complet contenu + maillage `/features` `/docs` `/#pricing`)
+  - `/blog/optimiser-profil-linkedin-freelance` (refresh complet contenu + maillage `/features` `/docs` `/#pricing`)
+- Objectif:
+  - mieux aligner les contenus avec les intentions "prospection freelance" et "linkedin freelance"
+  - augmenter la clarté des intros et des prochaines actions
+  - renforcer les liens internes vers pages à conversion.
+
 ## Prochaine wave recommandée
 
 - Exécuter la connexion GSC/Bing et soumettre `sitemap.xml` en prod.
 - Planifier l'appel régulier de `POST /api/cron/seo-search-metrics-sync` (daily/weekly).
-- Mettre à jour les 4 contenus les plus performants (refresh title, intro, CTA, maillage).
 - Ajouter une boucle de suivi post-refresh (J+14/J+30) pour mesurer l'impact des updates sur CTR/clics.
+- Prioriser 2 refresh additionnels guidés par `contentRefreshCandidates` (focus CTR < 2%).

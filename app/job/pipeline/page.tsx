@@ -17,6 +17,7 @@ import {
 import { EmptyState } from "@/components/nowts/empty-state";
 import { PlanLimitBanner } from "@/components/nowts/plan-limit-banner";
 import { CompanyList } from "@/features/companies/components/company-list";
+import { openGlobalDialog } from "@/features/global-dialog/global-dialog.store";
 import {
   Layout,
   LayoutActions,
@@ -25,6 +26,7 @@ import {
   LayoutTitle,
 } from "@/features/page/layout";
 import { resolveActionResult } from "@/lib/actions/actions-utils";
+import { getPlanLimits } from "@/lib/auth/stripe/auth-plans";
 import { checkAllLimitsAction } from "@/features/plans/check-limits.action";
 import { parseMissionAction } from "@/features/ai/parse-mission.action";
 import {
@@ -60,6 +62,7 @@ import {
   Building2,
   Download,
   Kanban,
+  Lock,
   List,
   Plus,
   Search,
@@ -502,6 +505,13 @@ export default function PipelinePage() {
     }
   };
 
+  const canExportCsv = getPlanLimits(currentPlan).csvExport >= 1;
+
+  const handleLockedCsvExport = () => {
+    openGlobalDialog("user-plan");
+    toast.info("L'export CSV est disponible à partir du plan Pro.");
+  };
+
   return (
     <Layout size="xl">
       <LayoutHeader>
@@ -567,6 +577,10 @@ export default function PipelinePage() {
           size="sm"
           variant="outline"
           onClick={async () => {
+            if (!canExportCsv) {
+              handleLockedCsvExport();
+              return;
+            }
             try {
               const rows = await resolveActionResult(
                 exportMissionsAction({
@@ -610,13 +624,21 @@ export default function PipelinePage() {
                 `missions-${new Date().toISOString().split("T")[0]}.csv`,
               );
               toast.success("Export CSV téléchargé");
-            } catch {
-              toast.error("Erreur lors de l'export");
+            } catch (error) {
+              toast.error(
+                error instanceof Error
+                  ? error.message
+                  : "Erreur lors de l'export",
+              );
             }
           }}
         >
-          <Download className="size-4" />
-          Exporter CSV
+          {canExportCsv ? (
+            <Download className="size-4" />
+          ) : (
+            <Lock className="size-4" />
+          )}
+          {canExportCsv ? "Exporter CSV" : "Exporter CSV (Pro)"}
         </Button>
         {selectedMissionIds.length > 0 && (
           <>
@@ -655,6 +677,10 @@ export default function PipelinePage() {
               size="sm"
               variant="outline"
               onClick={async () => {
+                if (!canExportCsv) {
+                  handleLockedCsvExport();
+                  return;
+                }
                 try {
                   const missionsToExport = missions?.missions.filter((m) =>
                     selectedMissionIds.includes(m.id),
@@ -686,13 +712,23 @@ export default function PipelinePage() {
                     `missions-selection-${new Date().toISOString().split("T")[0]}.csv`,
                   );
                   toast.success("Export CSV téléchargé");
-                } catch {
-                  toast.error("Erreur lors de l'export");
+                } catch (error) {
+                  toast.error(
+                    error instanceof Error
+                      ? error.message
+                      : "Erreur lors de l'export",
+                  );
                 }
               }}
             >
-              <Download className="size-4" />
-              Exporter ({selectedMissionIds.length})
+              {canExportCsv ? (
+                <Download className="size-4" />
+              ) : (
+                <Lock className="size-4" />
+              )}
+              {canExportCsv
+                ? `Exporter (${selectedMissionIds.length})`
+                : "Exporter sélection (Pro)"}
             </Button>
             <Button
               size="sm"

@@ -429,9 +429,9 @@ export const blogPosts: BlogPost[] = [
   },
   {
     slug: "structurer-prospection-freelance-2026",
-    title: "Comment structurer sa prospection freelance en 2026",
+    title: "Structurer sa prospection freelance en 2026: framework 14 jours",
     description:
-      "Un plan concret pour construire un systeme de prospection freelance repetable, mesurable et compatible avec un rythme de mission reel.",
+      "Framework concret en 5 blocs pour industrialiser la prospection freelance: ciblage, pipeline, relances, KPI et execution sur 14 jours.",
     date: "2026-02-22",
     tags: ["Prospection", "CRM", "Freelance"],
     readingTime: 8,
@@ -505,7 +505,7 @@ export const blogPosts: BlogPost[] = [
 <li>Un suivi analytics de conversion</li>
 <li>Un module de facturation pour accelerer le passage de la vente au cash</li>
 </ul>
-<p>Si tu veux une vue d'ensemble des modules disponibles, consulte la page <a href="/features">features Jobio</a> puis compare les plans via <a href="/#pricing">pricing</a>.</p>
+<p>Si tu veux une vue d'ensemble des modules disponibles, consulte la page <a href="/features">features Jobio</a>, puis applique les routines dans <a href="/docs">/docs</a> et compare les plans via <a href="/#pricing">/#pricing</a>.</p>
 
 <h2>Plan d'execution sur 14 jours</h2>
 <p><strong>Jour 1-2:</strong> definir ICP + proposition de valeur.</p>
@@ -514,13 +514,16 @@ export const blogPosts: BlogPost[] = [
 <p><strong>Jour 8-10:</strong> appliquer la cadence de relances.</p>
 <p><strong>Jour 11-14:</strong> revue KPI et ajustements.</p>
 <p>Objectif: transformer la prospection en systeme reproductible, pas en sprint de survie.</p>
+
+<h2>Prochaine etape</h2>
+<p>Si tu veux deployer ce framework sans perdre de temps, commence par configurer ton pipeline sur <a href="/features">/features</a>, suis une routine hebdo dans <a href="/docs">/docs</a> et valide les limites de ton plan sur <a href="/#pricing">/#pricing</a>.</p>
 `,
   },
   {
     slug: "crm-freelance-criteres-stack-minimale",
-    title: "CRM freelance: criteres de choix et stack minimale",
+    title: "CRM freelance: 7 criteres de choix + stack minimale",
     description:
-      "Comment choisir un CRM freelance utile (et pas gadget), avec une stack operationnelle minimale pour signer plus de missions.",
+      "Guide concret pour choisir un CRM freelance utile, eviter les anti-patterns et deployer une stack minimale qui convertit mieux.",
     date: "2026-02-22",
     tags: ["CRM", "Freelance", "Organisation"],
     readingTime: 8,
@@ -567,7 +570,7 @@ export const blogPosts: BlogPost[] = [
 <li><strong>Module CV/positionnement:</strong> adapter rapidement son pitch selon le deal</li>
 <li><strong>Module admin freelance:</strong> clients, devis, factures, paiements</li>
 </ul>
-<p>Tu peux visualiser cette logique produit sur <a href="/features">/features</a> puis verifier les limites par plan sur <a href="/#pricing">/#pricing</a>.</p>
+<p>Tu peux visualiser cette logique produit sur <a href="/features">/features</a>, operationaliser ton process via <a href="/docs">/docs</a>, puis verifier les limites par plan sur <a href="/#pricing">/#pricing</a>.</p>
 
 <h2>Checklist de selection en 20 minutes</h2>
 <p>Avant de choisir ton CRM, reponds oui/non:</p>
@@ -587,127 +590,152 @@ export const blogPosts: BlogPost[] = [
 <p><strong>Semaine 3:</strong> ajouter reporting hebdo et revue KPI.</p>
 <p><strong>Semaine 4:</strong> connecter l'administratif (devis/factures).</p>
 <p>L'objectif n'est pas d'avoir "le meilleur CRM", mais le meilleur rythme commercial pour ton contexte freelance.</p>
+
+<h2>Prochaine etape</h2>
+<p>Passe de la theorie a l'execution: configure ton setup sur <a href="/features">/features</a>, applique une cadence dans <a href="/docs">/docs</a> et aligne ton volume avec le bon plan via <a href="/#pricing">/#pricing</a>.</p>
 `,
   },
   {
     slug: "5-conseils-prospection-freelance",
-    title: "5 conseils pour optimiser sa prospection freelance tech",
+    title: "Prospection freelance tech: 5 leviers pour signer regulierement",
     description:
-      "Les bonnes pratiques pour structurer sa prospection commerciale en tant que freelance dans la tech et maximiser son taux de conversion.",
-    date: "2026-02-10",
+      "5 leviers operationnels pour stabiliser ton flux de missions freelance: positionnement, pipeline, relances, LinkedIn et pilotage KPI.",
+    date: "2026-02-22",
     tags: ["Prospection", "Freelance", "Strategie"],
-    readingTime: 5,
+    readingTime: 8,
     content: `
-<h2>1. Definir son positionnement avant de prospecter</h2>
-<p>La premiere erreur que font la plupart des freelances tech est de prospecter sans avoir clarifie leur positionnement. Avant d'envoyer le moindre message, vous devez pouvoir repondre clairement a trois questions : quel probleme je resous, pour qui, et pourquoi moi plutot qu'un autre ?</p>
-<p>Un positionnement clair vous permet de cibler les bonnes entreprises, de rediger des messages percutants et de justifier votre TJM. Sans cela, vous dispersez votre energie et vos messages restent generiques.</p>
-<p><strong>Action concrete :</strong> redigez une phrase de positionnement en moins de 20 mots. Par exemple : "J'aide les startups SaaS B2B a scaler leur frontend React sans dette technique."</p>
+<h2>Pourquoi ces 5 leviers font la difference</h2>
+<p>La prospection freelance echoue rarement par manque de competence technique. Elle echoue surtout par manque de systeme. Ces 5 leviers te donnent une base simple pour passer d'une prospection reactive a une machine commerciale stable.</p>
+<p>L'objectif n'est pas d'envoyer plus de messages. L'objectif est de signer plus de missions pertinentes avec moins de friction.</p>
 
-<h2>2. Construire un pipeline structure</h2>
-<p>La prospection ne doit pas etre un effort ponctuel. Les freelances qui signent regulierement des missions traitent leur prospection comme un processus commercial avec des etapes claires.</p>
-<p>Un pipeline efficace comporte generalement ces etapes :</p>
-<ul>
-<li><strong>Identification :</strong> reperer les entreprises et contacts pertinents</li>
-<li><strong>Premier contact :</strong> envoyer un message personnalise</li>
-<li><strong>Qualification :</strong> comprendre le besoin et le budget</li>
-<li><strong>Proposition :</strong> envoyer une offre claire et chiffree</li>
-<li><strong>Negociation :</strong> ajuster les termes si necessaire</li>
-<li><strong>Signature :</strong> formaliser l'accord</li>
-</ul>
-<p>En visualisant vos opportunites dans un pipeline, vous savez exactement ou concentrer vos efforts et combien de missions sont en cours de discussion.</p>
+<h2>1) Clarifier ton positionnement avant le moindre outreach</h2>
+<p>Avant de prospecter, tu dois pouvoir repondre a 3 questions en une phrase: quel probleme tu resous, pour qui, et quel impact tu livres. Sans ca, tes messages restent generiques et ton TJM devient difficile a defendre.</p>
+<p><strong>Action concrete:</strong> formule une promesse en 20 mots max. Exemple: "J'aide les equipes SaaS B2B a accelerer leur delivery frontend sans dette technique."</p>
 
-<h2>3. Automatiser les relances sans perdre en qualite</h2>
-<p>La relance est le levier le plus sous-exploite par les freelances. La majorite des missions se signent apres 2 a 5 points de contact, mais la plupart des freelances abandonnent apres le premier message sans reponse.</p>
-<p>La cle est de planifier vos relances a l'avance et de les espacer intelligemment. Un bon rythme est :</p>
+<h2>2) Installer un pipeline structure</h2>
+<p>Les freelances qui signent regulierement pilotent un pipeline, pas une todo liste. Chaque opportunite doit avoir un statut clair et une prochaine action datee.</p>
+<p>Pipeline minimal recommande:</p>
 <ul>
-<li>J+3 apres le premier contact</li>
-<li>J+7 si toujours pas de reponse</li>
-<li>J+14 avec un angle different (partage d'article, cas client, actualite)</li>
+<li>Lead identifie</li>
+<li>Premier contact envoye</li>
+<li>Qualification faite</li>
+<li>Proposition envoyee</li>
+<li>Negociation</li>
+<li>Signe / perdu</li>
 </ul>
-<p><strong>Important :</strong> chaque relance doit apporter de la valeur. Ne renvoyez jamais un simple "Avez-vous eu le temps de regarder mon message ?". Partagez plutot un insight, une etude de cas ou une actualite pertinente pour votre interlocuteur.</p>
+<p>Sans pipeline explicite, tu perds les bons deals dans le bruit quotidien.</p>
 
-<h2>4. Exploiter LinkedIn comme canal principal</h2>
-<p>Pour les freelances tech, LinkedIn reste le canal de prospection le plus efficace. C'est la que se trouvent vos futurs clients : CTO, VP Engineering, Product Managers et Heads of Engineering.</p>
-<p>Pour maximiser votre impact sur LinkedIn :</p>
+<h2>3) Industrialiser les relances sans perdre la personnalisation</h2>
+<p>Une grande partie des missions se debloquent apres 2 a 4 interactions. Ne pas relancer, c'est abandonner des opportunites deja qualifiees.</p>
+<p>Cadence simple:</p>
 <ul>
-<li><strong>Optimisez votre profil :</strong> titre clair, resume oriente resultats, experiences detaillees</li>
-<li><strong>Publiez regulierement :</strong> 2 a 3 posts par semaine sur votre expertise</li>
-<li><strong>Commentez strategiquement :</strong> engagez sur les posts de vos prospects</li>
-<li><strong>Envoyez des messages personnalises :</strong> mentionnez un element specifique du profil ou de l'entreprise</li>
+<li>J+3: rappel contextualise</li>
+<li>J+7: valeur concrete (cas, benchmark, proposition)</li>
+<li>J+14: cloture elegante avec porte ouverte</li>
 </ul>
-<p>Un profil LinkedIn bien optimise genere des demandes entrantes et renforce votre credibilite lors des approches sortantes.</p>
+<p><strong>Regle:</strong> chaque relance doit ajouter une information utile. Sinon, c'est du bruit.</p>
 
-<h2>5. Mesurer et iterer sur ses performances</h2>
-<p>Ce qui ne se mesure pas ne s'ameliore pas. Suivez vos metriques de prospection pour identifier ce qui fonctionne et ce qui doit etre ajuste.</p>
-<p>Les indicateurs essentiels a suivre :</p>
+<h2>4) Exploiter LinkedIn comme canal d'acquisition</h2>
+<p>Pour les freelances tech, LinkedIn reste le canal le plus rentable pour ouvrir des conversations qualifiees avec CTO, VP Engineering, Head of Product et fondateurs.</p>
+<p>Checklist d'hygiene LinkedIn:</p>
 <ul>
-<li><strong>Taux de reponse :</strong> pourcentage de prospects qui repondent a vos messages</li>
-<li><strong>Taux de conversion :</strong> pourcentage d'opportunites qui deviennent des missions</li>
-<li><strong>Delai moyen de signature :</strong> temps entre le premier contact et la signature</li>
-<li><strong>Source des missions :</strong> quel canal genere le plus de missions signees</li>
+<li>Titre positionne sur resultat, pas sur stack brute</li>
+<li>Resume oriente cas d'usage et preuves</li>
+<li>2 posts/semaine sur problemes clients reels</li>
+<li>Commentaires cibles sur les comptes prospects</li>
 </ul>
-<p>En analysant ces donnees chaque mois, vous pouvez doubler la mise sur les strategies qui fonctionnent et abandonner celles qui ne donnent pas de resultats. La prospection est un jeu d'optimisation continue.</p>
+<p>Un profil credible + une activite reguliere augmentent fortement la conversion de tes messages sortants.</p>
+
+<h2>5) Piloter avec 4 KPI hebdo</h2>
+<p>Sans mesure, tu ajustes a l'intuition. Avec 4 KPI, tu identifies rapidement ou agir:</p>
+<ul>
+<li>Taux de reponse premier contact</li>
+<li>Taux lead -> call</li>
+<li>Taux proposition -> signature</li>
+<li>Cycle moyen de conversion</li>
+</ul>
+<p>Revue recommandee: 30 minutes chaque semaine pour couper ce qui ne marche pas et renforcer ce qui convertit.</p>
+
+<h2>Plan d'action 7 jours</h2>
+<p><strong>Jour 1:</strong> clarifier proposition de valeur.</p>
+<p><strong>Jour 2:</strong> nettoyer pipeline et statuts.</p>
+<p><strong>Jour 3-4:</strong> lancer outreach cible.</p>
+<p><strong>Jour 5:</strong> executer relances J+3.</p>
+<p><strong>Jour 6:</strong> publier 1 contenu LinkedIn utile.</p>
+<p><strong>Jour 7:</strong> revue KPI et ajustements.</p>
+
+<h2>Prochaine etape</h2>
+<p>Pour passer de la theorie a l'execution, configure ton systeme sur <a href="/features">/features</a>, suis un cadre operationnel dans <a href="/docs">/docs</a> et aligne ton volume de prospection avec ton plan sur <a href="/#pricing">/#pricing</a>.</p>
 `,
   },
   {
     slug: "optimiser-profil-linkedin-freelance",
-    title: "Comment optimiser son profil LinkedIn en tant que freelance",
+    title: "Optimiser son profil LinkedIn freelance: guide conversion 2026",
     description:
-      "Guide complet pour transformer votre profil LinkedIn en aimant a missions : titre, resume, experiences et strategie de contenu.",
-    date: "2026-02-05",
+      "Guide pratique pour transformer ton profil LinkedIn en actif commercial: titre, resume, preuves, contenus et routine hebdo.",
+    date: "2026-02-22",
     tags: ["LinkedIn", "Personal Branding", "Freelance"],
-    readingTime: 6,
+    readingTime: 8,
     content: `
-<h2>Pourquoi votre profil LinkedIn est votre meilleur commercial</h2>
-<p>En tant que freelance tech, votre profil LinkedIn est souvent le premier point de contact avec vos futurs clients. Avant meme de lire votre message de prospection, un prospect va consulter votre profil pour evaluer votre credibilite. Un profil bien optimise peut faire la difference entre un message ignore et un rendez-vous decroche.</p>
-<p>LinkedIn compte plus de 28 millions d'utilisateurs en France. Parmi eux, des milliers de decideurs tech qui recherchent activement des freelances pour leurs projets. Votre profil doit les convaincre en moins de 30 secondes que vous etes la bonne personne.</p>
+<h2>Pourquoi LinkedIn est un actif commercial (et pas juste une vitrine)</h2>
+<p>Pour un freelance tech, LinkedIn influence directement la conversion: avant de repondre a ton message, le prospect verifie ton profil. S'il ne comprend pas clairement ton positionnement en 20 secondes, la conversation s'arrete la.</p>
+<p>L'objectif n'est pas d'avoir un profil "beau". L'objectif est d'avoir un profil qui rassure, qualifie et convertit.</p>
 
-<h2>Le titre : votre accroche en 120 caracteres</h2>
-<p>Le titre est l'element le plus visible de votre profil. Il apparait dans les resultats de recherche, les suggestions de connexion et a cote de chacun de vos commentaires et publications.</p>
-<p><strong>Les erreurs classiques a eviter :</strong></p>
+<h2>1) Refaire ton titre comme une promesse client</h2>
+<p>Ton titre doit expliquer ce que tu fais, pour qui, et avec quel impact.</p>
+<p><strong>Erreurs classiques:</strong></p>
 <ul>
-<li>"Developpeur Fullstack" — trop generique, ne dit rien sur votre valeur</li>
-<li>"En recherche de missions" — posture de demandeur, pas d'expert</li>
-<li>"Freelance | React | Node | AWS | Docker | ..." — liste de technologies sans contexte</li>
+<li>"Developpeur fullstack" (trop generique)</li>
+<li>"En recherche de mission" (posture faible)</li>
+<li>"React | Node | AWS | Docker" (liste sans contexte)</li>
 </ul>
-<p><strong>La formule qui fonctionne :</strong> [Ce que vous faites] pour [qui] | [Resultat ou preuve sociale]</p>
-<p>Exemples efficaces :</p>
+<p><strong>Formule robuste:</strong> [Resultat] pour [type de client] | [preuve].</p>
+<p>Exemples:</p>
 <ul>
-<li>"Je construis des apps React performantes pour les startups SaaS | Ex-Lead Dev chez Doctolib"</li>
-<li>"CTO freelance — j'aide les scale-ups a structurer leur equipe tech | 12 ans XP"</li>
-<li>"Expert Data Engineering | Pipelines temps reel pour la fintech | AWS Certified"</li>
+<li>"J'aide les SaaS B2B a accelerer leur delivery frontend | Ex Lead Dev"</li>
+<li>"CTO freelance: structuration d'equipe tech en phase scale | 12 ans XP"</li>
+<li>"Data Engineer freelance: pipelines temps reel fintech | AWS Certified"</li>
 </ul>
 
-<h2>Le resume : racontez votre histoire en 3 paragraphes</h2>
-<p>Le resume (section "Info") est votre espace pour developper votre proposition de valeur. Structurez-le en trois parties :</p>
-<p><strong>Paragraphe 1 — Le probleme :</strong> Decrivez le contexte de vos clients cibles et les defis auxquels ils font face. Montrez que vous comprenez leur realite.</p>
-<p><strong>Paragraphe 2 — Votre solution :</strong> Expliquez comment vous aidez vos clients a resoudre ces problemes. Soyez concret : technologies, methodologies, type de livrables.</p>
-<p><strong>Paragraphe 3 — La preuve :</strong> Partagez 2-3 resultats mesurables de vos missions precedentes. Les chiffres sont vos meilleurs allies : "reduction du temps de chargement de 60%", "migration de 200k utilisateurs sans downtime", "mise en production en 6 semaines".</p>
+<h2>2) Ecrire un resume en 3 blocs orientes decision</h2>
+<p>Ton resume doit se lire comme un mini business case:</p>
+<p><strong>Bloc A - probleme:</strong> contexte client et enjeux.</p>
+<p><strong>Bloc B - methode:</strong> ce que tu mets en place concretement.</p>
+<p><strong>Bloc C - preuves:</strong> 2 a 3 resultats chiffres.</p>
+<p>Sans chiffres ni contexte, ton resume reste declaratif et perd en credibilite.</p>
 
-<h2>Les experiences : des etudes de cas, pas un CV</h2>
-<p>Chaque experience sur votre profil LinkedIn devrait se lire comme une mini etude de cas, pas comme une ligne de CV. Pour chaque mission freelance ou poste passe, suivez cette structure :</p>
+<h2>3) Transformer chaque experience en mini etude de cas</h2>
+<p>Chaque experience doit repondre a 4 questions:</p>
 <ul>
-<li><strong>Le contexte :</strong> quelle entreprise, quel secteur, quelle taille d'equipe</li>
-<li><strong>Le defi :</strong> quel probleme technique ou business deviez-vous resoudre</li>
-<li><strong>Votre contribution :</strong> ce que vous avez concretement fait et les technologies utilisees</li>
-<li><strong>Le resultat :</strong> impact mesurable sur le business ou le produit</li>
+<li>Contexte: type d'entreprise, taille, enjeu</li>
+<li>Defi: friction technique ou business</li>
+<li>Contribution: decisions et execution</li>
+<li>Resultat: impact mesurable (temps, cout, revenu, qualite)</li>
 </ul>
-<p>Cette approche transforme votre profil en portfolio vivant et donne envie aux prospects d'en savoir plus.</p>
+<p>Ce format transforme ton profil en portfolio vivant et donne de la matiere a tes messages de prospection.</p>
 
-<h2>La strategie de contenu : devenir visible</h2>
-<p>Un profil optimise ne suffit pas si personne ne le voit. La publication reguliere de contenu est le meilleur moyen d'augmenter votre visibilite et d'attirer des missions entrantes.</p>
-<p>Types de contenus qui fonctionnent pour les freelances tech :</p>
+<h2>4) Publier du contenu utile (pas du bruit)</h2>
+<p>Un bon profil sans visibilite convertit peu. Publie de facon reguliere pour nourrir la confiance:</p>
 <ul>
-<li><strong>Retours d'experience :</strong> partagez les lecons apprises sur vos missions (sans rompre la confidentialite)</li>
-<li><strong>Tutoriels et tips :</strong> montrez votre expertise a travers des conseils pratiques</li>
-<li><strong>Opinions sur les tendances :</strong> positionnez-vous sur les sujets qui animent votre secteur</li>
-<li><strong>Coulisses du freelancing :</strong> partagez votre quotidien, vos outils, votre organisation</li>
+<li>retours d'experience mission</li>
+<li>frameworks actionnables</li>
+<li>erreurs frequentes et correctifs</li>
+<li>avant/apres avec KPI</li>
 </ul>
-<p>Publiez 2 a 3 fois par semaine, commentez les posts de vos prospects et engagez dans les groupes pertinents. La regularite prime sur la perfection : un post imparfait publie vaut mieux qu'un post parfait jamais ecrit.</p>
+<p>Cadence minimale: 2 posts/semaine + commentaires cibles sur les comptes prospects.</p>
 
-<h2>Les recommandations : votre preuve sociale</h2>
-<p>Les recommandations LinkedIn sont l'equivalent des avis Google pour un freelance. Apres chaque mission reussie, demandez une recommandation a votre client en lui facilitant la tache : suggerez les points cles a mentionner et proposez-lui un brouillon qu'il pourra adapter.</p>
-<p>Visez au minimum 5 recommandations de clients recents. Elles rassurent les prospects et renforcent votre credibilite de maniere significative.</p>
+<h2>5) Renforcer la preuve sociale</h2>
+<p>Les recommandations client font gagner du temps en qualification. Apres chaque mission reussie, demande un retour court axe sur probleme, intervention, resultat.</p>
+<p>Objectif: obtenir au moins 5 recommandations recentes et coherentes avec ton positionnement actuel.</p>
+
+<h2>Routine hebdo (30 minutes)</h2>
+<p><strong>10 min:</strong> mettre a jour une experience ou un resultat.</p>
+<p><strong>10 min:</strong> preparer un post utile.</p>
+<p><strong>10 min:</strong> commenter 5 publications de prospects cibles.</p>
+<p>Cette discipline cree un flux d'opportunites entrant, sans dependre uniquement du cold outreach.</p>
+
+<h2>Prochaine etape</h2>
+<p>Pour connecter ton profil LinkedIn a un systeme commercial complet, aligne ta prospection sur <a href="/features">/features</a>, applique des routines dans <a href="/docs">/docs</a> et ajuste ton volume d'actions selon ton plan via <a href="/#pricing">/#pricing</a>.</p>
 `,
   },
   {

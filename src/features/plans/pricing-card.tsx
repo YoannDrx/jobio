@@ -86,6 +86,15 @@ export function PricingCard({
   };
 
   const discount = calculateDiscount(plan.price, plan.yearlyPrice ?? 0);
+  const planLimitEntries = Object.entries(plan.limits) as [string, number][];
+  const numericLimitEntries = planLimitEntries.filter(
+    ([key, value]) => NUMERIC_FEATURES.includes(key) && value > 0,
+  );
+  const booleanLimitEntries = planLimitEntries.filter(
+    ([key, value]) => BOOLEAN_FEATURES.has(key) && value >= 1,
+  );
+  const additionalFeatures =
+    ADDITIONAL_FEATURES[plan.name as keyof typeof ADDITIONAL_FEATURES];
 
   return (
     <Card
@@ -150,74 +159,93 @@ export function PricingCard({
             Inclus dans le plan
           </h4>
 
-          <ul className="space-y-5">
+          <div className="space-y-5">
             {plan.name === "pro" && (
-              <li className="text-primary text-sm font-medium italic">
+              <p className="text-primary text-sm font-medium italic">
                 Tout le plan Free +
-              </li>
+              </p>
             )}
             {plan.name === "ultra" && (
-              <li className="text-primary text-sm font-medium italic">
+              <p className="text-primary text-sm font-medium italic">
                 Tout le plan Pro +
-              </li>
+              </p>
             )}
 
-            {Object.entries(plan.limits)
-              .filter(([key, value]) => {
-                const isBoolean = BOOLEAN_FEATURES.has(key);
-                const isNumeric = NUMERIC_FEATURES.includes(key);
+            <div className="space-y-3">
+              <p className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
+                Capacités
+              </p>
+              <ul className="space-y-4">
+                {numericLimitEntries.map(([key, value]) => {
+                  const limitConfig =
+                    LIMITS_CONFIG[key as keyof typeof LIMITS_CONFIG];
+                  const Icon = limitConfig.icon;
 
-                if (isBoolean) {
-                  return (value as number) >= 1;
-                }
-                if (isNumeric) {
-                  return (value as number) > 0;
-                }
-                return true;
-              })
-              .map(([key, value]) => {
-                const limitConfig =
-                  LIMITS_CONFIG[key as keyof typeof LIMITS_CONFIG];
+                  return (
+                    <li key={key} className="flex items-start">
+                      <div className="text-primary mt-0.5 mr-3 size-5 shrink-0">
+                        <Icon className="size-5" />
+                      </div>
+                      <div>
+                        <p className="font-medium">
+                          {limitConfig.getLabel(value as number)}
+                        </p>
+                        <p className="text-muted-foreground text-sm">
+                          {limitConfig.description}
+                        </p>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
 
-                const Icon = limitConfig.icon;
+            <div className="space-y-3">
+              <p className="text-muted-foreground text-xs font-semibold tracking-wide uppercase">
+                Fonctionnalités incluses
+              </p>
+              <ul className="space-y-4">
+                {booleanLimitEntries.map(([key, value]) => {
+                  const limitConfig =
+                    LIMITS_CONFIG[key as keyof typeof LIMITS_CONFIG];
+                  const Icon = limitConfig.icon;
 
-                return (
-                  <li key={key} className="flex items-start">
-                    <div className="text-primary mt-0.5 mr-3 size-5 shrink-0">
-                      <Icon className="size-5" />
-                    </div>
-                    <div>
-                      <p className="font-medium">
-                        {limitConfig.getLabel(value as number)}
-                      </p>
-                      <p className="text-muted-foreground text-sm">
-                        {limitConfig.description}
-                      </p>
-                    </div>
-                  </li>
-                );
-              })}
+                  return (
+                    <li key={key} className="flex items-start">
+                      <div className="text-primary mt-0.5 mr-3 size-5 shrink-0">
+                        <Icon className="size-5" />
+                      </div>
+                      <div>
+                        <p className="font-medium">
+                          {limitConfig.getLabel(value as number)}
+                        </p>
+                        <p className="text-muted-foreground text-sm">
+                          {limitConfig.description}
+                        </p>
+                      </div>
+                    </li>
+                  );
+                })}
+                {additionalFeatures.map((feature, index) => {
+                  const Icon = feature.icon;
 
-            {ADDITIONAL_FEATURES[
-              plan.name as keyof typeof ADDITIONAL_FEATURES
-            ].map((feature, index) => {
-              const Icon = feature.icon;
-
-              return (
-                <li key={index} className="flex items-start">
-                  <div className="text-primary mt-0.5 mr-3 size-5 shrink-0">
-                    <Icon className="size-5" />
-                  </div>
-                  <div>
-                    <p className="font-medium">{feature.label}</p>
-                    <p className="text-muted-foreground text-sm">
-                      {feature.description}
-                    </p>
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
+                  return (
+                    <li key={index} className="flex items-start">
+                      <div className="text-primary mt-0.5 mr-3 size-5 shrink-0">
+                        <Icon className="size-5" />
+                      </div>
+                      <div>
+                        <p className="font-medium">{feature.label}</p>
+                        <p className="text-muted-foreground text-sm">
+                          {feature.description}
+                        </p>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          </div>
         </div>
       </CardContent>
 
