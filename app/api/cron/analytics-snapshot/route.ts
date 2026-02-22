@@ -4,6 +4,7 @@ import { route } from "@/lib/zod-route";
 import { captureSnapshot } from "@/features/analytics/analytics-snapshot";
 import { finishCronJobRun, startCronJobRun } from "@/lib/ops/cron-job-runs";
 import { logger } from "@/lib/logger";
+import { validateCronAuthorization } from "@/lib/security/cron-auth";
 
 const RETENTION_DAYS: Record<string, number | undefined> = {
   free: 7,
@@ -64,13 +65,16 @@ export const POST = route.handler(async (req) => {
     route: new URL(req.url).pathname,
   });
 
-  const authHeader = req.headers.get("authorization");
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  const authFailure = validateCronAuthorization(req.headers.get("authorization"));
+  if (authFailure) {
     await finishCronJobRun(run?.id, {
-      status: "UNAUTHORIZED",
-      errorMessage: "Invalid authorization header",
+      status: authFailure.status === 401 ? "UNAUTHORIZED" : "FAILED",
+      errorMessage: authFailure.logMessage,
     });
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json(
+      { error: authFailure.publicError },
+      { status: authFailure.status },
+    );
   }
 
   try {

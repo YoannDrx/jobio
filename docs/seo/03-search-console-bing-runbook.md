@@ -109,6 +109,7 @@ Checklist d'activation:
   - `POST /api/cron/seo-search-metrics-sync`
 - Sécurité:
   - header `Authorization: Bearer <CRON_SECRET>`
+  - `CRON_SECRET` doit être configuré côté serveur (sinon la route répond `503`).
 - Fonctionnement:
   - lit `SEO_SEARCH_METRICS_ENDPOINT`
   - récupère le snapshot JSON

@@ -338,6 +338,22 @@
   - `docs/seo/03-search-console-bing-runbook.md`
   - note explicite sur `409` concurrent + suivi de fraîcheur (>48h)
 
+## 2026-02-22 - Wave 24 (cron auth hardening)
+
+- Durcissement auth des routes cron:
+  - `src/lib/security/cron-auth.ts` (helper centralisé)
+  - comparaison sécurisée (`timingSafeEqual`) du bearer token
+  - refus explicite `503` si `CRON_SECRET` absent
+- Routes appliquées:
+  - `app/api/cron/analytics-snapshot/route.ts`
+  - `app/api/cron/billing-reminders/route.ts`
+  - `app/api/cron/push-notifications/route.ts`
+  - `app/api/cron/trial-ending/route.ts`
+  - `app/api/cron/trial-reminders/route.ts`
+  - `app/api/cron/seo-search-metrics-sync/route.ts`
+- Tests:
+  - `__tests__/cron-auth.test.ts`
+
 ## Prochaine wave recommandée
 
 - Exécuter la connexion GSC/Bing et soumettre `sitemap.xml` en prod.

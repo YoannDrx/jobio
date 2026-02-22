@@ -5,13 +5,17 @@ import {
   finishCronJobRun,
   startCronJobRun,
 } from "@/lib/ops/cron-job-runs";
+import { validateCronAuthorization } from "@/lib/security/cron-auth";
 import { NextResponse } from "next/server";
 import { route } from "@/lib/zod-route";
 
 export const POST = route.handler(async (req) => {
-  const authHeader = req.headers.get("authorization");
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const authFailure = validateCronAuthorization(req.headers.get("authorization"));
+  if (authFailure) {
+    return NextResponse.json(
+      { error: authFailure.publicError },
+      { status: authFailure.status },
+    );
   }
 
   const activeRun = await findActiveCronJobRun({
