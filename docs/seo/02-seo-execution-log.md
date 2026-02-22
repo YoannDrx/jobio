@@ -87,8 +87,41 @@
 - Test unitaire du calculateur:
   - `__tests__/seo-kpi.test.ts`
 
+## 2026-02-22 - Wave 8 (Search Console/Bing metrics integration)
+
+- Nouveau loader de métriques SEO externes:
+  - `src/features/admin/seo-search-metrics.ts`
+  - validation stricte du snapshot JSON (source `env` ou fichier)
+- Extension du calculateur KPI SEO:
+  - `src/features/admin/seo-kpi.ts`
+  - ajout des signaux acquisition (clics, impressions, CTR, position, deltas)
+  - checklist dédiée "Métriques Search Console / Bing"
+  - actions recommandées pilotées par statut (`not_configured`, `invalid`, chute de clics)
+- Intégration UI admin:
+  - `app/admin/ops/page.tsx`
+  - nouveau bloc acquisition SEO (KPIs + top requêtes + état de configuration)
+- Documentation d'exploitation:
+  - `docs/seo/03-search-console-bing-runbook.md`
+  - `docs/seo/05-search-metrics-snapshot.example.json`
+- Tests:
+  - `__tests__/seo-kpi.test.ts` enrichi
+  - `__tests__/seo-search-metrics.test.ts` ajouté
+
+## 2026-02-22 - Wave 9 (content backlog S1-S2 publication)
+
+- Publication de 2 contenus prioritaires du backlog:
+  - `src/features/blog/blog-data.ts`
+  - `/blog/structurer-prospection-freelance-2026`
+  - `/blog/crm-freelance-criteres-stack-minimale`
+- Chaque contenu inclut des liens contextuels vers:
+  - `/features`
+  - `/#pricing`
+- Backlog éditorial mis à jour:
+  - `docs/seo/04-intent-map-content-backlog.md`
+  - S1-S2 items 1 et 2 marqués comme réalisés.
+
 ## Prochaine wave recommandée
 
-- Exécuter la connexion GSC/Bing et soumettre `sitemap.xml`.
-- Publier 2 premiers contenus du backlog (S1-S2).
-- Connecter les métriques Search Console réelles (clics/impressions/CTR) dans ce module admin.
+- Exécuter la connexion GSC/Bing et soumettre `sitemap.xml` en prod.
+- Optimiser `/features` avec une FAQ orientée intention ("crm freelance", "prospection freelance").
+- Brancher une collecte automatique (API GSC/Bing) pour éviter l'alimentation manuelle des snapshots.

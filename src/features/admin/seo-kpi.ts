@@ -1,5 +1,9 @@
-import { SiteConfig } from "@/site-config";
 import type { BlogPost } from "@/features/blog/blog-data";
+import type {
+  SeoSearchMetricsState,
+  SeoSearchSnapshot,
+} from "@/features/admin/seo-search-metrics";
+import { SiteConfig } from "@/site-config";
 import type { MetadataRoute } from "next";
 
 const DAY_IN_MS = 24 * 60 * 60 * 1000;
@@ -38,6 +42,33 @@ export type SeoChecklistItem = {
   detail: string;
 };
 
+export type SeoTopQuerySummary = {
+  query: string;
+  clicks: number;
+  impressions: number;
+  ctr: number;
+  position: number | null;
+};
+
+export type SeoSearchPerformanceSummary = {
+  status: SeoSearchMetricsState["status"];
+  source: SeoSearchMetricsState["source"];
+  provider: SeoSearchSnapshot["provider"] | null;
+  periodLabel: string | null;
+  capturedAt: string | null;
+  error: string | null;
+  clicks: number | null;
+  impressions: number | null;
+  ctr: number | null;
+  averagePosition: number | null;
+  clicksDeltaPercent: number | null;
+  impressionsDeltaPercent: number | null;
+  ctrDeltaPoints: number | null;
+  indexedPublicPages: number | null;
+  indexedPrivatePages: number | null;
+  topQueries: SeoTopQuerySummary[];
+};
+
 export type SeoKpiSummary = {
   sitemapPublicUrlsCount: number;
   hasRssInSitemap: boolean;
@@ -49,6 +80,7 @@ export type SeoKpiSummary = {
   daysSinceLatestBlogPost: number | null;
   checklist: SeoChecklistItem[];
   recommendedActions: string[];
+  searchPerformance: SeoSearchPerformanceSummary;
 };
 
 const toAbsoluteUrl = (path: `/${string}` | "/") =>
@@ -92,10 +124,92 @@ const getLatestPostDate = (posts: BlogPost[]): Date | null => {
   return new Date(Math.max(...timestamps));
 };
 
+const roundOneDecimal = (value: number): number =>
+  Math.round(value * 10) / 10;
+
+const percentDelta = (current: number, previous: number): number | null => {
+  if (previous <= 0) {
+    return null;
+  }
+
+  return roundOneDecimal(((current - previous) / previous) * 100);
+};
+
+const toPeriodLabel = (from: string, to: string, label?: string): string => {
+  if (label && label.trim().length > 0) {
+    return label;
+  }
+
+  return `${from} -> ${to}`;
+};
+
+const buildSearchPerformanceSummary = (
+  searchMetricsState: SeoSearchMetricsState,
+): SeoSearchPerformanceSummary => {
+  if (searchMetricsState.status !== "configured" || !searchMetricsState.payload) {
+    return {
+      status: searchMetricsState.status,
+      source: searchMetricsState.source,
+      provider: null,
+      periodLabel: null,
+      capturedAt: null,
+      error: searchMetricsState.error,
+      clicks: null,
+      impressions: null,
+      ctr: null,
+      averagePosition: null,
+      clicksDeltaPercent: null,
+      impressionsDeltaPercent: null,
+      ctrDeltaPoints: null,
+      indexedPublicPages: null,
+      indexedPrivatePages: null,
+      topQueries: [],
+    };
+  }
+
+  const { current, previous } = searchMetricsState.payload;
+
+  return {
+    status: "configured",
+    source: searchMetricsState.source,
+    provider: current.provider,
+    periodLabel: toPeriodLabel(
+      current.period.from,
+      current.period.to,
+      current.period.label,
+    ),
+    capturedAt: current.capturedAt,
+    error: null,
+    clicks: current.totals.clicks,
+    impressions: current.totals.impressions,
+    ctr: roundOneDecimal(current.totals.ctr * 100),
+    averagePosition: current.totals.averagePosition ?? null,
+    clicksDeltaPercent: previous
+      ? percentDelta(current.totals.clicks, previous.totals.clicks)
+      : null,
+    impressionsDeltaPercent: previous
+      ? percentDelta(current.totals.impressions, previous.totals.impressions)
+      : null,
+    ctrDeltaPoints: previous
+      ? roundOneDecimal((current.totals.ctr - previous.totals.ctr) * 100)
+      : null,
+    indexedPublicPages: current.indexedPages?.public ?? null,
+    indexedPrivatePages: current.indexedPages?.private ?? null,
+    topQueries: (current.topQueries ?? []).slice(0, 5).map((query) => ({
+      query: query.query,
+      clicks: query.clicks,
+      impressions: query.impressions,
+      ctr: roundOneDecimal(query.ctr * 100),
+      position: query.position ?? null,
+    })),
+  };
+};
+
 type ComputeSeoKpiSummaryInput = {
   sitemapEntries: MetadataRoute.Sitemap;
   robotsRules: MetadataRoute.Robots["rules"];
   posts: BlogPost[];
+  searchMetricsState: SeoSearchMetricsState;
   now: Date;
 };
 
@@ -103,6 +217,7 @@ export const computeSeoKpiSummary = ({
   sitemapEntries,
   robotsRules,
   posts,
+  searchMetricsState,
   now,
 }: ComputeSeoKpiSummaryInput): SeoKpiSummary => {
   const sitemapUrls = new Set(
@@ -140,6 +255,31 @@ export const computeSeoKpiSummary = ({
 
   const hasRssInSitemap = sitemapUrls.has(toAbsoluteUrl("/rss.xml"));
 
+  const searchPerformance = buildSearchPerformanceSummary(searchMetricsState);
+
+  const searchMetricsChecklistStatus: SeoChecklistStatus =
+    searchPerformance.status !== "configured"
+      ? "warning"
+      : searchPerformance.indexedPrivatePages !== null &&
+          searchPerformance.indexedPrivatePages > 0
+        ? "warning"
+        : searchPerformance.clicksDeltaPercent !== null &&
+            searchPerformance.clicksDeltaPercent <= -30
+          ? "warning"
+          : "ok";
+
+  const searchMetricsChecklistDetail =
+    searchPerformance.status === "not_configured"
+      ? "Aucune source Search Console/Bing configurée dans l'environnement."
+      : searchPerformance.status === "invalid"
+        ? `Configuration invalide: ${searchPerformance.error ?? "format non conforme"}.`
+        : searchPerformance.indexedPrivatePages !== null &&
+            searchPerformance.indexedPrivatePages > 0
+          ? `${searchPerformance.indexedPrivatePages} page(s) privée(s) signalée(s) indexée(s) par la source SEO.`
+          : searchPerformance.clicks === null || searchPerformance.impressions === null
+            ? "Source SEO configurée, mais aucune métrique exploitable n'a été trouvée."
+            : `${searchPerformance.clicks} clics / ${searchPerformance.impressions} impressions (${searchPerformance.periodLabel ?? "période non précisée"}).`;
+
   const checklist: SeoChecklistItem[] = [
     {
       id: "sitemap-coverage",
@@ -176,6 +316,12 @@ export const computeSeoKpiSummary = ({
           ? `${blogPostsLast30Days} article(s) publiés sur 30 jours.`
           : `${blogPostsLast30Days} article(s) publiés sur 30 jours (objectif: 2+).`,
     },
+    {
+      id: "external-search-metrics",
+      label: "Métriques Search Console / Bing",
+      status: searchMetricsChecklistStatus,
+      detail: searchMetricsChecklistDetail,
+    },
   ];
 
   const recommendedActions: string[] = [];
@@ -202,6 +348,38 @@ export const computeSeoKpiSummary = ({
     );
   }
 
+  if (searchPerformance.status === "not_configured") {
+    recommendedActions.push(
+      "Configurer SEO_SEARCH_METRICS_JSON ou SEO_SEARCH_METRICS_FILE pour injecter les métriques GSC/Bing dans l'admin.",
+    );
+  }
+
+  if (searchPerformance.status === "invalid") {
+    recommendedActions.push(
+      "Corriger le format des métriques SEO externes (JSON invalide) pour réactiver le suivi acquisition.",
+    );
+  }
+
+  if (
+    searchPerformance.status === "configured" &&
+    searchPerformance.clicksDeltaPercent !== null &&
+    searchPerformance.clicksDeltaPercent <= -30
+  ) {
+    recommendedActions.push(
+      "Analyser la chute de clics SEO (>30%) entre périodes et déclencher un plan correctif (titles, snippets, maillage).",
+    );
+  }
+
+  if (
+    searchPerformance.status === "configured" &&
+    searchPerformance.indexedPrivatePages !== null &&
+    searchPerformance.indexedPrivatePages > 0
+  ) {
+    recommendedActions.push(
+      "Traiter en priorité l'indexation de pages privées détectée via Search Console/Bing.",
+    );
+  }
+
   if (recommendedActions.length === 0) {
     recommendedActions.push(
       "Exécuter la revue hebdo Search Console/Bing et ajuster le backlog contenu.",
@@ -219,5 +397,6 @@ export const computeSeoKpiSummary = ({
     daysSinceLatestBlogPost,
     checklist,
     recommendedActions,
+    searchPerformance,
   };
 };

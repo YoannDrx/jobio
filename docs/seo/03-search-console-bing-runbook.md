@@ -81,6 +81,24 @@ Owner recommandé: Growth + Engineering
   - sessions SEO -> signup
   - signup SEO -> activation J+7
 
+## 5.1) Injection des métriques dans l'admin Jobio
+
+- Le module `/admin/ops` lit un snapshot JSON consolidé GSC/Bing.
+- Deux modes supportés:
+  - `SEO_SEARCH_METRICS_JSON`: payload JSON inline.
+  - `SEO_SEARCH_METRICS_FILE`: chemin fichier JSON sur le serveur.
+- Exemple de format:
+  - `docs/seo/05-search-metrics-snapshot.example.json`
+
+Checklist d'activation:
+1. Générer un snapshot hebdo (current + previous) depuis vos exports GSC/Bing.
+2. Alimenter `SEO_SEARCH_METRICS_JSON` ou déposer le fichier puis renseigner `SEO_SEARCH_METRICS_FILE`.
+3. Vérifier `/admin/ops`:
+   - statut "Configuré"
+   - clics / impressions / CTR affichés
+   - deltas période vs période visibles
+4. Corriger immédiatement si statut "Invalide" (JSON malformé ou schéma non conforme).
+
 ## 6) Alertes opérationnelles (SLO SEO)
 
 - Alerte P1:

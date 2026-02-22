@@ -10,6 +10,168 @@ export type BlogPost = {
 
 export const blogPosts: BlogPost[] = [
   {
+    slug: "structurer-prospection-freelance-2026",
+    title: "Comment structurer sa prospection freelance en 2026",
+    description:
+      "Un plan concret pour construire un systeme de prospection freelance repetable, mesurable et compatible avec un rythme de mission reel.",
+    date: "2026-02-22",
+    tags: ["Prospection", "CRM", "Freelance"],
+    readingTime: 8,
+    content: `
+<h2>Pourquoi la prospection freelance echoue encore en 2026</h2>
+<p>La plupart des freelances tech ne manquent pas de competences. Ils manquent de systeme. La prospection reste reactive: quelques messages envoyes en urgence quand le planning se vide, puis plus rien quand une mission tombe. Ce mode "stop and go" cree des trous de revenus, une pression inutile et une qualite commerciale instable.</p>
+<p>Structurer sa prospection en 2026, c'est accepter une regle simple: la prospection est un processus operationnel hebdomadaire, pas une tache ponctuelle.</p>
+
+<h2>Le framework en 5 blocs</h2>
+<p>Pour stabiliser ton flux de missions, organise ton dispositif autour de 5 blocs complementaires:</p>
+<ul>
+<li><strong>Cible:</strong> quels segments d'entreprises et quels decideurs viser</li>
+<li><strong>Offre:</strong> quelle proposition de valeur formuler clairement</li>
+<li><strong>Pipeline:</strong> comment suivre chaque opportunite du 1er contact a la signature</li>
+<li><strong>Relances:</strong> quelle cadence adopter sans polluer la relation</li>
+<li><strong>Pilotage:</strong> quels KPI suivre pour ajuster en continu</li>
+</ul>
+<p>Si un de ces blocs est faible, tout le systeme se degrade rapidement.</p>
+
+<h2>Bloc 1: clarifier sa cible (ICP freelance)</h2>
+<p>Ton ICP (Ideal Client Profile) n'a pas besoin d'etre complexe. Il doit etre exploitable. Definis 3 criteres de priorisation:</p>
+<ul>
+<li><strong>Maturite produit:</strong> startup en acceleration, PME en transformation, scale-up qui recrute</li>
+<li><strong>Type de probleme:</strong> dette technique frontend, migration data, industrialisation CI/CD, etc.</li>
+<li><strong>Capacite budget:</strong> interlocuteur avec mandat de depense et urgence reelle</li>
+</ul>
+<p>Tu peux ensuite segmenter ton sourcing en 2 listes: "priorite haute" (ouverture immediate) et "nurture" (a maturer).</p>
+
+<h2>Bloc 2: formaliser une offre lisible en 30 secondes</h2>
+<p>Ton message doit repondre en une phrase a "pourquoi toi". Evite la liste de technos. Parle resultat business + contexte tech.</p>
+<p><strong>Exemple:</strong> "J'aide les equipes produit SaaS a reduire leur delai de livraison frontend de 20 a 30% sans degradations de qualite."</p>
+<p>Cette phrase devient le socle de ton outreach, de ton profil LinkedIn et de ta landing perso.</p>
+
+<h2>Bloc 3: installer un pipeline strict</h2>
+<p>Un pipeline minimum pour freelance doit contenir des etapes actionnables:</p>
+<ul>
+<li>Lead identifie</li>
+<li>Contact envoye</li>
+<li>Reponse recue</li>
+<li>Call de qualification</li>
+<li>Proposition envoyee</li>
+<li>Negociation</li>
+<li>Signe / perdu</li>
+</ul>
+<p>Chaque transition doit declencher une action concrete (prochaine relance, doc a envoyer, date de suivi). Sans prochaine action, l'opportunite est en risque.</p>
+
+<h2>Bloc 4: cadence de relance qui convertit</h2>
+<p>La plupart des opportunites meurent faute de suivi. Une cadence simple et robuste:</p>
+<ul>
+<li>J+3: relance courte avec valeur ajoutee</li>
+<li>J+7: relance orientee resultat (cas concret, point de friction resolu)</li>
+<li>J+14: dernier message courtois avec sortie propre</li>
+</ul>
+<p>Chaque relance doit apporter un angle nouveau. Un "ping" sans contexte detruit ta credibilite.</p>
+
+<h2>Bloc 5: piloter comme un funnel</h2>
+<p>4 KPI suffisent pour commencer:</p>
+<ul>
+<li><strong>Taux de reponse:</strong> qualite de ciblage + qualite du message</li>
+<li><strong>Taux de passage call:</strong> pertinence de l'offre</li>
+<li><strong>Taux de signature:</strong> qualite qualification + proposition</li>
+<li><strong>Cycle moyen de conversion:</strong> vitesse commerciale</li>
+</ul>
+<p>Revue hebdo recommandee: 30 minutes pour analyser, couper ce qui ne marche pas et doubler sur ce qui convertit.</p>
+
+<h2>Stack minimale recommandee</h2>
+<p>Tu n'as pas besoin de 10 outils. Une stack minimale en 2026:</p>
+<ul>
+<li>Un CRM pipeline avec historique contact</li>
+<li>Un systeme de relances (manuelles + semi-automatiques)</li>
+<li>Un suivi analytics de conversion</li>
+<li>Un module de facturation pour accelerer le passage de la vente au cash</li>
+</ul>
+<p>Si tu veux une vue d'ensemble des modules disponibles, consulte la page <a href="/features">features Jobio</a> puis compare les plans via <a href="/#pricing">pricing</a>.</p>
+
+<h2>Plan d'execution sur 14 jours</h2>
+<p><strong>Jour 1-2:</strong> definir ICP + proposition de valeur.</p>
+<p><strong>Jour 3-4:</strong> nettoyer profil et assets commerciaux.</p>
+<p><strong>Jour 5-7:</strong> lancer 30 premiers contacts qualifies.</p>
+<p><strong>Jour 8-10:</strong> appliquer la cadence de relances.</p>
+<p><strong>Jour 11-14:</strong> revue KPI et ajustements.</p>
+<p>Objectif: transformer la prospection en systeme reproductible, pas en sprint de survie.</p>
+`,
+  },
+  {
+    slug: "crm-freelance-criteres-stack-minimale",
+    title: "CRM freelance: criteres de choix et stack minimale",
+    description:
+      "Comment choisir un CRM freelance utile (et pas gadget), avec une stack operationnelle minimale pour signer plus de missions.",
+    date: "2026-02-22",
+    tags: ["CRM", "Freelance", "Organisation"],
+    readingTime: 8,
+    content: `
+<h2>Pourquoi un CRM est devenu obligatoire pour les freelances</h2>
+<p>Des que tu depasses 15 a 20 opportunites actives, la memoire ne suffit plus. Sans CRM, tu perds des relances, tu oublies le contexte de discussion et tu sous-exploites ton pipeline. Resultat: moins de signatures pour le meme volume d'effort.</p>
+<p>Un CRM freelance ne doit pas copier les usines a gaz des equipes enterprise. Il doit rester simple, actionnable et centre sur la conversion.</p>
+
+<h2>Les 7 criteres de choix qui comptent vraiment</h2>
+<h3>1. Vitesse de saisie</h3>
+<p>Si l'ajout d'une opportunite prend plus de 30 secondes, tu ne l'utiliseras pas durablement. Priorise l'import rapide (URL, parsing, templates).</p>
+
+<h3>2. Pipeline visible</h3>
+<p>Le coeur du CRM est la visualisation de l'etat commercial: quelles missions sont bloquees, lesquelles sont chaudes, et ou agir aujourd'hui.</p>
+
+<h3>3. Historique relationnel</h3>
+<p>Tu dois retrouver en un clic les messages, relances et decisions precedentes pour personnaliser la suite.</p>
+
+<h3>4. Relances cadencables</h3>
+<p>Un bon CRM doit permettre de planifier et tracer les relances. Sinon, la discipline commerciale depend de ta charge mentale.</p>
+
+<h3>5. Scoring / priorisation</h3>
+<p>Quand tout semble urgent, rien ne l'est. Un systeme de score (fit client, urgence, budget, timing) aide a choisir les bons combats.</p>
+
+<h3>6. Analytics exploitables</h3>
+<p>Tu dois pouvoir repondre chaque semaine a: "quel canal convertit ?", "ou je perds des deals ?", "combien de temps pour signer ?"</p>
+
+<h3>7. Continuite operationnelle</h3>
+<p>Le CRM ideal connecte la vente a l'execution administrative: devis, factures, suivi de paiement. C'est ce qui transforme le pipeline en cash.</p>
+
+<h2>Les anti-patterns frequents</h2>
+<ul>
+<li><strong>Tableur unique sans process:</strong> rapide au debut, fragile a moyen terme</li>
+<li><strong>Trop d'automatisation trop tot:</strong> la strategie n'est pas claire, l'automatisation amplifie le bruit</li>
+<li><strong>Aucun rituel hebdo:</strong> meme le meilleur outil est inutile sans revue reguliere</li>
+<li><strong>Copier un setup d'agence:</strong> besoins differents, friction inutile</li>
+</ul>
+
+<h2>Stack minimale freelance (2026)</h2>
+<p>Une stack compacte et efficace:</p>
+<ul>
+<li><strong>CRM pipeline:</strong> centraliser missions, etapes et prochaines actions</li>
+<li><strong>Relances & templates:</strong> accelerer l'outreach sans sacrifier la personnalisation</li>
+<li><strong>Module CV/positionnement:</strong> adapter rapidement son pitch selon le deal</li>
+<li><strong>Module admin freelance:</strong> clients, devis, factures, paiements</li>
+</ul>
+<p>Tu peux visualiser cette logique produit sur <a href="/features">/features</a> puis verifier les limites par plan sur <a href="/#pricing">/#pricing</a>.</p>
+
+<h2>Checklist de selection en 20 minutes</h2>
+<p>Avant de choisir ton CRM, reponds oui/non:</p>
+<ul>
+<li>Je peux importer une mission en moins de 30 secondes</li>
+<li>Je vois mes opportunites par etape, sans effort manuel</li>
+<li>Chaque opportunite a une "prochaine action" datee</li>
+<li>Je peux tracer mes relances et leur impact</li>
+<li>J'ai des KPI hebdo (reponse, conversion, cycle)</li>
+<li>Je peux enchaîner vers devis/facture sans sortir du systeme</li>
+</ul>
+<p>Si tu as moins de 5 "oui", ton setup actuel freine probablement ta croissance.</p>
+
+<h2>Plan de migration en douceur</h2>
+<p><strong>Semaine 1:</strong> migrer uniquement les opportunites actives.</p>
+<p><strong>Semaine 2:</strong> imposer une cadence de relance standard.</p>
+<p><strong>Semaine 3:</strong> ajouter reporting hebdo et revue KPI.</p>
+<p><strong>Semaine 4:</strong> connecter l'administratif (devis/factures).</p>
+<p>L'objectif n'est pas d'avoir "le meilleur CRM", mais le meilleur rythme commercial pour ton contexte freelance.</p>
+`,
+  },
+  {
     slug: "5-conseils-prospection-freelance",
     title: "5 conseils pour optimiser sa prospection freelance tech",
     description:

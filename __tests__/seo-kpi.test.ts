@@ -3,11 +3,19 @@ import {
   REQUIRED_PUBLIC_PAGES,
   computeSeoKpiSummary,
 } from "@/features/admin/seo-kpi";
+import type { SeoSearchMetricsState } from "@/features/admin/seo-search-metrics";
 import { SiteConfig } from "@/site-config";
 import { describe, expect, it } from "vitest";
 
 const toAbsoluteUrl = (path: `/${string}` | "/") =>
   `${SiteConfig.prodUrl}${path === "/" ? "" : path}`;
+
+const defaultSearchMetricsState: SeoSearchMetricsState = {
+  status: "not_configured",
+  source: "none",
+  payload: null,
+  error: null,
+};
 
 describe("computeSeoKpiSummary", () => {
   it("flags missing sitemap pages and robots disallow gaps", () => {
@@ -33,6 +41,7 @@ describe("computeSeoKpiSummary", () => {
           readingTime: 3,
         },
       ],
+      searchMetricsState: defaultSearchMetricsState,
       now: new Date("2026-02-22T00:00:00.000Z"),
     });
 
@@ -40,6 +49,7 @@ describe("computeSeoKpiSummary", () => {
     expect(summary.missingPrivateDisallows).toContain("/job");
     expect(summary.disallowCoveragePercent).toBeLessThan(100);
     expect(summary.blogPostsLast30Days).toBe(0);
+    expect(summary.searchPerformance.status).toBe("not_configured");
     expect(summary.checklist.some((item) => item.status === "warning")).toBe(
       true,
     );
@@ -75,6 +85,60 @@ describe("computeSeoKpiSummary", () => {
           readingTime: 4,
         },
       ],
+      searchMetricsState: {
+        status: "configured",
+        source: "env_json",
+        payload: {
+          current: {
+            provider: "google_search_console",
+            capturedAt: "2026-02-22T09:00:00.000Z",
+            period: {
+              from: "2026-01-26",
+              to: "2026-02-22",
+              label: "28 derniers jours",
+            },
+            totals: {
+              clicks: 560,
+              impressions: 12000,
+              ctr: 0.046,
+              averagePosition: 15.4,
+            },
+            indexedPages: {
+              public: 41,
+              private: 0,
+            },
+            topQueries: [
+              {
+                query: "crm freelance",
+                clicks: 73,
+                impressions: 900,
+                ctr: 0.081,
+                position: 8.2,
+              },
+            ],
+          },
+          previous: {
+            provider: "google_search_console",
+            capturedAt: "2026-01-26T09:00:00.000Z",
+            period: {
+              from: "2025-12-30",
+              to: "2026-01-26",
+              label: "28 jours précédents",
+            },
+            totals: {
+              clicks: 500,
+              impressions: 10000,
+              ctr: 0.05,
+              averagePosition: 16.1,
+            },
+            indexedPages: {
+              public: 38,
+              private: 0,
+            },
+          },
+        },
+        error: null,
+      },
       now: new Date("2026-02-22T00:00:00.000Z"),
     });
 
@@ -82,6 +146,40 @@ describe("computeSeoKpiSummary", () => {
     expect(summary.missingPrivateDisallows).toHaveLength(0);
     expect(summary.disallowCoveragePercent).toBe(100);
     expect(summary.blogPostsLast30Days).toBeGreaterThanOrEqual(2);
+    expect(summary.searchPerformance.status).toBe("configured");
+    expect(summary.searchPerformance.clicks).toBe(560);
+    expect(summary.searchPerformance.clicksDeltaPercent).toBe(12);
+    expect(summary.searchPerformance.topQueries).toHaveLength(1);
     expect(summary.checklist.every((item) => item.status === "ok")).toBe(true);
+  });
+
+  it("marks search metrics as warning when payload is invalid", () => {
+    const summary = computeSeoKpiSummary({
+      sitemapEntries: REQUIRED_PUBLIC_PAGES.map((path) => ({
+        url: toAbsoluteUrl(path),
+      })),
+      robotsRules: {
+        userAgent: "*",
+        allow: "/",
+        disallow: [...EXPECTED_PRIVATE_DISALLOWS],
+      },
+      posts: [],
+      searchMetricsState: {
+        status: "invalid",
+        source: "file",
+        payload: null,
+        error: "Unexpected token",
+      },
+      now: new Date("2026-02-22T00:00:00.000Z"),
+    });
+
+    const metricsChecklist = summary.checklist.find(
+      (item) => item.id === "external-search-metrics",
+    );
+
+    expect(metricsChecklist?.status).toBe("warning");
+    expect(summary.recommendedActions.some((action) => action.includes("JSON"))).toBe(
+      true,
+    );
   });
 });

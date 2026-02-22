@@ -1,0 +1,71 @@
+{
+  "current": {
+    "provider": "combined",
+    "capturedAt": "2026-02-22T09:00:00.000Z",
+    "period": {
+      "from": "2026-01-26",
+      "to": "2026-02-22",
+      "label": "28 derniers jours"
+    },
+    "totals": {
+      "clicks": 560,
+      "impressions": 12000,
+      "ctr": 0.046,
+      "averagePosition": 15.4
+    },
+    "indexedPages": {
+      "public": 41,
+      "private": 0
+    },
+    "topQueries": [
+      {
+        "query": "crm freelance",
+        "clicks": 73,
+        "impressions": 900,
+        "ctr": 0.081,
+        "position": 8.2
+      },
+      {
+        "query": "prospection freelance",
+        "clicks": 55,
+        "impressions": 1040,
+        "ctr": 0.052,
+        "position": 9.8
+      }
+    ],
+    "topPages": [
+      {
+        "path": "/features",
+        "clicks": 120,
+        "impressions": 2100,
+        "ctr": 0.057
+      },
+      {
+        "path": "/blog",
+        "clicks": 98,
+        "impressions": 1980,
+        "ctr": 0.049
+      }
+    ],
+    "notes": "Snapshot consolidé GSC + Bing"
+  },
+  "previous": {
+    "provider": "combined",
+    "capturedAt": "2026-01-26T09:00:00.000Z",
+    "period": {
+      "from": "2025-12-30",
+      "to": "2026-01-26",
+      "label": "28 jours précédents"
+    },
+    "totals": {
+      "clicks": 500,
+      "impressions": 10000,
+      "ctr": 0.05,
+      "averagePosition": 16.1
+    },
+    "indexedPages": {
+      "public": 38,
+      "private": 0
+    }
+  }
+}

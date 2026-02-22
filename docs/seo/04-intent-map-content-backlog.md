@@ -34,9 +34,9 @@ Owner: Growth + Product Marketing
 
 ## Sprint S1-S2
 
-1. Publier article: `Comment structurer sa prospection freelance en 2026`.
-2. Publier article: `CRM freelance: critères de choix et stack minimale`.
-3. Optimiser `/features` avec section FAQ ciblée intention.
+1. ✅ Publier article: `Comment structurer sa prospection freelance en 2026` (`/blog/structurer-prospection-freelance-2026`).
+2. ✅ Publier article: `CRM freelance: critères de choix et stack minimale` (`/blog/crm-freelance-criteres-stack-minimale`).
+3. ⏳ Optimiser `/features` avec section FAQ ciblée intention.
 
 ## Sprint S3-S4
 

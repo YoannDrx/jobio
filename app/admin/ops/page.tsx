@@ -43,6 +43,20 @@ const statusVariant = (
 const seoChecklistVariant = (status: "ok" | "warning") =>
   status === "ok" ? "secondary" : "outline";
 
+const searchMetricsVariant = (
+  status: "configured" | "not_configured" | "invalid",
+) => (status === "configured" ? "secondary" : "outline");
+
+const formatDeltaPercent = (value: number | null) => {
+  if (value === null) return "n/a";
+  return `${value > 0 ? "+" : ""}${value}%`;
+};
+
+const formatCtr = (value: number | null) => {
+  if (value === null) return "-";
+  return `${value}%`;
+};
+
 export default async function AdminOpsPage() {
   await getRequiredAdmin();
 
@@ -201,6 +215,149 @@ export default async function AdminOpsPage() {
                 ))}
               </TableBody>
             </Table>
+
+            <div className="space-y-3 rounded-lg border p-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="text-sm font-medium">
+                  Acquisition Search Console / Bing
+                </p>
+                <Badge
+                  variant={searchMetricsVariant(seoSummary.searchPerformance.status)}
+                >
+                  {seoSummary.searchPerformance.status === "configured"
+                    ? "Configuré"
+                    : seoSummary.searchPerformance.status === "invalid"
+                      ? "Invalide"
+                      : "Non configuré"}
+                </Badge>
+                {seoSummary.searchPerformance.periodLabel ? (
+                  <Badge variant="outline">
+                    {seoSummary.searchPerformance.periodLabel}
+                  </Badge>
+                ) : null}
+                {seoSummary.searchPerformance.capturedAt ? (
+                  <p className="text-muted-foreground text-xs">
+                    Snapshot:{" "}
+                    {formatDateTime(new Date(seoSummary.searchPerformance.capturedAt))}
+                  </p>
+                ) : null}
+              </div>
+
+              {seoSummary.searchPerformance.status === "configured" ? (
+                <>
+                  <div className="grid gap-4 md:grid-cols-4">
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-sm font-medium">Clics</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-2xl font-semibold">
+                          {seoSummary.searchPerformance.clicks ?? "-"}
+                        </p>
+                        <p className="text-muted-foreground text-xs">
+                          delta:{" "}
+                          {formatDeltaPercent(
+                            seoSummary.searchPerformance.clicksDeltaPercent,
+                          )}
+                        </p>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-sm font-medium">
+                          Impressions
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-2xl font-semibold">
+                          {seoSummary.searchPerformance.impressions ?? "-"}
+                        </p>
+                        <p className="text-muted-foreground text-xs">
+                          delta:{" "}
+                          {formatDeltaPercent(
+                            seoSummary.searchPerformance.impressionsDeltaPercent,
+                          )}
+                        </p>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-sm font-medium">CTR moyen</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-2xl font-semibold">
+                          {formatCtr(seoSummary.searchPerformance.ctr)}
+                        </p>
+                        <p className="text-muted-foreground text-xs">
+                          delta:{" "}
+                          {seoSummary.searchPerformance.ctrDeltaPoints === null
+                            ? "n/a"
+                            : `${seoSummary.searchPerformance.ctrDeltaPoints > 0 ? "+" : ""}${seoSummary.searchPerformance.ctrDeltaPoints} pt`}
+                        </p>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardHeader className="pb-2">
+                        <CardTitle className="text-sm font-medium">
+                          Position moyenne
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-2xl font-semibold">
+                          {seoSummary.searchPerformance.averagePosition ?? "-"}
+                        </p>
+                        <p className="text-muted-foreground text-xs">
+                          source: {seoSummary.searchPerformance.provider}
+                        </p>
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  {seoSummary.searchPerformance.topQueries.length > 0 ? (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Top requête</TableHead>
+                          <TableHead>Clics</TableHead>
+                          <TableHead>Impressions</TableHead>
+                          <TableHead>CTR</TableHead>
+                          <TableHead>Position</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {seoSummary.searchPerformance.topQueries.map((query) => (
+                          <TableRow key={query.query}>
+                            <TableCell className="max-w-[260px] truncate font-medium">
+                              {query.query}
+                            </TableCell>
+                            <TableCell>{query.clicks}</TableCell>
+                            <TableCell>{query.impressions}</TableCell>
+                            <TableCell>{query.ctr}%</TableCell>
+                            <TableCell>{query.position ?? "-"}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  ) : (
+                    <p className="text-muted-foreground text-sm">
+                      Aucune requête détaillée fournie dans la source externe.
+                    </p>
+                  )}
+                </>
+              ) : (
+                <p className="text-muted-foreground text-sm">
+                  Configure{" "}
+                  <code className="rounded bg-muted px-1 py-0.5">
+                    SEO_SEARCH_METRICS_JSON
+                  </code>{" "}
+                  ou{" "}
+                  <code className="rounded bg-muted px-1 py-0.5">
+                    SEO_SEARCH_METRICS_FILE
+                  </code>{" "}
+                  pour injecter les snapshots GSC/Bing.
+                </p>
+              )}
+            </div>
 
             <div className="rounded-lg border p-3">
               <p className="mb-2 text-sm font-medium">Actions recommandées</p>
