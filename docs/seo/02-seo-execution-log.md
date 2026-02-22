@@ -120,8 +120,29 @@
   - `docs/seo/04-intent-map-content-backlog.md`
   - S1-S2 items 1 et 2 marqués comme réalisés.
 
+## 2026-02-22 - Wave 10 (features intent SEO + auto metrics endpoint)
+
+- Page `/features` enrichie SEO:
+  - `app/(layout)/features/page.tsx`
+  - metadata keywords orientés intentions ("crm freelance", "prospection freelance", "cv ats", "facturation freelance")
+  - section FAQ orientée intention
+  - JSON-LD `FAQPage` dédié à la page features
+- Source métriques SEO automatisable:
+  - `src/features/admin/seo-search-metrics.ts`
+  - nouveau mode `endpoint` avec Bearer token optionnel + timeout configurable
+  - ordre de priorité: env JSON -> endpoint -> fichier
+- Surface Ops admin enrichie:
+  - `app/admin/ops/page.tsx`
+  - affichage explicite de la source des métriques (ENV / Endpoint / Fichier)
+- Configuration et runbook mis à jour:
+  - `src/lib/env.ts`
+  - `.env-template`
+  - `docs/seo/03-search-console-bing-runbook.md`
+- Tests:
+  - `__tests__/seo-search-metrics.test.ts` étendu (mode endpoint + erreurs HTTP)
+
 ## Prochaine wave recommandée
 
 - Exécuter la connexion GSC/Bing et soumettre `sitemap.xml` en prod.
-- Optimiser `/features` avec une FAQ orientée intention ("crm freelance", "prospection freelance").
-- Brancher une collecte automatique (API GSC/Bing) pour éviter l'alimentation manuelle des snapshots.
+- Brancher un endpoint de collecte réel (export automatisé GSC/Bing) derrière `SEO_SEARCH_METRICS_ENDPOINT`.
+- Publier les contenus S3-S4 (guide CV ATS + article relances) et mailler vers `/features` + `/#pricing`.

@@ -32,6 +32,9 @@ export const env = createEnv({
     STRIPE_PROGRAM_CROISSANCE_PRICE_ID: z.string().optional(),
     SEO_SEARCH_METRICS_JSON: z.string().optional(),
     SEO_SEARCH_METRICS_FILE: z.string().optional(),
+    SEO_SEARCH_METRICS_ENDPOINT: z.string().url().optional(),
+    SEO_SEARCH_METRICS_BEARER_TOKEN: z.string().optional(),
+    SEO_SEARCH_METRICS_TIMEOUT_MS: z.coerce.number().int().positive().optional(),
   },
   /**
    * If you add `client` environment variables, you need to add them to

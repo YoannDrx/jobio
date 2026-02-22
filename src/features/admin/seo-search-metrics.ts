@@ -2,6 +2,8 @@ import { env } from "@/lib/env";
 import { readFile } from "node:fs/promises";
 import { z } from "zod";
 
+const DEFAULT_ENDPOINT_TIMEOUT_MS = 8_000;
+
 const seoTotalsSchema = z.object({
   clicks: z.number().int().nonnegative(),
   impressions: z.number().int().nonnegative(),
@@ -52,7 +54,7 @@ const seoSearchMetricsPayloadSchema = z.object({
 export type SeoSearchSnapshot = z.infer<typeof seoSnapshotSchema>;
 export type SeoSearchMetricsPayload = z.infer<typeof seoSearchMetricsPayloadSchema>;
 
-export type SeoSearchMetricsSource = "env_json" | "file" | "none";
+export type SeoSearchMetricsSource = "env_json" | "endpoint" | "file" | "none";
 
 export type SeoSearchMetricsState = {
   status: "configured" | "not_configured" | "invalid";
@@ -64,6 +66,94 @@ export type SeoSearchMetricsState = {
 const parsePayload = (rawValue: string): SeoSearchMetricsPayload => {
   const parsedJson: unknown = JSON.parse(rawValue);
   return seoSearchMetricsPayloadSchema.parse(parsedJson);
+};
+
+const loadFromEndpoint = async (
+  endpointUrl: string,
+): Promise<SeoSearchMetricsState> => {
+  const timeoutMs =
+    env.SEO_SEARCH_METRICS_TIMEOUT_MS ?? DEFAULT_ENDPOINT_TIMEOUT_MS;
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const headers = new Headers({
+      Accept: "application/json",
+    });
+
+    if (env.SEO_SEARCH_METRICS_BEARER_TOKEN) {
+      headers.set(
+        "Authorization",
+        `Bearer ${env.SEO_SEARCH_METRICS_BEARER_TOKEN}`,
+      );
+    }
+
+    const response = await fetch(endpointUrl, {
+      method: "GET",
+      headers,
+      cache: "no-store",
+      signal: controller.signal,
+    });
+
+    if (!response.ok) {
+      return {
+        status: "invalid",
+        source: "endpoint",
+        payload: null,
+        error: `Endpoint returned status ${response.status}`,
+      };
+    }
+
+    const rawContent = await response.text();
+
+    try {
+      return {
+        status: "configured",
+        source: "endpoint",
+        payload: parsePayload(rawContent),
+        error: null,
+      };
+    } catch (error) {
+      return {
+        status: "invalid",
+        source: "endpoint",
+        payload: null,
+        error: error instanceof Error ? error.message : "Payload endpoint invalide",
+      };
+    }
+  } catch (error) {
+    return {
+      status: "invalid",
+      source: "endpoint",
+      payload: null,
+      error:
+        error instanceof Error
+          ? error.message
+          : "Impossible de charger le snapshot SEO distant",
+    };
+  } finally {
+    clearTimeout(timeout);
+  }
+};
+
+const loadFromFile = async (filePath: string): Promise<SeoSearchMetricsState> => {
+  try {
+    const fileContent = await readFile(filePath, "utf-8");
+    return {
+      status: "configured",
+      source: "file",
+      payload: parsePayload(fileContent),
+      error: null,
+    };
+  } catch (error) {
+    return {
+      status: "invalid",
+      source: "file",
+      payload: null,
+      error: error instanceof Error ? error.message : "Fichier métriques invalide",
+    };
+  }
 };
 
 export const loadSeoSearchMetricsState = async (): Promise<SeoSearchMetricsState> => {
@@ -87,25 +177,16 @@ export const loadSeoSearchMetricsState = async (): Promise<SeoSearchMetricsState
     }
   }
 
+  const fromEndpoint = env.SEO_SEARCH_METRICS_ENDPOINT?.trim();
+
+  if (fromEndpoint) {
+    return loadFromEndpoint(fromEndpoint);
+  }
+
   const fromFile = env.SEO_SEARCH_METRICS_FILE?.trim();
 
   if (fromFile) {
-    try {
-      const fileContent = await readFile(fromFile, "utf-8");
-      return {
-        status: "configured",
-        source: "file",
-        payload: parsePayload(fileContent),
-        error: null,
-      };
-    } catch (error) {
-      return {
-        status: "invalid",
-        source: "file",
-        payload: null,
-        error: error instanceof Error ? error.message : "Fichier métriques invalide",
-      };
-    }
+    return loadFromFile(fromFile);
   }
 
   return {

@@ -350,7 +350,7 @@ export const computeSeoKpiSummary = ({
 
   if (searchPerformance.status === "not_configured") {
     recommendedActions.push(
-      "Configurer SEO_SEARCH_METRICS_JSON ou SEO_SEARCH_METRICS_FILE pour injecter les métriques GSC/Bing dans l'admin.",
+      "Configurer SEO_SEARCH_METRICS_JSON, SEO_SEARCH_METRICS_ENDPOINT ou SEO_SEARCH_METRICS_FILE pour injecter les métriques GSC/Bing dans l'admin.",
     );
   }
 

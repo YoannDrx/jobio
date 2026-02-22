@@ -87,12 +87,16 @@ Owner recommandé: Growth + Engineering
 - Deux modes supportés:
   - `SEO_SEARCH_METRICS_JSON`: payload JSON inline.
   - `SEO_SEARCH_METRICS_FILE`: chemin fichier JSON sur le serveur.
+- Mode auto (recommandé):
+  - `SEO_SEARCH_METRICS_ENDPOINT`: endpoint HTTPS qui expose le snapshot JSON.
+  - `SEO_SEARCH_METRICS_BEARER_TOKEN`: token Bearer optionnel.
+  - `SEO_SEARCH_METRICS_TIMEOUT_MS`: timeout fetch en ms (défaut 8000).
 - Exemple de format:
   - `docs/seo/05-search-metrics-snapshot.example.json`
 
 Checklist d'activation:
 1. Générer un snapshot hebdo (current + previous) depuis vos exports GSC/Bing.
-2. Alimenter `SEO_SEARCH_METRICS_JSON` ou déposer le fichier puis renseigner `SEO_SEARCH_METRICS_FILE`.
+2. Alimenter `SEO_SEARCH_METRICS_JSON`, ou déposer le fichier (`SEO_SEARCH_METRICS_FILE`), ou brancher `SEO_SEARCH_METRICS_ENDPOINT`.
 3. Vérifier `/admin/ops`:
    - statut "Configuré"
    - clics / impressions / CTR affichés

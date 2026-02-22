@@ -57,6 +57,13 @@ const formatCtr = (value: number | null) => {
   return `${value}%`;
 };
 
+const sourceLabel = (source: "env_json" | "endpoint" | "file" | "none") => {
+  if (source === "env_json") return "ENV JSON";
+  if (source === "endpoint") return "Endpoint";
+  if (source === "file") return "Fichier";
+  return "Aucune";
+};
+
 export default async function AdminOpsPage() {
   await getRequiredAdmin();
 
@@ -235,6 +242,9 @@ export default async function AdminOpsPage() {
                     {seoSummary.searchPerformance.periodLabel}
                   </Badge>
                 ) : null}
+                <Badge variant="outline">
+                  Source: {sourceLabel(seoSummary.searchPerformance.source)}
+                </Badge>
                 {seoSummary.searchPerformance.capturedAt ? (
                   <p className="text-muted-foreground text-xs">
                     Snapshot:{" "}

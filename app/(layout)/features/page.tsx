@@ -1,5 +1,11 @@
 import { BreadcrumbStructuredData } from "@/components/seo/breadcrumb-structured-data";
 import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import {
   PublicPageShell,
   PublicSection,
 } from "@/features/layout/public-page-shell";
@@ -26,6 +32,13 @@ export const metadata = buildMarketingMetadata({
   description:
     "Decouvrez toutes les fonctionnalites de Jobio : pipeline commercial, CRM contacts, relances, profils freelance, IA, analytics et plus.",
   path: "/features",
+  keywords: [
+    "crm freelance tech",
+    "organiser prospection freelance",
+    "relance client freelance",
+    "outil facturation freelance",
+    "cv freelance ats",
+  ],
 });
 
 type FeatureSection = {
@@ -175,9 +188,59 @@ const relatedResources = [
   },
 ];
 
+const featureFaqs = [
+  {
+    id: "crm-freelance",
+    question: "Jobio est-il un CRM freelance adapte aux profils tech ?",
+    answer:
+      "Oui. Jobio combine pipeline missions, CRM contacts, relances et analytics dans un setup pense pour les freelances tech. L'objectif est de piloter la prospection sans multiplier les outils.",
+  },
+  {
+    id: "prospection-organisation",
+    question: "Comment Jobio aide a organiser la prospection freelance ?",
+    answer:
+      "Tu centralises les opportunites, tu qualifies avec le scoring IA, tu planifies les relances et tu mesures les conversions. Chaque mission garde une prochaine action claire.",
+  },
+  {
+    id: "cv-ats",
+    question: "Le module CV couvre-t-il les besoins ATS en freelance ?",
+    answer:
+      "Oui. CV Studio IA inclut un ATS scoring, des recommandations actionnables et la gestion de plusieurs versions de CV selon le type de mission visee.",
+  },
+  {
+    id: "facturation",
+    question: "Peut-on gerer devis et factures dans Jobio ?",
+    answer:
+      "Oui. Le module Freelance Billing gere clients, devis, factures, paiements, avoirs, depenses et registres exportables pour garder une continuité entre prospection et administratif.",
+  },
+  {
+    id: "plans",
+    question: "Les fonctionnalites varient-elles selon le plan ?",
+    answer:
+      "Oui. Les volumes et certaines capacites (IA, automatisation, modules avances) dependent du plan Free, Pro ou Ultra. La section pricing donne la matrice exacte a jour.",
+  },
+] as const;
+
+const featureFaqJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: featureFaqs.map((faq) => ({
+    "@type": "Question",
+    name: faq.question,
+    acceptedAnswer: {
+      "@type": "Answer",
+      text: faq.answer,
+    },
+  })),
+};
+
 export default function FeaturesPage() {
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(featureFaqJsonLd) }}
+      />
       <BreadcrumbStructuredData
         items={[
           { name: "Accueil", path: "/" },
@@ -214,6 +277,26 @@ export default function FeaturesPage() {
             </PublicSection>
           ))}
         </div>
+
+        <PublicSection
+          title="FAQ - CRM freelance et prospection"
+          description="Questions frequentes des freelances tech avant de choisir leur stack commerciale."
+          className="mt-4"
+        >
+          <Accordion type="single" collapsible className="w-full">
+            {featureFaqs.map((faq) => (
+              <AccordionItem key={faq.id} value={faq.id}>
+                <AccordionTrigger className="text-left">
+                  {faq.question}
+                </AccordionTrigger>
+                <AccordionContent className="text-muted-foreground text-sm leading-relaxed">
+                  {faq.answer}
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+        </PublicSection>
+
         <RelatedResourcesSection
           title="Pour aller plus loin"
           description="Relie les fonctionnalités à ton setup, ton apprentissage et ton plan."
