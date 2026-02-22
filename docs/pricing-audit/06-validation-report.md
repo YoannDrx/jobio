@@ -1,20 +1,20 @@
 # 06 - Validation Report
 
-Date: 2026-02-21
+Date: 2026-02-22
 
 ## 1) Checks techniques
 
 - [x] `pnpm ts` (OK)
 - [x] `pnpm lint` (OK)
-- [x] `pnpm test` (OK)
+- [x] `pnpm test:ci __tests__/pricing-matrix.test.ts __tests__/plan-copy.test.ts __tests__/next-prerender-interrupted.test.ts` (OK)
+- [x] `pnpm build` (OK)
 
-Resultat tests:
-- 24 fichiers de tests passes
-- 1 fichier de tests skippe
-- 161 tests passes, 4 skippes
-
-Remarque:
-- Quelques warnings non bloquants apparaissent pendant les tests (accessibility Radix et query data undefined sur des tests providers), mais aucune erreur et suite verte.
+Remarque build:
+- Le bruit `Unknown Error / NEXT_PRERENDER_INTERRUPTED` a ete retire via un filtre cible:
+  - `src/lib/errors/next-prerender-interrupted.ts`
+  - `src/lib/zod-route.ts`
+  - `src/lib/actions/safe-actions.ts`
+- Le build final affiche uniquement le tableau des routes (plus de spam d'erreurs attendues Next.js).
 
 ## 2) Checks produit
 
@@ -26,6 +26,10 @@ Remarque:
 - [x] CV template gating (UI + serveur)
 - [x] Duplicate template respecte limite plan (`messageTemplates`)
 - [x] Discount annuel cohérent (calcul dynamique depuis `AUTH_PLANS`)
+- [x] Copy marketing anti-derive sur pages publiques:
+  - `/features` annote explicitement les features plan-gatees (`Pro+` / `Ultra`)
+  - `/docs` resume les limites dynamiquement depuis `getPlanLimits`
+  - wording support dans pricing clarifie (niveau selon plan)
 
 ## 3) Checks Stripe live
 
@@ -33,7 +37,7 @@ Remarque:
 - [x] prix actifs alignes code
 - [x] descriptions alignees avec limites reelles
 
-Snapshot Stripe verifie:
+Snapshot Stripe verifie (live):
 - Jobio Pro mensuel actif: `price_1SxxydH4VwBfiTEI0f4jurPk` (999)
 - Jobio Pro annuel actif: `price_1T2zxnH4VwBfiTEIZu2BPZ1J` (9900)
 - Jobio Pro annuel legacy inactif: `price_1SxxygH4VwBfiTEI9a7e8RrQ` (9590)
@@ -53,4 +57,6 @@ Le scope livre couvre:
 - alignement pricing UI/billing/code/Stripe
 - durcissement du gating sur features critiques
 - correction de regressions UX de pricing
+- garde-fous anti-derive copy sur pages publiques
+- reduction du bruit de logs build pour mieux detecter les vraies anomalies
 - documentation d'audit et matrice cible dans `docs/pricing-audit/`
