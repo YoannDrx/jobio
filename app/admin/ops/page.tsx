@@ -22,6 +22,7 @@ import Link from "next/link";
 import { getAdminFeatureFlags, getCronJobRuns, getOpsIncidentSummary } from "../_actions/ops";
 import { getSeoKpiSummary } from "../_actions/seo";
 import { FeatureFlagToggleButton } from "./_components/feature-flag-toggle-button";
+import { SyncSeoMetricsButton } from "./_components/sync-seo-metrics-button";
 import { SyncFeatureFlagsButton } from "./_components/sync-feature-flags-button";
 
 const formatDateTime = (value: Date) =>
@@ -105,6 +106,7 @@ export default async function AdminOpsPage() {
         </LayoutDescription>
       </LayoutHeader>
       <LayoutActions className="gap-2">
+        <SyncSeoMetricsButton />
         <SyncFeatureFlagsButton />
         <Button asChild variant="outline" size="sm">
           <Link href="/admin/errors">Voir les erreurs</Link>

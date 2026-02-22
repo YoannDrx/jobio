@@ -116,6 +116,11 @@ Checklist d'activation:
   - stocke dans un cache Redis (TTL 14 jours)
 - Dans `/admin/ops`, la source affichée devient `Redis cache` quand ce flux est utilisé.
 
+Opérations manuelles:
+- Bouton `Synchroniser SEO` disponible dans `/admin/ops` (admin only).
+- Permet de déclencher une sync immédiate sans attendre le cron planifié.
+- Le run est historisé dans la table cron jobs (`seo-search-metrics-sync-manual`).
+
 ## 6) Alertes opérationnelles (SLO SEO)
 
 - Alerte P1:

@@ -243,6 +243,18 @@
 - Tests:
   - `__tests__/seo-kpi.test.ts` enrichi (cas de checkpoint post-refresh à échéance)
 
+## 2026-02-22 - Wave 17 (manual SEO metrics sync in admin)
+
+- Sync manuelle des métriques SEO depuis l'admin:
+  - `app/admin/_actions/seo.ts`
+  - nouvelle action `syncSeoMetricsNowAction` (admin only)
+  - déclenche sync endpoint -> cache, journalise un run cron, écrit un audit log admin
+- UI admin Ops:
+  - `app/admin/ops/_components/sync-seo-metrics-button.tsx`
+  - bouton `Synchroniser SEO` ajouté dans `app/admin/ops/page.tsx`
+- Runbook mis à jour:
+  - `docs/seo/03-search-console-bing-runbook.md` (section opérations manuelles)
+
 ## Prochaine wave recommandée
 
 - Exécuter la connexion GSC/Bing et soumettre `sitemap.xml` en prod.
