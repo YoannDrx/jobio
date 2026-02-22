@@ -24,7 +24,10 @@ import {
   LayoutTitle,
 } from "@/features/page/layout";
 import { resolveActionResult } from "@/lib/actions/actions-utils";
-import { getPlanLimits } from "@/lib/auth/stripe/auth-plans";
+import {
+  getPlanLimitsForPlan,
+  resolvePlanLimitsForUser,
+} from "@/lib/auth/stripe/plan-entitlements";
 import { getRequiredCurrentUser } from "@/lib/user/get-user";
 import {
   Table,
@@ -81,8 +84,10 @@ export default async function FreelanceInsightsPage() {
   const statusLabel = currentStatus
     ? freelanceStatusLabel[currentStatus]
     : compliancePreset.statusLabel;
-  const planLimits = getPlanLimits(user.subscription?.plan ?? "free");
-  const freePlanLimits = getPlanLimits("free");
+  const [{ limits: planLimits }, freePlanLimits] = await Promise.all([
+    resolvePlanLimitsForUser(user.id),
+    getPlanLimitsForPlan("free"),
+  ]);
   const canUseAIForecast =
     planLimits.aiRequestsPerMonth > freePlanLimits.aiRequestsPerMonth;
 

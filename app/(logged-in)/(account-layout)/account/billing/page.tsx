@@ -5,7 +5,7 @@ import {
   LayoutTitle,
 } from "@/features/page/layout";
 import { Pricing } from "@/features/plans/pricing-section";
-import { getPlanLimits } from "@/lib/auth/stripe/auth-plans";
+import { getPlanLimitsForPlan } from "@/lib/auth/stripe/plan-entitlements";
 import { combineWithParentMetadata } from "@/lib/metadata";
 import { checkPlanLimit } from "@/lib/plan-limits";
 import { getRequiredCurrentUser } from "@/lib/user/get-user";
@@ -38,7 +38,7 @@ export default async function OrgBillingPage() {
 
   const user = await getRequiredCurrentUser();
   const plan = subscription.plan;
-  const limits = getPlanLimits(plan);
+  const limits = await getPlanLimitsForPlan(plan);
 
   const [
     missions,
@@ -86,5 +86,7 @@ export default async function OrgBillingPage() {
     messageTemplates,
   };
 
-  return <UserBilling subscription={subscription} usage={usage} />;
+  return (
+    <UserBilling subscription={subscription} usage={usage} planLimits={limits} />
+  );
 }

@@ -66,3 +66,19 @@ Le scope livre couvre:
 
 - Voir `docs/pricing-audit/08-entitlements-v2-roadmap.md`
 - Axe stratégique: passer à une architecture "Entitlements V2" pilotée par données + instrumentation conversion/upsell.
+
+## 6) Avancement Entitlements V2 (2026-02-22)
+
+- [x] Foundation livrée:
+  - Modèles Prisma `plan_entitlement_release` + `plan_entitlement`
+  - Migration seedée avec la matrice Free/Pro/Ultra v1
+  - Resolver serveur avec fallback automatique vers la config statique
+  - Gating branché sur les limites résolues côté serveur (billing + analytics + actions de limites)
+- [x] Guardrail ops:
+  - Kill switch via `PLAN_ENTITLEMENTS_DB_ENABLED=false` pour revenir immédiatement au mode statique
+- [x] Validation technique:
+  - `pnpm prisma generate`
+  - `pnpm ts`
+  - `pnpm lint`
+  - `pnpm test:ci __tests__/plan-entitlements.test.ts __tests__/pricing-matrix.test.ts __tests__/auth-plan-billing-limits.test.ts`
+  - `pnpm build`

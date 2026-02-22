@@ -17,7 +17,7 @@ import {
   LayoutTitle,
 } from "@/features/page/layout";
 import { resolveActionResult } from "@/lib/actions/actions-utils";
-import { getPlanLimits } from "@/lib/auth/stripe/auth-plans";
+import type { PlanLimit } from "@/lib/auth/stripe/auth-plans";
 import { checkAllLimitsAction } from "@/features/plans/check-limits.action";
 import {
   checkDuplicateContactAction,
@@ -156,6 +156,9 @@ export default function ContactsPage() {
     remaining: number;
   } | null>(null);
   const [currentPlan, setCurrentPlan] = useState("free");
+  const [currentPlanLimits, setCurrentPlanLimits] = useState<PlanLimit | null>(
+    null,
+  );
 
   // Dialog create/edit
   const [showForm, setShowForm] = useState(false);
@@ -225,6 +228,7 @@ export default function ContactsPage() {
     void resolveActionResult(checkAllLimitsAction()).then((limits) => {
       setContactLimits(limits.contacts);
       setCurrentPlan(limits.plan);
+      setCurrentPlanLimits(limits.limits);
     });
     void resolveActionResult(getTagsAction()).then((tags) => {
       setAvailableTags(tags);
@@ -338,7 +342,7 @@ export default function ContactsPage() {
     setEditing(null);
   };
 
-  const canExportCsv = getPlanLimits(currentPlan).csvExport >= 1;
+  const canExportCsv = (currentPlanLimits?.csvExport ?? 0) >= 1;
 
   const handleLockedCsvExport = () => {
     openGlobalDialog("user-plan");

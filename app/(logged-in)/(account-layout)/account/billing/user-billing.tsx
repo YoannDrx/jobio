@@ -14,7 +14,10 @@ import {
   LayoutTitle,
 } from "@/features/page/layout";
 import { resolveActionResult } from "@/lib/actions/actions-utils";
-import { LIMITS_CONFIG, getPlanLimits } from "@/lib/auth/stripe/auth-plans";
+import {
+  LIMITS_CONFIG,
+  type PlanLimit,
+} from "@/lib/auth/stripe/auth-plans";
 import type { UserActiveSubscription } from "@/lib/user/get-user-subscription";
 import { cn } from "@/lib/utils";
 import { useMutation } from "@tanstack/react-query";
@@ -49,12 +52,12 @@ const DISPLAY_ONLY_LIMIT_KEYS = new Set(["analyticsHistoryDays"]);
 export function UserBilling(props: {
   subscription: UserActiveSubscription;
   usage: UsageData;
+  planLimits: PlanLimit;
 }) {
   const subscription = props.subscription;
   const usage = props.usage;
+  const planLimits = props.planLimits;
   const router = useRouter();
-
-  const planLimits = getPlanLimits(subscription.plan);
 
   const manageSubscriptionMutation = useMutation({
     mutationFn: async () => {

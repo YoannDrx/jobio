@@ -6,13 +6,18 @@ import {
   LayoutHeader,
   LayoutTitle,
 } from "@/features/page/layout";
-import { getPlanLimits } from "@/lib/auth/stripe/auth-plans";
+import {
+  getPlanLimitsForPlan,
+  resolvePlanLimitsForUser,
+} from "@/lib/auth/stripe/plan-entitlements";
 import { getRequiredCurrentUser } from "@/lib/user/get-user";
 
 export default async function FreelanceRegistersPage() {
   const user = await getRequiredCurrentUser();
-  const limits = getPlanLimits(user.subscription?.plan ?? "free");
-  const freePlanLimits = getPlanLimits("free");
+  const [{ limits }, freePlanLimits] = await Promise.all([
+    resolvePlanLimitsForUser(user.id),
+    getPlanLimitsForPlan("free"),
+  ]);
   const canUseAdvancedExports =
     limits.billingQuotes > freePlanLimits.billingQuotes;
 

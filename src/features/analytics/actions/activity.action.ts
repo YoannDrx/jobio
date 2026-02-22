@@ -1,18 +1,18 @@
 "use server";
 
 import { authAction } from "@/lib/actions/safe-actions";
-import { getPlanLimits } from "@/lib/auth/stripe/auth-plans";
 import { prisma } from "@/lib/prisma";
-import { computeDateRange, dateRangeSchema, getWeekKey } from "./shared";
+import {
+  computeDateRange,
+  dateRangeSchema,
+  getAnalyticsHistoryDaysForUser,
+  getWeekKey,
+} from "./shared";
 
 export const getWeeklyActivityAction = authAction
   .inputSchema(dateRangeSchema)
   .action(async ({ parsedInput: { startDate, endDate }, ctx: { user } }) => {
-    const subscription = await prisma.subscription.findUnique({
-      where: { referenceId: user.id },
-    });
-    const limits = getPlanLimits(subscription?.plan);
-    const historyDays = limits.analyticsHistoryDays;
+    const historyDays = await getAnalyticsHistoryDaysForUser(user.id);
     const dateRange = computeDateRange(historyDays, startDate, endDate);
 
     const missions = await prisma.mission.findMany({

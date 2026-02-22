@@ -26,7 +26,7 @@ import {
   LayoutTitle,
 } from "@/features/page/layout";
 import { resolveActionResult } from "@/lib/actions/actions-utils";
-import { getPlanLimits } from "@/lib/auth/stripe/auth-plans";
+import type { PlanLimit } from "@/lib/auth/stripe/auth-plans";
 import { checkAllLimitsAction } from "@/features/plans/check-limits.action";
 import { parseMissionAction } from "@/features/ai/parse-mission.action";
 import {
@@ -174,6 +174,9 @@ export default function PipelinePage() {
     remaining: number;
   } | null>(null);
   const [currentPlan, setCurrentPlan] = useState("free");
+  const [currentPlanLimits, setCurrentPlanLimits] = useState<PlanLimit | null>(
+    null,
+  );
 
   // Capture flow
   const [isParsing, setIsParsing] = useState(false);
@@ -203,6 +206,7 @@ export default function PipelinePage() {
       const limits = await resolveActionResult(checkAllLimitsAction());
       setMissionLimits(limits.missions);
       setCurrentPlan(limits.plan);
+      setCurrentPlanLimits(limits.limits);
     } catch (error) {
       toast.error(
         error instanceof Error
@@ -505,7 +509,7 @@ export default function PipelinePage() {
     }
   };
 
-  const canExportCsv = getPlanLimits(currentPlan).csvExport >= 1;
+  const canExportCsv = (currentPlanLimits?.csvExport ?? 0) >= 1;
 
   const handleLockedCsvExport = () => {
     openGlobalDialog("user-plan");

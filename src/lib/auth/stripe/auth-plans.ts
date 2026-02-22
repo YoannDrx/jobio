@@ -26,7 +26,7 @@ import {
   Zap,
 } from "lucide-react";
 
-const DEFAULT_LIMIT = {
+export const DEFAULT_LIMIT = {
   missions: 15,
   profiles: 2,
   contacts: 30,
@@ -51,6 +51,7 @@ const DEFAULT_LIMIT = {
 };
 
 export type PlanLimit = typeof DEFAULT_LIMIT;
+export const PLAN_LIMIT_KEYS = Object.keys(DEFAULT_LIMIT) as (keyof PlanLimit)[];
 
 export type OverrideLimits = Partial<PlanLimit>;
 

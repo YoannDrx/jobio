@@ -4,7 +4,10 @@ import { AI_MODELS } from "@/features/ai/ai-config";
 import { checkAndIncrementAIQuota } from "@/features/ai/ai-quota";
 import { BillingInvoiceStatus, BillingPaymentStatus } from "@/generated/prisma";
 import { authAction } from "@/lib/actions/safe-actions";
-import { getPlanLimits } from "@/lib/auth/stripe/auth-plans";
+import {
+  getPlanLimitsForPlan,
+  resolvePlanLimitsForUser,
+} from "@/lib/auth/stripe/plan-entitlements";
 import { ApplicationError } from "@/lib/errors/application-error";
 import { prisma } from "@/lib/prisma";
 import { generateObject } from "ai";
@@ -52,13 +55,10 @@ const buildMonthWindow = (count: number) => {
 export const generateFreelanceBillingForecastAction = authAction
   .inputSchema(generateBillingForecastInputSchema)
   .action(async ({ ctx: { user } }) => {
-    const subscription = await prisma.subscription.findUnique({
-      where: { referenceId: user.id },
-      select: { plan: true },
-    });
-
-    const planLimits = getPlanLimits(subscription?.plan ?? "free");
-    const freePlanLimits = getPlanLimits("free");
+    const [{ limits: planLimits }, freePlanLimits] = await Promise.all([
+      resolvePlanLimitsForUser(user.id),
+      getPlanLimitsForPlan("free"),
+    ]);
     if (planLimits.aiRequestsPerMonth <= freePlanLimits.aiRequestsPerMonth) {
       throw new ApplicationError(
         "Projection IA disponible à partir du plan Pro.",

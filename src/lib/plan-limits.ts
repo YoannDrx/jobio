@@ -1,5 +1,8 @@
-import { getPlanLimits } from "@/lib/auth/stripe/auth-plans";
 import type { PlanLimit } from "@/lib/auth/stripe/auth-plans";
+import {
+  getPlanLimitsForPlan,
+  resolvePlanLimitsForUser,
+} from "@/lib/auth/stripe/plan-entitlements";
 import { ApplicationError } from "@/lib/errors/application-error";
 import { STALE_ELIGIBLE_STATUS_VALUES } from "@/features/missions/mission-status";
 import { prisma } from "@/lib/prisma";
@@ -76,12 +79,10 @@ const BOOLEAN_FEATURE_LABELS: Record<BooleanFeature, string> = {
 };
 
 async function getUserPlanInfo(userId: string) {
-  const subscription = await prisma.subscription.findUnique({
-    where: { referenceId: userId },
-  });
+  const resolvedPlan = await resolvePlanLimitsForUser(userId);
   return {
-    plan: subscription?.plan ?? "free",
-    limits: getPlanLimits(subscription?.plan),
+    plan: resolvedPlan.plan,
+    limits: resolvedPlan.limits,
   };
 }
 
@@ -98,7 +99,7 @@ const resolvePlanInfo = async (
     const resolvedPlan = resolution.plan ?? "free";
     return {
       plan: resolvedPlan,
-      limits: resolution.limits ?? getPlanLimits(resolvedPlan),
+      limits: resolution.limits ?? (await getPlanLimitsForPlan(resolvedPlan)),
     };
   }
 
