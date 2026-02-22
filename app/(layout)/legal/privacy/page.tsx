@@ -3,14 +3,15 @@ import {
   PublicPageShell,
   PublicSection,
 } from "@/features/layout/public-page-shell";
+import { buildMarketingMetadata } from "@/lib/seo";
 import { SiteConfig } from "@/site-config";
-import type { Metadata } from "next";
 
-export const metadata: Metadata = {
+export const metadata = buildMarketingMetadata({
   title: `Politique de confidentialité | ${SiteConfig.title}`,
   description:
     "Politique de confidentialité de Jobio: données collectées, finalités, conservation, sécurité et droits RGPD.",
-};
+  path: "/legal/privacy",
+});
 
 const dataCategories = [
   {

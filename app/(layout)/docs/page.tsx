@@ -112,19 +112,19 @@ export default function DocsPage() {
         <PublicSection title="Navigation utile" description="Raccourcis clés">
           <div className="space-y-2 text-sm">
             <Badge variant="secondary" className="w-fit">
-              /app
+              /job
             </Badge>
             <p className="text-muted-foreground">
               Today: priorités du jour, relances urgentes, signaux importants.
             </p>
             <Badge variant="secondary" className="w-fit">
-              /app/pipeline
+              /job/pipeline
             </Badge>
             <p className="text-muted-foreground">
               Vue Kanban/Liste pour piloter toutes tes missions.
             </p>
             <Badge variant="secondary" className="w-fit">
-              /app/analytics
+              /job/analytics
             </Badge>
             <p className="text-muted-foreground">
               Lecture performance: conversion, TJM, forecast.

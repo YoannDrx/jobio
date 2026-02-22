@@ -3,8 +3,18 @@ import { blogPosts } from "@/features/blog/blog-data";
 import { prisma } from "@/lib/prisma";
 import type { MetadataRoute } from "next";
 
+const parseDate = (value?: string) => {
+  if (!value) {
+    return null;
+  }
+
+  const parsedDate = new Date(value);
+  return Number.isNaN(parsedDate.getTime()) ? null : parsedDate;
+};
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const now = new Date();
+  const buildDate =
+    parseDate(process.env.VERCEL_GIT_COMMIT_DATE) ?? new Date();
 
   const publicPages = [
     "/",
@@ -16,6 +26,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/branding",
     "/legal/terms",
     "/legal/privacy",
+    "/rss.xml",
   ] as const;
 
   const changeFrequencyByPage: Partial<
@@ -30,6 +41,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/branding": "monthly",
     "/legal/terms": "yearly",
     "/legal/privacy": "yearly",
+    "/rss.xml": "weekly",
   };
 
   const priorityByPage: Partial<
@@ -44,6 +56,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/branding": 0.4,
     "/legal/terms": 0.3,
     "/legal/privacy": 0.3,
+    "/rss.xml": 0.4,
   };
 
   const blogPages = blogPosts.map((post) => ({
@@ -84,7 +97,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   return [
     ...publicPages.map((page) => ({
       url: `${SiteConfig.prodUrl}${page === "/" ? "" : page}`,
-      lastModified: now,
+      lastModified: buildDate,
       changeFrequency: changeFrequencyByPage[page] ?? "monthly",
       priority: priorityByPage[page] ?? 0.5,
     })),

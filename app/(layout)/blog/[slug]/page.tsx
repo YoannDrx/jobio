@@ -5,7 +5,7 @@ import {
   PublicPageShell,
   PublicSection,
 } from "@/features/layout/public-page-shell";
-import { buildMarketingMetadata } from "@/lib/seo";
+import { absoluteUrl, buildMarketingMetadata } from "@/lib/seo";
 import { SiteConfig } from "@/site-config";
 import { ArrowLeft, Calendar, Clock } from "lucide-react";
 import type { Metadata } from "next";
@@ -48,60 +48,118 @@ export default async function BlogPostPage({ params }: PageProps) {
     notFound();
   }
 
+  const postUrl = absoluteUrl(`/blog/${post.slug}`);
+  const articleJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    headline: post.title,
+    description: post.description,
+    datePublished: post.date,
+    dateModified: post.date,
+    mainEntityOfPage: postUrl,
+    author: {
+      "@type": "Organization",
+      name: SiteConfig.company.name,
+    },
+    publisher: {
+      "@type": "Organization",
+      name: SiteConfig.company.name,
+      logo: {
+        "@type": "ImageObject",
+        url: absoluteUrl("/images/logo-icon.svg"),
+      },
+    },
+  };
+
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Accueil",
+        item: absoluteUrl("/"),
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Blog",
+        item: absoluteUrl("/blog"),
+      },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: post.title,
+        item: postUrl,
+      },
+    ],
+  };
+
   return (
-    <PublicPageShell
-      badge="Blog"
-      title={post.title}
-      description={post.description}
-      highlights={post.tags}
-    >
-      <div className="flex w-full flex-col gap-4">
-        <div className="flex items-center justify-between">
-          <Link
-            href="/blog"
-            className={buttonVariants({ variant: "ghost", size: "sm" })}
-          >
-            <ArrowLeft className="mr-1 size-4" />
-            Retour au blog
-          </Link>
-          <div className="text-muted-foreground flex items-center gap-4 text-sm">
-            <span className="flex items-center gap-1">
-              <Calendar className="size-4" />
-              {new Date(post.date).toLocaleDateString("fr-FR", {
-                day: "numeric",
-                month: "long",
-                year: "numeric",
-              })}
-            </span>
-            <span className="flex items-center gap-1">
-              <Clock className="size-4" />
-              {post.readingTime} min de lecture
-            </span>
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+      />
+      <PublicPageShell
+        badge="Blog"
+        title={post.title}
+        description={post.description}
+        highlights={post.tags}
+      >
+        <div className="flex w-full flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <Link
+              href="/blog"
+              className={buttonVariants({ variant: "ghost", size: "sm" })}
+            >
+              <ArrowLeft className="mr-1 size-4" />
+              Retour au blog
+            </Link>
+            <div className="text-muted-foreground flex items-center gap-4 text-sm">
+              <span className="flex items-center gap-1">
+                <Calendar className="size-4" />
+                {new Date(post.date).toLocaleDateString("fr-FR", {
+                  day: "numeric",
+                  month: "long",
+                  year: "numeric",
+                })}
+              </span>
+              <span className="flex items-center gap-1">
+                <Clock className="size-4" />
+                {post.readingTime} min de lecture
+              </span>
+            </div>
+          </div>
+
+          <PublicSection title="" description="">
+            <div
+              className="prose prose-neutral dark:prose-invert max-w-none"
+              dangerouslySetInnerHTML={{ __html: post.content }}
+            />
+          </PublicSection>
+
+          <div className="flex flex-wrap gap-1.5">
+            {post.tags.map((tag) => (
+              <Badge key={tag} variant="secondary">
+                {tag}
+              </Badge>
+            ))}
+          </div>
+
+          <div className="pt-4">
+            <Link href="/blog" className={buttonVariants({ variant: "outline" })}>
+              <ArrowLeft className="mr-1 size-4" />
+              Voir tous les articles
+            </Link>
           </div>
         </div>
-
-        <PublicSection title="" description="">
-          <div
-            className="prose prose-neutral dark:prose-invert max-w-none"
-            dangerouslySetInnerHTML={{ __html: post.content }}
-          />
-        </PublicSection>
-
-        <div className="flex flex-wrap gap-1.5">
-          {post.tags.map((tag) => (
-            <Badge key={tag} variant="secondary">
-              {tag}
-            </Badge>
-          ))}
-        </div>
-
-        <div className="pt-4">
-          <Link href="/blog" className={buttonVariants({ variant: "outline" })}>
-            <ArrowLeft className="mr-1 size-4" />
-            Voir tous les articles
-          </Link>
-        </div>
-      </div>
-    </PublicPageShell>
+      </PublicPageShell>
+    </>
   );
 }

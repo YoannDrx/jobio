@@ -1,13 +1,14 @@
 import { Badge } from "@/components/ui/badge";
 import { PublicPageShell, PublicSection } from "@/features/layout/public-page-shell";
+import { buildMarketingMetadata } from "@/lib/seo";
 import { SiteConfig } from "@/site-config";
-import type { Metadata } from "next";
 
-export const metadata: Metadata = {
+export const metadata = buildMarketingMetadata({
   title: `Conditions générales d'utilisation | ${SiteConfig.title}`,
   description:
     "CGU de Jobio: cadre contractuel, responsabilités, règles d'usage, facturation et résiliation.",
-};
+  path: "/legal/terms",
+});
 
 const keyRules = [
   "Utilisation personnelle ou professionnelle conforme à la loi.",

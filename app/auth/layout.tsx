@@ -1,8 +1,14 @@
 import GridBackground from "@/components/nowts/grid-background";
+import { NO_INDEX_ROBOTS } from "@/lib/seo";
+import type { Metadata } from "next";
 import type { PropsWithChildren } from "react";
 
 const SQUARE_SIZE = 20;
 const SQUARE_COLOR = "color-mix(in srgb, var(--muted) 50%, transparent)";
+
+export const metadata: Metadata = {
+  robots: NO_INDEX_ROBOTS,
+};
 
 export default function RouteLayout(props: PropsWithChildren) {
   return (

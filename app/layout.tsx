@@ -2,7 +2,7 @@ import "@/lib/zod-error-map";
 import { TailwindIndicator } from "@/components/utils/tailwind-indicator";
 import { NextTopLoader } from "@/features/page/next-top-loader";
 import { ServerToaster } from "@/features/server-sonner/server-toaster";
-import { getServerUrl } from "@/lib/server-url";
+import { INDEX_ROBOTS, absoluteUrl } from "@/lib/seo";
 import { cn } from "@/lib/utils";
 import { SiteConfig } from "@/site-config";
 import type { LayoutParams } from "@/types/next";
@@ -16,18 +16,44 @@ import { Providers } from "./providers";
 export const metadata: Metadata = {
   title: SiteConfig.title,
   description: SiteConfig.description,
-  metadataBase: new URL(getServerUrl()),
+  metadataBase: new URL(SiteConfig.prodUrl),
+  applicationName: SiteConfig.title,
+  keywords: [
+    "Jobio",
+    "prospection freelance",
+    "CRM freelance",
+    "pipeline missions",
+    "freelance tech",
+  ],
+  authors: [{ name: SiteConfig.company.name }],
+  creator: SiteConfig.company.name,
+  publisher: SiteConfig.company.name,
+  alternates: {
+    canonical: SiteConfig.prodUrl,
+  },
   openGraph: {
     title: SiteConfig.title,
     description: SiteConfig.description,
     type: "website",
     locale: "fr_FR",
+    siteName: SiteConfig.title,
+    url: SiteConfig.prodUrl,
+    images: [
+      {
+        url: absoluteUrl("/images/hero.png"),
+        width: 1200,
+        height: 630,
+        alt: SiteConfig.title,
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: SiteConfig.title,
     description: SiteConfig.description,
+    images: [absoluteUrl("/images/hero.png")],
   },
+  robots: INDEX_ROBOTS,
 };
 
 const CaptionFont = Space_Grotesk({
