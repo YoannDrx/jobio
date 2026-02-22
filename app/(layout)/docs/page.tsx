@@ -8,7 +8,7 @@ import {
   getPlanSupportLabel,
 } from "@/features/plans/plan-copy";
 import { getPlanLimits } from "@/lib/auth/stripe/auth-plans";
-import { buildMarketingMetadata } from "@/lib/seo";
+import { absoluteUrl, buildMarketingMetadata } from "@/lib/seo";
 import { SiteConfig } from "@/site-config";
 import {
   Bot,
@@ -131,6 +131,27 @@ const planSummaryCards = [
   },
 ];
 
+const docsWebPageJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  name: `Documentation | ${SiteConfig.title}`,
+  url: absoluteUrl("/docs"),
+  inLanguage: "fr-FR",
+  description:
+    "Documentation opérationnelle Jobio: démarrage, workflows prospection, bonnes pratiques IA et alignement des limites Free/Pro/Ultra.",
+  isPartOf: {
+    "@type": "WebSite",
+    name: SiteConfig.title,
+    url: SiteConfig.prodUrl,
+  },
+  about: [
+    "documentation produit",
+    "workflow prospection freelance",
+    "relances et séquences",
+    "limites plans Jobio",
+  ],
+};
+
 export default function DocsPage() {
   const howToJsonLd = {
     "@context": "https://schema.org",
@@ -148,6 +169,10 @@ export default function DocsPage() {
 
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(docsWebPageJsonLd) }}
+      />
       <BreadcrumbStructuredData
         items={[
           { name: "Accueil", path: "/" },

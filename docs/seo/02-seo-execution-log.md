@@ -301,6 +301,17 @@
 - Tests:
   - `__tests__/seo-sync-health.test.ts` ajouté
 
+## 2026-02-22 - Wave 21 (structured data enrichment on public intent pages)
+
+- Enrichissement JSON-LD des pages d'intention publique:
+  - `app/(layout)/features/page.tsx`
+  - ajout d'un schéma `WebPage` dédié (nom, description, `about`, rattachement site)
+  - `app/(layout)/docs/page.tsx`
+  - ajout d'un schéma `WebPage` dédié en complément du `HowTo`
+- Objectif:
+  - clarifier le rôle SEO de `/features` et `/docs`
+  - renforcer la compréhension des intentions cibles par les moteurs
+
 ## Prochaine wave recommandée
 
 - Exécuter la connexion GSC/Bing et soumettre `sitemap.xml` en prod.

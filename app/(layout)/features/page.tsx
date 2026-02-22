@@ -11,7 +11,7 @@ import {
 } from "@/features/layout/public-page-shell";
 import { RelatedResourcesSection } from "@/features/layout/related-resources-section";
 import { withPlanBadge } from "@/features/plans/plan-copy";
-import { buildMarketingMetadata } from "@/lib/seo";
+import { absoluteUrl, buildMarketingMetadata } from "@/lib/seo";
 import { SiteConfig } from "@/site-config";
 import {
   BarChart3,
@@ -238,9 +238,35 @@ const featureFaqJsonLd = {
   })),
 };
 
+const featuresWebPageJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  name: `Fonctionnalites | ${SiteConfig.title}`,
+  url: absoluteUrl("/features"),
+  inLanguage: "fr-FR",
+  description:
+    "Panorama des fonctionnalités Jobio pour freelances tech: pipeline, CRM, relances, CV Studio IA, facturation et analytics.",
+  isPartOf: {
+    "@type": "WebSite",
+    name: SiteConfig.title,
+    url: SiteConfig.prodUrl,
+  },
+  about: [
+    "crm freelance tech",
+    "prospection freelance",
+    "relances automatisées",
+    "cv freelance ats",
+    "facturation freelance",
+  ],
+};
+
 export default function FeaturesPage() {
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(featuresWebPageJsonLd) }}
+      />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(featureFaqJsonLd) }}
