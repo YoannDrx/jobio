@@ -83,7 +83,8 @@ export function Pricing() {
 
         <div className="mt-16 text-center">
           <p className="text-muted-foreground">
-            Tous les plans incluent l'accès de base et le support communautaire.
+            Tous les plans incluent l'accès produit. Le niveau de support
+            évolue selon le plan.
           </p>
           <p className="text-muted-foreground mt-2">
             Besoin d'un plan sur mesure ?{" "}

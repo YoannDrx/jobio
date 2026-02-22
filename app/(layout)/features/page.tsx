@@ -10,6 +10,7 @@ import {
   PublicSection,
 } from "@/features/layout/public-page-shell";
 import { RelatedResourcesSection } from "@/features/layout/related-resources-section";
+import { withPlanBadge } from "@/features/plans/plan-copy";
 import { buildMarketingMetadata } from "@/lib/seo";
 import { SiteConfig } from "@/site-config";
 import {
@@ -58,7 +59,7 @@ const featureSections: FeatureSection[] = [
       "Vue Kanban + liste pour piloter chaque mission",
       "Capture rapide de missions avec parsing IA",
       "Scoring automatique des opportunites",
-      "Filtres avances et export CSV",
+      withPlanBadge("Filtres avances et export CSV", "csvExport"),
     ],
   },
   {
@@ -81,7 +82,7 @@ const featureSections: FeatureSection[] = [
       "Calendrier de relances avec vue timeline",
       "4 types de relances configurables",
       "Snooze et report en un clic",
-      "Sequences de relance automatisees",
+      withPlanBadge("Sequences de relance automatisees", "sequences"),
     ],
   },
   {
@@ -102,8 +103,11 @@ const featureSections: FeatureSection[] = [
     bullets: [
       "Parsing automatique des offres de missions",
       "Scoring predictif des opportunites",
-      "Generation d'emails de prospection personnalises",
-      "Audit LinkedIn et strategie quotidienne assistee",
+      withPlanBadge(
+        "Generation d'emails de prospection personnalises",
+        "aiEmailGeneration",
+      ),
+      withPlanBadge("Audit LinkedIn assiste", "aiLinkedinAudit"),
     ],
   },
   {
@@ -114,8 +118,8 @@ const featureSections: FeatureSection[] = [
     bullets: [
       "CV Master centralise par profil freelance",
       "CV Lab multi-documents avec versions",
-      "ATS scoring et recommandations actionnables",
-      "Coach CV IA et export PDF",
+      withPlanBadge("ATS scoring et recommandations actionnables", "atsScoring"),
+      withPlanBadge("Coach CV IA et export PDF", "cvCoachAI"),
     ],
   },
   {
@@ -205,7 +209,7 @@ const featureFaqs = [
     id: "cv-ats",
     question: "Le module CV couvre-t-il les besoins ATS en freelance ?",
     answer:
-      "Oui. CV Studio IA inclut un ATS scoring, des recommandations actionnables et la gestion de plusieurs versions de CV selon le type de mission visee.",
+      "Oui. CV Studio IA inclut un ATS scoring (plan Pro+) avec recommandations actionnables, la gestion de plusieurs versions de CV, et un Coach CV IA reserve au plan Ultra.",
   },
   {
     id: "facturation",

@@ -255,6 +255,39 @@
 - Runbook mis à jour:
   - `docs/seo/03-search-console-bing-runbook.md` (section opérations manuelles)
 
+## 2026-02-22 - Wave 18 (anti-dérive pricing copy on public pages)
+
+- Nouveau helper de copy pricing piloté par les limites live:
+  - `src/features/plans/plan-copy.ts`
+  - badges automatiques `Pro+` / `Ultra` selon la vraie disponibilité d'une feature
+  - formatage des volumes (`Illimité`) et labels support par plan
+- Page `/features` durcie contre les surpromesses:
+  - `app/(layout)/features/page.tsx`
+  - mentions explicites de plan sur les bullets sensibles:
+    - export CSV, séquences automatisées, génération emails IA, audit LinkedIn, ATS scoring, CV Coach IA
+  - FAQ CV clarifiée (`ATS scoring` dès Pro, `Coach CV IA` réservé Ultra)
+- Page `/docs` alignée sur les limites centralisées:
+  - `app/(layout)/docs/page.tsx`
+  - section "Limites de plan (résumé)" alimentée dynamiquement depuis `getPlanLimits`
+  - ajout du niveau de support (communautaire/email/chat) par plan
+- Section pricing:
+  - `src/features/plans/pricing-section.tsx`
+  - wording support rendu explicite ("niveau de support évolue selon le plan")
+- Tests:
+  - `__tests__/plan-copy.test.ts` ajouté (garde-fou labels plan et formatage)
+
+## 2026-02-22 - Wave 19 (build log signal: Next prerender interruptions)
+
+- Filtre des erreurs attendues `NEXT_PRERENDER_INTERRUPTED`:
+  - `src/lib/errors/next-prerender-interrupted.ts` (helper de détection)
+  - `src/lib/zod-route.ts` (ne journalise plus ces interruptions comme "Unknown Error")
+  - `src/lib/actions/safe-actions.ts` (même garde-fou côté safe actions)
+- Objectif:
+  - réduire le bruit massif dans les logs de build/export
+  - conserver un signal clair sur les vraies erreurs applicatives
+- Tests:
+  - `__tests__/next-prerender-interrupted.test.ts` ajouté
+
 ## Prochaine wave recommandée
 
 - Exécuter la connexion GSC/Bing et soumettre `sitemap.xml` en prod.

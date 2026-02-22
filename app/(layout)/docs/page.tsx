@@ -3,6 +3,11 @@ import { Button } from "@/components/ui/button";
 import { BreadcrumbStructuredData } from "@/components/seo/breadcrumb-structured-data";
 import { PublicPageShell, PublicSection } from "@/features/layout/public-page-shell";
 import { RelatedResourcesSection } from "@/features/layout/related-resources-section";
+import {
+  formatPlanCount,
+  getPlanSupportLabel,
+} from "@/features/plans/plan-copy";
+import { getPlanLimits } from "@/lib/auth/stripe/auth-plans";
 import { buildMarketingMetadata } from "@/lib/seo";
 import { SiteConfig } from "@/site-config";
 import {
@@ -101,6 +106,28 @@ const relatedResources = [
     description:
       "Aligne ton volume d'usage avec les limites Free, Pro et Ultra.",
     ctaLabel: "Comparer les plans",
+  },
+];
+
+const freePlanLimits = getPlanLimits("free");
+const proPlanLimits = getPlanLimits("pro");
+const ultraPlanLimits = getPlanLimits("ultra");
+
+const planSummaryCards = [
+  {
+    name: "Free",
+    summary: `${formatPlanCount(freePlanLimits.missions)} missions · ${formatPlanCount(freePlanLimits.contacts)} contacts · ${formatPlanCount(freePlanLimits.aiRequestsPerMonth)} requêtes IA/mois`,
+    support: getPlanSupportLabel("free"),
+  },
+  {
+    name: "Pro",
+    summary: `${formatPlanCount(proPlanLimits.missions)} missions · ${formatPlanCount(proPlanLimits.contacts)} contacts · ${formatPlanCount(proPlanLimits.aiRequestsPerMonth)} requêtes IA/mois`,
+    support: getPlanSupportLabel("pro"),
+  },
+  {
+    name: "Ultra",
+    summary: `${formatPlanCount(ultraPlanLimits.missions)} missions · ${formatPlanCount(ultraPlanLimits.contacts)} contacts · ${formatPlanCount(ultraPlanLimits.aiRequestsPerMonth)} requêtes IA/mois`,
+    support: getPlanSupportLabel("ultra"),
   },
 ];
 
@@ -280,24 +307,17 @@ export default function DocsPage() {
         description="Extrait des plafonds actuels pour guider les usages."
       >
         <div className="grid gap-3 sm:grid-cols-3">
-          <div className="rounded-xl border p-4">
-            <p className="font-medium">Free</p>
-            <p className="text-muted-foreground mt-1 text-sm">
-              15 missions · 30 contacts · 5 requêtes IA/mois
-            </p>
-          </div>
-          <div className="rounded-xl border p-4">
-            <p className="font-medium">Pro</p>
-            <p className="text-muted-foreground mt-1 text-sm">
-              Missions illimitées · 200 contacts · 50 requêtes IA/mois
-            </p>
-          </div>
-          <div className="rounded-xl border p-4">
-            <p className="font-medium">Ultra</p>
-            <p className="text-muted-foreground mt-1 text-sm">
-              Limites très élevées + historique analytics étendu
-            </p>
-          </div>
+          {planSummaryCards.map((card) => (
+            <div key={card.name} className="rounded-xl border p-4">
+              <p className="font-medium">{card.name}</p>
+              <p className="text-muted-foreground mt-1 text-sm">
+                {card.summary}
+              </p>
+              <p className="text-muted-foreground mt-1 text-xs">
+                Support: {card.support}
+              </p>
+            </div>
+          ))}
         </div>
         <div className="text-muted-foreground mt-3 flex items-center gap-2 text-xs">
           <ListChecks className="size-3.5" />

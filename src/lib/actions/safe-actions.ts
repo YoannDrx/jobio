@@ -1,6 +1,7 @@
 import { createSafeActionClient } from "next-safe-action";
 import { getRequiredUser } from "../auth/auth-user";
 import { ApplicationError } from "../errors/application-error";
+import { isNextPrerenderInterruptedError } from "../errors/next-prerender-interrupted";
 import { logger } from "../logger";
 import { logSystemError } from "../monitoring/log-system-error";
 
@@ -74,6 +75,12 @@ function handleServerError(e: Error) {
   if (e instanceof ApplicationError) {
     logger.debug("[DEV] - Action Error", e.message);
     return e.message;
+  }
+
+  if (isNextPrerenderInterruptedError(e)) {
+    return process.env.NODE_ENV === "development"
+      ? e.message
+      : "Request interrupted during prerendering.";
   }
 
   logger.info("Unknown Error", e);

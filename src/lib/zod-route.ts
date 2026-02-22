@@ -2,6 +2,7 @@ import { createZodRoute } from "next-zod-route";
 import { NextResponse } from "next/server";
 import { getUser } from "./auth/auth-user";
 import { ApplicationError } from "./errors/application-error";
+import { isNextPrerenderInterruptedError } from "./errors/next-prerender-interrupted";
 import { ZodRouteError } from "./errors/zod-route-error";
 import { logger } from "./logger";
 
@@ -33,6 +34,10 @@ export const route = createZodRoute({
     if (e instanceof ApplicationError) {
       logger.debug("[DEV] - ApplicationError", e);
       return NextResponse.json({ message: e.message }, { status: 400 });
+    }
+
+    if (isNextPrerenderInterruptedError(e)) {
+      throw e;
     }
 
     logger.info("Unknown Error", e);
