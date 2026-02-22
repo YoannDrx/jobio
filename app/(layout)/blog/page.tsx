@@ -1,4 +1,5 @@
 import { Badge } from "@/components/ui/badge";
+import { BreadcrumbStructuredData } from "@/components/seo/breadcrumb-structured-data";
 import { blogPosts } from "@/features/blog/blog-data";
 import {
   PublicPageShell,
@@ -41,6 +42,12 @@ export default function BlogPage() {
 
   return (
     <>
+      <BreadcrumbStructuredData
+        items={[
+          { name: "Accueil", path: "/" },
+          { name: "Blog", path: "/blog" },
+        ]}
+      />
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(blogCollectionJsonLd) }}

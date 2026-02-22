@@ -1,4 +1,5 @@
 import { Badge } from "@/components/ui/badge";
+import { BreadcrumbStructuredData } from "@/components/seo/breadcrumb-structured-data";
 import {
   PublicPageShell,
   PublicSection,
@@ -61,17 +62,24 @@ const retentionRules = [
 
 export default function PrivacyPage() {
   return (
-    <PublicPageShell
-      badge="Confidentialité"
-      title="Tes données restent sous ton contrôle."
-      description="Cette politique décrit ce que Jobio collecte, pourquoi, combien de temps, et comment exercer tes droits. Version orientée clarté opérationnelle."
-      lastUpdated="11 février 2026"
-      highlights={[
-        "Conforme RGPD",
-        "Pas de revente de données",
-        "Suppression compte en self-service",
-      ]}
-    >
+    <>
+      <BreadcrumbStructuredData
+        items={[
+          { name: "Accueil", path: "/" },
+          { name: "Politique de confidentialité", path: "/legal/privacy" },
+        ]}
+      />
+      <PublicPageShell
+        badge="Confidentialité"
+        title="Tes données restent sous ton contrôle."
+        description="Cette politique décrit ce que Jobio collecte, pourquoi, combien de temps, et comment exercer tes droits. Version orientée clarté opérationnelle."
+        lastUpdated="11 février 2026"
+        highlights={[
+          "Conforme RGPD",
+          "Pas de revente de données",
+          "Suppression compte en self-service",
+        ]}
+      >
       <div className="grid w-full gap-4 lg:grid-cols-3">
         <PublicSection
           title="Champ d'application"
@@ -280,6 +288,7 @@ export default function PrivacyPage() {
           </li>
         </ul>
       </PublicSection>
-    </PublicPageShell>
+      </PublicPageShell>
+    </>
   );
 }

@@ -56,6 +56,18 @@ const organizationJsonLd = {
   },
 };
 
+const websiteJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: SiteConfig.title,
+  url: SiteConfig.prodUrl,
+  inLanguage: "fr-FR",
+  publisher: {
+    "@type": "Organization",
+    name: SiteConfig.company.name,
+  },
+};
+
 const softwareJsonLd = {
   "@context": "https://schema.org",
   "@type": "SoftwareApplication",
@@ -196,6 +208,10 @@ export default function HomePage() {
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
       />
       <script
         type="application/ld+json"

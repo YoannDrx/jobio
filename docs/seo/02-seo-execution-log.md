@@ -37,8 +37,33 @@
 - Objectif: réduire le JS critique en entrée et améliorer LCP/INP sur la landing.
 - Metadata globale enrichie avec alternate RSS dans `app/layout.tsx`.
 
+## 2026-02-22 - Wave 4 (structured data coverage)
+
+- Ajout d'un composant réutilisable:
+  - `src/components/seo/breadcrumb-structured-data.tsx`
+- Ajout de breadcrumbs JSON-LD sur pages marketing:
+  - `app/(layout)/about/page.tsx`
+  - `app/(layout)/features/page.tsx`
+  - `app/(layout)/docs/page.tsx`
+  - `app/(layout)/contact/page.tsx`
+- Ajout d'un schema `HowTo` sur la page docs (`app/(layout)/docs/page.tsx`).
+
+## 2026-02-22 - Wave 5 (indexability safety net + SEO ops)
+
+- Coverage breadcrumbs étendue:
+  - `app/(layout)/blog/page.tsx`
+  - `app/(layout)/legal/terms/page.tsx`
+  - `app/(layout)/legal/privacy/page.tsx`
+- Landing enrichie avec schema `WebSite`:
+  - `app/page.tsx`
+- Test de non-régression JSON-LD breadcrumb:
+  - `__tests__/breadcrumb-structured-data.test.tsx`
+- Runbook opérationnel publié:
+  - `docs/seo/03-search-console-bing-runbook.md`
+  - `docs/seo/04-intent-map-content-backlog.md`
+
 ## Prochaine wave recommandée
 
-- Instrumentation Search Console/Bing + dashboard KPI hebdo.
-- Mesure Web Vitals réelles sur landing/blog (production).
-- Plan éditorial SEO (8 semaines) et pages guides longues.
+- Exécuter la connexion GSC/Bing et soumettre `sitemap.xml`.
+- Publier 2 premiers contenus du backlog (S1-S2).
+- Ajouter un module "ressources liées" partagé sur blog/docs/features.

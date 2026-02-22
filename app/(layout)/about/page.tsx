@@ -1,4 +1,5 @@
 import { Badge } from "@/components/ui/badge";
+import { BreadcrumbStructuredData } from "@/components/seo/breadcrumb-structured-data";
 import { SiteConfig } from "@/site-config";
 import {
   PublicPageShell,
@@ -61,17 +62,24 @@ const milestones = [
 
 export default function AboutPage() {
   return (
-    <PublicPageShell
-      badge="À propos de Jobio"
-      title="Un cockpit commercial construit pour les freelances tech."
-      description="Jobio est né d'un constat simple: la prospection freelance est souvent gérée entre Notion, mails, rappels, feuilles de calcul et mémoire personnelle. On construit un outil unique qui remet de l'ordre et accélère la conversion."
-      highlights={[
-        "Produit orienté action",
-        "Roadmap active",
-        "Approche pragmatique",
-      ]}
-    >
-      <div className="grid w-full gap-4 lg:grid-cols-3">
+    <>
+      <BreadcrumbStructuredData
+        items={[
+          { name: "Accueil", path: "/" },
+          { name: "À propos", path: "/about" },
+        ]}
+      />
+      <PublicPageShell
+        badge="À propos de Jobio"
+        title="Un cockpit commercial construit pour les freelances tech."
+        description="Jobio est né d'un constat simple: la prospection freelance est souvent gérée entre Notion, mails, rappels, feuilles de calcul et mémoire personnelle. On construit un outil unique qui remet de l'ordre et accélère la conversion."
+        highlights={[
+          "Produit orienté action",
+          "Roadmap active",
+          "Approche pragmatique",
+        ]}
+      >
+        <div className="grid w-full gap-4 lg:grid-cols-3">
         <PublicSection
           title="Notre mission"
           description="Rendre la prospection prévisible, mesurable et plus sereine."
@@ -173,7 +181,8 @@ export default function AboutPage() {
           </span>
           <Sparkles className="text-primary size-4" />
         </div>
-      </PublicSection>
-    </PublicPageShell>
+        </PublicSection>
+      </PublicPageShell>
+    </>
   );
 }

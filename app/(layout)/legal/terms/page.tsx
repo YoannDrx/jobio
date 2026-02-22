@@ -1,4 +1,5 @@
 import { Badge } from "@/components/ui/badge";
+import { BreadcrumbStructuredData } from "@/components/seo/breadcrumb-structured-data";
 import { PublicPageShell, PublicSection } from "@/features/layout/public-page-shell";
 import { buildMarketingMetadata } from "@/lib/seo";
 import { SiteConfig } from "@/site-config";
@@ -27,13 +28,20 @@ const includedFeatures = [
 
 export default function TermsPage() {
   return (
-    <PublicPageShell
-      badge="CGU"
-      title="Conditions générales d'utilisation de Jobio."
-      description="Ce document encadre l'utilisation de la plateforme Jobio. Objectif: poser un cadre clair, lisible et opérationnel pour l'éditeur et les utilisateurs."
-      lastUpdated="11 février 2026"
-      highlights={["Droit français", "Abonnements Stripe", "Résiliation à tout moment"]}
-    >
+    <>
+      <BreadcrumbStructuredData
+        items={[
+          { name: "Accueil", path: "/" },
+          { name: "Conditions générales d'utilisation", path: "/legal/terms" },
+        ]}
+      />
+      <PublicPageShell
+        badge="CGU"
+        title="Conditions générales d'utilisation de Jobio."
+        description="Ce document encadre l'utilisation de la plateforme Jobio. Objectif: poser un cadre clair, lisible et opérationnel pour l'éditeur et les utilisateurs."
+        lastUpdated="11 février 2026"
+        highlights={["Droit français", "Abonnements Stripe", "Résiliation à tout moment"]}
+      >
       <div className="grid w-full gap-4 lg:grid-cols-3">
         <PublicSection
           title="1. Objet du service"
@@ -221,6 +229,7 @@ export default function TermsPage() {
           compétentes.
         </p>
       </PublicSection>
-    </PublicPageShell>
+      </PublicPageShell>
+    </>
   );
 }

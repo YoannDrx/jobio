@@ -1,3 +1,4 @@
+import { BreadcrumbStructuredData } from "@/components/seo/breadcrumb-structured-data";
 import {
   PublicPageShell,
   PublicSection,
@@ -151,36 +152,44 @@ const featureSections: FeatureSection[] = [
 
 export default function FeaturesPage() {
   return (
-    <PublicPageShell
-      badge="Fonctionnalites"
-      title="Tout ce dont un freelance tech a besoin pour prospecter."
-      description="Un outil unique qui regroupe pipeline, CRM, relances, profils, IA et analytics pour structurer et accelerer ta prospection commerciale."
-      highlights={["IA integree", "Pipeline visuel", "Analytics avances"]}
-    >
-      <div className="grid w-full gap-4 md:grid-cols-2">
-        {featureSections.map((section) => (
-          <PublicSection
-            key={section.title}
-            title={section.title}
-            description={section.description}
-          >
-            <div className="mb-3 flex items-center gap-2">
-              <section.icon className="text-primary size-5" />
-              <span className="text-muted-foreground text-sm font-medium">
-                Points cles
-              </span>
-            </div>
-            <ul className="flex flex-col gap-2">
-              {section.bullets.map((bullet) => (
-                <li key={bullet} className="flex items-start gap-2 text-sm">
-                  <Check className="text-primary mt-0.5 size-4 shrink-0" />
-                  <span className="text-muted-foreground">{bullet}</span>
-                </li>
-              ))}
-            </ul>
-          </PublicSection>
-        ))}
-      </div>
-    </PublicPageShell>
+    <>
+      <BreadcrumbStructuredData
+        items={[
+          { name: "Accueil", path: "/" },
+          { name: "Fonctionnalites", path: "/features" },
+        ]}
+      />
+      <PublicPageShell
+        badge="Fonctionnalites"
+        title="Tout ce dont un freelance tech a besoin pour prospecter."
+        description="Un outil unique qui regroupe pipeline, CRM, relances, profils, IA et analytics pour structurer et accelerer ta prospection commerciale."
+        highlights={["IA integree", "Pipeline visuel", "Analytics avances"]}
+      >
+        <div className="grid w-full gap-4 md:grid-cols-2">
+          {featureSections.map((section) => (
+            <PublicSection
+              key={section.title}
+              title={section.title}
+              description={section.description}
+            >
+              <div className="mb-3 flex items-center gap-2">
+                <section.icon className="text-primary size-5" />
+                <span className="text-muted-foreground text-sm font-medium">
+                  Points cles
+                </span>
+              </div>
+              <ul className="flex flex-col gap-2">
+                {section.bullets.map((bullet) => (
+                  <li key={bullet} className="flex items-start gap-2 text-sm">
+                    <Check className="text-primary mt-0.5 size-4 shrink-0" />
+                    <span className="text-muted-foreground">{bullet}</span>
+                  </li>
+                ))}
+              </ul>
+            </PublicSection>
+          ))}
+        </div>
+      </PublicPageShell>
+    </>
   );
 }

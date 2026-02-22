@@ -1,5 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { BreadcrumbStructuredData } from "@/components/seo/breadcrumb-structured-data";
 import { PublicPageShell, PublicSection } from "@/features/layout/public-page-shell";
 import { buildMarketingMetadata } from "@/lib/seo";
 import { SiteConfig } from "@/site-config";
@@ -79,18 +80,43 @@ const workflows = [
 ];
 
 export default function DocsPage() {
+  const howToJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    name: "Démarrage rapide Jobio",
+    description:
+      "Mise en place de Jobio pour structurer la prospection freelance en moins de 15 minutes.",
+    totalTime: "PT15M",
+    step: quickStart.map((item) => ({
+      "@type": "HowToStep",
+      name: item.title.replace(/^\d+\.\s*/, ""),
+      text: item.details,
+    })),
+  };
+
   return (
-    <PublicPageShell
-      badge="Documentation"
-      title="Mode d'emploi opérationnel de Jobio."
-      description="Cette documentation est orientée terrain: comment structurer ton flux de prospection, éviter les oublis de relance et améliorer ton taux de signature."
-      lastUpdated="11 février 2026"
-      highlights={[
-        "Guide rapide de démarrage",
-        "Workflows recommandés",
-        "Bonnes pratiques conversion",
-      ]}
-    >
+    <>
+      <BreadcrumbStructuredData
+        items={[
+          { name: "Accueil", path: "/" },
+          { name: "Documentation", path: "/docs" },
+        ]}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(howToJsonLd) }}
+      />
+      <PublicPageShell
+        badge="Documentation"
+        title="Mode d'emploi opérationnel de Jobio."
+        description="Cette documentation est orientée terrain: comment structurer ton flux de prospection, éviter les oublis de relance et améliorer ton taux de signature."
+        lastUpdated="11 février 2026"
+        highlights={[
+          "Guide rapide de démarrage",
+          "Workflows recommandés",
+          "Bonnes pratiques conversion",
+        ]}
+      >
       <div className="grid w-full gap-4 lg:grid-cols-3">
         <PublicSection
           title="Démarrage rapide"
@@ -270,6 +296,7 @@ export default function DocsPage() {
           </div>
         </div>
       </PublicSection>
-    </PublicPageShell>
+      </PublicPageShell>
+    </>
   );
 }

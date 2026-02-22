@@ -115,12 +115,18 @@ const prisma = mockDeep<PrismaClient>();
 const stripe = mockDeep<Stripe>();
 const authClient = mockDeep<AuthClientType>();
 const resend = mockDeep<Resend>();
+const resendMailAdapter = {
+  send: vi.fn(async () => ({
+    error: null,
+    data: { id: "test-email-id" },
+  })),
+};
 global.fetch = fetch;
 
 vi.mock("@/lib/prisma", () => ({ prisma }));
 vi.mock("@/lib/stripe", () => ({ stripe }));
 vi.mock("@/lib/auth-client", () => ({ authClient }));
-vi.mock("@/lib/mail/resend", () => ({ resend }));
+vi.mock("@/lib/mail/resend", () => ({ resend, resendMailAdapter }));
 vi.mock("@/lib/env", () => ({ env: {} }));
 vi.mock("@/lib/auth/auth-user", () => ({
   getUser: vi.fn(),
