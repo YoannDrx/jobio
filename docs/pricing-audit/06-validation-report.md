@@ -26,6 +26,7 @@ Remarque build:
 - [x] CV template gating (UI + serveur)
 - [x] Duplicate template respecte limite plan (`messageTemplates`)
 - [x] Discount annuel cohérent (calcul dynamique depuis `AUTH_PLANS`)
+- [x] Sidebar usage plan alignée sur les limites (inclut `cvDocuments`, `sequences`, `messageTemplates`)
 - [x] Copy marketing anti-derive sur pages publiques:
   - `/features` annote explicitement les features plan-gatees (`Pro+` / `Ultra`)
   - `/docs` resume les limites dynamiquement depuis `getPlanLimits`
