@@ -61,3 +61,8 @@ Le scope livre couvre:
 - garde-fous anti-derive copy sur pages publiques
 - reduction du bruit de logs build pour mieux detecter les vraies anomalies
 - documentation d'audit et matrice cible dans `docs/pricing-audit/`
+
+## 5) Prochain gros chantier recommandé
+
+- Voir `docs/pricing-audit/08-entitlements-v2-roadmap.md`
+- Axe stratégique: passer à une architecture "Entitlements V2" pilotée par données + instrumentation conversion/upsell.
