@@ -8,7 +8,12 @@ import {
   loadSeoSearchMetricsState,
   syncSeoSearchMetricsCacheFromEndpoint,
 } from "@/features/admin/seo-search-metrics";
-import { finishCronJobRun, startCronJobRun } from "@/lib/ops/cron-job-runs";
+import { SEO_SYNC_JOB_NAMES } from "@/features/admin/seo-sync-jobs";
+import {
+  findActiveCronJobRun,
+  finishCronJobRun,
+  startCronJobRun,
+} from "@/lib/ops/cron-job-runs";
 import { z } from "zod";
 import { createAdminAuditLog } from "./admin-audit";
 import robots from "../../robots";
@@ -37,6 +42,15 @@ export const syncSeoMetricsNowAction = authAction
   .action(async ({ ctx: { user } }) => {
     if (user.role !== "admin") {
       throw new ApplicationError("Accès administrateur requis");
+    }
+
+    const activeRun = await findActiveCronJobRun({
+      jobNames: [...SEO_SYNC_JOB_NAMES],
+    });
+    if (activeRun) {
+      throw new ApplicationError(
+        `Une synchronisation SEO est déjà en cours (${activeRun.jobName}, démarrée à ${activeRun.startedAt.toISOString()}).`,
+      );
     }
 
     const run = await startCronJobRun({

@@ -1,7 +1,4 @@
-const SEO_SYNC_JOB_NAMES = new Set([
-  "seo-search-metrics-sync",
-  "seo-search-metrics-sync-manual",
-]);
+import { isSeoSyncJobName } from "./seo-sync-jobs";
 
 export type CronRunLite = {
   jobName: string;
@@ -17,7 +14,7 @@ export type SeoSyncFreshness = {
 const SEO_SYNC_STALE_AFTER_HOURS = 48;
 
 export const isSeoSyncRun = (run: CronRunLite): boolean =>
-  SEO_SYNC_JOB_NAMES.has(run.jobName);
+  isSeoSyncJobName(run.jobName);
 
 export const getLatestSeoSyncRun = (
   runs: CronRunLite[],

@@ -120,6 +120,12 @@ Opérations manuelles:
 - Bouton `Synchroniser SEO` disponible dans `/admin/ops` (admin only).
 - Permet de déclencher une sync immédiate sans attendre le cron planifié.
 - Le run est historisé dans la table cron jobs (`seo-search-metrics-sync-manual`).
+- Garde-fou anti-concurrence:
+  - si une sync SEO est déjà en cours (cron ou manuelle), l'API retourne `409`.
+  - attendre la fin du run actif avant de relancer.
+- Monitoring fraîcheur:
+  - `/admin/ops` affiche "Dernier succès sync" + badge `Sync fraîche/obsolète`.
+  - seuil d'alerte obsolescence: > 48h sans succès.
 
 ## 6) Alertes opérationnelles (SLO SEO)
 

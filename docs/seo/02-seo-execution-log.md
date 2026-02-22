@@ -324,6 +324,20 @@
   - améliorer l'interprétation des pages de contenu et de la hiérarchie blog
   - augmenter la robustesse sémantique des pages éditoriales
 
+## 2026-02-22 - Wave 23 (SEO sync anti-concurrency guardrails)
+
+- Garde-fous anti-sync concurrente SEO:
+  - `src/features/admin/seo-sync-jobs.ts` (source de vérité des job names SEO sync)
+  - `src/lib/ops/cron-job-runs.ts`:
+    - ajout `findActiveCronJobRun()` (RUNNING récents par job)
+  - `app/admin/_actions/seo.ts`:
+    - blocage sync manuelle si run SEO déjà actif
+  - `app/api/cron/seo-search-metrics-sync/route.ts`:
+    - blocage sync cron si run SEO actif (`409`)
+- Runbook mis à jour:
+  - `docs/seo/03-search-console-bing-runbook.md`
+  - note explicite sur `409` concurrent + suivi de fraîcheur (>48h)
+
 ## Prochaine wave recommandée
 
 - Exécuter la connexion GSC/Bing et soumettre `sitemap.xml` en prod.

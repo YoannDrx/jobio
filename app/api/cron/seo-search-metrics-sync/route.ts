@@ -1,22 +1,40 @@
+import { SEO_SYNC_JOB_NAMES } from "@/features/admin/seo-sync-jobs";
 import { syncSeoSearchMetricsCacheFromEndpoint } from "@/features/admin/seo-search-metrics";
-import { finishCronJobRun, startCronJobRun } from "@/lib/ops/cron-job-runs";
+import {
+  findActiveCronJobRun,
+  finishCronJobRun,
+  startCronJobRun,
+} from "@/lib/ops/cron-job-runs";
 import { NextResponse } from "next/server";
 import { route } from "@/lib/zod-route";
 
 export const POST = route.handler(async (req) => {
+  const authHeader = req.headers.get("authorization");
+  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const activeRun = await findActiveCronJobRun({
+    jobNames: [...SEO_SYNC_JOB_NAMES],
+  });
+  if (activeRun) {
+    return NextResponse.json(
+      {
+        error: "SEO sync already running",
+        activeRun: {
+          id: activeRun.id,
+          jobName: activeRun.jobName,
+          startedAt: activeRun.startedAt.toISOString(),
+        },
+      },
+      { status: 409 },
+    );
+  }
+
   const run = await startCronJobRun({
     jobName: "seo-search-metrics-sync",
     route: new URL(req.url).pathname,
   });
-
-  const authHeader = req.headers.get("authorization");
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-    await finishCronJobRun(run?.id, {
-      status: "UNAUTHORIZED",
-      errorMessage: "Invalid authorization header",
-    });
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
 
   try {
     const syncResult = await syncSeoSearchMetricsCacheFromEndpoint();
