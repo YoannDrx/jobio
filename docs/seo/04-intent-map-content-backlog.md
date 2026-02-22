@@ -52,8 +52,8 @@ Owner: Growth + Product Marketing
 
 ## Sprint S7-S8
 
-1. Publier guide long: `Facturation freelance: devis, factures, conformité`.
-2. Publier article: `Pipeline freelance: du lead au contrat signé`.
+1. ✅ Publier guide long: `Facturation freelance: devis, factures, conformité` (`/blog/facturation-freelance-devis-factures-conformite`).
+2. ✅ Publier article: `Pipeline freelance: du lead au contrat signé` (`/blog/pipeline-freelance-lead-contrat-signe`).
 3. Mettre à jour 4 meilleurs contenus (refresh title, intro, CTA, maillage).
 
 ## 5) Structure type d’une page SEO Jobio

@@ -13,6 +13,7 @@ import { NewsletterSection } from "@/features/landing/newsletter-section";
 import { Footer } from "@/features/layout/footer";
 import { PricingComparisonTable } from "@/features/plans/pricing-comparison-table";
 import { Pricing } from "@/features/plans/pricing-section";
+import { getPlanLimits } from "@/lib/auth/stripe/auth-plans";
 import { absoluteUrl, buildMarketingMetadata } from "@/lib/seo";
 import { SiteConfig } from "@/site-config";
 import {
@@ -132,6 +133,8 @@ const workflow = [
       "Tu analyses tes résultats, identifies les plateformes rentables et ajustes ton process.",
   },
 ];
+
+const proPlanLimits = getPlanLimits("pro");
 
 const productSuites = [
   {
@@ -271,7 +274,10 @@ export default function HomePage() {
             <div className="grid gap-4 md:grid-cols-4">
               <StatCard value="15+" label="Plateformes freelance suivies" />
               <StatCard value="< 5 min" label="Pour capturer une mission" />
-              <StatCard value="90 j" label="Historique analytics en Pro" />
+              <StatCard
+                value={`${proPlanLimits.analyticsHistoryDays} j`}
+                label="Historique analytics en Pro"
+              />
               <StatCard value="24/7" label="Visibilité sur ton pipeline" />
             </div>
 

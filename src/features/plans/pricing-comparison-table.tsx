@@ -1,92 +1,9 @@
-"use client";
-
 import { Check, X } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Typography } from "@/components/nowts/typography";
 import { cn } from "@/lib/utils";
 import { Fragment } from "react";
-
-type Feature = {
-  name: string;
-  free: string | boolean;
-  pro: string | boolean;
-  ultra: string | boolean;
-};
-
-type Category = {
-  name: string;
-  features: Feature[];
-};
-
-const categories: Category[] = [
-  {
-    name: "Prospection",
-    features: [
-      { name: "Missions", free: "15", pro: "Illimité", ultra: "Illimité" },
-      { name: "Profils", free: "2", pro: "5", ultra: "Illimité" },
-      { name: "Contacts", free: "30", pro: "200", ultra: "Illimité" },
-      { name: "Plateformes", free: "3", pro: "10", ultra: "Illimité" },
-      { name: "Entreprises", free: "10", pro: "50", ultra: "Illimité" },
-    ],
-  },
-  {
-    name: "CV Lab",
-    features: [
-      { name: "Documents CV", free: "1", pro: "10", ultra: "Illimité" },
-      { name: "Templates", free: "Classic", pro: "Tous", ultra: "Tous" },
-      { name: "ATS Scoring", free: false, pro: true, ultra: true },
-      { name: "CV Coach IA", free: false, pro: false, ultra: true },
-    ],
-  },
-  {
-    name: "Automatisation",
-    features: [
-      { name: "Relances auto", free: false, pro: true, ultra: true },
-      { name: "Séquences", free: false, pro: "3", ultra: "Illimité" },
-      { name: "Templates messages", free: "3", pro: "20", ultra: "Illimité" },
-      { name: "Export CSV", free: false, pro: true, ultra: true },
-    ],
-  },
-  {
-    name: "Facturation",
-    features: [
-      { name: "Clients", free: false, pro: "10", ultra: "Illimité" },
-      { name: "Devis", free: false, pro: "50", ultra: "Illimité" },
-      { name: "Factures", free: false, pro: "50", ultra: "Illimité" },
-      { name: "Catalogue", free: false, pro: "25", ultra: "Illimité" },
-    ],
-  },
-  {
-    name: "Intelligence IA",
-    features: [
-      { name: "Requêtes/mois", free: "5", pro: "50", ultra: "999" },
-      { name: "Génération emails", free: false, pro: true, ultra: true },
-      { name: "LinkedIn Audit", free: false, pro: true, ultra: true },
-    ],
-  },
-  {
-    name: "Analytics",
-    features: [
-      {
-        name: "Historique",
-        free: "7 jours",
-        pro: "90 jours",
-        ultra: "Illimité",
-      },
-    ],
-  },
-  {
-    name: "Support",
-    features: [
-      {
-        name: "Type",
-        free: "Communautaire",
-        pro: "Email prioritaire",
-        ultra: "Chat prioritaire",
-      },
-    ],
-  },
-];
+import { PRICING_COMPARISON_CATEGORIES } from "./pricing-matrix";
 
 function FeatureValue({ value }: { value: string | boolean }) {
   if (typeof value === "boolean") {
@@ -147,7 +64,7 @@ export function PricingComparisonTable() {
             </tr>
           </thead>
           <tbody>
-            {categories.map((category) => (
+            {PRICING_COMPARISON_CATEGORIES.map((category) => (
               <Fragment key={category.name}>
                 <tr>
                   <td

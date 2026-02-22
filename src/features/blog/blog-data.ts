@@ -255,6 +255,179 @@ export const blogPosts: BlogPost[] = [
 `,
   },
   {
+    slug: "facturation-freelance-devis-factures-conformite",
+    title: "Facturation freelance: devis, factures, conformite",
+    description:
+      "Mode operatoire complet pour passer d'une mission signee a un encaissement propre: devis, factures, relances et hygiene de conformite.",
+    date: "2026-02-22",
+    tags: ["Facturation", "Freelance", "Conformite"],
+    readingTime: 10,
+    content: `
+<h2>Pourquoi la facturation est un levier de marge, pas une corvee admin</h2>
+<p>Beaucoup de freelances optimisent leur prospection puis perdent de la marge sur l'execution administrative: devis incomplets, factures tardives, relances de paiement improvisees. Le resultat est simple: plus de stress, plus de retard de cash, moins de pilotage.</p>
+<p>Une stack de facturation propre transforme le revenu signe en revenu encaisse, sans frictions evitables.</p>
+
+<h2>Le pipeline administratif minimal en 6 etapes</h2>
+<ol>
+<li>Qualification client (informations legales et contact facturation)</li>
+<li>Emission d'un devis clair avec validite et conditions</li>
+<li>Acceptation formelle (signature ou validation ecrite)</li>
+<li>Emission de facture selon les jalons reels</li>
+<li>Suivi des echeances et relances de paiement</li>
+<li>Archivage et registre pour controle/compta</li>
+</ol>
+<p>Si une etape manque, le risque d'impaye ou de litige augmente fortement.</p>
+
+<h2>Devis: ce qui doit etre verrouille avant demarrage</h2>
+<p>Un bon devis reduit les discussions improductives en cours de mission. Il doit clarifier:</p>
+<ul>
+<li>scope et livrables inclus / exclus</li>
+<li>modalite de facturation (forfait, TJM, jalons)</li>
+<li>planning et conditions de validation</li>
+<li>conditions de paiement (delai, acompte, penalites)</li>
+<li>conditions de revision (changement de perimetre)</li>
+</ul>
+<p>Le devis n'est pas un simple PDF commercial. C'est ton cadre operationnel et financier.</p>
+
+<h2>Factures: rigueur, cadence et preuve</h2>
+<p>Les retards de facturation creent un trou de tresorerie immediat. Mets en place une cadence fixe: emission a date definie, verification des champs obligatoires, preuve de transmission.</p>
+<p>Bonnes pratiques:</p>
+<ul>
+<li>facturer au plus tot apres jalon valide</li>
+<li>standardiser tes templates facture/devis</li>
+<li>associer chaque facture au bon dossier client</li>
+<li>tracer statut: envoyee, vue, payee, relancee</li>
+</ul>
+<p>Pour les obligations legales selon ton statut, valide ton process avec ton expert-comptable.</p>
+
+<h2>Relances de paiement sans degrader la relation</h2>
+<p>Une relance de paiement n'est pas agressive si elle est cadencée et factuelle. Exemple de routine:</p>
+<ul>
+<li>J+1 apres echeance: rappel courtois</li>
+<li>J+7: relance structuree avec recap de la facture</li>
+<li>J+14: escalation avec proposition de call rapide</li>
+</ul>
+<p>Le point cle: relancer vite, documenter chaque interaction, rester professionnel.</p>
+
+<h2>KPI admin a suivre chaque semaine</h2>
+<ul>
+<li><strong>DSO</strong> (delai moyen d'encaissement)</li>
+<li><strong>Taux de factures payees a l'echeance</strong></li>
+<li><strong>Montant en retard</strong></li>
+<li><strong>Cycle devis signe -> 1ere facture emise</strong></li>
+</ul>
+<p>Ces indicateurs sont aussi importants que les KPI de prospection: ils pilotent ta stabilite cash.</p>
+
+<h2>Checklist de conformite mensuelle</h2>
+<ul>
+<li>numerotation continue des devis/factures</li>
+<li>coordonnees client et mentions obligatoires controlees</li>
+<li>pieces justificatives archivees</li>
+<li>registre exportable disponible en cas de demande</li>
+</ul>
+<p>Un process robuste t'evite les corrections urgentes en fin de trimestre.</p>
+
+<h2>Relier facturation, pipeline et pricing</h2>
+<p>Le meilleur systeme combine acquisition, conversion et encaissement dans une seule boucle de pilotage. Tu peux lier ces briques dans <a href="/features">/features</a>, executer tes routines dans <a href="/docs">/docs</a> et verifier les limites de ton plan via <a href="/#pricing">/#pricing</a>.</p>
+
+<h2>Plan d'action 7 jours</h2>
+<p><strong>Jour 1:</strong> audit complet du flux devis -> facture -> paiement.</p>
+<p><strong>Jour 2:</strong> standardiser templates et mentions.</p>
+<p><strong>Jour 3:</strong> structurer le suivi des echeances.</p>
+<p><strong>Jour 4:</strong> definir cadence de relance.</p>
+<p><strong>Jour 5:</strong> instrumenter KPI cash.</p>
+<p><strong>Jour 6:</strong> nettoyer les dossiers clients ouverts.</p>
+<p><strong>Jour 7:</strong> lancer la revue hebdo admin dans l'agenda.</p>
+<p>Objectif: transformer la facturation en moteur de previsibilite, pas en zone de friction.</p>
+`,
+  },
+  {
+    slug: "pipeline-freelance-lead-contrat-signe",
+    title: "Pipeline freelance: du lead au contrat signe",
+    description:
+      "Cadre de pipeline freelance pour convertir plus vite: etapes, criteres de passage, relances et KPI de conversion par stade.",
+    date: "2026-02-22",
+    tags: ["Pipeline", "Prospection", "Conversion"],
+    readingTime: 9,
+    content: `
+<h2>Un pipeline n'est utile que si chaque etape force une action</h2>
+<p>Beaucoup de pipelines freelances ressemblent a une liste statique de prospects. Sans criteres de passage, sans prochaine action datee, sans priorisation, le pipeline devient decoratif.</p>
+<p>Un bon pipeline doit reduire l'incertitude: que faire aujourd'hui, sur quel deal, avec quel message.</p>
+
+<h2>Les 7 etapes recommandees</h2>
+<ol>
+<li>Lead qualifie</li>
+<li>Premier contact envoye</li>
+<li>Echange actif</li>
+<li>Call de qualification</li>
+<li>Proposition emise</li>
+<li>Negociation</li>
+<li>Signe / perdu</li>
+</ol>
+<p>Garde ce framework simple et stable. Les sous-etapes sont possibles, mais seulement si elles changent une decision.</p>
+
+<h2>Criteres de passage par etape</h2>
+<p>Chaque deplacement dans le pipeline doit reposer sur un critere objectif:</p>
+<ul>
+<li><strong>Lead qualifie -> Contact envoye:</strong> ICP + enjeu + interlocuteur identifies</li>
+<li><strong>Contact envoye -> Echange actif:</strong> reponse recue ou ouverture d'une discussion</li>
+<li><strong>Echange actif -> Call:</strong> besoin confirme + disponibilite validee</li>
+<li><strong>Call -> Proposition:</strong> scope, budget et timing clarifies</li>
+<li><strong>Proposition -> Negociation:</strong> contre-proposition explicite ou ajustements demandes</li>
+</ul>
+<p>Ces criteres evitent les faux positifs et les previsions gonflees.</p>
+
+<h2>Probabilite par stade (pour un pipeline ponderé)</h2>
+<ul>
+<li>Lead qualifie: 10%</li>
+<li>Contact envoye: 20%</li>
+<li>Echange actif: 35%</li>
+<li>Call: 50%</li>
+<li>Proposition: 65%</li>
+<li>Negociation: 80%</li>
+</ul>
+<p>Ces pourcentages sont des points de depart. Ajuste-les avec tes donnees reelles au fil des semaines.</p>
+
+<h2>Rituels operationnels pour accelerer la conversion</h2>
+<ul>
+<li><strong>Daily 10 min:</strong> verifier chaque opportunite sans prochaine action</li>
+<li><strong>Hebdo 30 min:</strong> nettoyer les deals bloques et reprioriser</li>
+<li><strong>Hebdo 20 min:</strong> analyser les pertes et adapter pitch/qualification</li>
+</ul>
+<p>Sans rituel, le pipeline se degrade naturellement.</p>
+
+<h2>Les 5 KPI pipeline a suivre en priorite</h2>
+<ul>
+<li>taux de passage entre chaque etape</li>
+<li>age moyen des deals par etape</li>
+<li>valeur ponderée du pipeline</li>
+<li>cycle moyen lead -> signature</li>
+<li>taux de win sur propositions emises</li>
+</ul>
+<p>Ces KPI montrent exactement ou ton systeme perd des opportunites.</p>
+
+<h2>Erreurs frequentes a corriger</h2>
+<ul>
+<li>garder des opportunites "fantomes" sans activite recente</li>
+<li>ne pas disqualifier les leads hors scope/budget</li>
+<li>ne pas relancer apres proposition</li>
+<li>confondre volume de leads et qualite commerciale</li>
+</ul>
+<p>Un pipeline propre gagne souvent plus qu'une augmentation brute du volume.</p>
+
+<h2>Relier pipeline, CV et pricing</h2>
+<p>Ton pipeline convertit mieux quand ton positionnement (CV/pitch), ta cadence de relance et ton pricing sont alignes. Tu peux connecter ces modules sur <a href="/features">/features</a>, transformer la methode en execution quotidienne via <a href="/docs">/docs</a>, puis comparer les capacites de plan sur <a href="/#pricing">/#pricing</a>.</p>
+
+<h2>Plan d'execution 14 jours</h2>
+<p><strong>J1-J2:</strong> nettoyer les etapes et criteres de passage.</p>
+<p><strong>J3-J5:</strong> relancer tous les deals sans prochaine action.</p>
+<p><strong>J6-J8:</strong> standardiser call script et trame de proposition.</p>
+<p><strong>J9-J11:</strong> instrumenter KPI de conversion.</p>
+<p><strong>J12-J14:</strong> revue complete et ajustement des probabilites par stade.</p>
+<p>Objectif: passer d'un suivi artisanal a une machine commerciale previsible.</p>
+`,
+  },
+  {
     slug: "structurer-prospection-freelance-2026",
     title: "Comment structurer sa prospection freelance en 2026",
     description:

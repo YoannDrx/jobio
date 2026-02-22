@@ -182,9 +182,30 @@
   - `docs/seo/04-intent-map-content-backlog.md`
   - Sprint S5-S6 marqué comme réalisé (item docs déjà livré précédemment).
 
+## 2026-02-22 - Wave 13 (content S7-S8 + pricing truth-source)
+
+- Publication des contenus S7-S8 prioritaires:
+  - `src/features/blog/blog-data.ts`
+  - `/blog/facturation-freelance-devis-factures-conformite`
+  - `/blog/pipeline-freelance-lead-contrat-signe`
+- Maillage éditorial dans ces contenus:
+  - liens vers `/features`, `/docs`, `/#pricing`
+- Anti-dérive pricing côté UI:
+  - nouvelle matrice centralisée dérivée de `getPlanLimits`:
+    - `src/features/plans/pricing-matrix.ts`
+  - tableau comparatif branché sur la matrice (plus de hardcode des valeurs):
+    - `src/features/plans/pricing-comparison-table.tsx`
+  - landing stat "historique analytics en Pro" alignée dynamiquement sur les limites:
+    - `app/page.tsx`
+- Tests:
+  - `__tests__/pricing-matrix.test.ts` ajouté (cohérence matrix <-> plans)
+- Backlog éditorial mis à jour:
+  - `docs/seo/04-intent-map-content-backlog.md`
+  - Items S7-S8 (1,2) marqués comme réalisés.
+
 ## Prochaine wave recommandée
 
 - Exécuter la connexion GSC/Bing et soumettre `sitemap.xml` en prod.
 - Planifier l'appel régulier de `POST /api/cron/seo-search-metrics-sync` (daily/weekly).
-- Publier les contenus S7-S8 (facturation freelance + pipeline lead -> contrat signé).
 - Mettre à jour les 4 contenus les plus performants (refresh title, intro, CTA, maillage).
+- Ajouter un reporting SEO "content refresh candidates" basé sur clics/CTR/position dans l'admin Ops.
