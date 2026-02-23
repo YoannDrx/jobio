@@ -44,7 +44,7 @@ export function FreelanceDeclarationsChart({
         <XAxis dataKey="period" tick={{ fontSize: 12 }} />
         <YAxis tickFormatter={formatEuros} tick={{ fontSize: 12 }} width={80} />
         <Tooltip
-          formatter={(value: number) => formatEuros(value)}
+          formatter={(value) => formatEuros(Number(value))}
           contentStyle={{
             backgroundColor: "hsl(var(--card))",
             border: "1px solid hsl(var(--border))",
