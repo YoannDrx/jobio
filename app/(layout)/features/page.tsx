@@ -170,6 +170,13 @@ const featureSections: FeatureSection[] = [
 
 const relatedResources = [
   {
+    href: "/use-cases" as const,
+    title: "Parcours par profil freelance",
+    description:
+      "Choisis un use case (développeur, data/IA, product/no-code) pour voir le workflow recommandé.",
+    ctaLabel: "Voir les use cases",
+  },
+  {
     href: "/docs" as const,
     title: "Guide d'exécution",
     description:

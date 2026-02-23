@@ -239,6 +239,9 @@ const checkoutSessionCompleted = async (
         ? "yearly"
         : "monthly",
     entryPoint: session.metadata?.entryPoint ?? "stripe_checkout",
+    experimentVariant:
+      session.metadata?.experimentVariant ??
+      stripeSubscription.metadata.experimentVariant,
     checkoutSessionId: session.id,
     stripeSubscriptionId: subscriptionId,
     metadata: {

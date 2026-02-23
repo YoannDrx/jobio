@@ -364,6 +364,36 @@
   - réduire le temps de diagnostic des incidents "cron ne tourne pas"
   - rendre la configuration prod SEO plus observable pour l'équipe
 
+## 2026-02-23 - Wave 26 (SEO use-case pages + maillage conversion)
+
+- Nouvelles pages publiques "use cases":
+  - `app/(layout)/use-cases/page.tsx` (hub)
+  - `app/(layout)/use-cases/[slug]/page.tsx` (3 pages statiques)
+  - cas couverts:
+    - `developpeur-freelance`
+    - `data-ai-freelance`
+    - `product-no-code-freelance`
+- Source de vérité des contenus use-case:
+  - `src/features/seo/use-cases.ts`
+  - persona, pains, outcomes, workflow, highlights, FAQ, mots-clés, variante pricing associée
+- Structured data enrichie:
+  - hub: `CollectionPage` + `ItemList`
+  - détail: `WebPage` + `HowTo` + `FAQPage` + `BreadcrumbList`
+- Maillage interne renforcé:
+  - header public: lien `/use-cases`
+  - footer: lien `/use-cases`
+  - landing: section dédiée avec 3 cartes use-case
+  - pages `/features` et `/docs`: ressource liée vers `/use-cases`
+- Mesure conversion SEO renforcée:
+  - liens use-case -> pricing enrichis (`?pv=...&pe=use_case_<slug>#pricing`)
+  - `src/features/plans/pricing-section.tsx` lit `pe` et propage l'entry point au funnel
+  - `/admin/ops` affiche désormais la conversion par entry point
+- Crawl/index alignés:
+  - `app/sitemap.tsx`: ajout `/use-cases` + pages détaillées
+  - `src/features/admin/seo-kpi.ts`: `/use-cases` ajouté dans les pages publiques requises
+- Tests:
+  - `__tests__/sitemap-route.test.ts` enrichi pour vérifier hub + page use-case
+
 ## Prochaine wave recommandée
 
 - Exécuter la connexion GSC/Bing et soumettre `sitemap.xml` en prod.

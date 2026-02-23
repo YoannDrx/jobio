@@ -87,6 +87,13 @@ const workflows = [
 
 const relatedResources = [
   {
+    href: "/use-cases" as const,
+    title: "Use cases par métier freelance",
+    description:
+      "Accède au workflow recommandé selon ton profil: dev, data/IA ou product/no-code.",
+    ctaLabel: "Voir les use cases",
+  },
+  {
     href: "/features" as const,
     title: "Cartographie des fonctionnalités",
     description:

@@ -31,6 +31,7 @@ import {
   getLatestSeoSyncRun,
   getLatestSeoSyncSuccessRun,
 } from "@/features/admin/seo-sync-health";
+import { pricingExperimentVariantLabels } from "@/lib/pricing/pricing-experiments";
 import { ActivatePlanEntitlementVersionButton } from "./_components/activate-plan-entitlement-version-button";
 import { CreatePlanEntitlementVersionButton } from "./_components/create-plan-entitlement-version-button";
 import { FeatureFlagToggleButton } from "./_components/feature-flag-toggle-button";
@@ -811,6 +812,94 @@ export default async function AdminOpsPage() {
                         </TableCell>
                       </TableRow>
                     ))}
+                  </TableBody>
+                </Table>
+
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Variante pricing</TableHead>
+                      <TableHead>Vues</TableHead>
+                      <TableHead>Sélection</TableHead>
+                      <TableHead>Checkout</TableHead>
+                      <TableHead>Abonnements</TableHead>
+                      <TableHead>Conv. sélection → checkout</TableHead>
+                      <TableHead>Conv. checkout → abonnement</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {Object.entries(pricingFunnel.byVariant).map(
+                      ([variantKey, variant]) => (
+                        <TableRow key={variantKey}>
+                          <TableCell className="font-medium">
+                            {
+                              pricingExperimentVariantLabels[
+                                variantKey as keyof typeof pricingExperimentVariantLabels
+                              ]
+                            }
+                          </TableCell>
+                          <TableCell>{variant.pricingPageViewed}</TableCell>
+                          <TableCell>{variant.planSelected}</TableCell>
+                          <TableCell>{variant.checkoutStarted}</TableCell>
+                          <TableCell>{variant.subscriptionCompleted}</TableCell>
+                          <TableCell>
+                            {formatRatePercent(
+                              variant.conversionRates.checkoutFromSelection,
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            {formatRatePercent(
+                              variant.conversionRates.subscriptionFromCheckout,
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ),
+                    )}
+                  </TableBody>
+                </Table>
+
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Entry point</TableHead>
+                      <TableHead>Vues</TableHead>
+                      <TableHead>Sélection</TableHead>
+                      <TableHead>Checkout</TableHead>
+                      <TableHead>Abonnements</TableHead>
+                      <TableHead>Conv. sélection → checkout</TableHead>
+                      <TableHead>Conv. checkout → abonnement</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {pricingFunnel.byEntryPoint.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={7} className="text-muted-foreground">
+                          Aucun event sur la période.
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      pricingFunnel.byEntryPoint.map((entry) => (
+                        <TableRow key={entry.entryPoint}>
+                          <TableCell className="font-mono text-xs">
+                            {entry.entryPoint}
+                          </TableCell>
+                          <TableCell>{entry.pricingPageViewed}</TableCell>
+                          <TableCell>{entry.planSelected}</TableCell>
+                          <TableCell>{entry.checkoutStarted}</TableCell>
+                          <TableCell>{entry.subscriptionCompleted}</TableCell>
+                          <TableCell>
+                            {formatRatePercent(
+                              entry.conversionRates.checkoutFromSelection,
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            {formatRatePercent(
+                              entry.conversionRates.subscriptionFromCheckout,
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
                   </TableBody>
                 </Table>
               </>

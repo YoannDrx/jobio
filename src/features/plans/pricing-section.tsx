@@ -3,6 +3,14 @@
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { PricingFunnelEventNames } from "@/lib/pricing/pricing-funnel-event-names";
+import {
+  DEFAULT_PRICING_EXPERIMENT_VARIANT,
+  PRICING_EXPERIMENT_QUERY_PARAM,
+  PRICING_EXPERIMENT_STORAGE_KEY,
+  PRICING_EXPERIMENT_VARIANTS,
+  normalizePricingExperimentVariant,
+  type PricingExperimentVariant,
+} from "@/lib/pricing/pricing-experiments";
 import { AUTH_PLANS } from "@/lib/auth/stripe/auth-plans";
 import { cn } from "@/lib/utils";
 import { useAction } from "next-safe-action/hooks";
@@ -11,21 +19,114 @@ import { useEffect, useRef, useState } from "react";
 import { PricingCard } from "./pricing-card";
 import { recordPricingFunnelEventAction } from "./pricing-funnel.action";
 
+const PRICING_VARIANT_COPY: Record<
+  PricingExperimentVariant,
+  {
+    title: string;
+    description: string;
+  }
+> = {
+  control: {
+    title: "Choisis ton plan",
+    description:
+      "Sélectionne le plan adapté à tes besoins. Change à tout moment.",
+  },
+  value_stack: {
+    title: "Un plan qui couvre tout ton flux freelance",
+    description:
+      "Prospection, CV IA, relances et facturation dans un seul espace de travail.",
+  },
+  roi_focus: {
+    title: "Gagne du temps et sécurise ton chiffre d'affaires",
+    description:
+      "Passe de la capture mission à la facturation plus vite, avec un pilotage clair.",
+  },
+};
+
+const PRICING_ENTRY_POINT_QUERY_PARAM = "pe";
+const normalizeEntryPoint = (value: string | null): string | null => {
+  if (!value) return null;
+  const normalized = value.trim().toLowerCase();
+  if (!/^[a-z0-9_-]{2,64}$/.test(normalized)) return null;
+  return normalized;
+};
+
+const resolvePricingExperimentVariant = (): PricingExperimentVariant => {
+  if (typeof window === "undefined") {
+    return DEFAULT_PRICING_EXPERIMENT_VARIANT;
+  }
+
+  try {
+    const fromQuery = normalizePricingExperimentVariant(
+      new URLSearchParams(window.location.search).get(
+        PRICING_EXPERIMENT_QUERY_PARAM,
+      ),
+    );
+    if (fromQuery) {
+      window.localStorage.setItem(PRICING_EXPERIMENT_STORAGE_KEY, fromQuery);
+      return fromQuery;
+    }
+
+    const fromStorage = normalizePricingExperimentVariant(
+      window.localStorage.getItem(PRICING_EXPERIMENT_STORAGE_KEY),
+    );
+    if (fromStorage) {
+      return fromStorage;
+    }
+
+    const assigned =
+      PRICING_EXPERIMENT_VARIANTS[
+        Math.floor(Math.random() * PRICING_EXPERIMENT_VARIANTS.length)
+      ];
+    window.localStorage.setItem(PRICING_EXPERIMENT_STORAGE_KEY, assigned);
+    return assigned;
+  } catch {
+    return DEFAULT_PRICING_EXPERIMENT_VARIANT;
+  }
+};
+
+const resolvePricingEntryPoint = (defaultEntryPoint: string): string => {
+  if (typeof window === "undefined") {
+    return defaultEntryPoint;
+  }
+
+  const fromQuery = normalizeEntryPoint(
+    new URLSearchParams(window.location.search).get(
+      PRICING_ENTRY_POINT_QUERY_PARAM,
+    ),
+  );
+  return fromQuery ?? defaultEntryPoint;
+};
+
 export function Pricing({ entryPoint = "landing" }: { entryPoint?: string }) {
   const [isYearly, setIsYearly] = useState(false);
+  const [experimentVariant, setExperimentVariant] =
+    useState<PricingExperimentVariant | null>(null);
+  const [resolvedEntryPoint, setResolvedEntryPoint] = useState(entryPoint);
   const hasTrackedView = useRef(false);
   const { execute: recordPricingEvent } = useAction(recordPricingFunnelEventAction);
 
   useEffect(() => {
+    setResolvedEntryPoint(resolvePricingEntryPoint(entryPoint));
+    setExperimentVariant(resolvePricingExperimentVariant());
+  }, [entryPoint]);
+
+  useEffect(() => {
+    if (!experimentVariant) return;
     if (hasTrackedView.current) return;
     hasTrackedView.current = true;
 
     recordPricingEvent({
       eventType: PricingFunnelEventNames.PRICING_PAGE_VIEWED,
-      entryPoint,
+      entryPoint: resolvedEntryPoint,
       planCurrent: "free",
+      experimentVariant,
     });
-  }, [entryPoint, recordPricingEvent]);
+  }, [resolvedEntryPoint, experimentVariant, recordPricingEvent]);
+
+  const copy = PRICING_VARIANT_COPY[
+    experimentVariant ?? DEFAULT_PRICING_EXPERIMENT_VARIANT
+  ];
 
   const maxYearlyDiscount = Math.max(
     ...AUTH_PLANS.filter((plan) => plan.price > 0 && plan.yearlyPrice)
@@ -45,10 +146,10 @@ export function Pricing({ entryPoint = "landing" }: { entryPoint?: string }) {
         <div className="flex flex-col items-center justify-center space-y-4 text-center">
           <div className="space-y-2">
             <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">
-              Choisis ton plan
+              {copy.title}
             </h2>
             <p className="text-muted-foreground max-w-[700px] md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-              Sélectionne le plan adapté à tes besoins. Change à tout moment.
+              {copy.description}
             </p>
           </div>
 
@@ -98,7 +199,10 @@ export function Pricing({ entryPoint = "landing" }: { entryPoint?: string }) {
               key={plan.name}
               plan={plan}
               isYearly={isYearly}
-              entryPoint={entryPoint}
+              entryPoint={resolvedEntryPoint}
+              experimentVariant={
+                experimentVariant ?? DEFAULT_PRICING_EXPERIMENT_VARIANT
+              }
             />
           ))}
         </div>

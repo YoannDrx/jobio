@@ -18,6 +18,10 @@ import {
 import { AnalyticsEvents, track } from "@/lib/analytics";
 import { BILLING_URL } from "@/lib/LINKS";
 import { PricingFunnelEventNames } from "@/lib/pricing/pricing-funnel-event-names";
+import {
+  DEFAULT_PRICING_EXPERIMENT_VARIANT,
+  type PricingExperimentVariant,
+} from "@/lib/pricing/pricing-experiments";
 import { cn } from "@/lib/utils";
 import { Clock } from "lucide-react";
 import { useAction } from "next-safe-action/hooks";
@@ -57,10 +61,12 @@ export function PricingCard({
   plan,
   isYearly,
   entryPoint = "pricing",
+  experimentVariant = DEFAULT_PRICING_EXPERIMENT_VARIANT,
 }: {
   plan: AppAuthPlan;
   isYearly?: boolean;
   entryPoint?: string;
+  experimentVariant?: PricingExperimentVariant;
 }) {
   // Get the current user
   const { data: session } = useSession();
@@ -269,12 +275,14 @@ export function PricingCard({
               plan_target: plan.name,
               billing_cycle: billingCycle,
               entry_point: entryPoint,
+              experiment_variant: experimentVariant,
             });
             recordPricingEvent({
               eventType: PricingFunnelEventNames.PLAN_SELECTED,
               planTarget: plan.name,
               billingCycle,
               entryPoint,
+              experimentVariant,
             });
 
             if (plan.price === 0) {
@@ -297,6 +305,7 @@ export function PricingCard({
               successUrl: `${BILLING_URL}/success`,
               cancelUrl: `${BILLING_URL}/cancel`,
               entryPoint,
+              experimentVariant,
             });
           }}
         >

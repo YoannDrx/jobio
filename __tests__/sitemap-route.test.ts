@@ -27,9 +27,11 @@ describe("sitemap metadata route", () => {
       expect.arrayContaining([
         "https://jobio.fr",
         "https://jobio.fr/features",
+        "https://jobio.fr/use-cases",
         "https://jobio.fr/blog",
         "https://jobio.fr/rss.xml",
         "https://jobio.fr/blog/5-conseils-prospection-freelance",
+        "https://jobio.fr/use-cases/developpeur-freelance",
         "https://jobio.fr/p/acme",
       ]),
     );

@@ -13,6 +13,7 @@ const pricingFunnelEventSchema = z.object({
   billingCycle: z.string().min(2).max(16).optional(),
   entryPoint: z.string().min(2).max(64).optional(),
   featureKey: z.string().min(2).max(64).optional(),
+  experimentVariant: z.string().min(2).max(32).optional(),
 });
 
 export const recordPricingFunnelEventAction = action
@@ -28,6 +29,7 @@ export const recordPricingFunnelEventAction = action
       billingCycle: parsedInput.billingCycle ?? null,
       entryPoint: parsedInput.entryPoint ?? null,
       featureKey: parsedInput.featureKey ?? null,
+      experimentVariant: parsedInput.experimentVariant ?? null,
     });
 
     return {

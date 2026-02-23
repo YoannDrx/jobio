@@ -18,11 +18,19 @@ export const upgradeUserAction = authAction
       successUrl: z.string(),
       cancelUrl: z.string(),
       entryPoint: z.string().min(2).max(64).optional(),
+      experimentVariant: z.string().min(2).max(32).optional(),
     }),
   )
   .action(
     async ({
-      parsedInput: { plan, annual, successUrl, cancelUrl, entryPoint },
+      parsedInput: {
+        plan,
+        annual,
+        successUrl,
+        cancelUrl,
+        entryPoint,
+        experimentVariant,
+      },
       ctx: { user },
     }) => {
       // Find the plan
@@ -76,6 +84,7 @@ export const upgradeUserAction = authAction
           plan: plan,
           entryPoint: entryPoint ?? "unknown",
           billingCycle: annual ? "yearly" : "monthly",
+          experimentVariant: experimentVariant ?? "control",
         },
         subscription_data: {
           metadata: {
@@ -83,6 +92,7 @@ export const upgradeUserAction = authAction
             plan: plan,
             entryPoint: entryPoint ?? "unknown",
             billingCycle: annual ? "yearly" : "monthly",
+            experimentVariant: experimentVariant ?? "control",
           },
           trial_period_days: authPlan.freeTrial?.days,
         },
@@ -99,6 +109,7 @@ export const upgradeUserAction = authAction
         planTarget: plan,
         billingCycle: annual ? "yearly" : "monthly",
         entryPoint: entryPoint ?? "pricing",
+        experimentVariant: experimentVariant ?? "control",
         checkoutSessionId: session.id,
       });
 

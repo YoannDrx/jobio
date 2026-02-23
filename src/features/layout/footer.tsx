@@ -41,6 +41,13 @@ export function Footer() {
                       variant="link"
                       className="h-auto justify-start p-0"
                     >
+                      <Link href="/use-cases">Use cases</Link>
+                    </Button>
+                    <Button
+                      asChild
+                      variant="link"
+                      className="h-auto justify-start p-0"
+                    >
                       <Link href="/#pricing">Tarifs</Link>
                     </Button>
                     <Button

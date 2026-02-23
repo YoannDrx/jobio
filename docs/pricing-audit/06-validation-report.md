@@ -103,3 +103,14 @@ Le scope livre couvre:
   - dashboard admin `/admin/ops`:
     - métriques funnel 30 jours
     - split Pro vs Ultra
+
+- [x] Phase C2 (expérimentation A/B pricing):
+  - ajout du champ `experimentVariant` dans `pricing_funnel_event`
+  - attribution variante côté UI pricing:
+    - `control`
+    - `value_stack`
+    - `roi_focus`
+  - propagation variante jusqu'au checkout Stripe et webhook
+  - métriques conversion par variante dans `/admin/ops`
+  - attribution `entryPoint` enrichie (`pe=`) pour mesurer SEO use-case -> pricing -> checkout
+  - métriques conversion par entry point dans `/admin/ops`

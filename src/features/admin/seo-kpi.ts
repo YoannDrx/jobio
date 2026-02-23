@@ -34,6 +34,7 @@ export const REQUIRED_PUBLIC_PAGES = [
   "/",
   "/about",
   "/features",
+  "/use-cases",
   "/blog",
   "/docs",
   "/contact",

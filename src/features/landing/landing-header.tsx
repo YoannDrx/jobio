@@ -104,6 +104,7 @@ export function LandingHeader() {
           className="text-muted-foreground hidden items-center gap-4 text-sm font-medium sm:flex"
         >
           <Link href="#features">Fonctionnalités</Link>
+          <Link href="/use-cases">Use cases</Link>
           <Link href="#pricing">Tarifs</Link>
           <AuthButtonClient />
           <ThemeToggle />
@@ -133,6 +134,13 @@ export function LandingHeader() {
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   Fonctionnalités
+                </Link>
+                <Link
+                  href="/use-cases"
+                  className="text-foreground text-lg font-medium"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Use cases
                 </Link>
                 <Link
                   href="#pricing"

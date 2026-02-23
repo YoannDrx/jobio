@@ -13,6 +13,7 @@ import { NewsletterSection } from "@/features/landing/newsletter-section";
 import { Footer } from "@/features/layout/footer";
 import { PricingComparisonTable } from "@/features/plans/pricing-comparison-table";
 import { Pricing } from "@/features/plans/pricing-section";
+import { JOBIO_USE_CASES } from "@/features/seo/use-cases";
 import { getPlanLimits } from "@/lib/auth/stripe/auth-plans";
 import { absoluteUrl, buildMarketingMetadata } from "@/lib/seo";
 import { SiteConfig } from "@/site-config";
@@ -133,6 +134,13 @@ const workflow = [
       "Tu analyses tes résultats, identifies les plateformes rentables et ajustes ton process.",
   },
 ];
+
+const useCaseCtas = JOBIO_USE_CASES.map((item) => ({
+  href: `/use-cases/${item.slug}`,
+  title: item.persona,
+  summary: item.summary,
+  recommendedPlan: item.recommendedPlan,
+}));
 
 const proPlanLimits = getPlanLimits("pro");
 
@@ -449,6 +457,42 @@ export default function HomePage() {
                       </li>
                     ))}
                   </ul>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </section>
+
+        <section className="mx-auto w-full max-w-7xl px-4 py-12 lg:px-8 lg:py-16">
+          <div className="mb-6 max-w-3xl">
+            <Badge className="mb-3">Use cases</Badge>
+            <h2 className="font-caption text-3xl font-semibold tracking-tight sm:text-4xl">
+              Des parcours dédiés selon ton profil freelance.
+            </h2>
+            <p className="text-muted-foreground mt-3 text-sm sm:text-base">
+              Choisis un guide orienté terrain pour voir comment Jobio se cale
+              sur ton contexte: développeur, data/IA ou product/no-code.
+            </p>
+          </div>
+          <div className="grid gap-4 md:grid-cols-3">
+            {useCaseCtas.map((item) => (
+              <Card key={item.href} className="border-border/70">
+                <CardContent className="flex h-full flex-col p-5">
+                  <div className="mb-2 flex items-center justify-between gap-2">
+                    <p className="font-medium">{item.title}</p>
+                    <Badge variant="outline" className="capitalize">
+                      {item.recommendedPlan}
+                    </Badge>
+                  </div>
+                  <p className="text-muted-foreground mb-4 text-sm">
+                    {item.summary}
+                  </p>
+                  <Link
+                    href={item.href}
+                    className={buttonVariants({ size: "sm", variant: "outline" })}
+                  >
+                    Voir le use case
+                  </Link>
                 </CardContent>
               </Card>
             ))}

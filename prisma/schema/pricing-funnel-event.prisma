@@ -18,6 +18,7 @@ model PricingFunnelEvent {
   billingCycle String?
   entryPoint   String?
   featureKey   String?
+  experimentVariant String?
 
   checkoutSessionId    String?
   stripeSubscriptionId String?
@@ -30,6 +31,7 @@ model PricingFunnelEvent {
   @@index([createdAt])
   @@index([eventType, createdAt])
   @@index([planTarget, eventType, createdAt])
+  @@index([experimentVariant, eventType, createdAt])
   @@index([userId, createdAt])
   @@map("pricing_funnel_event")
 }

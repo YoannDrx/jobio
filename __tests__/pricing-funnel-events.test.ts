@@ -8,31 +8,43 @@ describe("pricing funnel events summary", () => {
       {
         eventType: PricingFunnelEventType.PRICING_PAGE_VIEWED,
         planTarget: null,
+        entryPoint: "landing",
+        experimentVariant: "control",
         createdAt: new Date("2026-02-23T10:00:00.000Z"),
       },
       {
         eventType: PricingFunnelEventType.PLAN_SELECTED,
         planTarget: "pro",
+        entryPoint: "landing",
+        experimentVariant: "control",
         createdAt: new Date("2026-02-23T10:01:00.000Z"),
       },
       {
         eventType: PricingFunnelEventType.PLAN_SELECTED,
         planTarget: "ultra",
+        entryPoint: "use_case_developpeur_freelance",
+        experimentVariant: "value_stack",
         createdAt: new Date("2026-02-23T10:02:00.000Z"),
       },
       {
         eventType: PricingFunnelEventType.CHECKOUT_STARTED,
         planTarget: "pro",
+        entryPoint: "landing",
+        experimentVariant: "control",
         createdAt: new Date("2026-02-23T10:03:00.000Z"),
       },
       {
         eventType: PricingFunnelEventType.SUBSCRIPTION_COMPLETED,
         planTarget: "pro",
+        entryPoint: "landing",
+        experimentVariant: "control",
         createdAt: new Date("2026-02-23T10:04:00.000Z"),
       },
       {
         eventType: PricingFunnelEventType.PAYWALL_HIT,
         planTarget: "ultra",
+        entryPoint: "server_enforce_limit",
+        experimentVariant: "value_stack",
         createdAt: new Date("2026-02-23T10:05:00.000Z"),
       },
     ];
@@ -60,6 +72,31 @@ describe("pricing funnel events summary", () => {
     expect(summary.conversionRates.checkoutFromSelection).toBe(50);
     expect(summary.conversionRates.subscriptionFromCheckout).toBe(100);
     expect(summary.conversionRates.subscriptionFromSelection).toBe(50);
+
+    expect(summary.byVariant.control.pricingPageViewed).toBe(1);
+    expect(summary.byVariant.control.planSelected).toBe(1);
+    expect(summary.byVariant.control.checkoutStarted).toBe(1);
+    expect(summary.byVariant.control.subscriptionCompleted).toBe(1);
+    expect(summary.byVariant.control.conversionRates.checkoutFromSelection).toBe(
+      100,
+    );
+
+    expect(summary.byVariant.value_stack.planSelected).toBe(1);
+    expect(summary.byVariant.value_stack.paywallHit).toBe(1);
+    expect(summary.byVariant.value_stack.checkoutStarted).toBe(0);
+    expect(
+      summary.byVariant.value_stack.conversionRates.checkoutFromSelection,
+    ).toBe(0);
+
+    expect(summary.byVariant.roi_focus.planSelected).toBe(0);
+
+    expect(summary.byEntryPoint[0]?.entryPoint).toBe("landing");
+    expect(summary.byEntryPoint[0]?.planSelected).toBe(1);
+    expect(summary.byEntryPoint[0]?.checkoutStarted).toBe(1);
+    expect(summary.byEntryPoint[0]?.subscriptionCompleted).toBe(1);
+    expect(summary.byEntryPoint[1]?.entryPoint).toBe(
+      "use_case_developpeur_freelance",
+    );
     expect(summary.lastEventAt?.toISOString()).toBe("2026-02-23T10:05:00.000Z");
   });
 });
