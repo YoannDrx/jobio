@@ -34,6 +34,19 @@ test.describe("sequences", () => {
       callbackURL: "/job",
     });
 
+    // Upgrade to pro plan so sequences feature is available (free plan has sequences: 0)
+    const user = await prisma.user.findUniqueOrThrow({
+      where: { email: userData.email },
+    });
+    await prisma.subscription.create({
+      data: {
+        id: `test-sub-${user.id}`,
+        plan: "pro",
+        referenceId: user.id,
+        status: "active",
+      },
+    });
+
     // Navigate to sequences page
     await page.goto("/job/sequences");
     await page.waitForLoadState("networkidle");
@@ -59,13 +72,8 @@ test.describe("sequences", () => {
     });
 
     // Clean up
-    const user = await prisma.user.findUnique({
-      where: { email: userData.email },
-    });
-    if (user) {
-      await prisma.sequence.deleteMany({ where: { userId: user.id } });
-      await prisma.user.delete({ where: { id: user.id } });
-    }
+    await prisma.sequence.deleteMany({ where: { userId: user.id } });
+    await prisma.user.delete({ where: { id: user.id } });
   });
 
   test("edit a sequence name", async ({ page }) => {
