@@ -54,7 +54,9 @@ export function LanguagesSection({
       <Button
         variant="outline"
         size="sm"
-        onClick={async () => onAdd("languages", { name: "" })}
+        onClick={async () =>
+          onAdd("languages", { name: "Nouvelle langue", level: "Courant" })
+        }
       >
         <Plus className="mr-1 size-3.5" />
         Ajouter une langue

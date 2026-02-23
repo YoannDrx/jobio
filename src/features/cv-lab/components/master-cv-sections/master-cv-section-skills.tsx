@@ -54,7 +54,12 @@ export function SkillsSection({
       <Button
         variant="outline"
         size="sm"
-        onClick={async () => onAdd("skills", { name: "" })}
+        onClick={async () =>
+          onAdd("skills", {
+            name: "Nouvelle competence",
+            level: "INTERMEDIATE",
+          })
+        }
       >
         <Plus className="mr-1 size-3.5" />
         Ajouter une competence

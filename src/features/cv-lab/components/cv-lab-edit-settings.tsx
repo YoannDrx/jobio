@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -61,6 +62,9 @@ type CvLabEditSettingsProps = {
   onDraftChange: (patch: Partial<Draft>) => void;
   profiles: CvProfile[];
   canUseAllCvTemplates: boolean;
+  hasMasterCvSource: boolean;
+  masterCv: { id: string; fullName: string } | null;
+  onDocumentSourceChange: (source: "profile" | "master") => Promise<void>;
 };
 
 export function CvLabEditSettings({
@@ -68,10 +72,16 @@ export function CvLabEditSettings({
   onDraftChange,
   profiles,
   canUseAllCvTemplates,
+  hasMasterCvSource,
+  masterCv,
+  onDocumentSourceChange,
 }: CvLabEditSettingsProps) {
+  const [isChangingSource, setIsChangingSource] = useState(false);
   const templateOptions = canUseAllCvTemplates
     ? [...CV_LAB_TEMPLATES]
     : Array.from(new Set(["CLASSIC", draft.template])) as CvLabTemplate[];
+
+  const sourceValue = hasMasterCvSource ? "master" : "profile";
 
   return (
     <div className="grid gap-4 md:grid-cols-2">
@@ -95,10 +105,48 @@ export function CvLabEditSettings({
         />
       </div>
 
+      <div className="flex flex-col gap-2 md:col-span-2">
+        <Label>Source des données</Label>
+        <Select
+          value={sourceValue}
+          disabled={isChangingSource}
+          onValueChange={async (value) => {
+            const nextValue = value as "profile" | "master";
+            if (nextValue === sourceValue) return;
+            setIsChangingSource(true);
+            try {
+              await onDocumentSourceChange(nextValue);
+            } finally {
+              setIsChangingSource(false);
+            }
+          }}
+        >
+          <SelectTrigger className="w-full">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="profile">Profil</SelectItem>
+            {masterCv ? (
+              <SelectItem value="master">CV Master ({masterCv.fullName})</SelectItem>
+            ) : (
+              <SelectItem value="master" disabled>
+                CV Master indisponible
+              </SelectItem>
+            )}
+          </SelectContent>
+        </Select>
+        <p className="text-muted-foreground text-xs">
+          {hasMasterCvSource
+            ? "Ce CV utilise le CV Master comme base. Vous pouvez masquer des items ou les personnaliser localement."
+            : "Ce CV utilise le profil comme base. Les modifications des sections impactent le profil source."}
+        </p>
+      </div>
+
       <div className="flex flex-col gap-2">
         <Label>Profil source</Label>
         <Select
           value={draft.profileId}
+          disabled={hasMasterCvSource}
           onValueChange={(value) => onDraftChange({ profileId: value })}
         >
           <SelectTrigger className="w-full">
@@ -112,6 +160,11 @@ export function CvLabEditSettings({
             ))}
           </SelectContent>
         </Select>
+        {hasMasterCvSource ? (
+          <p className="text-muted-foreground text-xs">
+            Le profil n&apos;est pas utilise tant que la source est le CV Master.
+          </p>
+        ) : null}
       </div>
 
       <div className="flex flex-col gap-2">

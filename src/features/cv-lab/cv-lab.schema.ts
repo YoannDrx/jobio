@@ -124,6 +124,9 @@ export const contentOverrideItemSchema = z.object({
   masterItemId: z.string(),
   title: z.string().optional(),
   company: z.string().optional(),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+  current: z.boolean().optional(),
   description: z.string().optional(),
   name: z.string().optional(),
   level: z.string().optional(),
@@ -215,6 +218,13 @@ export type MasterCvEducation = z.infer<typeof masterCvEducationSchema>;
 export type MasterCvProject = z.infer<typeof masterCvProjectSchema>;
 export type MasterCvLanguage = z.infer<typeof masterCvLanguageSchema>;
 export type MasterCvCertification = z.infer<typeof masterCvCertificationSchema>;
+export type MasterCvItem =
+  | MasterCvExperience
+  | MasterCvSkill
+  | MasterCvEducation
+  | MasterCvProject
+  | MasterCvLanguage
+  | MasterCvCertification;
 export type MasterCvPersonalInfo = z.infer<typeof masterCvPersonalInfoSchema>;
 export type MasterCvSection = z.infer<typeof masterCvSectionSchema>;
 export type ContentOverrideItem = z.infer<typeof contentOverrideItemSchema>;

@@ -82,6 +82,7 @@ model CvLabDocument {
   contentOverrides Json?
   hiddenItems      Json?
   personalInfo     Json?
+  shareToken       String? @unique
 
   coachSessionId String?
 

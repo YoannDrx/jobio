@@ -4,6 +4,7 @@ import { Button } from "./ui/button";
 
 export function AvatarUploader(props: {
   onImageChange: (file: File) => void;
+  onImageRemove?: () => void | Promise<void>;
   currentAvatar?: string | null;
 }) {
   const [
@@ -28,6 +29,19 @@ export function AvatarUploader(props: {
   });
 
   const previewUrl = files[0]?.preview ?? props.currentAvatar ?? null;
+  const hasLocalFile = Boolean(files[0]?.id);
+
+  const handleRemove = () => {
+    const localFileId = files[0]?.id;
+    if (localFileId) {
+      removeFile(localFileId);
+      return;
+    }
+
+    if (previewUrl && props.onImageRemove) {
+      void props.onImageRemove();
+    }
+  };
 
   return (
     <div className="flex w-fit flex-col items-center gap-2">
@@ -60,10 +74,11 @@ export function AvatarUploader(props: {
         </button>
         {previewUrl && (
           <Button
-            onClick={() => removeFile(files[0]?.id ?? "")}
+            onClick={handleRemove}
             size="icon"
             className="border-background focus-visible:border-background absolute -top-1 -right-1 size-6 rounded-full border-2 shadow-none"
             aria-label="Remove image"
+            disabled={!hasLocalFile && !props.onImageRemove}
           >
             <XIcon className="size-3.5" />
           </Button>

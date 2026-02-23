@@ -539,7 +539,7 @@ export function useCvCoachStudio() {
               action: {
                 label: "Voir",
                 onClick: () => {
-                  window.location.href = "/app/cv-lab";
+                  window.location.href = "/job/cv-studio?tab=editor";
                 },
               },
             });

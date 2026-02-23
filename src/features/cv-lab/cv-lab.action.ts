@@ -5,12 +5,16 @@ import { authAction } from "@/lib/actions/safe-actions";
 import { ApplicationError } from "@/lib/errors/application-error";
 import { prisma } from "@/lib/prisma";
 import { enforcePlanLimit, enforcePlanFeature } from "@/lib/plan-limits";
+import { nanoid } from "nanoid";
 import { z } from "zod";
 import {
+  contentOverridesSchema,
   createCvLabDocumentSchema,
   createCvLabVersionSchema,
   cvLabDocumentIdSchema,
   CV_LAB_SECTIONS,
+  hiddenItemsSchema,
+  personalInfoOverridesSchema,
   restoreCvLabVersionSchema,
   updateCvLabDocumentSchema,
 } from "./cv-lab.schema";
@@ -409,6 +413,10 @@ export const duplicateCvLabDocumentAction = authAction
         summaryOverride: source.summaryOverride,
         sectionOrder: source.sectionOrder ?? Prisma.JsonNull,
         hiddenSections: source.hiddenSections ?? Prisma.JsonNull,
+        masterCvId: source.masterCvId,
+        contentOverrides: source.contentOverrides ?? Prisma.JsonNull,
+        hiddenItems: source.hiddenItems ?? Prisma.JsonNull,
+        personalInfo: source.personalInfo ?? Prisma.JsonNull,
       },
     });
 
@@ -506,6 +514,85 @@ export const deleteCvLabDocumentAction = authAction
     await prisma.cvLabDocument.delete({
       where: {
         id: document.id,
+      },
+    });
+
+    return {
+      success: true,
+    };
+  });
+
+export const generateCvLabShareTokenAction = authAction
+  .inputSchema(cvLabDocumentIdSchema)
+  .action(async ({ parsedInput, ctx: { user } }) => {
+    const document = await prisma.cvLabDocument.findFirst({
+      where: {
+        id: parsedInput.id,
+        userId: user.id,
+        archivedAt: null,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!document) {
+      throw new ApplicationError("Document CV introuvable");
+    }
+
+    const token = nanoid(32);
+
+    try {
+      await prisma.cvLabDocument.update({
+        where: {
+          id: document.id,
+        },
+        data: {
+          shareToken: token,
+        },
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2002"
+      ) {
+        throw new ApplicationError(
+          "Impossible de générer un lien de partage, réessaie",
+        );
+      }
+
+      throw error;
+    }
+
+    return {
+      token,
+      url: `/p/cv/${token}`,
+    };
+  });
+
+export const revokeCvLabShareTokenAction = authAction
+  .inputSchema(cvLabDocumentIdSchema)
+  .action(async ({ parsedInput, ctx: { user } }) => {
+    const document = await prisma.cvLabDocument.findFirst({
+      where: {
+        id: parsedInput.id,
+        userId: user.id,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!document) {
+      throw new ApplicationError("Document CV introuvable");
+    }
+
+    await prisma.cvLabDocument.update({
+      where: {
+        id: document.id,
+      },
+      data: {
+        shareToken: null,
       },
     });
 
@@ -637,6 +724,10 @@ export const restoreCvLabVersionAction = authAction
         summaryOverride: z.string().nullable().optional(),
         sectionOrder: z.array(z.enum(CV_LAB_SECTIONS)),
         hiddenSections: z.array(z.enum(CV_LAB_SECTIONS)),
+        masterCvId: z.string().nullable().optional(),
+        contentOverrides: contentOverridesSchema.optional().nullable(),
+        hiddenItems: hiddenItemsSchema.optional().nullable(),
+        personalInfo: personalInfoOverridesSchema.optional().nullable(),
       })
       .parse(version.snapshot);
 
@@ -663,6 +754,26 @@ export const restoreCvLabVersionAction = authAction
         summaryOverride: snapshot.summaryOverride ?? null,
         sectionOrder: toJsonArray(snapshot.sectionOrder),
         hiddenSections: toJsonArray(snapshot.hiddenSections),
+        masterCvId:
+          snapshot.masterCvId !== undefined ? snapshot.masterCvId : undefined,
+        contentOverrides:
+          snapshot.contentOverrides !== undefined
+            ? snapshot.contentOverrides
+              ? (snapshot.contentOverrides as unknown as Prisma.InputJsonValue)
+              : Prisma.JsonNull
+            : undefined,
+        hiddenItems:
+          snapshot.hiddenItems !== undefined
+            ? snapshot.hiddenItems
+              ? (snapshot.hiddenItems as unknown as Prisma.InputJsonValue)
+              : Prisma.JsonNull
+            : undefined,
+        personalInfo:
+          snapshot.personalInfo !== undefined
+            ? snapshot.personalInfo
+              ? (snapshot.personalInfo as unknown as Prisma.InputJsonValue)
+              : Prisma.JsonNull
+            : undefined,
       },
     });
 

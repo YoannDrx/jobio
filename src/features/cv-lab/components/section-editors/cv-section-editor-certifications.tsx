@@ -162,7 +162,7 @@ export function CvSectionEditorCertifications({
                 <Label>Date d'obtention</Label>
                 <Input
                   value={item.issueDate ?? ""}
-                  placeholder="2023-03"
+                  placeholder="mars 2023"
                   onChange={(e) =>
                     updateItem(index, { issueDate: e.target.value })
                   }

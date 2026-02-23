@@ -5,7 +5,14 @@ import { CvLabEditSettings } from "./cv-lab-edit-settings";
 import { CvLabEditSections } from "./cv-lab-edit-sections";
 import { CvLabEditVersions } from "./cv-lab-edit-versions";
 import { CvLabEditAts } from "./cv-lab-edit-ats";
-import type { CvLabSection, CvLabTemplate, CvLabTheme } from "../cv-lab.schema";
+import type {
+  ContentOverrideItem,
+  CvLabSection,
+  CvLabTemplate,
+  CvLabTheme,
+  MasterCvItem,
+  MasterCvSection,
+} from "../cv-lab.schema";
 import type {
   AtsAnalysis,
   AtsSuggestionPreview,
@@ -74,6 +81,23 @@ type CvLabEditPanelProps = {
   onPreviewAtsSuggestions: () => void;
   onApplyAtsSuggestions: () => void;
   onCancelAtsPreview: () => void;
+  hasMasterCvSource: boolean;
+  masterCv: { id: string; fullName: string } | null;
+  onDocumentSourceChange: (source: "profile" | "master") => Promise<void>;
+  masterItems?: Partial<Record<MasterCvSection, MasterCvItem[]>>;
+  hiddenItemIds?: Partial<Record<MasterCvSection, string[]>>;
+  contentOverrides?: Partial<Record<MasterCvSection, ContentOverrideItem[]>>;
+  onToggleItem?: (
+    section: MasterCvSection,
+    itemId: string,
+    visible: boolean,
+  ) => void;
+  onUpdateOverride?: (
+    section: MasterCvSection,
+    itemId: string,
+    patch: Record<string, unknown>,
+  ) => void;
+  onRemoveOverride?: (section: MasterCvSection, itemId: string) => void;
 };
 
 export function CvLabEditPanel({
@@ -112,6 +136,15 @@ export function CvLabEditPanel({
   onPreviewAtsSuggestions,
   onApplyAtsSuggestions,
   onCancelAtsPreview,
+  hasMasterCvSource,
+  masterCv,
+  onDocumentSourceChange,
+  masterItems,
+  hiddenItemIds,
+  contentOverrides,
+  onToggleItem,
+  onUpdateOverride,
+  onRemoveOverride,
 }: CvLabEditPanelProps) {
   return (
     <Tabs
@@ -131,6 +164,9 @@ export function CvLabEditPanel({
           onDraftChange={onDraftChange}
           profiles={profiles}
           canUseAllCvTemplates={canUseAllCvTemplates}
+          hasMasterCvSource={hasMasterCvSource}
+          masterCv={masterCv}
+          onDocumentSourceChange={onDocumentSourceChange}
         />
       </TabsContent>
 
@@ -140,6 +176,12 @@ export function CvLabEditPanel({
           hiddenSections={draft.hiddenSections}
           onToggleSection={onToggleSection}
           onMoveSection={onMoveSection}
+          masterItems={masterItems}
+          hiddenItemIds={hiddenItemIds}
+          contentOverrides={contentOverrides}
+          onToggleItem={onToggleItem}
+          onUpdateOverride={onUpdateOverride}
+          onRemoveOverride={onRemoveOverride}
         />
       </TabsContent>
 

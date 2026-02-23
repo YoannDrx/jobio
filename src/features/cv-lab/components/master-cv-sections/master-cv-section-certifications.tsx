@@ -96,7 +96,7 @@ export function CertificationsSection({
                     <Label>Date</Label>
                     <Input
                       value={current.date ?? ""}
-                      placeholder="2023-06"
+                      placeholder="juin 2023"
                       onChange={(e) =>
                         updateEdit(item.id, { date: e.target.value })
                       }
@@ -139,7 +139,10 @@ export function CertificationsSection({
         variant="outline"
         size="sm"
         onClick={async () =>
-          onAdd("certifications", { name: "", description: "" })
+          onAdd("certifications", {
+            name: "Nouvelle certification",
+            issuer: "Organisme",
+          })
         }
       >
         <Plus className="mr-1 size-3.5" />

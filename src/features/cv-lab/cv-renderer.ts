@@ -505,6 +505,8 @@ export const renderCvLabHtml = (
       display: flex;
       gap: 20px;
       align-items: flex-start;
+      break-inside: avoid;
+      page-break-inside: avoid;
     }
     .header-photo {
       width: 80px;
@@ -537,6 +539,8 @@ export const renderCvLabHtml = (
       color: var(--muted);
       font-size: 13px;
       align-items: center;
+      break-inside: avoid;
+      page-break-inside: avoid;
     }
     .chip {
       display: inline-flex;
@@ -615,6 +619,8 @@ export const renderCvLabHtml = (
       white-space: pre-wrap;
       orphans: 3;
       widows: 3;
+      break-inside: avoid;
+      page-break-inside: avoid;
     }
     .list {
       margin: 0;
@@ -623,10 +629,16 @@ export const renderCvLabHtml = (
       display: grid;
       gap: 5px;
     }
+    .list li {
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
     .badges {
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
+      break-inside: avoid;
+      page-break-inside: avoid;
     }
     .badge {
       display: inline-flex;
@@ -638,6 +650,8 @@ export const renderCvLabHtml = (
       line-height: 1;
       color: color-mix(in srgb, var(--accent) 76%, var(--text));
       background: color-mix(in srgb, var(--accent) 8%, transparent);
+      break-inside: avoid;
+      page-break-inside: avoid;
     }
     .badge small {
       color: var(--muted);
@@ -655,21 +669,46 @@ export const renderCvLabHtml = (
       }
     }
     @media print {
+      html,
       body {
         padding: 0;
+        background: #ffffff !important;
       }
       .cv {
         border: none;
         border-radius: 0;
         max-width: 100%;
+        overflow: visible;
+        background: #ffffff !important;
+      }
+      header,
+      .content,
+      main,
+      aside,
+      .section {
+        background: #ffffff !important;
       }
       .section {
-        break-inside: avoid;
-        page-break-inside: avoid;
+        break-inside: auto;
+        page-break-inside: auto;
       }
       .item {
         break-inside: avoid;
         page-break-inside: avoid;
+      }
+      .paragraph {
+        break-inside: auto;
+        page-break-inside: auto;
+      }
+      .list li {
+        break-inside: auto;
+        page-break-inside: auto;
+      }
+      .meta-line,
+      .badges,
+      .badge {
+        break-inside: auto;
+        page-break-inside: auto;
       }
       h3 {
         break-after: avoid;

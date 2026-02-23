@@ -37,6 +37,11 @@ export type CvDocument = {
   summaryOverride: string | null;
   sectionOrder: CvLabSection[];
   hiddenSections: CvLabSection[];
+  masterCvId?: string | null;
+  contentOverrides?: unknown;
+  hiddenItems?: unknown;
+  personalInfo?: unknown;
+  shareToken: string | null;
   coachSessionId: string | null;
   updatedAt: string | Date;
   archivedAt: string | Date | null;

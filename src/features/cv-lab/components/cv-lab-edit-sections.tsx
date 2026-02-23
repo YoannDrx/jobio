@@ -4,12 +4,25 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import {
+  DragDropContext,
+  Draggable,
+  Droppable,
+  type DropResult,
+} from "@hello-pangea/dnd";
+import {
   MASTER_CV_SECTIONS,
   type CvLabSection,
   type ContentOverrideItem,
+  type MasterCvItem,
   type MasterCvSection,
 } from "../cv-lab.schema";
-import { ArrowDown, ArrowLeft, ArrowUp, ChevronRight } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowLeft,
+  ArrowUp,
+  ChevronRight,
+  GripVertical,
+} from "lucide-react";
 import { CvItemSelector } from "./cv-item-selector";
 
 const SECTION_LABELS: Record<CvLabSection, string> = {
@@ -22,7 +35,7 @@ const SECTION_LABELS: Record<CvLabSection, string> = {
   certifications: "Certifications",
 };
 
-type MasterItemsMap = Partial<Record<MasterCvSection, { id: string }[]>>;
+type MasterItemsMap = Partial<Record<MasterCvSection, MasterCvItem[]>>;
 type HiddenItemsMap = Partial<Record<MasterCvSection, string[]>>;
 type ContentOverridesMap = Partial<
   Record<MasterCvSection, ContentOverrideItem[]>
@@ -69,6 +82,25 @@ export function CvLabEditSections({
 
   const hasMasterCvSupport = Boolean(masterItems && onToggleItem);
 
+  const handleDragEnd = (result: DropResult) => {
+    if (!result.destination) {
+      return;
+    }
+
+    if (result.destination.index === result.source.index) {
+      return;
+    }
+
+    const section = result.draggableId as CvLabSection;
+    const direction =
+      result.destination.index > result.source.index ? "down" : "up";
+    const moveCount = Math.abs(result.destination.index - result.source.index);
+
+    for (let index = 0; index < moveCount; index += 1) {
+      onMoveSection(section, direction);
+    }
+  };
+
   if (expandedSection && hasMasterCvSupport) {
     return (
       <div className="flex flex-col gap-3">
@@ -103,64 +135,95 @@ export function CvLabEditSections({
   }
 
   return (
-    <div className="flex flex-col gap-2">
-      {sectionOrder.map((section, index) => {
-        const isHidden = hiddenSections.includes(section);
-        const canExpand = hasMasterCvSupport && isMasterCvSection(section);
-        const itemCount = canExpand
-          ? (masterItems?.[section as MasterCvSection]?.length ?? 0)
-          : 0;
-
-        return (
+    <DragDropContext onDragEnd={handleDragEnd}>
+      <Droppable droppableId="cv-section-order">
+        {(droppableProvided) => (
           <div
-            key={section}
-            className="flex items-center justify-between rounded-md border px-3 py-2"
+            ref={droppableProvided.innerRef}
+            {...droppableProvided.droppableProps}
+            className="flex flex-col gap-2"
           >
-            <div className="flex items-center gap-3">
-              <Switch
-                checked={!isHidden}
-                onCheckedChange={(checked) => onToggleSection(section, checked)}
-              />
-              <div className="flex items-center gap-2">
-                <span className="text-sm">{SECTION_LABELS[section]}</span>
-                {canExpand && itemCount > 0 ? (
-                  <span className="text-muted-foreground text-xs">
-                    ({itemCount})
-                  </span>
-                ) : null}
-              </div>
-            </div>
-            <div className="flex gap-1">
-              {canExpand ? (
-                <Button
-                  size="icon-sm"
-                  variant="ghost"
-                  title="Gerer les items"
-                  onClick={() => setExpandedSection(section as MasterCvSection)}
-                >
-                  <ChevronRight className="size-4" />
-                </Button>
-              ) : null}
-              <Button
-                size="icon-sm"
-                variant="ghost"
-                disabled={index === 0}
-                onClick={() => onMoveSection(section, "up")}
-              >
-                <ArrowUp className="size-4" />
-              </Button>
-              <Button
-                size="icon-sm"
-                variant="ghost"
-                disabled={index === sectionOrder.length - 1}
-                onClick={() => onMoveSection(section, "down")}
-              >
-                <ArrowDown className="size-4" />
-              </Button>
-            </div>
+            {sectionOrder.map((section, index) => {
+              const isHidden = hiddenSections.includes(section);
+              const canExpand =
+                hasMasterCvSupport && isMasterCvSection(section);
+              const itemCount = canExpand
+                ? (masterItems?.[section as MasterCvSection]?.length ?? 0)
+                : 0;
+
+              return (
+                <Draggable key={section} draggableId={section} index={index}>
+                  {(draggableProvided) => (
+                    <div
+                      ref={draggableProvided.innerRef}
+                      {...draggableProvided.draggableProps}
+                      className="flex items-center justify-between rounded-md border px-3 py-2"
+                    >
+                      <div className="flex items-center gap-3">
+                        <button
+                          type="button"
+                          className="text-muted-foreground hover:text-foreground"
+                          title="Glisser pour reordonner"
+                          {...draggableProvided.dragHandleProps}
+                        >
+                          <GripVertical className="size-4" />
+                        </button>
+                        <Switch
+                          checked={!isHidden}
+                          onCheckedChange={(checked) =>
+                            onToggleSection(section, checked)
+                          }
+                        />
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm">
+                            {SECTION_LABELS[section]}
+                          </span>
+                          {canExpand && itemCount > 0 ? (
+                            <span className="text-muted-foreground text-xs">
+                              ({itemCount})
+                            </span>
+                          ) : null}
+                        </div>
+                      </div>
+                      <div className="flex gap-1">
+                        {canExpand ? (
+                          <Button
+                            size="icon-sm"
+                            variant="ghost"
+                            title="Gerer les items"
+                            onClick={() =>
+                              setExpandedSection(section as MasterCvSection)
+                            }
+                          >
+                            <ChevronRight className="size-4" />
+                          </Button>
+                        ) : null}
+                        <Button
+                          size="icon-sm"
+                          variant="ghost"
+                          disabled={index === 0}
+                          onClick={() => onMoveSection(section, "up")}
+                        >
+                          <ArrowUp className="size-4" />
+                        </Button>
+                        <Button
+                          size="icon-sm"
+                          variant="ghost"
+                          disabled={index === sectionOrder.length - 1}
+                          onClick={() => onMoveSection(section, "down")}
+                        >
+                          <ArrowDown className="size-4" />
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </Draggable>
+              );
+            })}
+            {droppableProvided.placeholder}
           </div>
-        );
-      })}
-    </div>
+        )}
+      </Droppable>
+    </DragDropContext>
   );
 }

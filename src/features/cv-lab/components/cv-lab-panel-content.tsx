@@ -13,8 +13,10 @@ import {
   ChevronDown,
   Copy,
   Download,
+  ExternalLink,
   Eye,
   FileDown,
+  Link2,
   RotateCcw,
   Trash2,
   Upload,
@@ -40,6 +42,11 @@ type CvLabPanelContentProps = {
   importInputRef: RefObject<HTMLInputElement | null>;
   onImportInputChange: (event: ChangeEvent<HTMLInputElement>) => void;
   previewHtml: string | null;
+  publicShareUrl: string | null;
+  onGenerateShareLink: () => void;
+  isGeneratingShareLink: boolean;
+  onRevokeShareLink: () => void;
+  isRevokingShareLink: boolean;
   onExportPdf: () => void;
   isExportingPdf: boolean;
   isArchived: boolean;
@@ -69,6 +76,11 @@ export function CvLabPanelContent({
   importInputRef,
   onImportInputChange,
   previewHtml,
+  publicShareUrl,
+  onGenerateShareLink,
+  isGeneratingShareLink,
+  onRevokeShareLink,
+  isRevokingShareLink,
   onExportPdf,
   isExportingPdf,
   isArchived,
@@ -81,6 +93,17 @@ export function CvLabPanelContent({
   onReset,
   hasUnsavedChanges,
 }: CvLabPanelContentProps) {
+  const handleCopyShareLink = async () => {
+    if (!publicShareUrl) return;
+
+    try {
+      await navigator.clipboard.writeText(publicShareUrl);
+      toast.success("Lien public copié");
+    } catch {
+      toast.error("Impossible de copier le lien");
+    }
+  };
+
   return (
     <div className="flex flex-col gap-4">
       <input
@@ -114,6 +137,81 @@ export function CvLabPanelContent({
       ) : null}
 
       {editPanel}
+
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm">Lien public</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-2">
+          <p className="text-muted-foreground text-xs">
+            Partage ce CV avec un recruteur sans connexion.
+          </p>
+
+          {publicShareUrl ? (
+            <>
+              <div className="bg-muted flex items-center gap-1 rounded-md p-2">
+                <p className="flex-1 truncate text-xs">{publicShareUrl}</p>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 w-7 p-0"
+                  onClick={() => void handleCopyShareLink()}
+                  aria-label="Copier le lien public"
+                >
+                  <Copy className="size-3.5" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 w-7 p-0"
+                  asChild
+                >
+                  <a
+                    href={publicShareUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="Ouvrir le lien public"
+                  >
+                    <ExternalLink className="size-3.5" />
+                  </a>
+                </Button>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={onGenerateShareLink}
+                  disabled={isGeneratingShareLink || isRevokingShareLink}
+                >
+                  <RotateCcw className="mr-2 size-3.5" />
+                  {isGeneratingShareLink ? "Regeneration..." : "Regenerer"}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-destructive"
+                  onClick={onRevokeShareLink}
+                  disabled={isRevokingShareLink || isGeneratingShareLink}
+                >
+                  <Trash2 className="mr-2 size-3.5" />
+                  {isRevokingShareLink ? "Desactivation..." : "Desactiver"}
+                </Button>
+              </div>
+            </>
+          ) : (
+            <Button
+              variant="outline"
+              size="sm"
+              className="w-fit"
+              onClick={onGenerateShareLink}
+              disabled={isGeneratingShareLink}
+            >
+              <Link2 className="mr-2 size-3.5" />
+              {isGeneratingShareLink ? "Activation..." : "Activer lien public"}
+            </Button>
+          )}
+        </CardContent>
+      </Card>
 
       <Separator />
 

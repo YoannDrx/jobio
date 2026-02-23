@@ -92,10 +92,20 @@ export function EducationSection({
                     />
                   </div>
                   <div className="flex flex-col gap-1">
+                    <Label>Date debut</Label>
+                    <Input
+                      value={current.startDate ?? ""}
+                      placeholder="septembre 2018"
+                      onChange={(e) =>
+                        updateEdit(item.id, { startDate: e.target.value })
+                      }
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1">
                     <Label>Date fin</Label>
                     <Input
                       value={current.endDate ?? ""}
-                      placeholder="2020-06"
+                      placeholder="juin 2020"
                       onChange={(e) =>
                         updateEdit(item.id, { endDate: e.target.value })
                       }
@@ -148,7 +158,11 @@ export function EducationSection({
         variant="outline"
         size="sm"
         onClick={async () =>
-          onAdd("education", { degree: "", school: "", description: "" })
+          onAdd("education", {
+            degree: "Nouveau diplome",
+            institution: "Etablissement",
+            description: "",
+          })
         }
       >
         <Plus className="mr-1 size-3.5" />

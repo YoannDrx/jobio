@@ -248,6 +248,7 @@ export function useMasterCvStudio() {
 
   const handleSectionClick = useCallback((section: string) => {
     const sectionMap: Record<string, MasterCvSection> = {
+      header: "personal",
       summary: "personal",
       experiences: "experiences",
       skills: "skills",

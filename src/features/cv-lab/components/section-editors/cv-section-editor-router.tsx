@@ -2,6 +2,8 @@
 
 import type {
   ContentOverrides,
+  MasterCvItem,
+  MasterCvSection,
   PersonalInfoOverrides,
 } from "@/features/cv-lab/cv-lab.schema";
 import { CvSectionEditorHeader } from "./cv-section-editor-header";
@@ -12,6 +14,7 @@ import { CvSectionEditorEducation } from "./cv-section-editor-education";
 import { CvSectionEditorProjects } from "./cv-section-editor-projects";
 import { CvSectionEditorLanguages } from "./cv-section-editor-languages";
 import { CvSectionEditorCertifications } from "./cv-section-editor-certifications";
+import { CvItemSelector } from "../cv-item-selector";
 import { Info, PenLine } from "lucide-react";
 
 type CvProfile = {
@@ -42,6 +45,19 @@ type CvSectionEditorRouterProps = {
   contentOverrides?: ContentOverrides;
   personalInfo?: PersonalInfoOverrides;
   onOverridesSaved?: () => Promise<void>;
+  masterItems?: Partial<Record<MasterCvSection, MasterCvItem[]>>;
+  hiddenItemIds?: Partial<Record<MasterCvSection, string[]>>;
+  onToggleItem?: (
+    section: MasterCvSection,
+    itemId: string,
+    visible: boolean,
+  ) => void;
+  onUpdateOverride?: (
+    section: MasterCvSection,
+    itemId: string,
+    patch: Record<string, unknown>,
+  ) => void;
+  onRemoveOverride?: (section: MasterCvSection, itemId: string) => void;
 };
 
 const SECTION_TITLES: Record<string, string> = {
@@ -65,9 +81,44 @@ export function CvSectionEditorRouter({
   contentOverrides,
   personalInfo,
   onOverridesSaved,
+  masterItems,
+  hiddenItemIds,
+  onToggleItem,
+  onUpdateOverride,
+  onRemoveOverride,
 }: CvSectionEditorRouterProps) {
   const title = SECTION_TITLES[section] ?? section;
   const isOverrideMode = Boolean(documentId);
+  const isMasterSection = [
+    "experiences",
+    "skills",
+    "education",
+    "projects",
+    "languages",
+    "certifications",
+  ].includes(section);
+
+  const renderMasterSectionItemEditor = (targetSection: MasterCvSection) => {
+    if (!isOverrideMode) return null;
+    if (!masterItems) return null;
+    if (!onToggleItem || !onUpdateOverride || !onRemoveOverride) return null;
+
+    return (
+      <CvItemSelector
+        section={targetSection}
+        masterItems={masterItems[targetSection] ?? []}
+        hiddenItemIds={hiddenItemIds?.[targetSection] ?? []}
+        overrides={contentOverrides?.[targetSection] ?? []}
+        onToggleItem={(itemId, visible) =>
+          onToggleItem(targetSection, itemId, visible)
+        }
+        onUpdateOverride={(itemId, patch) =>
+          onUpdateOverride(targetSection, itemId, patch)
+        }
+        onRemoveOverride={(itemId) => onRemoveOverride(targetSection, itemId)}
+      />
+    );
+  };
 
   const renderEditor = () => {
     switch (section) {
@@ -91,6 +142,15 @@ export function CvSectionEditorRouter({
           />
         );
       case "experiences":
+        if (isOverrideMode) {
+          return (
+            renderMasterSectionItemEditor("experiences") ?? (
+              <p className="text-muted-foreground text-sm">
+                Impossible de charger les items du CV Master.
+              </p>
+            )
+          );
+        }
         return (
           <CvSectionEditorExperiences
             profile={profile}
@@ -101,6 +161,15 @@ export function CvSectionEditorRouter({
           />
         );
       case "skills":
+        if (isOverrideMode) {
+          return (
+            renderMasterSectionItemEditor("skills") ?? (
+              <p className="text-muted-foreground text-sm">
+                Impossible de charger les items du CV Master.
+              </p>
+            )
+          );
+        }
         return (
           <CvSectionEditorSkills
             profile={profile}
@@ -111,6 +180,15 @@ export function CvSectionEditorRouter({
           />
         );
       case "education":
+        if (isOverrideMode) {
+          return (
+            renderMasterSectionItemEditor("education") ?? (
+              <p className="text-muted-foreground text-sm">
+                Impossible de charger les items du CV Master.
+              </p>
+            )
+          );
+        }
         return (
           <CvSectionEditorEducation
             profile={profile}
@@ -121,6 +199,15 @@ export function CvSectionEditorRouter({
           />
         );
       case "projects":
+        if (isOverrideMode) {
+          return (
+            renderMasterSectionItemEditor("projects") ?? (
+              <p className="text-muted-foreground text-sm">
+                Impossible de charger les items du CV Master.
+              </p>
+            )
+          );
+        }
         return (
           <CvSectionEditorProjects
             profile={profile}
@@ -131,6 +218,15 @@ export function CvSectionEditorRouter({
           />
         );
       case "languages":
+        if (isOverrideMode) {
+          return (
+            renderMasterSectionItemEditor("languages") ?? (
+              <p className="text-muted-foreground text-sm">
+                Impossible de charger les items du CV Master.
+              </p>
+            )
+          );
+        }
         return (
           <CvSectionEditorLanguages
             profile={profile}
@@ -141,6 +237,15 @@ export function CvSectionEditorRouter({
           />
         );
       case "certifications":
+        if (isOverrideMode) {
+          return (
+            renderMasterSectionItemEditor("certifications") ?? (
+              <p className="text-muted-foreground text-sm">
+                Impossible de charger les items du CV Master.
+              </p>
+            )
+          );
+        }
         return (
           <CvSectionEditorCertifications
             profile={profile}
@@ -159,14 +264,7 @@ export function CvSectionEditorRouter({
     }
   };
 
-  const isProfileSection = [
-    "experiences",
-    "skills",
-    "education",
-    "projects",
-    "languages",
-    "certifications",
-  ].includes(section);
+  const isProfileSection = isMasterSection;
 
   return (
     <div className="flex flex-col gap-4">

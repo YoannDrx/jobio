@@ -88,7 +88,7 @@ const IMPORT_SYSTEM_PROMPT = `Tu es un expert en extraction de donnees CV. A par
 
 Regles:
 - Extrais TOUTES les informations disponibles, meme partielles.
-- Pour les dates, utilise le format "MM/YYYY" ou "YYYY" si le mois n'est pas disponible.
+- Pour les dates, utilise un format texte lisible en francais: "janvier 2026" (ou "2026" si le mois n'est pas disponible).
 - Pour les experiences en cours, mets current: true et endDate vide.
 - Pour les competences, estime le niveau: "BEGINNER", "INTERMEDIATE", "ADVANCED", "EXPERT".
 - Pour les langues, estime le niveau: "BEGINNER", "INTERMEDIATE", "ADVANCED", "FLUENT".
@@ -105,6 +105,48 @@ const addIdsToItems = <T extends Record<string, unknown>>(
 
 const toJson = (val: unknown): Prisma.InputJsonValue =>
   val as Prisma.InputJsonValue;
+
+const FRENCH_MONTHS = [
+  "janvier",
+  "fevrier",
+  "mars",
+  "avril",
+  "mai",
+  "juin",
+  "juillet",
+  "aout",
+  "septembre",
+  "octobre",
+  "novembre",
+  "decembre",
+] as const;
+
+const normalizeDateLabel = (value: string | undefined): string => {
+  const trimmed = value?.trim() ?? "";
+  if (!trimmed) {
+    return "";
+  }
+
+  const monthYear = trimmed.match(/^(\d{1,2})[/-](\d{4})$/);
+  if (monthYear) {
+    const month = Number(monthYear[1]);
+    const year = monthYear[2];
+    if (month >= 1 && month <= 12) {
+      return `${FRENCH_MONTHS[month - 1]} ${year}`;
+    }
+  }
+
+  const yearMonth = trimmed.match(/^(\d{4})[/-](\d{1,2})$/);
+  if (yearMonth) {
+    const year = yearMonth[1];
+    const month = Number(yearMonth[2]);
+    if (month >= 1 && month <= 12) {
+      return `${FRENCH_MONTHS[month - 1]} ${year}`;
+    }
+  }
+
+  return trimmed;
+};
 
 export const importMasterCvFromFileAction = authAction
   .inputSchema(
@@ -154,12 +196,25 @@ export const importMasterCvFromFileAction = authAction
 
     const extracted = response.object;
 
-    const experiences = addIdsToItems(extracted.experiences);
+    const experiences = addIdsToItems(extracted.experiences).map((item) => ({
+      ...item,
+      startDate: normalizeDateLabel(item.startDate),
+      endDate: normalizeDateLabel(item.endDate),
+    }));
     const skills = addIdsToItems(extracted.skills);
-    const education = addIdsToItems(extracted.education);
+    const education = addIdsToItems(extracted.education).map((item) => ({
+      ...item,
+      startDate: normalizeDateLabel(item.startDate),
+      endDate: normalizeDateLabel(item.endDate),
+    }));
     const projects = addIdsToItems(extracted.projects);
     const languages = addIdsToItems(extracted.languages);
-    const certifications = addIdsToItems(extracted.certifications);
+    const certifications = addIdsToItems(extracted.certifications).map(
+      (item) => ({
+        ...item,
+        date: normalizeDateLabel(item.date),
+      }),
+    );
 
     const existing = await prisma.masterCv.findUnique({
       where: { userId: user.id },
@@ -249,11 +304,22 @@ export const importMasterCvFromCoachSessionAction = authAction
       .filter((s) => s.trim().length > 0)
       .map((name) => ({ id: nanoid(11), name, level: "ADVANCED" }));
 
-    const experiences = mapWithIds(snapshot.experiences);
-    const education = mapWithIds(snapshot.education);
+    const experiences = mapWithIds(snapshot.experiences).map((item) => ({
+      ...item,
+      startDate: normalizeDateLabel(asString(item.startDate)),
+      endDate: normalizeDateLabel(asString(item.endDate)),
+    }));
+    const education = mapWithIds(snapshot.education).map((item) => ({
+      ...item,
+      startDate: normalizeDateLabel(asString(item.startDate)),
+      endDate: normalizeDateLabel(asString(item.endDate)),
+    }));
     const projects = mapWithIds(snapshot.projects);
     const languages = mapWithIds(snapshot.languages);
-    const certifications = mapWithIds(snapshot.certifications);
+    const certifications = mapWithIds(snapshot.certifications).map((item) => ({
+      ...item,
+      date: normalizeDateLabel(asString(item.date) || asString(item.issueDate)),
+    }));
     const interests = Array.isArray(snapshot.interests)
       ? (snapshot.interests as string[]).filter(
           (s) => typeof s === "string" && s.trim().length > 0,

@@ -84,15 +84,30 @@ export function PersonalInfoSection({
     });
   };
 
+  const handleRemovePhoto = async () => {
+    if (!photoUrl) return;
+    setPhotoUrl("");
+    try {
+      await onSave({ photoUrl: "" });
+      toast.success("Photo supprimee");
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Erreur suppression photo",
+      );
+      setPhotoUrl(data.photoUrl ?? "");
+    }
+  };
+
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-start gap-4">
         <AvatarUploader
           onImageChange={handlePhotoUpload}
+          onImageRemove={handleRemovePhoto}
           currentAvatar={photoUrl || null}
         />
         {isUploadingPhoto && (
-          <div className="text-muted-foreground flex items-center gap-2 text-sm">
+          <div className="text-muted-foreground flex items-center gap-2 pt-2 text-sm">
             <Loader2 className="size-4 animate-spin" />
             Upload en cours...
           </div>

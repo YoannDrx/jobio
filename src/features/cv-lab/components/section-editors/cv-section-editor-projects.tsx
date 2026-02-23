@@ -172,7 +172,7 @@ export function CvSectionEditorProjects({
                   <Label>Date début</Label>
                   <Input
                     value={item.startDate ?? ""}
-                    placeholder="2022-01"
+                    placeholder="janvier 2022"
                     onChange={(e) =>
                       updateItem(index, { startDate: e.target.value })
                     }
@@ -182,7 +182,7 @@ export function CvSectionEditorProjects({
                   <Label>Date fin</Label>
                   <Input
                     value={item.endDate ?? ""}
-                    placeholder="2023-06"
+                    placeholder="juin 2023"
                     onChange={(e) =>
                       updateItem(index, { endDate: e.target.value })
                     }

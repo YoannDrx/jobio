@@ -126,7 +126,9 @@ export function ProjectsSection({
       <Button
         variant="outline"
         size="sm"
-        onClick={async () => onAdd("projects", { name: "", description: "" })}
+        onClick={async () =>
+          onAdd("projects", { name: "Nouveau projet", description: "" })
+        }
       >
         <Plus className="mr-1 size-3.5" />
         Ajouter un projet

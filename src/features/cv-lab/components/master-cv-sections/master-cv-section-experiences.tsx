@@ -95,7 +95,7 @@ export function ExperiencesSection({
                     <Label>Date debut</Label>
                     <Input
                       value={current.startDate ?? ""}
-                      placeholder="2020-01"
+                      placeholder="janvier 2020"
                       onChange={(e) =>
                         updateEdit(item.id, { startDate: e.target.value })
                       }
@@ -105,7 +105,7 @@ export function ExperiencesSection({
                     <Label>Date fin</Label>
                     <Input
                       value={current.endDate ?? ""}
-                      placeholder="2023-06"
+                      placeholder="juin 2023"
                       onChange={(e) =>
                         updateEdit(item.id, { endDate: e.target.value })
                       }
@@ -148,7 +148,11 @@ export function ExperiencesSection({
         variant="outline"
         size="sm"
         onClick={async () =>
-          onAdd("experiences", { title: "", company: "", description: "" })
+          onAdd("experiences", {
+            title: "Nouveau poste",
+            company: "Entreprise",
+            description: "",
+          })
         }
       >
         <Plus className="mr-1 size-3.5" />

@@ -14,6 +14,7 @@ import { dialogManager } from "@/features/dialog-manager/dialog-manager";
 import { resolveActionResult } from "@/lib/actions/actions-utils";
 import { getProfilesAction } from "@/features/profiles/profiles.action";
 import { getCurrentPlanAction } from "@/features/plans/check-limits.action";
+import { getMasterCvAction } from "@/features/cv-lab/master-cv.action";
 import {
   analyzeCvLabAtsAction,
   archiveCvLabDocumentAction,
@@ -21,13 +22,21 @@ import {
   createCvLabVersionAction,
   deleteCvLabDocumentAction,
   duplicateCvLabDocumentAction,
+  generateCvLabShareTokenAction,
   listCvLabDocumentsAction,
   restoreCvLabDocumentAction,
   listCvLabVersionsAction,
+  revokeCvLabShareTokenAction,
   restoreCvLabVersionAction,
   updateCvLabDocumentAction,
 } from "../cv-lab.action";
-import { CV_LAB_SECTIONS, type CvLabSection } from "../cv-lab.schema";
+import {
+  CV_LAB_SECTIONS,
+  MASTER_CV_SECTIONS,
+  type ContentOverrideItem,
+  type CvLabSection,
+  type MasterCvSection,
+} from "../cv-lab.schema";
 import type { CvLabEditTab } from "../components/cv-lab-edit-panel";
 import {
   type AtsAnalysis,
@@ -57,8 +66,68 @@ import {
   toDate,
 } from "../cv-lab-utils";
 
+type MasterCvData = {
+  id: string;
+  fullName: string;
+  experiences: unknown;
+  skills: unknown;
+  education: unknown;
+  projects: unknown;
+  languages: unknown;
+  certifications: unknown;
+};
+
+const parseJsonRecord = (value: unknown): Record<string, unknown> | null => {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    return null;
+  }
+  return value as Record<string, unknown>;
+};
+
+const parseContentOverrides = (
+  value: unknown,
+): Partial<Record<MasterCvSection, ContentOverrideItem[]>> => {
+  const record = parseJsonRecord(value);
+  if (!record) return {};
+
+  const result: Partial<Record<MasterCvSection, ContentOverrideItem[]>> = {};
+  for (const section of MASTER_CV_SECTIONS) {
+    const sectionValue = record[section];
+    if (!Array.isArray(sectionValue)) continue;
+    result[section] = sectionValue.filter(
+      (item): item is ContentOverrideItem =>
+        item !== null &&
+        typeof item === "object" &&
+        !Array.isArray(item) &&
+        typeof (item as { masterItemId?: unknown }).masterItemId === "string",
+    );
+  }
+
+  return result;
+};
+
+const parseHiddenItems = (
+  value: unknown,
+): Partial<Record<MasterCvSection, string[]>> => {
+  const record = parseJsonRecord(value);
+  if (!record) return {};
+
+  const result: Partial<Record<MasterCvSection, string[]>> = {};
+  for (const section of MASTER_CV_SECTIONS) {
+    const sectionValue = record[section];
+    if (!Array.isArray(sectionValue)) continue;
+    result[section] = sectionValue.filter(
+      (item): item is string => typeof item === "string",
+    );
+  }
+
+  return result;
+};
+
 export function useCvLabStudio() {
+
   const [profiles, setProfiles] = useState<CvProfile[]>([]);
+  const [masterCv, setMasterCv] = useState<MasterCvData | null>(null);
   const [documents, setDocuments] = useState<CvDocument[]>([]);
   const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(
     null,
@@ -132,7 +201,8 @@ export function useCvLabStudio() {
 
   const reloadData = useCallback(
     async (nextSelectedId?: string | null) => {
-      const [profileRows, documentRows, planInfo] = await Promise.all([
+      const [profileRows, documentRows, planInfo, masterCvRow] =
+        await Promise.all([
         resolveActionResult(getProfilesAction({})),
         resolveActionResult(
           listCvLabDocumentsAction({
@@ -140,6 +210,7 @@ export function useCvLabStudio() {
           }),
         ),
         resolveActionResult(getCurrentPlanAction()),
+        resolveActionResult(getMasterCvAction()),
       ]);
 
       const normalizedProfiles = profileRows.map((profile) => ({
@@ -157,6 +228,7 @@ export function useCvLabStudio() {
       const normalizedDocuments = documentRows as unknown as CvDocument[];
       setCanUseAllCvTemplates(planInfo.plan !== "free");
       const visibleDocuments = filterDocumentsByView(normalizedDocuments);
+      setMasterCv((masterCvRow as MasterCvData | null) ?? null);
 
       setProfiles(normalizedProfiles);
       setDocuments(visibleDocuments);
@@ -644,6 +716,65 @@ export function useCvLabStudio() {
     },
   });
 
+  const generateShareLinkMutation = useMutation({
+    mutationFn: async () => {
+      if (!selectedDocument) {
+        throw new Error("Aucun document sélectionné");
+      }
+
+      const generatedShare = await resolveActionResult(
+        generateCvLabShareTokenAction({ id: selectedDocument.id }),
+      );
+
+      return {
+        documentId: selectedDocument.id,
+        token: generatedShare.token,
+      };
+    },
+    onSuccess: ({ documentId, token }) => {
+      setDocuments((previous) =>
+        previous.map((document) =>
+          document.id === documentId
+            ? ({ ...document, shareToken: token } as CvDocument)
+            : document,
+        ),
+      );
+      toast.success("Lien public généré");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
+  });
+
+  const revokeShareLinkMutation = useMutation({
+    mutationFn: async () => {
+      if (!selectedDocument) {
+        throw new Error("Aucun document sélectionné");
+      }
+
+      await resolveActionResult(
+        revokeCvLabShareTokenAction({ id: selectedDocument.id }),
+      );
+
+      return {
+        documentId: selectedDocument.id,
+      };
+    },
+    onSuccess: ({ documentId }) => {
+      setDocuments((previous) =>
+        previous.map((document) =>
+          document.id === documentId
+            ? ({ ...document, shareToken: null } as CvDocument)
+            : document,
+        ),
+      );
+      toast.success("Lien public désactivé");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
+  });
+
   const handleDeleteDocument = () => {
     if (!selectedDocument) return;
     dialogManager.confirm({
@@ -1039,9 +1170,255 @@ export function useCvLabStudio() {
     setEditTab("settings");
   };
 
+  const patchSelectedDocument = useCallback(
+    (patch: Partial<CvDocument>) => {
+      if (!selectedDocument?.id) return;
+      setDocuments((previous) =>
+        previous.map((document) =>
+          document.id === selectedDocument.id
+            ? ({ ...document, ...patch } as CvDocument)
+            : document,
+        ),
+      );
+    },
+    [selectedDocument?.id],
+  );
+
+  const setDocumentSource = useCallback(
+    async (source: "profile" | "master") => {
+      if (!selectedDocument) return;
+
+      if (source === "master" && !masterCv?.id) {
+        toast.error("Aucun CV Master disponible");
+        return;
+      }
+
+      try {
+        const masterPatch =
+          source === "master"
+            ? ({
+                masterCvId: masterCv?.id ?? null,
+              } as Partial<CvDocument>)
+            : ({
+                masterCvId: null,
+                contentOverrides: null,
+                hiddenItems: null,
+                personalInfo: null,
+              } as Partial<CvDocument>);
+
+        await resolveActionResult(
+          updateCvLabDocumentAction({
+            id: selectedDocument.id,
+            ...(draft
+              ? {
+                  profileId: draft.profileId,
+                  name: draft.name,
+                  targetRole: draft.targetRole || null,
+                  template: draft.template,
+                  theme: draft.theme,
+                  pageSize: "A4",
+                  accentColor: draft.accentColor,
+                  fontFamily: draft.fontFamily,
+                  headlineOverride: draft.headlineOverride || null,
+                  summaryOverride: draft.summaryOverride || null,
+                  sectionOrder: draft.sectionOrder,
+                  hiddenSections: draft.hiddenSections,
+                }
+              : {}),
+            ...(source === "master"
+              ? { masterCvId: masterCv?.id }
+              : {
+                  masterCvId: null,
+                  contentOverrides: null,
+                  hiddenItems: null,
+                  personalInfo: null,
+                }),
+          }),
+        );
+        patchSelectedDocument(masterPatch);
+        toast.success(
+          source === "master"
+            ? "Source basculee sur le CV Master"
+            : "Source basculee sur le profil",
+        );
+      } catch (error) {
+        toast.error(
+          error instanceof Error ? error.message : "Erreur de mise a jour",
+        );
+      }
+    },
+    [draft, masterCv?.id, patchSelectedDocument, selectedDocument],
+  );
+
+  const toggleMasterItemVisibility = useCallback(
+    async (section: MasterCvSection, itemId: string, visible: boolean) => {
+      if (!selectedDocument?.id) return;
+
+      const currentHidden = parseHiddenItems(selectedDocument.hiddenItems);
+      const sectionHiddenIds = new Set(currentHidden[section] ?? []);
+
+      if (visible) {
+        sectionHiddenIds.delete(itemId);
+      } else {
+        sectionHiddenIds.add(itemId);
+      }
+
+      const nextHidden: Partial<Record<MasterCvSection, string[]>> = {
+        ...currentHidden,
+        [section]: Array.from(sectionHiddenIds),
+      };
+
+      const normalizedHiddenItems: Record<MasterCvSection, string[]> = {
+        experiences: nextHidden.experiences ?? [],
+        skills: nextHidden.skills ?? [],
+        education: nextHidden.education ?? [],
+        projects: nextHidden.projects ?? [],
+        languages: nextHidden.languages ?? [],
+        certifications: nextHidden.certifications ?? [],
+      };
+      const hasHiddenItems = MASTER_CV_SECTIONS.some(
+        (key) => normalizedHiddenItems[key].length > 0,
+      );
+
+      try {
+        await resolveActionResult(
+          updateCvLabDocumentAction({
+            id: selectedDocument.id,
+            hiddenItems: hasHiddenItems ? normalizedHiddenItems : null,
+          }),
+        );
+        patchSelectedDocument({
+          hiddenItems: hasHiddenItems ? normalizedHiddenItems : null,
+        });
+      } catch (error) {
+        toast.error(
+          error instanceof Error ? error.message : "Erreur de mise a jour",
+        );
+      }
+    },
+    [patchSelectedDocument, selectedDocument],
+  );
+
+  const updateMasterItemOverride = useCallback(
+    async (
+      section: MasterCvSection,
+      itemId: string,
+      patch: Record<string, unknown>,
+    ) => {
+      if (!selectedDocument?.id) return;
+
+      const currentOverrides = parseContentOverrides(
+        selectedDocument.contentOverrides,
+      );
+      const sectionOverrides = [...(currentOverrides[section] ?? [])];
+
+      const existingIndex = sectionOverrides.findIndex(
+        (item) => item.masterItemId === itemId,
+      );
+
+      const existingOverride =
+        existingIndex >= 0 ? sectionOverrides[existingIndex] : null;
+      const mergedOverride: ContentOverrideItem = {
+        ...(existingOverride ?? { masterItemId: itemId }),
+        ...patch,
+        masterItemId: itemId,
+      };
+
+      const hasRealOverrideKeys = Object.keys(mergedOverride).some(
+        (key) => key !== "masterItemId",
+      );
+
+      if (existingIndex >= 0) {
+        if (hasRealOverrideKeys) {
+          sectionOverrides[existingIndex] = mergedOverride;
+        } else {
+          sectionOverrides.splice(existingIndex, 1);
+        }
+      } else if (hasRealOverrideKeys) {
+        sectionOverrides.push(mergedOverride);
+      }
+
+      const nextOverrides: Partial<Record<MasterCvSection, ContentOverrideItem[]>> =
+        sectionOverrides.length > 0
+          ? {
+              ...currentOverrides,
+              [section]: sectionOverrides,
+            }
+          : (Object.fromEntries(
+              Object.entries(currentOverrides).filter(
+                ([entrySection]) => entrySection !== section,
+              ),
+            ) as Partial<Record<MasterCvSection, ContentOverrideItem[]>>);
+
+      try {
+        await resolveActionResult(
+          updateCvLabDocumentAction({
+            id: selectedDocument.id,
+            contentOverrides:
+              Object.keys(nextOverrides).length > 0 ? nextOverrides : null,
+          }),
+        );
+        patchSelectedDocument({
+          contentOverrides:
+            Object.keys(nextOverrides).length > 0 ? nextOverrides : null,
+        });
+      } catch (error) {
+        toast.error(
+          error instanceof Error ? error.message : "Erreur de mise a jour",
+        );
+      }
+    },
+    [patchSelectedDocument, selectedDocument],
+  );
+
+  const removeMasterItemOverride = useCallback(
+    async (section: MasterCvSection, itemId: string) => {
+      if (!selectedDocument?.id) return;
+
+      const currentOverrides = parseContentOverrides(
+        selectedDocument.contentOverrides,
+      );
+      const sectionOverrides = (currentOverrides[section] ?? []).filter(
+        (item) => item.masterItemId !== itemId,
+      );
+
+      const nextOverrides: Partial<Record<MasterCvSection, ContentOverrideItem[]>> =
+        sectionOverrides.length > 0
+          ? {
+              ...currentOverrides,
+              [section]: sectionOverrides,
+            }
+          : (Object.fromEntries(
+              Object.entries(currentOverrides).filter(
+                ([entrySection]) => entrySection !== section,
+              ),
+            ) as Partial<Record<MasterCvSection, ContentOverrideItem[]>>);
+
+      try {
+        await resolveActionResult(
+          updateCvLabDocumentAction({
+            id: selectedDocument.id,
+            contentOverrides:
+              Object.keys(nextOverrides).length > 0 ? nextOverrides : null,
+          }),
+        );
+        patchSelectedDocument({
+          contentOverrides:
+            Object.keys(nextOverrides).length > 0 ? nextOverrides : null,
+        });
+      } catch (error) {
+        toast.error(
+          error instanceof Error ? error.message : "Erreur de suppression",
+        );
+      }
+    },
+    [patchSelectedDocument, selectedDocument],
+  );
+
   return {
     // State
     profiles,
+    masterCv,
     documents,
     selectedDocumentId,
     selectedDocument,
@@ -1090,6 +1467,8 @@ export function useCvLabStudio() {
     createVersionMutation,
     restoreVersionMutation,
     atsMutation,
+    generateShareLinkMutation,
+    revokeShareLinkMutation,
     exportPdfMutation,
     exportJsonMutation,
     importJsonMutation,
@@ -1109,5 +1488,9 @@ export function useCvLabStudio() {
     handleImportInputChange,
     handleDeleteDocument,
     handleSelectDocument,
+    setDocumentSource,
+    toggleMasterItemVisibility,
+    updateMasterItemOverride,
+    removeMasterItemOverride,
   };
 }
