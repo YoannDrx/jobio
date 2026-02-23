@@ -15,12 +15,15 @@ import {
   ADDITIONAL_FEATURES,
   LIMITS_CONFIG,
 } from "@/lib/auth/stripe/auth-plans";
+import { AnalyticsEvents, track } from "@/lib/analytics";
 import { BILLING_URL } from "@/lib/LINKS";
+import { PricingFunnelEventNames } from "@/lib/pricing/pricing-funnel-event-names";
 import { cn } from "@/lib/utils";
 import { Clock } from "lucide-react";
 import { useAction } from "next-safe-action/hooks";
 import { toast } from "sonner";
 import { LoadingButton } from "../form/submit-button";
+import { recordPricingFunnelEventAction } from "./pricing-funnel.action";
 import { upgradeUserAction } from "./plans.action";
 
 const BOOLEAN_FEATURES = new Set([
@@ -53,12 +56,15 @@ const NUMERIC_FEATURES = [
 export function PricingCard({
   plan,
   isYearly,
+  entryPoint = "pricing",
 }: {
   plan: AppAuthPlan;
   isYearly?: boolean;
+  entryPoint?: string;
 }) {
   // Get the current user
   const { data: session } = useSession();
+  const billingCycle = isYearly ? "yearly" : "monthly";
 
   const { execute: upgradeUser, isPending } = useAction(upgradeUserAction, {
     onSuccess: (result) => {
@@ -70,6 +76,7 @@ export function PricingCard({
       toast.error(error.error.serverError ?? "Failed to upgrade plan");
     },
   });
+  const { execute: recordPricingEvent } = useAction(recordPricingFunnelEventAction);
 
   // Calculate pricing details
   const monthlyPrice = plan.price;
@@ -258,6 +265,18 @@ export function PricingCard({
             plan.isPopular ? "bg-primary hover:bg-primary/90" : "",
           )}
           onClick={() => {
+            track(AnalyticsEvents.PLAN_SELECTED, {
+              plan_target: plan.name,
+              billing_cycle: billingCycle,
+              entry_point: entryPoint,
+            });
+            recordPricingEvent({
+              eventType: PricingFunnelEventNames.PLAN_SELECTED,
+              planTarget: plan.name,
+              billingCycle,
+              entryPoint,
+            });
+
             if (plan.price === 0) {
               if (session?.user) {
                 window.location.href = "/job";
@@ -277,6 +296,7 @@ export function PricingCard({
               annual: isYearly,
               successUrl: `${BILLING_URL}/success`,
               cancelUrl: `${BILLING_URL}/cancel`,
+              entryPoint,
             });
           }}
         >

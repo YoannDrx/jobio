@@ -2,14 +2,31 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
+import { PricingFunnelEventNames } from "@/lib/pricing/pricing-funnel-event-names";
 import { AUTH_PLANS } from "@/lib/auth/stripe/auth-plans";
 import { cn } from "@/lib/utils";
+import { useAction } from "next-safe-action/hooks";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { PricingCard } from "./pricing-card";
+import { recordPricingFunnelEventAction } from "./pricing-funnel.action";
 
-export function Pricing() {
+export function Pricing({ entryPoint = "landing" }: { entryPoint?: string }) {
   const [isYearly, setIsYearly] = useState(false);
+  const hasTrackedView = useRef(false);
+  const { execute: recordPricingEvent } = useAction(recordPricingFunnelEventAction);
+
+  useEffect(() => {
+    if (hasTrackedView.current) return;
+    hasTrackedView.current = true;
+
+    recordPricingEvent({
+      eventType: PricingFunnelEventNames.PRICING_PAGE_VIEWED,
+      entryPoint,
+      planCurrent: "free",
+    });
+  }, [entryPoint, recordPricingEvent]);
+
   const maxYearlyDiscount = Math.max(
     ...AUTH_PLANS.filter((plan) => plan.price > 0 && plan.yearlyPrice)
       .map((plan) => {
@@ -77,7 +94,12 @@ export function Pricing() {
           }}
         >
           {AUTH_PLANS.filter((p) => !p.isHidden).map((plan) => (
-            <PricingCard key={plan.name} plan={plan} isYearly={isYearly} />
+            <PricingCard
+              key={plan.name}
+              plan={plan}
+              isYearly={isYearly}
+              entryPoint={entryPoint}
+            />
           ))}
         </div>
 

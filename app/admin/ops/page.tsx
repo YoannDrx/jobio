@@ -20,7 +20,10 @@ import {
 } from "@/components/ui/table";
 import Link from "next/link";
 import { getAdminFeatureFlags, getCronJobRuns, getOpsIncidentSummary } from "../_actions/ops";
-import { getPlanEntitlementsOverview } from "../_actions/pricing";
+import {
+  getPlanEntitlementsOverview,
+  getPricingFunnelOverview,
+} from "../_actions/pricing";
 import { getSeoKpiSummary } from "../_actions/seo";
 import {
   computeSeoSyncFreshness,
@@ -67,6 +70,8 @@ const formatCtr = (value: number | null) => {
   return `${value}%`;
 };
 
+const formatRatePercent = (value: number) => `${value.toFixed(2)}%`;
+
 const sourceLabel = (
   source: "env_json" | "redis_cache" | "endpoint" | "file" | "none",
 ) => {
@@ -107,13 +112,20 @@ const seoSyncFreshnessLabel = (status: "fresh" | "stale" | "missing") => {
 export default async function AdminOpsPage() {
   await getRequiredAdmin();
 
-  const [flags, cronRuns, incidentSummary, seoSummary, entitlementsOverview] =
-    await Promise.all([
+  const [
+    flags,
+    cronRuns,
+    incidentSummary,
+    seoSummary,
+    entitlementsOverview,
+    pricingFunnel,
+  ] = await Promise.all([
       getAdminFeatureFlags(),
       getCronJobRuns(30),
       getOpsIncidentSummary(),
       getSeoKpiSummary(),
       getPlanEntitlementsOverview(),
+      getPricingFunnelOverview(30),
     ]);
 
   const runningJobs = cronRuns.filter((run) => run.status === "RUNNING").length;
@@ -679,6 +691,129 @@ export default async function AdminOpsPage() {
                   </div>
                 ))}
               </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Conversion pricing (30 jours)</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {!pricingFunnel.available ? (
+              <p className="text-muted-foreground text-sm">
+                Table `pricing_funnel_event` absente (migration non déployée).
+              </p>
+            ) : (
+              <>
+                <div className="grid gap-4 md:grid-cols-5">
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-medium">
+                        Vues pricing
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-2xl font-semibold">
+                        {pricingFunnel.totals.pricingPageViewed}
+                      </p>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-medium">
+                        Plans sélectionnés
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-2xl font-semibold">
+                        {pricingFunnel.totals.planSelected}
+                      </p>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-medium">
+                        Checkout démarrés
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-2xl font-semibold">
+                        {pricingFunnel.totals.checkoutStarted}
+                      </p>
+                      <p className="text-muted-foreground text-xs">
+                        {formatRatePercent(
+                          pricingFunnel.conversionRates.checkoutFromSelection,
+                        )}{" "}
+                        depuis sélection
+                      </p>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-medium">
+                        Abonnements complétés
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-2xl font-semibold">
+                        {pricingFunnel.totals.subscriptionCompleted}
+                      </p>
+                      <p className="text-muted-foreground text-xs">
+                        {formatRatePercent(
+                          pricingFunnel.conversionRates.subscriptionFromCheckout,
+                        )}{" "}
+                        depuis checkout
+                      </p>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader className="pb-2">
+                      <CardTitle className="text-sm font-medium">
+                        Paywall hits
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-2xl font-semibold">
+                        {pricingFunnel.totals.paywallHit}
+                      </p>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Plan cible</TableHead>
+                      <TableHead>Paywall</TableHead>
+                      <TableHead>Sélection</TableHead>
+                      <TableHead>Checkout</TableHead>
+                      <TableHead>Abonnements</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {(["pro", "ultra"] as const).map((plan) => (
+                      <TableRow key={plan}>
+                        <TableCell className="font-medium capitalize">
+                          {plan}
+                        </TableCell>
+                        <TableCell>{pricingFunnel.byPlan[plan].paywallHit}</TableCell>
+                        <TableCell>{pricingFunnel.byPlan[plan].planSelected}</TableCell>
+                        <TableCell>
+                          {pricingFunnel.byPlan[plan].checkoutStarted}
+                        </TableCell>
+                        <TableCell>
+                          {pricingFunnel.byPlan[plan].subscriptionCompleted}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </>
             )}
           </CardContent>
         </Card>

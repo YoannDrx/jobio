@@ -1,12 +1,14 @@
 import { AUTH_PLANS } from "@/lib/auth/stripe/auth-plans";
 import { env } from "@/lib/env";
 import { logger } from "@/lib/logger";
+import { capturePricingFunnelEvent } from "@/lib/pricing/pricing-funnel-events";
 import { prisma } from "@/lib/prisma";
 import { stripe } from "@/lib/stripe";
 import { headers } from "next/headers";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import type Stripe from "stripe";
+import { PricingFunnelEventType } from "@/generated/prisma";
 export const maxDuration = 300;
 
 // Utility function to get plan from subscription metadata
@@ -226,6 +228,23 @@ const checkoutSessionCompleted = async (
       subscriptionId: subscriptionId,
     });
   }
+
+  await capturePricingFunnelEvent({
+    eventType: PricingFunnelEventType.SUBSCRIPTION_COMPLETED,
+    userId: user.id,
+    planCurrent: existingSubscription?.plan ?? "free",
+    planTarget: plan.name,
+    billingCycle:
+      stripeSubscription.items.data[0]?.price.recurring?.interval === "year"
+        ? "yearly"
+        : "monthly",
+    entryPoint: session.metadata?.entryPoint ?? "stripe_checkout",
+    checkoutSessionId: session.id,
+    stripeSubscriptionId: subscriptionId,
+    metadata: {
+      status: stripeSubscription.status,
+    },
+  });
 
   logger.info(
     `Subscription created/updated for user: ${user.id}, plan: ${plan.name}`,

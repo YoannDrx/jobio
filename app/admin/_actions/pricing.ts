@@ -9,6 +9,7 @@ import {
 } from "@/lib/auth/stripe/auth-plans";
 import { parsePlanEntitlementOverrides } from "@/lib/auth/stripe/plan-entitlements";
 import { ApplicationError } from "@/lib/errors/application-error";
+import { getPricingFunnelSummary } from "@/lib/pricing/pricing-funnel-events";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { createAdminAuditLog } from "./admin-audit";
@@ -91,6 +92,9 @@ export const getPlanEntitlementsOverview = async () => {
     throw error;
   }
 };
+
+export const getPricingFunnelOverview = async (periodDays = 30) =>
+  getPricingFunnelSummary(periodDays);
 
 const createVersionSchema = z.object({
   plan: z.enum(PLAN_NAMES),

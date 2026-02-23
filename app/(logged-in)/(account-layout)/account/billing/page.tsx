@@ -31,7 +31,7 @@ export default async function OrgBillingPage() {
             </LayoutDescription>
           </LayoutHeader>
         </Layout>
-        <Pricing />
+        <Pricing entryPoint="billing_page" />
       </>
     );
   }

@@ -456,7 +456,7 @@ export default function HomePage() {
         </section>
 
         <section id="pricing">
-          <Pricing />
+          <Pricing entryPoint="landing" />
           <PricingComparisonTable />
         </section>
 

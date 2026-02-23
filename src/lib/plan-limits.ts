@@ -1,3 +1,4 @@
+import { PricingFunnelEventType } from "@/generated/prisma";
 import type { PlanLimit } from "@/lib/auth/stripe/auth-plans";
 import {
   getPlanLimitsForPlan,
@@ -5,6 +6,7 @@ import {
 } from "@/lib/auth/stripe/plan-entitlements";
 import { ApplicationError } from "@/lib/errors/application-error";
 import { STALE_ELIGIBLE_STATUS_VALUES } from "@/features/missions/mission-status";
+import { capturePricingFunnelEvent } from "@/lib/pricing/pricing-funnel-events";
 import { prisma } from "@/lib/prisma";
 
 type LimitFeature =
@@ -240,6 +242,21 @@ export async function enforcePlanLimit(
   if (!result.allowed) {
     const featureLabel = LIMIT_FEATURE_LABELS[feature];
     const upgrade = getUpgradeMessage(result.plan);
+    const planTarget = getPlanUpgradeLabel(result.plan).toLowerCase();
+
+    await capturePricingFunnelEvent({
+      eventType: PricingFunnelEventType.PAYWALL_HIT,
+      userId,
+      planCurrent: result.plan,
+      planTarget: planTarget || result.plan,
+      featureKey: feature,
+      entryPoint: "server_enforce_limit",
+      metadata: {
+        used: result.used,
+        limit: result.limit,
+      },
+    });
+
     throw new ApplicationError(
       `Limite atteinte : ${result.used}/${result.limit} ${featureLabel}. ${upgrade}.`,
     );
@@ -264,6 +281,17 @@ export async function enforcePlanFeature(
   if (limits[feature] < 1) {
     const featureLabel = BOOLEAN_FEATURE_LABELS[feature];
     const upgrade = getUpgradeMessage(plan);
+    const planTarget = getPlanUpgradeLabel(plan).toLowerCase();
+
+    await capturePricingFunnelEvent({
+      eventType: PricingFunnelEventType.PAYWALL_HIT,
+      userId,
+      planCurrent: plan,
+      planTarget: planTarget || plan,
+      featureKey: feature,
+      entryPoint: "server_enforce_feature",
+    });
+
     throw new ApplicationError(
       `Fonctionnalité non disponible : ${featureLabel}. ${upgrade}.`,
     );

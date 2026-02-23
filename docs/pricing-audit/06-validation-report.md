@@ -91,3 +91,15 @@ Le scope livre couvre:
     - vérification plans statiques (`AUTH_PLANS`)
     - vérification entitlements DB (release active + drift)
     - vérification Stripe (price IDs, montants, devise, intervalle, metadata)
+
+- [x] Phase C1 (instrumentation conversion/upsell):
+  - table `pricing_funnel_event` + enum `PricingFunnelEventType`
+  - tracking funnel:
+    - `PRICING_PAGE_VIEWED` (cards pricing)
+    - `PLAN_SELECTED` (CTA card)
+    - `CHECKOUT_STARTED` (action upgrade serveur)
+    - `SUBSCRIPTION_COMPLETED` (webhook Stripe)
+    - `PAYWALL_HIT` (enforce plan limit/feature côté serveur)
+  - dashboard admin `/admin/ops`:
+    - métriques funnel 30 jours
+    - split Pro vs Ultra

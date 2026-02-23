@@ -1,8 +1,10 @@
 "use server";
 
+import { PricingFunnelEventType } from "@/generated/prisma";
 import { authAction } from "@/lib/actions/safe-actions";
 import { AUTH_PLANS } from "@/lib/auth/stripe/auth-plans";
 import { ActionError } from "@/lib/errors/action-error";
+import { capturePricingFunnelEvent } from "@/lib/pricing/pricing-funnel-events";
 import { prisma } from "@/lib/prisma";
 import { getServerUrl } from "@/lib/server-url";
 import { stripe } from "@/lib/stripe";
@@ -15,11 +17,12 @@ export const upgradeUserAction = authAction
       annual: z.boolean().default(false),
       successUrl: z.string(),
       cancelUrl: z.string(),
+      entryPoint: z.string().min(2).max(64).optional(),
     }),
   )
   .action(
     async ({
-      parsedInput: { plan, annual, successUrl, cancelUrl },
+      parsedInput: { plan, annual, successUrl, cancelUrl, entryPoint },
       ctx: { user },
     }) => {
       // Find the plan
@@ -39,7 +42,14 @@ export const upgradeUserAction = authAction
       // Get the full user from database to access stripeCustomerId
       const dbUser = await prisma.user.findUnique({
         where: { id: user.id },
-        select: { stripeCustomerId: true },
+        select: {
+          stripeCustomerId: true,
+          subscription: {
+            select: {
+              plan: true,
+            },
+          },
+        },
       });
 
       if (!dbUser?.stripeCustomerId) {
@@ -64,11 +74,15 @@ export const upgradeUserAction = authAction
         metadata: {
           userId: user.id,
           plan: plan,
+          entryPoint: entryPoint ?? "unknown",
+          billingCycle: annual ? "yearly" : "monthly",
         },
         subscription_data: {
           metadata: {
             userId: user.id,
             plan: plan,
+            entryPoint: entryPoint ?? "unknown",
+            billingCycle: annual ? "yearly" : "monthly",
           },
           trial_period_days: authPlan.freeTrial?.days,
         },
@@ -77,6 +91,16 @@ export const upgradeUserAction = authAction
       if (!session.url) {
         throw new ActionError("Failed to create checkout session");
       }
+
+      await capturePricingFunnelEvent({
+        eventType: PricingFunnelEventType.CHECKOUT_STARTED,
+        userId: user.id,
+        planCurrent: dbUser.subscription?.plan ?? "free",
+        planTarget: plan,
+        billingCycle: annual ? "yearly" : "monthly",
+        entryPoint: entryPoint ?? "pricing",
+        checkoutSessionId: session.id,
+      });
 
       return {
         url: session.url,
