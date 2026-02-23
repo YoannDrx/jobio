@@ -82,3 +82,12 @@ Le scope livre couvre:
   - `pnpm lint`
   - `pnpm test:ci __tests__/plan-entitlements.test.ts __tests__/pricing-matrix.test.ts __tests__/auth-plan-billing-limits.test.ts`
   - `pnpm build`
+
+- [x] Phase A2/B (ops + vérification anti-dérive):
+  - panneau admin `/admin/ops` pour les entitlements versionnés
+    - création de version (clone active / clone statique)
+    - activation d'une version par plan
+  - script `pnpm pricing:verify`
+    - vérification plans statiques (`AUTH_PLANS`)
+    - vérification entitlements DB (release active + drift)
+    - vérification Stripe (price IDs, montants, devise, intervalle, metadata)

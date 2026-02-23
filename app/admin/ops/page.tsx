@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/table";
 import Link from "next/link";
 import { getAdminFeatureFlags, getCronJobRuns, getOpsIncidentSummary } from "../_actions/ops";
+import { getPlanEntitlementsOverview } from "../_actions/pricing";
 import { getSeoKpiSummary } from "../_actions/seo";
 import {
   computeSeoSyncFreshness,
@@ -27,6 +28,8 @@ import {
   getLatestSeoSyncRun,
   getLatestSeoSyncSuccessRun,
 } from "@/features/admin/seo-sync-health";
+import { ActivatePlanEntitlementVersionButton } from "./_components/activate-plan-entitlement-version-button";
+import { CreatePlanEntitlementVersionButton } from "./_components/create-plan-entitlement-version-button";
 import { FeatureFlagToggleButton } from "./_components/feature-flag-toggle-button";
 import { SyncSeoMetricsButton } from "./_components/sync-seo-metrics-button";
 import { SyncFeatureFlagsButton } from "./_components/sync-feature-flags-button";
@@ -104,12 +107,14 @@ const seoSyncFreshnessLabel = (status: "fresh" | "stale" | "missing") => {
 export default async function AdminOpsPage() {
   await getRequiredAdmin();
 
-  const [flags, cronRuns, incidentSummary, seoSummary] = await Promise.all([
-    getAdminFeatureFlags(),
-    getCronJobRuns(30),
-    getOpsIncidentSummary(),
-    getSeoKpiSummary(),
-  ]);
+  const [flags, cronRuns, incidentSummary, seoSummary, entitlementsOverview] =
+    await Promise.all([
+      getAdminFeatureFlags(),
+      getCronJobRuns(30),
+      getOpsIncidentSummary(),
+      getSeoKpiSummary(),
+      getPlanEntitlementsOverview(),
+    ]);
 
   const runningJobs = cronRuns.filter((run) => run.status === "RUNNING").length;
   const failedJobs = cronRuns.filter((run) => run.status === "FAILED").length;
@@ -607,6 +612,70 @@ export default async function AdminOpsPage() {
                       </p>
                     </div>
                     <FeatureFlagToggleButton flagKey={flag.key} enabled={flag.enabled} />
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Entitlements plans (versionnés)</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {!entitlementsOverview.available ? (
+              <p className="text-muted-foreground text-sm">
+                {entitlementsOverview.reason}
+              </p>
+            ) : (
+              <div className="space-y-3">
+                {entitlementsOverview.plans.map((plan) => (
+                  <div
+                    key={plan.plan}
+                    className="flex flex-col gap-3 rounded-lg border p-3"
+                  >
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="font-medium capitalize">{plan.plan}</p>
+                      <Badge variant="outline">
+                        Active:{" "}
+                        {plan.activeVersion === null
+                          ? "aucune"
+                          : `v${plan.activeVersion}`}
+                      </Badge>
+                      <Badge variant="outline">
+                        Versions: {plan.versions.length}
+                      </Badge>
+                    </div>
+
+                    <div className="flex flex-wrap gap-2">
+                      <CreatePlanEntitlementVersionButton
+                        plan={plan.plan}
+                        source="active"
+                      />
+                      <CreatePlanEntitlementVersionButton
+                        plan={plan.plan}
+                        source="static"
+                      />
+                    </div>
+
+                    {plan.versions.length === 0 ? (
+                      <p className="text-muted-foreground text-sm">
+                        Aucune version enregistrée.
+                      </p>
+                    ) : (
+                      <div className="flex flex-wrap gap-2">
+                        {plan.versions.map((version) => (
+                          <div key={`${plan.plan}-${version.version}`}>
+                            <ActivatePlanEntitlementVersionButton
+                              plan={plan.plan}
+                              version={version.version}
+                              isActive={version.isActive}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>

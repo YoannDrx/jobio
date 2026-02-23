@@ -46,3 +46,21 @@ Vérifier dans `.env` après toute mutation Stripe.
 
 - Réappliquer description précédente via `stripe products update ... --description "..."`.
 - En cas de mauvais price actif: réactiver l'ancien `price` puis remettre les env vars correspondantes.
+
+## 6) Vérification automatique (app/DB/Stripe)
+
+Commande:
+```bash
+pnpm pricing:verify
+```
+
+Options utiles:
+- `--skip-stripe`: ignore les appels Stripe live
+- `--skip-db`: ignore la lecture des entitlements DB
+- `--strict`: fail aussi sur warnings
+- `--json`: sortie machine-readable
+
+Exemple CI stricte:
+```bash
+pnpm pricing:verify --strict --json
+```
