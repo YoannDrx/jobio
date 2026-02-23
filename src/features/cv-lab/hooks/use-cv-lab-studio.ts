@@ -69,6 +69,14 @@ import {
 type MasterCvData = {
   id: string;
   fullName: string;
+  headline: string | null;
+  summary: string | null;
+  email: string | null;
+  phone: string | null;
+  city: string | null;
+  photoUrl: string | null;
+  hobbies: unknown;
+  driverLicenses: unknown;
   experiences: unknown;
   skills: unknown;
   education: unknown;
@@ -122,6 +130,14 @@ const parseHiddenItems = (
   }
 
   return result;
+};
+
+const parsePersonalInfo = (
+  value: unknown,
+): Record<string, unknown> | null => {
+  const record = parseJsonRecord(value);
+  if (!record) return null;
+  return record;
 };
 
 export function useCvLabStudio() {
@@ -926,10 +942,60 @@ export function useCvLabStudio() {
         throw new Error("Aucun document sélectionné");
       }
 
+      const source = selectedDocument.masterCvId ? "master" : "profile";
+      const contentOverrides =
+        source === "master"
+          ? parseContentOverrides(selectedDocument.contentOverrides)
+          : null;
+      const hiddenItems =
+        source === "master"
+          ? parseHiddenItems(selectedDocument.hiddenItems)
+          : null;
+      const personalInfo =
+        source === "master"
+          ? parsePersonalInfo(selectedDocument.personalInfo)
+          : null;
+
+      const masterCvSnapshot =
+        source === "master" && masterCv
+          ? {
+              id: masterCv.id,
+              fullName: masterCv.fullName,
+              headline: masterCv.headline,
+              summary: masterCv.summary,
+              email: masterCv.email,
+              phone: masterCv.phone,
+              city: masterCv.city,
+              photoUrl: masterCv.photoUrl,
+              hobbies: masterCv.hobbies,
+              driverLicenses: masterCv.driverLicenses,
+              experiences: masterCv.experiences,
+              skills: masterCv.skills,
+              education: masterCv.education,
+              projects: masterCv.projects,
+              languages: masterCv.languages,
+              certifications: masterCv.certifications,
+            }
+          : null;
+
       const payload = {
-        version: 1,
+        version: 2,
         exportedAt: new Date().toISOString(),
-        snapshot: buildRenderSnapshot(draft),
+        snapshot: {
+          ...buildRenderSnapshot(draft),
+          source,
+          masterCvId: source === "master" ? selectedDocument.masterCvId : null,
+          contentOverrides,
+          hiddenItems,
+          personalInfo,
+        },
+        profileSnapshot: selectedDocument.profile,
+        masterCvSnapshot,
+        documentMeta: {
+          documentId: selectedDocument.id,
+          exportedFrom: "cv-lab",
+          updatedAt: selectedDocument.updatedAt,
+        },
       };
 
       const filenameBase =
@@ -986,9 +1052,59 @@ export function useCvLabStudio() {
 
       const normalizedOrder = normalizeSectionOrder(snapshot.sectionOrder);
       const normalizedHidden = normalizeHiddenSections(snapshot.hiddenSections);
+      const hasImportedProfile =
+        typeof snapshot.profileId === "string" &&
+        profiles.some((profile) => profile.id === snapshot.profileId);
+      const fallbackProfileId = profiles[0]?.id ?? draft.profileId;
 
-      return {
-        profileId: snapshot.profileId ?? selectedDocument.profileId,
+      const source = snapshot.source ?? (snapshot.masterCvId ? "master" : null);
+      const hasMasterSnapshotData =
+        source === "master" ||
+        snapshot.masterCvId !== undefined ||
+        snapshot.contentOverrides !== undefined ||
+        snapshot.hiddenItems !== undefined ||
+        snapshot.personalInfo !== undefined;
+      const useMasterSource = source === "master" && Boolean(masterCv?.id);
+
+      const importedDocumentUpdatePatch = hasMasterSnapshotData
+        ? useMasterSource
+          ? {
+              masterCvId: masterCv?.id ?? null,
+              contentOverrides: snapshot.contentOverrides ?? null,
+              hiddenItems: snapshot.hiddenItems ?? null,
+              personalInfo: snapshot.personalInfo ?? null,
+            }
+          : {
+              masterCvId: null,
+              contentOverrides: null,
+              hiddenItems: null,
+              personalInfo: null,
+            }
+        : null;
+
+      const importedDocumentPatch: Partial<CvDocument> =
+        importedDocumentUpdatePatch
+          ? {
+              masterCvId: importedDocumentUpdatePatch.masterCvId,
+              contentOverrides: importedDocumentUpdatePatch.contentOverrides,
+              hiddenItems: importedDocumentUpdatePatch.hiddenItems,
+              personalInfo: importedDocumentUpdatePatch.personalInfo,
+            }
+          : {};
+
+      if (importedDocumentUpdatePatch) {
+        await resolveActionResult(
+          updateCvLabDocumentAction({
+            id: selectedDocument.id,
+            ...importedDocumentUpdatePatch,
+          }),
+        );
+      }
+
+      const nextDraft = {
+        profileId: hasImportedProfile
+          ? (snapshot.profileId as string)
+          : fallbackProfileId,
         name: snapshot.name,
         targetRole: snapshot.targetRole ?? "",
         template: snapshot.template,
@@ -1001,27 +1117,45 @@ export function useCvLabStudio() {
         sectionOrder: normalizedOrder,
         hiddenSections: normalizedHidden,
       } satisfies Draft;
-    },
-    onSuccess: (nextDraft) => {
-      const hasProfile = profiles.some(
-        (profile) => profile.id === nextDraft.profileId,
-      );
-      const fallbackProfileId = profiles[0]?.id ?? nextDraft.profileId;
 
-      if (!hasProfile) {
-        setDraft({
-          ...nextDraft,
-          profileId: fallbackProfileId,
-        });
-        toast.warning(
-          "Le profil du fichier n'existe pas sur ce compte. Profil courant conservé.",
-        );
-      } else {
-        setDraft(nextDraft);
-      }
+      return {
+        documentId: selectedDocument.id,
+        nextDraft,
+        importedDocumentPatch,
+        profileWasMissing:
+          typeof snapshot.profileId === "string" && !hasImportedProfile,
+        masterSourceUnavailable: hasMasterSnapshotData && source === "master" && !masterCv?.id,
+      };
+    },
+    onSuccess: ({
+      documentId,
+      nextDraft,
+      importedDocumentPatch,
+      profileWasMissing,
+      masterSourceUnavailable,
+    }) => {
+      setDraft(nextDraft);
+      setDocuments((previous) =>
+        previous.map((document) =>
+          document.id === documentId
+            ? ({ ...document, ...importedDocumentPatch } as CvDocument)
+            : document,
+        ),
+      );
 
       setAtsAnalysis(null);
       setAtsSuggestionPreview(null);
+
+      if (profileWasMissing) {
+        toast.warning(
+          "Le profil du fichier n'existe pas sur ce compte. Profil courant conservé.",
+        );
+      }
+      if (masterSourceUnavailable) {
+        toast.warning(
+          "Le fichier utilisait CV Master, mais aucun CV Master n'est disponible sur ce compte.",
+        );
+      }
       toast.success("Configuration CV importée");
     },
     onError: (error: Error) => {

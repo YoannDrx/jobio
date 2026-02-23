@@ -139,12 +139,12 @@ export function CvLabPanelContent({
       {editPanel}
 
       <Card>
-        <CardHeader className="pb-2">
+        <CardHeader className="space-y-0 pb-0">
           <CardTitle className="text-sm">Lien public</CardTitle>
         </CardHeader>
-        <CardContent className="flex flex-col gap-2">
+        <CardContent className="flex flex-col gap-1">
           <p className="text-muted-foreground text-xs">
-            Partage ce CV avec un recruteur sans connexion.
+            Partagez CV avec un recruteur.
           </p>
 
           {publicShareUrl ? (

@@ -1,5 +1,8 @@
 import { z } from "zod";
 import {
+  contentOverridesSchema,
+  hiddenItemsSchema,
+  personalInfoOverridesSchema,
   CV_LAB_PAGE_SIZES,
   CV_LAB_SECTIONS,
   CV_LAB_TEMPLATES,
@@ -209,6 +212,11 @@ export const cvLabSnapshotImportSchema = z.object({
   summaryOverride: z.string().trim().max(1400).nullable().optional(),
   sectionOrder: z.array(z.enum(CV_LAB_SECTIONS)).default([...CV_LAB_SECTIONS]),
   hiddenSections: z.array(z.enum(CV_LAB_SECTIONS)).default([]),
+  source: z.enum(["profile", "master"]).optional(),
+  masterCvId: z.string().min(1).nullable().optional(),
+  contentOverrides: contentOverridesSchema.optional().nullable(),
+  hiddenItems: hiddenItemsSchema.optional().nullable(),
+  personalInfo: personalInfoOverridesSchema.optional().nullable(),
 });
 
 export const cvLabImportPayloadSchema = z.union([
@@ -216,6 +224,9 @@ export const cvLabImportPayloadSchema = z.union([
     version: z.number().int().positive().optional(),
     exportedAt: z.string().optional(),
     snapshot: cvLabSnapshotImportSchema,
+    profileSnapshot: z.unknown().optional(),
+    masterCvSnapshot: z.unknown().optional(),
+    documentMeta: z.unknown().optional(),
   }),
   cvLabSnapshotImportSchema,
 ]);

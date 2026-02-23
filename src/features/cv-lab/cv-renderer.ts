@@ -144,6 +144,16 @@ const TEMPLATE_STYLES: Record<RenderableDocument["template"], TemplateStyle> = {
 const sanitizeHex = (value: string) =>
   /^#[0-9a-fA-F]{6}$/.test(value) ? value : "#0f172a";
 
+const normalizeAccentColor = (value: string) => {
+  const sanitized = sanitizeHex(value).toLowerCase();
+  // Historical default was dark navy and produced an almost colorless UI.
+  // Keep explicit user colors, but promote the legacy default to a visible blue.
+  if (sanitized === "#0f172a") {
+    return "#2563eb";
+  }
+  return sanitized;
+};
+
 const escapeHtml = (value: string | null | undefined) => {
   if (!value) return "";
   return value
@@ -370,7 +380,7 @@ export const renderCvLabHtml = (
     document.sectionOrder,
     document.hiddenSections,
   );
-  const accentColor = sanitizeHex(document.accentColor);
+  const accentColor = normalizeAccentColor(document.accentColor);
   const theme = THEMES[document.theme];
   const templateStyle = TEMPLATE_STYLES[document.template];
   const headline = document.headlineOverride ?? content.headline;
