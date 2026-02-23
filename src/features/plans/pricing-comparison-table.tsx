@@ -8,9 +8,13 @@ import { PRICING_COMPARISON_CATEGORIES } from "./pricing-matrix";
 function FeatureValue({ value }: { value: string | boolean }) {
   if (typeof value === "boolean") {
     return value ? (
-      <Check className="size-4 text-green-600" />
+      <span className="flex items-center justify-center">
+        <Check className="size-4 text-green-600" />
+      </span>
     ) : (
-      <X className="text-muted-foreground size-4" />
+      <span className="flex items-center justify-center">
+        <X className="text-muted-foreground size-4" />
+      </span>
     );
   }
   return <span>{value}</span>;

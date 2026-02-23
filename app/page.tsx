@@ -501,7 +501,9 @@ export default function HomePage() {
 
         <section id="pricing">
           <Pricing entryPoint="landing" />
-          <PricingComparisonTable />
+          <div className="mx-auto w-full max-w-7xl px-4 pb-14 lg:px-8 lg:pb-20">
+            <PricingComparisonTable />
+          </div>
         </section>
 
         <section className="mx-auto w-full max-w-6xl px-4 py-14 lg:px-8 lg:py-20">
@@ -562,7 +564,7 @@ export default function HomePage() {
         </section>
       </main>
 
-      <Footer />
+      <Footer alignWithLandingHeader />
     </div>
   );
 }

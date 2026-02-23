@@ -1,6 +1,5 @@
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { Layout } from "@/features/page/layout";
 import type { ReactNode } from "react";
 
 type PublicPageShellProps = {
@@ -29,7 +28,7 @@ export function PublicPageShell({
         <div className="bg-brand-emerald/20 absolute top-16 right-[12%] size-44 rounded-full blur-3xl" />
       </div>
 
-      <Layout size="lg" className="pt-14 pb-8">
+      <div className="mx-auto w-full max-w-7xl px-4 pt-14 pb-8 lg:px-8">
         <div className="flex w-full flex-col gap-5 rounded-3xl border border-white/60 bg-white/80 p-8 shadow-xl backdrop-blur-md dark:border-white/10 dark:bg-black/20">
           <Badge className="w-fit">{badge}</Badge>
           <div className="max-w-3xl space-y-3">
@@ -49,9 +48,11 @@ export function PublicPageShell({
             ))}
           </div>
         </div>
-      </Layout>
+      </div>
 
-      <Layout size="lg">{children}</Layout>
+      <div className="mx-auto flex w-full max-w-7xl flex-wrap gap-4 px-4 lg:px-8">
+        {children}
+      </div>
     </div>
   );
 }
