@@ -11,7 +11,7 @@ import {
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 import { X } from "lucide-react";
-import { useCallback, useEffect, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, type ReactNode } from "react";
 
 type StudioSidePanelProps = {
   isOpen: boolean;
@@ -20,7 +20,14 @@ type StudioSidePanelProps = {
   children: ReactNode;
   footer?: ReactNode;
   width?: number;
+  onWidthChange?: (width: number) => void;
+  minWidth?: number;
+  maxWidth?: number;
 };
+
+const DEFAULT_WIDTH = 420;
+const DEFAULT_MIN_WIDTH = 320;
+const DEFAULT_MAX_WIDTH = 600;
 
 export function StudioSidePanel({
   isOpen,
@@ -28,9 +35,15 @@ export function StudioSidePanel({
   title,
   children,
   footer,
-  width = 420,
+  width = DEFAULT_WIDTH,
+  onWidthChange,
+  minWidth = DEFAULT_MIN_WIDTH,
+  maxWidth = DEFAULT_MAX_WIDTH,
 }: StudioSidePanelProps) {
   const isMobile = useIsMobile();
+  const isDraggingRef = useRef(false);
+  const startXRef = useRef(0);
+  const startWidthRef = useRef(width);
 
   const handleEscape = useCallback(
     (e: KeyboardEvent) => {
@@ -43,6 +56,40 @@ export function StudioSidePanel({
     if (isOpen) document.addEventListener("keydown", handleEscape);
     return () => document.removeEventListener("keydown", handleEscape);
   }, [isOpen, handleEscape]);
+
+  const handleMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      if (!onWidthChange) return;
+      e.preventDefault();
+      isDraggingRef.current = true;
+      startXRef.current = e.clientX;
+      startWidthRef.current = width;
+      document.body.style.cursor = "col-resize";
+      document.body.style.userSelect = "none";
+
+      const handleMouseMove = (moveEvent: MouseEvent) => {
+        if (!isDraggingRef.current) return;
+        const delta = startXRef.current - moveEvent.clientX;
+        const newWidth = Math.min(
+          maxWidth,
+          Math.max(minWidth, startWidthRef.current + delta),
+        );
+        onWidthChange(newWidth);
+      };
+
+      const handleMouseUp = () => {
+        isDraggingRef.current = false;
+        document.body.style.cursor = "";
+        document.body.style.userSelect = "";
+        document.removeEventListener("mousemove", handleMouseMove);
+        document.removeEventListener("mouseup", handleMouseUp);
+      };
+
+      document.addEventListener("mousemove", handleMouseMove);
+      document.addEventListener("mouseup", handleMouseUp);
+    },
+    [maxWidth, minWidth, onWidthChange, width],
+  );
 
   if (isMobile) {
     return (
@@ -67,6 +114,12 @@ export function StudioSidePanel({
       )}
       style={{ width }}
     >
+      {onWidthChange ? (
+        <div
+          className="absolute top-0 left-0 z-50 h-full w-1 cursor-col-resize hover:bg-blue-500/30 active:bg-blue-500/50"
+          onMouseDown={handleMouseDown}
+        />
+      ) : null}
       <div className="flex items-center justify-between border-b px-4 py-3">
         <p className="text-sm font-semibold">{title}</p>
         <Button variant="ghost" size="icon-sm" onClick={onClose}>

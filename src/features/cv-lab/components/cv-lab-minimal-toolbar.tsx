@@ -8,7 +8,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import { ChevronDown, Plus } from "lucide-react";
+import { Check, ChevronDown, Loader2, Plus, Undo2, Redo2 } from "lucide-react";
 import { useState } from "react";
 import { dialogManager } from "@/features/dialog-manager/dialog-manager";
 
@@ -23,21 +23,31 @@ type CvDocumentListItem = {
 type CvLabMinimalToolbarProps = {
   documentName: string;
   hasUnsavedChanges: boolean;
+  autoSaveStatus: "idle" | "saving" | "saved" | "error";
   documents: CvDocumentListItem[];
   selectedDocumentId: string | null;
   onSelectDocument: (id: string) => void;
   onCreate: () => void;
   isCreating: boolean;
+  canUndo?: boolean;
+  canRedo?: boolean;
+  onUndo?: () => void;
+  onRedo?: () => void;
 };
 
 export function CvLabMinimalToolbar({
   documentName,
   hasUnsavedChanges,
+  autoSaveStatus,
   documents,
   selectedDocumentId,
   onSelectDocument,
   onCreate,
   isCreating,
+  canUndo,
+  canRedo,
+  onUndo,
+  onRedo,
 }: CvLabMinimalToolbarProps) {
   const [isDocPickerOpen, setIsDocPickerOpen] = useState(false);
 
@@ -69,13 +79,18 @@ export function CvLabMinimalToolbar({
   };
 
   return (
-    <div className="flex items-center justify-between">
+    <div
+      className="flex items-center justify-between"
+      role="toolbar"
+      aria-label="Barre d'outils CV"
+    >
       <div className="flex items-center gap-2">
         <Popover open={isDocPickerOpen} onOpenChange={setIsDocPickerOpen}>
           <PopoverTrigger asChild>
             <button
               type="button"
               className="hover:bg-muted flex items-center gap-1.5 rounded-md px-2 py-1 transition-colors"
+              aria-label="Sélectionner un CV"
             >
               <p className="text-lg font-semibold">{documentName}</p>
               <ChevronDown className="text-muted-foreground size-4" />
@@ -124,7 +139,45 @@ export function CvLabMinimalToolbar({
             </div>
           </PopoverContent>
         </Popover>
-        {hasUnsavedChanges ? (
+        {onUndo ? (
+          <div className="flex items-center gap-0.5">
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              onClick={onUndo}
+              disabled={!canUndo}
+              title="Annuler (Ctrl+Z)"
+              aria-label="Annuler (Ctrl+Z)"
+            >
+              <Undo2 className="size-3.5" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              onClick={onRedo}
+              disabled={!canRedo}
+              title="Rétablir (Ctrl+Shift+Z)"
+              aria-label="Rétablir (Ctrl+Shift+Z)"
+            >
+              <Redo2 className="size-3.5" />
+            </Button>
+          </div>
+        ) : null}
+        {autoSaveStatus === "saving" ? (
+          <Badge variant="outline" className="gap-1 text-xs">
+            <Loader2 className="size-3 animate-spin" />
+            Sauvegarde...
+          </Badge>
+        ) : autoSaveStatus === "saved" ? (
+          <Badge variant="outline" className="gap-1 text-xs text-green-600">
+            <Check className="size-3" />
+            Sauvegardé
+          </Badge>
+        ) : autoSaveStatus === "error" ? (
+          <Badge variant="destructive" className="gap-1 text-xs">
+            Erreur de sauvegarde
+          </Badge>
+        ) : hasUnsavedChanges ? (
           <Badge variant="outline" className="text-xs">
             Non sauvegardé
           </Badge>

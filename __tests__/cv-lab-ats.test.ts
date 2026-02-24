@@ -15,6 +15,7 @@ const makeContent = (
   photoUrl: null,
   hobbies: [],
   driverLicenses: [],
+  socialLinks: {},
   skills: [
     { id: "s1", name: "React", level: "expert" },
     { id: "s2", name: "TypeScript", level: "expert" },

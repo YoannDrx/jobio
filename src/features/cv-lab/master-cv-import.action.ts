@@ -29,6 +29,12 @@ const masterCvExtractSchema = z.object({
         endDate: z.string().default(""),
         description: z.string().default(""),
         current: z.boolean().default(false),
+        location: z.string().default(""),
+        contractType: z.string().default(""),
+        remote: z.string().default(""),
+        techStack: z.array(z.string()).default([]),
+        achievements: z.array(z.string()).default([]),
+        teamContext: z.string().default(""),
       }),
     )
     .default([]),
@@ -96,6 +102,7 @@ Regles:
 - N'invente aucune information. Extrais uniquement ce qui est present dans le texte.
 - Regroupe les competences techniques (langages, frameworks, outils) dans skills.
 - Extrais les loisirs/hobbies et permis de conduire s'ils sont mentionnes.
+- Pour chaque experience, extrais si possible: location (ville), contractType (CDI, CDD, FREELANCE, STAGE, ALTERNANCE, PONCTUEL, HORS_TECH), remote (ONSITE, HYBRID, REMOTE), techStack (liste des technologies utilisees), achievements (realisations cles chiffrees), teamContext (taille equipe, contexte).
 
 Retourne uniquement l'objet JSON valide selon le schema fourni.`;
 

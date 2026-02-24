@@ -9,6 +9,7 @@ import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { BarChart3 } from "lucide-react";
+import { CvGenerateFromOfferDialog } from "./cv-generate-from-offer-dialog";
 
 export type AtsAnalysis = {
   generatedAt: string;
@@ -60,6 +61,16 @@ export type CvLabEditAtsProps = {
   onPreviewSuggestions: () => void;
   onApplySuggestions: () => void;
   onCancelPreview: () => void;
+  onGenerateFromOffer?: (result: {
+    targetRole: string;
+    headlineOverride: string;
+    summaryOverride: string;
+    hiddenItems: Record<string, string[]>;
+    contentOverrides: Record<
+      string,
+      { masterItemId: string; description?: string; title?: string }[]
+    >;
+  }) => void;
 };
 
 const toDate = (value: string | Date) => new Date(value);
@@ -82,6 +93,7 @@ export function CvLabEditAts({
   onPreviewSuggestions,
   onApplySuggestions,
   onCancelPreview,
+  onGenerateFromOffer,
 }: CvLabEditAtsProps) {
   return (
     <Card>
@@ -90,9 +102,14 @@ export function CvLabEditAts({
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
         <div className="flex flex-col gap-2">
-          <Label htmlFor="ats-job-description">
-            Fiche de poste (optionnel, recommande)
-          </Label>
+          <div className="flex items-center justify-between">
+            <Label htmlFor="ats-job-description">
+              Fiche de poste (optionnel, recommande)
+            </Label>
+            {onGenerateFromOffer ? (
+              <CvGenerateFromOfferDialog onGenerated={onGenerateFromOffer} />
+            ) : null}
+          </div>
           <Textarea
             id="ats-job-description"
             rows={5}
@@ -106,13 +123,18 @@ export function CvLabEditAts({
           variant="outline"
           onClick={onAnalyze}
           disabled={isAnalyzing || !hasDraft}
+          aria-busy={isAnalyzing}
         >
           <BarChart3 className="mr-2 size-4" />
           {isAnalyzing ? "Analyse..." : "Lancer l'analyse ATS"}
         </Button>
 
         {atsAnalysis ? (
-          <div className="flex flex-col gap-4 rounded-md border p-4">
+          <div
+            className="flex flex-col gap-4 rounded-md border p-4"
+            aria-live="polite"
+            aria-label="Résultats de l'analyse ATS"
+          >
             <div className="flex items-center justify-between gap-3">
               <div>
                 <p className="text-muted-foreground text-xs uppercase">

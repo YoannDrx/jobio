@@ -37,6 +37,7 @@ type MasterCvData = {
   photoUrl: string | null;
   hobbies: unknown;
   driverLicenses: unknown;
+  socialLinks: unknown;
   experiences: unknown;
   skills: unknown;
   education: unknown;
@@ -66,6 +67,7 @@ type MasterCvSectionRouterProps = {
     patch: Record<string, unknown>,
   ) => Promise<void>;
   onRemoveItem: (section: string, itemId: string) => Promise<void>;
+  onReorderItems: (section: string, itemIds: string[]) => Promise<void>;
 };
 
 const parseArray = <T extends { id: string }>(value: unknown): T[] => {
@@ -84,6 +86,7 @@ export function MasterCvSectionRouter({
   onAddItem,
   onUpdateItem,
   onRemoveItem,
+  onReorderItems,
 }: MasterCvSectionRouterProps) {
   const experiences = parseArray<MasterCvExperience>(masterCv.experiences);
   const skills = parseArray<MasterCvSkill>(masterCv.skills);
@@ -131,6 +134,7 @@ export function MasterCvSectionRouter({
             onAdd={onAddItem}
             onUpdate={onUpdateItem}
             onRemove={onRemoveItem}
+            onReorder={onReorderItems}
           />
         </div>
       );
@@ -165,6 +169,7 @@ export function MasterCvSectionRouter({
             onAdd={onAddItem}
             onUpdate={onUpdateItem}
             onRemove={onRemoveItem}
+            onReorder={onReorderItems}
           />
         </div>
       );
@@ -182,6 +187,7 @@ export function MasterCvSectionRouter({
             onAdd={onAddItem}
             onUpdate={onUpdateItem}
             onRemove={onRemoveItem}
+            onReorder={onReorderItems}
           />
         </div>
       );
@@ -216,6 +222,7 @@ export function MasterCvSectionRouter({
             onAdd={onAddItem}
             onUpdate={onUpdateItem}
             onRemove={onRemoveItem}
+            onReorder={onReorderItems}
           />
         </div>
       );

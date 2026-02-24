@@ -4,6 +4,7 @@ import { ApplicationError } from "../errors/application-error";
 import { isNextPrerenderInterruptedError } from "../errors/next-prerender-interrupted";
 import { logger } from "../logger";
 import { logSystemError } from "../monitoring/log-system-error";
+import { enforceRateLimit } from "../security/rate-limit";
 
 /**
  * Base safe action client with error handling
@@ -70,6 +71,55 @@ export const authAction = createSafeActionClient({
     },
   });
 });
+
+/**
+ * Rate-limited authenticated safe action client
+ *
+ * @description
+ * Same as authAction but with per-user rate limiting via Redis.
+ * Use this for expensive operations: AI calls, exports, bulk operations.
+ *
+ * @param key - Unique identifier for the rate limit bucket (e.g. "ai-rewrite", "export-csv")
+ * @param limit - Max requests allowed in the window (default: 10)
+ * @param windowSeconds - Time window in seconds (default: 60)
+ *
+ * @example
+ * ```ts
+ * export const rewriteCvAction = rateLimitedAuthAction("cv-rewrite", 10, 60)
+ *   .inputSchema(z.object({ text: z.string() }))
+ *   .action(async ({ parsedInput, ctx: { user } }) => {
+ *     // max 10 calls per minute per user
+ *   });
+ * ```
+ */
+export const rateLimitedAuthAction = (
+  key: string,
+  limit = 10,
+  windowSeconds = 60,
+) =>
+  createSafeActionClient({
+    handleServerError,
+  }).use(async ({ next }) => {
+    const user = await getRequiredUser();
+
+    const result = await enforceRateLimit({
+      key: `${key}:${user.id}`,
+      limit,
+      windowSeconds,
+    });
+
+    if (!result.allowed) {
+      throw new ApplicationError(
+        `Trop de requêtes. Réessaie dans ${result.retryAfterSeconds}s.`,
+      );
+    }
+
+    return next({
+      ctx: {
+        user: user,
+      },
+    });
+  });
 
 function handleServerError(e: Error) {
   if (e instanceof ApplicationError) {

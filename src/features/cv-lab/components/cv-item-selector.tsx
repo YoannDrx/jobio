@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Check, Pencil, RotateCcw, X } from "lucide-react";
+import { TagInput } from "./tag-input";
 import type {
   ContentOverrideItem,
   MasterCvCertification,
@@ -107,6 +108,16 @@ const buildFormState = (
         endDate: toStringValue(override?.endDate ?? data.endDate),
         current: toBooleanValue(override?.current ?? data.current),
         description: toStringValue(override?.description ?? data.description),
+        location: toStringValue(override?.location ?? data.location),
+        contractType: toStringValue(
+          override?.contractType ?? data.contractType,
+        ),
+        remote: toStringValue(override?.remote ?? data.remote),
+        techStack: parseTechnologies(override?.techStack ?? data.techStack),
+        achievements: parseTechnologies(
+          override?.achievements ?? data.achievements,
+        ),
+        teamContext: toStringValue(override?.teamContext ?? data.teamContext),
       };
     }
     case "skills": {
@@ -135,7 +146,12 @@ const buildFormState = (
         url: toStringValue(override?.url ?? data.url),
         technologies: parseTechnologies(
           override?.technologies ?? data.technologies,
-        ).join(", "),
+        ),
+        role: toStringValue(override?.role ?? data.role),
+        startDate: toStringValue(override?.startDate ?? data.startDate),
+        endDate: toStringValue(override?.endDate ?? data.endDate),
+        highlights: parseTechnologies(override?.highlights ?? data.highlights),
+        status: toStringValue(override?.status ?? data.status),
       };
     }
     case "languages": {
@@ -182,10 +198,36 @@ const buildOverridePatch = (
       pushStringField("startDate", data.startDate);
       pushStringField("endDate", data.endDate);
       pushStringField("description", data.description);
+      pushStringField("location", data.location);
+      pushStringField("contractType", data.contractType);
+      pushStringField("remote", data.remote);
+      pushStringField("teamContext", data.teamContext);
 
       const nextCurrent = Boolean(state.current);
       if (Boolean(data.current) !== nextCurrent) {
         patch.current = nextCurrent;
+      }
+
+      const currentTechStack = parseTechnologies(data.techStack);
+      const nextTechStack = Array.isArray(state.techStack)
+        ? (state.techStack as string[])
+        : [];
+      if (
+        currentTechStack.length !== nextTechStack.length ||
+        currentTechStack.some((v, i) => v !== nextTechStack[i])
+      ) {
+        patch.techStack = nextTechStack;
+      }
+
+      const currentAchievements = parseTechnologies(data.achievements);
+      const nextAchievements = Array.isArray(state.achievements)
+        ? (state.achievements as string[])
+        : [];
+      if (
+        currentAchievements.length !== nextAchievements.length ||
+        currentAchievements.some((v, i) => v !== nextAchievements[i])
+      ) {
+        patch.achievements = nextAchievements;
       }
       break;
     }
@@ -210,18 +252,37 @@ const buildOverridePatch = (
       pushStringField("name", data.name);
       pushStringField("description", data.description);
       pushStringField("url", data.url);
+      pushStringField("role", data.role);
+      pushStringField("startDate", data.startDate);
+      pushStringField("endDate", data.endDate);
+      pushStringField("status", data.status);
 
       const currentTechnologies = parseTechnologies(data.technologies);
-      const nextTechnologies = toStringValue(state.technologies)
-        .split(",")
-        .map((value) => value.trim())
-        .filter(Boolean);
+      const nextTechnologies = Array.isArray(state.technologies)
+        ? (state.technologies as string[])
+        : [];
 
       if (
         currentTechnologies.length !== nextTechnologies.length ||
-        currentTechnologies.some((value, index) => value !== nextTechnologies[index])
+        currentTechnologies.some(
+          (value, index) => value !== nextTechnologies[index],
+        )
       ) {
         patch.technologies = nextTechnologies;
+      }
+
+      const currentHighlights = parseTechnologies(data.highlights);
+      const nextHighlights = Array.isArray(state.highlights)
+        ? (state.highlights as string[])
+        : [];
+
+      if (
+        currentHighlights.length !== nextHighlights.length ||
+        currentHighlights.some(
+          (value, index) => value !== nextHighlights[index],
+        )
+      ) {
+        patch.highlights = nextHighlights;
       }
       break;
     }
@@ -255,7 +316,8 @@ export function CvItemSelector({
 }: CvItemSelectorProps) {
   const hiddenSet = new Set(hiddenItemIds);
   const overrideMap = useMemo(
-    () => new Map(overrides.map((override) => [override.masterItemId, override])),
+    () =>
+      new Map(overrides.map((override) => [override.masterItemId, override])),
     [overrides],
   );
   const [editingItemId, setEditingItemId] = useState<string | null>(null);
@@ -287,6 +349,7 @@ export function CvItemSelector({
                   onCheckedChange={(checked) =>
                     onToggleItem(item.id, Boolean(checked))
                   }
+                  aria-label={`Afficher ${title}`}
                 />
                 <div className="flex flex-col gap-0.5 overflow-hidden">
                   <span className="truncate text-sm font-medium">{title}</span>
@@ -307,6 +370,8 @@ export function CvItemSelector({
                   size="icon-xs"
                   variant={isEditing ? "secondary" : "ghost"}
                   title="Editer l'override"
+                  aria-label={`Éditer ${title}`}
+                  aria-expanded={isEditing}
                   onClick={() => {
                     if (isEditing) {
                       setEditingItemId(null);
@@ -323,6 +388,7 @@ export function CvItemSelector({
                     size="icon-xs"
                     variant="ghost"
                     title="Supprimer l'override"
+                    aria-label={`Supprimer la personnalisation de ${title}`}
                     onClick={() => {
                       onRemoveOverride(item.id);
                       if (isEditing) {
@@ -398,10 +464,67 @@ export function CvItemSelector({
                       <Switch
                         checked={toBooleanValue(formState.current)}
                         onCheckedChange={(checked) =>
-                          setFormState((prev) => ({ ...prev, current: checked }))
+                          setFormState((prev) => ({
+                            ...prev,
+                            current: checked,
+                          }))
                         }
                       />
                       <Label>Poste actuel</Label>
+                    </div>
+                    <div className="grid gap-2 sm:grid-cols-3">
+                      <div className="flex flex-col gap-1">
+                        <Label>Lieu</Label>
+                        <Input
+                          value={toStringValue(formState.location)}
+                          placeholder="Paris, France"
+                          onChange={(event) =>
+                            setFormState((prev) => ({
+                              ...prev,
+                              location: event.target.value,
+                            }))
+                          }
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <Label>Type de contrat</Label>
+                        <Input
+                          value={toStringValue(formState.contractType)}
+                          placeholder="CDI, FREELANCE..."
+                          onChange={(event) =>
+                            setFormState((prev) => ({
+                              ...prev,
+                              contractType: event.target.value,
+                            }))
+                          }
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <Label>Mode de travail</Label>
+                        <Input
+                          value={toStringValue(formState.remote)}
+                          placeholder="ONSITE, HYBRID, REMOTE"
+                          onChange={(event) =>
+                            setFormState((prev) => ({
+                              ...prev,
+                              remote: event.target.value,
+                            }))
+                          }
+                        />
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <Label>Contexte equipe</Label>
+                      <Input
+                        value={toStringValue(formState.teamContext)}
+                        placeholder="Equipe 5 devs, startup"
+                        onChange={(event) =>
+                          setFormState((prev) => ({
+                            ...prev,
+                            teamContext: event.target.value,
+                          }))
+                        }
+                      />
                     </div>
                     <div className="flex flex-col gap-1">
                       <Label>Description</Label>
@@ -414,6 +537,37 @@ export function CvItemSelector({
                             description: event.target.value,
                           }))
                         }
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <Label>Stack technique</Label>
+                      <TagInput
+                        tags={
+                          Array.isArray(formState.techStack)
+                            ? (formState.techStack as string[])
+                            : []
+                        }
+                        onChange={(tags) =>
+                          setFormState((prev) => ({ ...prev, techStack: tags }))
+                        }
+                        placeholder="Ajouter une technologie"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <Label>Realisations</Label>
+                      <TagInput
+                        tags={
+                          Array.isArray(formState.achievements)
+                            ? (formState.achievements as string[])
+                            : []
+                        }
+                        onChange={(tags) =>
+                          setFormState((prev) => ({
+                            ...prev,
+                            achievements: tags,
+                          }))
+                        }
+                        placeholder="Ajouter une realisation"
                       />
                     </div>
                   </>
@@ -563,6 +717,60 @@ export function CvItemSelector({
                         />
                       </div>
                     </div>
+                    <div className="grid gap-2 sm:grid-cols-3">
+                      <div className="flex flex-col gap-1">
+                        <Label>Role</Label>
+                        <Input
+                          value={toStringValue(formState.role)}
+                          placeholder="Lead dev / Solo"
+                          onChange={(event) =>
+                            setFormState((prev) => ({
+                              ...prev,
+                              role: event.target.value,
+                            }))
+                          }
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <Label>Date debut</Label>
+                        <Input
+                          value={toStringValue(formState.startDate)}
+                          placeholder="janvier 2024"
+                          onChange={(event) =>
+                            setFormState((prev) => ({
+                              ...prev,
+                              startDate: event.target.value,
+                            }))
+                          }
+                        />
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <Label>Date fin</Label>
+                        <Input
+                          value={toStringValue(formState.endDate)}
+                          placeholder="juin 2025"
+                          onChange={(event) =>
+                            setFormState((prev) => ({
+                              ...prev,
+                              endDate: event.target.value,
+                            }))
+                          }
+                        />
+                      </div>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <Label>Statut</Label>
+                      <Input
+                        value={toStringValue(formState.status)}
+                        placeholder="En cours / Termine"
+                        onChange={(event) =>
+                          setFormState((prev) => ({
+                            ...prev,
+                            status: event.target.value,
+                          }))
+                        }
+                      />
+                    </div>
                     <div className="flex flex-col gap-1">
                       <Label>Description</Label>
                       <Textarea
@@ -577,16 +785,37 @@ export function CvItemSelector({
                       />
                     </div>
                     <div className="flex flex-col gap-1">
-                      <Label>Technologies (separees par des virgules)</Label>
-                      <Input
-                        value={toStringValue(formState.technologies)}
-                        placeholder="React, TypeScript, Node.js"
-                        onChange={(event) =>
+                      <Label>Technologies</Label>
+                      <TagInput
+                        tags={
+                          Array.isArray(formState.technologies)
+                            ? (formState.technologies as string[])
+                            : []
+                        }
+                        onChange={(tags) =>
                           setFormState((prev) => ({
                             ...prev,
-                            technologies: event.target.value,
+                            technologies: tags,
                           }))
                         }
+                        placeholder="Ajouter une technologie"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <Label>Points forts</Label>
+                      <TagInput
+                        tags={
+                          Array.isArray(formState.highlights)
+                            ? (formState.highlights as string[])
+                            : []
+                        }
+                        onChange={(tags) =>
+                          setFormState((prev) => ({
+                            ...prev,
+                            highlights: tags,
+                          }))
+                        }
+                        placeholder="Ajouter un point fort"
                       />
                     </div>
                   </>
@@ -703,7 +932,11 @@ export function CvItemSelector({
                   <Button
                     size="sm"
                     onClick={() => {
-                      const patch = buildOverridePatch(section, item, formState);
+                      const patch = buildOverridePatch(
+                        section,
+                        item,
+                        formState,
+                      );
                       if (Object.keys(patch).length === 0) {
                         onRemoveOverride(item.id);
                       } else {

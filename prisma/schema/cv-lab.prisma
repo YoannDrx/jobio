@@ -42,6 +42,7 @@ model MasterCv {
 
   hobbies        Json?
   driverLicenses Json?
+  socialLinks    Json?
 
   experiences    Json?
   skills         Json?

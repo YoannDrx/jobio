@@ -14,6 +14,7 @@ type DocumentStudioLayoutProps = {
   editPanelContent: ReactNode;
   editPanelFooter?: ReactNode;
   editPanelWidth?: number;
+  onEditPanelWidthChange?: (width: number) => void;
   emptyState?: ReactNode;
   contentMode?: "centered" | "full";
 };
@@ -28,6 +29,7 @@ export function DocumentStudioLayout({
   editPanelContent,
   editPanelFooter,
   editPanelWidth = 420,
+  onEditPanelWidthChange,
   emptyState,
   contentMode = "centered",
 }: DocumentStudioLayoutProps) {
@@ -66,6 +68,7 @@ export function DocumentStudioLayout({
         title={editPanelTitle}
         footer={editPanelFooter}
         width={editPanelWidth}
+        onWidthChange={onEditPanelWidthChange}
       >
         {editPanelContent}
       </StudioSidePanel>

@@ -98,6 +98,16 @@ type CvLabEditPanelProps = {
     patch: Record<string, unknown>,
   ) => void;
   onRemoveOverride?: (section: MasterCvSection, itemId: string) => void;
+  onGenerateFromOffer?: (result: {
+    targetRole: string;
+    headlineOverride: string;
+    summaryOverride: string;
+    hiddenItems: Record<string, string[]>;
+    contentOverrides: Record<
+      string,
+      { masterItemId: string; description?: string; title?: string }[]
+    >;
+  }) => void;
 };
 
 export function CvLabEditPanel({
@@ -145,13 +155,15 @@ export function CvLabEditPanel({
   onToggleItem,
   onUpdateOverride,
   onRemoveOverride,
+  onGenerateFromOffer,
 }: CvLabEditPanelProps) {
   return (
     <Tabs
       value={activeTab}
       onValueChange={(value) => onTabChange(value as CvLabEditTab)}
+      aria-label="Panneau d'édition du CV"
     >
-      <TabsList className="w-full">
+      <TabsList className="w-full" aria-label="Onglets d'édition">
         <TabsTrigger value="settings">Paramètres</TabsTrigger>
         <TabsTrigger value="sections">Sections</TabsTrigger>
         <TabsTrigger value="versions">Versions</TabsTrigger>
@@ -220,6 +232,7 @@ export function CvLabEditPanel({
           onPreviewSuggestions={onPreviewAtsSuggestions}
           onApplySuggestions={onApplyAtsSuggestions}
           onCancelPreview={onCancelAtsPreview}
+          onGenerateFromOffer={onGenerateFromOffer}
         />
       </TabsContent>
     </Tabs>

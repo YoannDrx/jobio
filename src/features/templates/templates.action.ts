@@ -31,19 +31,11 @@ export const updateTemplateAction = authAction
   .inputSchema(updateTemplateSchema)
   .action(async ({ parsedInput: { id, ...data }, ctx: { user } }) => {
     const template = await prisma.messageTemplate.findFirst({
-      where: { id },
+      where: { id, userId: user.id, isSystem: false },
     });
 
     if (!template) {
       throw new ApplicationError("Template introuvable");
-    }
-
-    if (template.isSystem) {
-      throw new ApplicationError("Impossible de modifier un template systeme");
-    }
-
-    if (template.userId !== user.id) {
-      throw new ApplicationError("Vous ne pouvez modifier que vos templates");
     }
 
     const updated = await prisma.messageTemplate.update({
@@ -58,19 +50,11 @@ export const deleteTemplateAction = authAction
   .inputSchema(z.object({ id: z.string() }))
   .action(async ({ parsedInput: { id }, ctx: { user } }) => {
     const template = await prisma.messageTemplate.findFirst({
-      where: { id },
+      where: { id, userId: user.id, isSystem: false },
     });
 
     if (!template) {
       throw new ApplicationError("Template introuvable");
-    }
-
-    if (template.isSystem) {
-      throw new ApplicationError("Impossible de supprimer un template systeme");
-    }
-
-    if (template.userId !== user.id) {
-      throw new ApplicationError("Vous ne pouvez supprimer que vos templates");
     }
 
     await prisma.messageTemplate.delete({

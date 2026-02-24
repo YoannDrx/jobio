@@ -1,69 +1,31 @@
 "use client";
 
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type ChangeEvent,
-} from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { dialogManager } from "@/features/dialog-manager/dialog-manager";
 import { resolveActionResult } from "@/lib/actions/actions-utils";
 import { getProfilesAction } from "@/features/profiles/profiles.action";
 import { getCurrentPlanAction } from "@/features/plans/check-limits.action";
 import { getMasterCvAction } from "@/features/cv-lab/master-cv.action";
+import { useUndoRedo } from "./use-undo-redo";
+import { useCvDocumentManagement } from "./use-cv-document-management";
+import { useCvPreview } from "./use-cv-preview";
+import { useCvAts } from "./use-cv-ats";
+import { useCvVersions } from "./use-cv-versions";
 import {
-  analyzeCvLabAtsAction,
-  archiveCvLabDocumentAction,
-  createCvLabDocumentAction,
-  createCvLabVersionAction,
-  deleteCvLabDocumentAction,
-  duplicateCvLabDocumentAction,
-  generateCvLabShareTokenAction,
   listCvLabDocumentsAction,
-  restoreCvLabDocumentAction,
-  listCvLabVersionsAction,
-  revokeCvLabShareTokenAction,
-  restoreCvLabVersionAction,
   updateCvLabDocumentAction,
 } from "../cv-lab.action";
-import {
-  CV_LAB_SECTIONS,
-  MASTER_CV_SECTIONS,
-  type ContentOverrideItem,
-  type CvLabSection,
-  type MasterCvSection,
-} from "../cv-lab.schema";
+import { type CvLabSection } from "../cv-lab.schema";
 import type { CvLabEditTab } from "../components/cv-lab-edit-panel";
 import {
-  type AtsAnalysis,
-  type AtsSuggestionPreview,
   type CvDocument,
   type CvProfile,
-  type CvVersion,
   type Draft,
-  type DraftDiffItem,
-  type SectionLineDiff,
-  CV_LAB_VERSION_COMPARE_CURRENT,
   areDraftsEqual,
-  buildAtsSuggestionPreview,
   buildDraft,
-  buildDraftDiffItems,
-  buildRenderSnapshot,
-  buildSectionLineDiffs,
-  buildSectionLineSnapshotFromDraft,
-  cvLabImportPayloadSchema,
   cvLabLocalDraftPayloadSchema,
-  getFilenameFromDisposition,
   getLocalDraftStorageKey,
   normalizeDraft,
-  normalizeHiddenSections,
-  normalizeSectionOrder,
-  parseDraftFromVersionSnapshot,
-  toDate,
 } from "../cv-lab-utils";
 
 type MasterCvData = {
@@ -77,6 +39,7 @@ type MasterCvData = {
   photoUrl: string | null;
   hobbies: unknown;
   driverLicenses: unknown;
+  socialLinks: unknown;
   experiences: unknown;
   skills: unknown;
   education: unknown;
@@ -85,63 +48,9 @@ type MasterCvData = {
   certifications: unknown;
 };
 
-const parseJsonRecord = (value: unknown): Record<string, unknown> | null => {
-  if (!value || typeof value !== "object" || Array.isArray(value)) {
-    return null;
-  }
-  return value as Record<string, unknown>;
-};
-
-const parseContentOverrides = (
-  value: unknown,
-): Partial<Record<MasterCvSection, ContentOverrideItem[]>> => {
-  const record = parseJsonRecord(value);
-  if (!record) return {};
-
-  const result: Partial<Record<MasterCvSection, ContentOverrideItem[]>> = {};
-  for (const section of MASTER_CV_SECTIONS) {
-    const sectionValue = record[section];
-    if (!Array.isArray(sectionValue)) continue;
-    result[section] = sectionValue.filter(
-      (item): item is ContentOverrideItem =>
-        item !== null &&
-        typeof item === "object" &&
-        !Array.isArray(item) &&
-        typeof (item as { masterItemId?: unknown }).masterItemId === "string",
-    );
-  }
-
-  return result;
-};
-
-const parseHiddenItems = (
-  value: unknown,
-): Partial<Record<MasterCvSection, string[]>> => {
-  const record = parseJsonRecord(value);
-  if (!record) return {};
-
-  const result: Partial<Record<MasterCvSection, string[]>> = {};
-  for (const section of MASTER_CV_SECTIONS) {
-    const sectionValue = record[section];
-    if (!Array.isArray(sectionValue)) continue;
-    result[section] = sectionValue.filter(
-      (item): item is string => typeof item === "string",
-    );
-  }
-
-  return result;
-};
-
-const parsePersonalInfo = (
-  value: unknown,
-): Record<string, unknown> | null => {
-  const record = parseJsonRecord(value);
-  if (!record) return null;
-  return record;
-};
+type AutoSaveStatus = "idle" | "saving" | "saved" | "error";
 
 export function useCvLabStudio() {
-
   const [profiles, setProfiles] = useState<CvProfile[]>([]);
   const [masterCv, setMasterCv] = useState<MasterCvData | null>(null);
   const [documents, setDocuments] = useState<CvDocument[]>([]);
@@ -149,31 +58,21 @@ export function useCvLabStudio() {
     null,
   );
   const [draft, setDraft] = useState<Draft | null>(null);
-  const [versions, setVersions] = useState<CvVersion[]>([]);
-  const [versionLabel, setVersionLabel] = useState("");
-  const [atsJobDescription, setAtsJobDescription] = useState("");
-  const [atsAnalysis, setAtsAnalysis] = useState<AtsAnalysis | null>(null);
-  const [atsSuggestionPreview, setAtsSuggestionPreview] =
-    useState<AtsSuggestionPreview | null>(null);
-  const [previewHtml, setPreviewHtml] = useState<string | null>(null);
-  const [previewError, setPreviewError] = useState<string | null>(null);
-  const [isPreviewLoading, setIsPreviewLoading] = useState(false);
-  const [canUseAllCvTemplates, setCanUseAllCvTemplates] = useState(false);
-  const [compareLeftVersionId, setCompareLeftVersionId] = useState("");
-  const [compareRightReference, setCompareRightReference] = useState(
-    CV_LAB_VERSION_COMPARE_CURRENT,
-  );
   const [recoverableLocalDraft, setRecoverableLocalDraft] = useState<{
     draft: Draft;
     savedAt: string;
   } | null>(null);
+  const [canUseAllCvTemplates, setCanUseAllCvTemplates] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [editTab, setEditTab] = useState<CvLabEditTab>("settings");
   const [activeProfileSection, setActiveProfileSection] = useState<
     string | null
   >(null);
-  const importInputRef = useRef<HTMLInputElement | null>(null);
+  const [autoSaveStatus, setAutoSaveStatus] = useState<AutoSaveStatus>("idle");
+  const undoRedo = useUndoRedo<Draft>();
+  const lastSavedDraftJsonRef = useRef<string | null>(null);
+  const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const selectedDocument = useMemo(
     () =>
@@ -181,35 +80,30 @@ export function useCvLabStudio() {
     [documents, selectedDocumentId],
   );
 
-  const refreshVersions = useCallback(async (documentId: string) => {
-    const data = await resolveActionResult(
-      listCvLabVersionsAction({ documentId, limit: 20 }),
-    );
-    const mappedVersions = data.map((version) => ({
-      id: version.id,
-      label: version.label,
-      createdAt: version.createdAt,
-      snapshot: parseDraftFromVersionSnapshot(version.snapshot),
-      snapshotRaw: version.snapshot,
-    }));
+  const profileById = useMemo(
+    () => new Map(profiles.map((profile) => [profile.id, profile] as const)),
+    [profiles],
+  );
 
-    setVersions(mappedVersions);
-    setCompareLeftVersionId((previous) => {
-      if (mappedVersions.some((version) => version.id === previous)) {
-        return previous;
-      }
-      return mappedVersions[0]?.id ?? "";
-    });
-    setCompareRightReference((previous) => {
-      if (previous === CV_LAB_VERSION_COMPARE_CURRENT) {
-        return previous;
-      }
-      if (mappedVersions.some((version) => version.id === previous)) {
-        return previous;
-      }
-      return CV_LAB_VERSION_COMPARE_CURRENT;
-    });
-  }, []);
+  // --- Sub-hooks ---
+
+  const ats = useCvAts({
+    selectedDocument,
+    draft,
+    setDraft,
+  });
+
+  const versionHook = useCvVersions({
+    selectedDocument,
+    selectedDocumentId,
+    draft,
+    profileById,
+    setAtsSuggestionPreview: (v: null) => ats.setAtsSuggestionPreview(v),
+    reloadData: async () => Promise.resolve(), // placeholder — reloadData calls refreshVersions directly
+  });
+
+  const { refreshVersions, setVersions: setVersionsList } = versionHook;
+  const { resetAtsState } = ats;
 
   const filterDocumentsByView = useCallback((sourceDocuments: CvDocument[]) => {
     return sourceDocuments.filter((document) => !document.archivedAt);
@@ -219,15 +113,15 @@ export function useCvLabStudio() {
     async (nextSelectedId?: string | null) => {
       const [profileRows, documentRows, planInfo, masterCvRow] =
         await Promise.all([
-        resolveActionResult(getProfilesAction({})),
-        resolveActionResult(
-          listCvLabDocumentsAction({
-            includeArchived: false,
-          }),
-        ),
-        resolveActionResult(getCurrentPlanAction()),
-        resolveActionResult(getMasterCvAction()),
-      ]);
+          resolveActionResult(getProfilesAction({})),
+          resolveActionResult(
+            listCvLabDocumentsAction({
+              includeArchived: false,
+            }),
+          ),
+          resolveActionResult(getCurrentPlanAction()),
+          resolveActionResult(getMasterCvAction()),
+        ]);
 
       const normalizedProfiles = profileRows.map((profile) => ({
         id: profile.id,
@@ -268,11 +162,52 @@ export function useCvLabStudio() {
         }
       } else {
         setDraft(null);
-        setVersions([]);
+        setVersionsList([]);
       }
     },
-    [filterDocumentsByView, refreshVersions, selectedDocumentId],
+    [
+      filterDocumentsByView,
+      refreshVersions,
+      setVersionsList,
+      selectedDocumentId,
+    ],
   );
+
+  const patchSelectedDocument = useCallback(
+    (patch: Partial<CvDocument>) => {
+      if (!selectedDocument?.id) return;
+      setDocuments((previous) =>
+        previous.map((document) =>
+          document.id === selectedDocument.id
+            ? ({ ...document, ...patch } as CvDocument)
+            : document,
+        ),
+      );
+    },
+    [selectedDocument?.id],
+  );
+
+  const documentManagement = useCvDocumentManagement({
+    profiles,
+    masterCv,
+    setDocuments,
+    selectedDocument,
+    selectedDocumentId,
+    draft,
+    setDraft,
+    setAtsAnalysis: () => ats.setAtsAnalysis(null),
+    setAtsSuggestionPreview: () => ats.setAtsSuggestionPreview(null),
+    setRecoverableLocalDraft: () => setRecoverableLocalDraft(null),
+    reloadData,
+    patchSelectedDocument,
+  });
+
+  const preview = useCvPreview({
+    selectedDocument,
+    draft,
+    masterCv,
+    profileById,
+  });
 
   // Initial load
   useEffect(() => {
@@ -296,22 +231,19 @@ export function useCvLabStudio() {
   useEffect(() => {
     if (!selectedDocument) {
       setDraft(null);
-      setVersions([]);
-      setAtsAnalysis(null);
-      setAtsSuggestionPreview(null);
-      setAtsJobDescription("");
-      setPreviewHtml(null);
-      setPreviewError(null);
+      setVersionsList([]);
+      resetAtsState();
       setRecoverableLocalDraft(null);
+      setAutoSaveStatus("idle");
+      lastSavedDraftJsonRef.current = null;
       return;
     }
     const savedDraft = normalizeDraft(buildDraft(selectedDocument));
     setDraft(savedDraft);
-    setAtsAnalysis(null);
-    setAtsSuggestionPreview(null);
-    setAtsJobDescription("");
-    setPreviewError(null);
+    lastSavedDraftJsonRef.current = JSON.stringify(savedDraft);
+    resetAtsState();
     setRecoverableLocalDraft(null);
+    setAutoSaveStatus("idle");
 
     try {
       const payloadRaw = window.localStorage.getItem(
@@ -350,125 +282,13 @@ export function useCvLabStudio() {
     }
 
     void refreshVersions(selectedDocument.id);
-  }, [refreshVersions, selectedDocument]);
+  }, [refreshVersions, setVersionsList, resetAtsState, selectedDocument]);
 
   const hasUnsavedChanges = useMemo(() => {
     if (!selectedDocument || !draft) return false;
     const normalizedSelected = buildDraft(selectedDocument);
     return JSON.stringify(normalizedSelected) !== JSON.stringify(draft);
   }, [selectedDocument, draft]);
-
-  const profileById = useMemo(
-    () => new Map(profiles.map((profile) => [profile.id, profile] as const)),
-    [profiles],
-  );
-
-  const compareLeftVersion = useMemo(
-    () =>
-      versions.find((version) => version.id === compareLeftVersionId) ?? null,
-    [compareLeftVersionId, versions],
-  );
-
-  const compareRightVersion = useMemo(() => {
-    if (compareRightReference === CV_LAB_VERSION_COMPARE_CURRENT) {
-      return null;
-    }
-    return (
-      versions.find((version) => version.id === compareRightReference) ?? null
-    );
-  }, [compareRightReference, versions]);
-
-  const compareLeftDraft = compareLeftVersion?.snapshot ?? null;
-  const compareRightDraft =
-    compareRightReference === CV_LAB_VERSION_COMPARE_CURRENT
-      ? draft
-      : (compareRightVersion?.snapshot ?? null);
-
-  const versionDiffItems = useMemo(() => {
-    if (!compareLeftDraft || !compareRightDraft) {
-      return [] as DraftDiffItem[];
-    }
-    if (
-      compareRightReference !== CV_LAB_VERSION_COMPARE_CURRENT &&
-      compareLeftVersion?.id === compareRightVersion?.id
-    ) {
-      return [] as DraftDiffItem[];
-    }
-
-    return buildDraftDiffItems(compareLeftDraft, compareRightDraft);
-  }, [
-    compareLeftDraft,
-    compareLeftVersion?.id,
-    compareRightDraft,
-    compareRightReference,
-    compareRightVersion?.id,
-  ]);
-
-  const compareLeftSectionLines = useMemo(() => {
-    if (!compareLeftVersion || !compareLeftDraft) {
-      return null;
-    }
-
-    return buildSectionLineSnapshotFromDraft({
-      draft: compareLeftDraft,
-      profileById,
-      versionSnapshotRaw: compareLeftVersion.snapshotRaw,
-    });
-  }, [compareLeftDraft, compareLeftVersion, profileById]);
-
-  const compareRightSectionLines = useMemo(() => {
-    if (!compareRightDraft) {
-      return null;
-    }
-
-    return buildSectionLineSnapshotFromDraft({
-      draft: compareRightDraft,
-      profileById,
-      versionSnapshotRaw:
-        compareRightReference === CV_LAB_VERSION_COMPARE_CURRENT
-          ? undefined
-          : (compareRightVersion?.snapshotRaw ?? undefined),
-    });
-  }, [
-    compareRightDraft,
-    compareRightReference,
-    compareRightVersion,
-    profileById,
-  ]);
-
-  const versionSectionLineDiffs = useMemo(() => {
-    if (!compareLeftSectionLines || !compareRightSectionLines) {
-      return [] as SectionLineDiff[];
-    }
-
-    return buildSectionLineDiffs(
-      compareLeftSectionLines,
-      compareRightSectionLines,
-    );
-  }, [compareLeftSectionLines, compareRightSectionLines]);
-
-  const compareLeftLabel = compareLeftVersion
-    ? `${compareLeftVersion.label} (${toDate(
-        compareLeftVersion.createdAt,
-      ).toLocaleString("fr-FR")})`
-    : null;
-
-  const compareRightLabel =
-    compareRightReference === CV_LAB_VERSION_COMPARE_CURRENT
-      ? "Brouillon actuel"
-      : compareRightVersion
-        ? `${compareRightVersion.label} (${toDate(
-            compareRightVersion.createdAt,
-          ).toLocaleString("fr-FR")})`
-        : null;
-
-  const atsSuggestionDiffItems = useMemo(() => {
-    if (!draft || !atsSuggestionPreview) {
-      return [] as DraftDiffItem[];
-    }
-
-    return buildDraftDiffItems(draft, atsSuggestionPreview.draft);
-  }, [atsSuggestionPreview, draft]);
 
   // Warn on unsaved changes before unload
   useEffect(() => {
@@ -483,74 +303,6 @@ export function useCvLabStudio() {
       window.removeEventListener("beforeunload", beforeUnload);
     };
   }, [hasUnsavedChanges]);
-
-  // Preview HTML rendering
-  useEffect(() => {
-    if (!selectedDocument || !draft) {
-      setPreviewHtml(null);
-      setPreviewError(null);
-      setIsPreviewLoading(false);
-      return;
-    }
-
-    const controller = new AbortController();
-    const timeoutId = window.setTimeout(async () => {
-      try {
-        setIsPreviewLoading(true);
-        const response = await fetch("/api/cv-lab/render", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            documentId: selectedDocument.id,
-            mode: "preview",
-            snapshot: buildRenderSnapshot(draft),
-          }),
-          signal: controller.signal,
-        });
-
-        if (!response.ok) {
-          let message = "Impossible de charger la prévisualisation";
-          try {
-            const errorPayload = (await response.json()) as {
-              message?: string;
-            };
-            if (errorPayload.message) {
-              message = errorPayload.message;
-            }
-          } catch {
-            // Keep generic message.
-          }
-
-          throw new Error(message);
-        }
-
-        const html = await response.text();
-        if (!controller.signal.aborted) {
-          setPreviewHtml(html);
-          setPreviewError(null);
-        }
-      } catch (error) {
-        if (!controller.signal.aborted) {
-          setPreviewError(
-            error instanceof Error
-              ? error.message
-              : "Impossible de charger la prévisualisation",
-          );
-        }
-      } finally {
-        if (!controller.signal.aborted) {
-          setIsPreviewLoading(false);
-        }
-      }
-    }, 250);
-
-    return () => {
-      controller.abort();
-      window.clearTimeout(timeoutId);
-    };
-  }, [draft, selectedDocument]);
 
   // Auto-save draft to local storage
   useEffect(() => {
@@ -581,593 +333,115 @@ export function useCvLabStudio() {
     };
   }, [draft, selectedDocument]);
 
-  // --- Mutations ---
+  // Auto-save to server with debounce
+  useEffect(() => {
+    if (!selectedDocument || !draft) {
+      return;
+    }
 
-  const createMutation = useMutation({
-    mutationFn: async () => {
-      if (profiles.length === 0) {
-        throw new Error("Crée d'abord un profil pour démarrer CV Lab");
-      }
-      return resolveActionResult(
-        createCvLabDocumentAction({
-          profileId: profiles[0].id,
-          name: `CV ${new Date().toLocaleDateString("fr-FR")}`,
-          targetRole: null,
-          template: "CLASSIC",
-          theme: "MODERN",
-          pageSize: "A4",
-          accentColor: "#0f172a",
-          fontFamily: "Inter",
-          headlineOverride: null,
-          summaryOverride: null,
-          sectionOrder: [...CV_LAB_SECTIONS],
-          hiddenSections: [],
-        }),
-      );
-    },
-    onSuccess: async (createdDocument) => {
-      toast.success("Nouveau CV créé");
-      await reloadData(createdDocument.id);
-    },
-    onError: (error: Error) => {
-      toast.error(error.message);
-    },
-  });
+    const currentDraftJson = JSON.stringify(draft);
 
-  const saveMutation = useMutation({
-    mutationFn: async () => {
-      if (!selectedDocument || !draft) return;
-      await resolveActionResult(
-        updateCvLabDocumentAction({
-          id: selectedDocument.id,
-          profileId: draft.profileId,
-          name: draft.name,
-          targetRole: draft.targetRole || null,
-          template: draft.template,
-          theme: draft.theme,
-          pageSize: "A4",
-          accentColor: draft.accentColor,
-          fontFamily: draft.fontFamily,
-          headlineOverride: draft.headlineOverride || null,
-          summaryOverride: draft.summaryOverride || null,
-          sectionOrder: draft.sectionOrder,
-          hiddenSections: draft.hiddenSections,
-        }),
-      );
-    },
-    onSuccess: async () => {
-      if (selectedDocumentId) {
-        try {
-          window.localStorage.removeItem(
-            getLocalDraftStorageKey(selectedDocumentId),
-          );
-        } catch {
-          // Ignore local storage failures.
-        }
-      }
-      setRecoverableLocalDraft(null);
-      setAtsSuggestionPreview(null);
-      toast.success("CV sauvegardé");
-      await reloadData(selectedDocumentId);
-    },
-    onError: (error: Error) => {
-      toast.error(error.message);
-    },
-  });
+    // Skip if draft hasn't changed since last save
+    if (currentDraftJson === lastSavedDraftJsonRef.current) {
+      return;
+    }
 
-  const duplicateMutation = useMutation({
-    mutationFn: async () => {
-      if (!selectedDocument) return;
-      return resolveActionResult(
-        duplicateCvLabDocumentAction({
-          id: selectedDocument.id,
-        }),
-      );
-    },
-    onSuccess: async (copy) => {
-      if (!copy) return;
-      toast.success("CV dupliqué");
-      await reloadData(copy.id);
-    },
-    onError: (error: Error) => {
-      toast.error(error.message);
-    },
-  });
+    // Skip if no unsaved changes vs server
+    if (!hasUnsavedChanges) {
+      lastSavedDraftJsonRef.current = currentDraftJson;
+      return;
+    }
 
-  const archiveMutation = useMutation({
-    mutationFn: async () => {
-      if (!selectedDocument) return;
-      await resolveActionResult(
-        archiveCvLabDocumentAction({ id: selectedDocument.id }),
-      );
-    },
-    onSuccess: async () => {
-      toast.success("CV archivé");
-      await reloadData(null);
-    },
-    onError: (error: Error) => {
-      toast.error(error.message);
-    },
-  });
+    // Don't auto-save while a manual save is in progress
+    if (documentManagement.saveMutation.isPending) {
+      return;
+    }
 
-  const restoreDocumentMutation = useMutation({
-    mutationFn: async () => {
-      if (!selectedDocument) return;
-      await resolveActionResult(
-        restoreCvLabDocumentAction({ id: selectedDocument.id }),
-      );
-    },
-    onSuccess: async () => {
-      toast.success("CV restauré");
-      await reloadData(selectedDocumentId);
-    },
-    onError: (error: Error) => {
-      toast.error(error.message);
-    },
-  });
+    if (autoSaveTimerRef.current) {
+      clearTimeout(autoSaveTimerRef.current);
+    }
 
-  const deleteDocumentMutation = useMutation({
-    mutationFn: async () => {
-      if (!selectedDocument) return;
-      await resolveActionResult(
-        deleteCvLabDocumentAction({ id: selectedDocument.id }),
-      );
-    },
-    onSuccess: async () => {
-      if (selectedDocumentId) {
-        try {
-          window.localStorage.removeItem(
-            getLocalDraftStorageKey(selectedDocumentId),
-          );
-        } catch {
-          // Ignore local storage failures.
-        }
-      }
-      setRecoverableLocalDraft(null);
-      toast.success("CV supprimé définitivement");
-      await reloadData(null);
-    },
-    onError: (error: Error) => {
-      toast.error(error.message);
-    },
-  });
-
-  const generateShareLinkMutation = useMutation({
-    mutationFn: async () => {
-      if (!selectedDocument) {
-        throw new Error("Aucun document sélectionné");
-      }
-
-      const generatedShare = await resolveActionResult(
-        generateCvLabShareTokenAction({ id: selectedDocument.id }),
-      );
-
-      return {
-        documentId: selectedDocument.id,
-        token: generatedShare.token,
-      };
-    },
-    onSuccess: ({ documentId, token }) => {
-      setDocuments((previous) =>
-        previous.map((document) =>
-          document.id === documentId
-            ? ({ ...document, shareToken: token } as CvDocument)
-            : document,
-        ),
-      );
-      toast.success("Lien public généré");
-    },
-    onError: (error: Error) => {
-      toast.error(error.message);
-    },
-  });
-
-  const revokeShareLinkMutation = useMutation({
-    mutationFn: async () => {
-      if (!selectedDocument) {
-        throw new Error("Aucun document sélectionné");
-      }
-
-      await resolveActionResult(
-        revokeCvLabShareTokenAction({ id: selectedDocument.id }),
-      );
-
-      return {
-        documentId: selectedDocument.id,
-      };
-    },
-    onSuccess: ({ documentId }) => {
-      setDocuments((previous) =>
-        previous.map((document) =>
-          document.id === documentId
-            ? ({ ...document, shareToken: null } as CvDocument)
-            : document,
-        ),
-      );
-      toast.success("Lien public désactivé");
-    },
-    onError: (error: Error) => {
-      toast.error(error.message);
-    },
-  });
-
-  const handleDeleteDocument = () => {
-    if (!selectedDocument) return;
-    dialogManager.confirm({
-      title: "Supprimer le CV",
-      description: `Suppression définitive du CV "${selectedDocument.name}". Cette action est irréversible.`,
-      confirmText: "SUPPRIMER",
-      action: {
-        label: "Supprimer",
-        variant: "destructive",
-        onClick: async () => {
-          await deleteDocumentMutation.mutateAsync();
-        },
-      },
-      cancel: { label: "Annuler" },
-    });
-  };
-
-  const createVersionMutation = useMutation({
-    mutationFn: async () => {
-      if (!selectedDocument) return;
-      await resolveActionResult(
-        createCvLabVersionAction({
-          documentId: selectedDocument.id,
-          label: versionLabel.trim() || undefined,
-        }),
-      );
-    },
-    onSuccess: async () => {
-      toast.success("Snapshot créé");
-      setVersionLabel("");
-      if (selectedDocumentId) {
-        await refreshVersions(selectedDocumentId);
-        await reloadData(selectedDocumentId);
-      }
-    },
-    onError: (error: Error) => {
-      toast.error(error.message);
-    },
-  });
-
-  const restoreVersionMutation = useMutation({
-    mutationFn: async (versionId: string) => {
-      if (!selectedDocument) return;
-      await resolveActionResult(
-        restoreCvLabVersionAction({
-          documentId: selectedDocument.id,
-          versionId,
-        }),
-      );
-    },
-    onSuccess: async () => {
-      toast.success("Version restaurée");
-      setAtsSuggestionPreview(null);
-      await reloadData(selectedDocumentId);
-    },
-    onError: (error: Error) => {
-      toast.error(error.message);
-    },
-  });
-
-  const atsMutation = useMutation({
-    mutationFn: async () => {
-      if (!selectedDocument || !draft) return null;
-      return resolveActionResult(
-        analyzeCvLabAtsAction({
-          documentId: selectedDocument.id,
-          jobDescription: atsJobDescription.trim() || null,
-          snapshot: {
+    autoSaveTimerRef.current = setTimeout(async () => {
+      setAutoSaveStatus("saving");
+      try {
+        await resolveActionResult(
+          updateCvLabDocumentAction({
+            id: selectedDocument.id,
             profileId: draft.profileId,
+            name: draft.name,
             targetRole: draft.targetRole || null,
+            template: draft.template,
+            theme: draft.theme,
+            pageSize: "A4",
+            accentColor: draft.accentColor,
+            fontFamily: draft.fontFamily,
             headlineOverride: draft.headlineOverride || null,
             summaryOverride: draft.summaryOverride || null,
             sectionOrder: draft.sectionOrder,
             hiddenSections: draft.hiddenSections,
-          },
-        }),
-      );
-    },
-    onSuccess: (analysis) => {
-      if (!analysis) return;
-      setAtsAnalysis(analysis as AtsAnalysis);
-      setAtsSuggestionPreview(null);
-      toast.success("Analyse ATS generee");
-    },
-    onError: (error: Error) => {
-      toast.error(error.message);
-    },
-  });
-
-  const exportPdfMutation = useMutation({
-    mutationFn: async () => {
-      if (!selectedDocument || !draft) {
-        throw new Error("Aucun document sélectionné");
-      }
-
-      const response = await fetch("/api/cv-lab/render", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          documentId: selectedDocument.id,
-          mode: "pdf",
-          download: true,
-          snapshot: buildRenderSnapshot(draft),
-        }),
-      });
-
-      if (!response.ok) {
-        let message = "Impossible de générer le PDF";
-        try {
-          const errorPayload = (await response.json()) as { message?: string };
-          if (errorPayload.message) {
-            message = errorPayload.message;
-          }
-        } catch {
-          // Keep generic message.
-        }
-        throw new Error(message);
-      }
-
-      const blob = await response.blob();
-      const filename = getFilenameFromDisposition(
-        response.headers.get("content-disposition"),
-      );
-
-      return {
-        blob,
-        filename,
-      };
-    },
-    onSuccess: ({ blob, filename }) => {
-      const url = window.URL.createObjectURL(blob);
-      const anchor = window.document.createElement("a");
-      anchor.href = url;
-      anchor.download = filename;
-      anchor.click();
-      window.URL.revokeObjectURL(url);
-      toast.success("PDF exporté");
-    },
-    onError: (error: Error) => {
-      toast.error(error.message);
-    },
-  });
-
-  const exportJsonMutation = useMutation({
-    mutationFn: async () => {
-      if (!selectedDocument || !draft) {
-        throw new Error("Aucun document sélectionné");
-      }
-
-      const source = selectedDocument.masterCvId ? "master" : "profile";
-      const contentOverrides =
-        source === "master"
-          ? parseContentOverrides(selectedDocument.contentOverrides)
-          : null;
-      const hiddenItems =
-        source === "master"
-          ? parseHiddenItems(selectedDocument.hiddenItems)
-          : null;
-      const personalInfo =
-        source === "master"
-          ? parsePersonalInfo(selectedDocument.personalInfo)
-          : null;
-
-      const masterCvSnapshot =
-        source === "master" && masterCv
-          ? {
-              id: masterCv.id,
-              fullName: masterCv.fullName,
-              headline: masterCv.headline,
-              summary: masterCv.summary,
-              email: masterCv.email,
-              phone: masterCv.phone,
-              city: masterCv.city,
-              photoUrl: masterCv.photoUrl,
-              hobbies: masterCv.hobbies,
-              driverLicenses: masterCv.driverLicenses,
-              experiences: masterCv.experiences,
-              skills: masterCv.skills,
-              education: masterCv.education,
-              projects: masterCv.projects,
-              languages: masterCv.languages,
-              certifications: masterCv.certifications,
-            }
-          : null;
-
-      const payload = {
-        version: 2,
-        exportedAt: new Date().toISOString(),
-        snapshot: {
-          ...buildRenderSnapshot(draft),
-          source,
-          masterCvId: source === "master" ? selectedDocument.masterCvId : null,
-          contentOverrides,
-          hiddenItems,
-          personalInfo,
-        },
-        profileSnapshot: selectedDocument.profile,
-        masterCvSnapshot,
-        documentMeta: {
-          documentId: selectedDocument.id,
-          exportedFrom: "cv-lab",
-          updatedAt: selectedDocument.updatedAt,
-        },
-      };
-
-      const filenameBase =
-        draft.name
-          .trim()
-          .replace(/[^a-zA-Z0-9-_]+/g, "-")
-          .replace(/^-+|-+$/g, "")
-          .toLowerCase() || "cv";
-
-      return {
-        json: JSON.stringify(payload, null, 2),
-        filename: `${filenameBase}.jobio-cv.json`,
-      };
-    },
-    onSuccess: ({ json, filename }) => {
-      const blob = new Blob([json], {
-        type: "application/json;charset=utf-8",
-      });
-      const url = window.URL.createObjectURL(blob);
-      const anchor = window.document.createElement("a");
-      anchor.href = url;
-      anchor.download = filename;
-      anchor.click();
-      window.URL.revokeObjectURL(url);
-      toast.success("Configuration CV exportée");
-    },
-    onError: (error: Error) => {
-      toast.error(error.message);
-    },
-  });
-
-  const importJsonMutation = useMutation({
-    mutationFn: async (file: File) => {
-      if (!draft || !selectedDocument) {
-        throw new Error("Aucun document sélectionné");
-      }
-
-      const raw = await file.text();
-      let parsedJson: unknown;
-
-      try {
-        parsedJson = JSON.parse(raw);
-      } catch {
-        throw new Error("Le fichier n'est pas un JSON valide");
-      }
-
-      const parsed = cvLabImportPayloadSchema.safeParse(parsedJson);
-      if (!parsed.success) {
-        throw new Error("Format JSON CV Lab invalide");
-      }
-
-      const snapshot =
-        "snapshot" in parsed.data ? parsed.data.snapshot : parsed.data;
-
-      const normalizedOrder = normalizeSectionOrder(snapshot.sectionOrder);
-      const normalizedHidden = normalizeHiddenSections(snapshot.hiddenSections);
-      const hasImportedProfile =
-        typeof snapshot.profileId === "string" &&
-        profiles.some((profile) => profile.id === snapshot.profileId);
-      const fallbackProfileId = profiles[0]?.id ?? draft.profileId;
-
-      const source = snapshot.source ?? (snapshot.masterCvId ? "master" : null);
-      const hasMasterSnapshotData =
-        source === "master" ||
-        snapshot.masterCvId !== undefined ||
-        snapshot.contentOverrides !== undefined ||
-        snapshot.hiddenItems !== undefined ||
-        snapshot.personalInfo !== undefined;
-      const useMasterSource = source === "master" && Boolean(masterCv?.id);
-
-      const importedDocumentUpdatePatch = hasMasterSnapshotData
-        ? useMasterSource
-          ? {
-              masterCvId: masterCv?.id ?? null,
-              contentOverrides: snapshot.contentOverrides ?? null,
-              hiddenItems: snapshot.hiddenItems ?? null,
-              personalInfo: snapshot.personalInfo ?? null,
-            }
-          : {
-              masterCvId: null,
-              contentOverrides: null,
-              hiddenItems: null,
-              personalInfo: null,
-            }
-        : null;
-
-      const importedDocumentPatch: Partial<CvDocument> =
-        importedDocumentUpdatePatch
-          ? {
-              masterCvId: importedDocumentUpdatePatch.masterCvId,
-              contentOverrides: importedDocumentUpdatePatch.contentOverrides,
-              hiddenItems: importedDocumentUpdatePatch.hiddenItems,
-              personalInfo: importedDocumentUpdatePatch.personalInfo,
-            }
-          : {};
-
-      if (importedDocumentUpdatePatch) {
-        await resolveActionResult(
-          updateCvLabDocumentAction({
-            id: selectedDocument.id,
-            ...importedDocumentUpdatePatch,
           }),
         );
+
+        lastSavedDraftJsonRef.current = currentDraftJson;
+
+        try {
+          window.localStorage.removeItem(
+            getLocalDraftStorageKey(selectedDocument.id),
+          );
+        } catch {
+          // Ignore
+        }
+
+        setRecoverableLocalDraft(null);
+        setAutoSaveStatus("saved");
+
+        // Refresh documents list to sync
+        await reloadData(selectedDocument.id);
+
+        setTimeout(() => {
+          setAutoSaveStatus((prev) => (prev === "saved" ? "idle" : prev));
+        }, 2000);
+      } catch {
+        setAutoSaveStatus("error");
       }
+    }, 2000);
 
-      const nextDraft = {
-        profileId: hasImportedProfile
-          ? (snapshot.profileId as string)
-          : fallbackProfileId,
-        name: snapshot.name,
-        targetRole: snapshot.targetRole ?? "",
-        template: snapshot.template,
-        theme: snapshot.theme,
-        pageSize: "A4",
-        accentColor: snapshot.accentColor,
-        fontFamily: snapshot.fontFamily,
-        headlineOverride: snapshot.headlineOverride ?? "",
-        summaryOverride: snapshot.summaryOverride ?? "",
-        sectionOrder: normalizedOrder,
-        hiddenSections: normalizedHidden,
-      } satisfies Draft;
-
-      return {
-        documentId: selectedDocument.id,
-        nextDraft,
-        importedDocumentPatch,
-        profileWasMissing:
-          typeof snapshot.profileId === "string" && !hasImportedProfile,
-        masterSourceUnavailable: hasMasterSnapshotData && source === "master" && !masterCv?.id,
-      };
-    },
-    onSuccess: ({
-      documentId,
-      nextDraft,
-      importedDocumentPatch,
-      profileWasMissing,
-      masterSourceUnavailable,
-    }) => {
-      setDraft(nextDraft);
-      setDocuments((previous) =>
-        previous.map((document) =>
-          document.id === documentId
-            ? ({ ...document, ...importedDocumentPatch } as CvDocument)
-            : document,
-        ),
-      );
-
-      setAtsAnalysis(null);
-      setAtsSuggestionPreview(null);
-
-      if (profileWasMissing) {
-        toast.warning(
-          "Le profil du fichier n'existe pas sur ce compte. Profil courant conservé.",
-        );
+    return () => {
+      if (autoSaveTimerRef.current) {
+        clearTimeout(autoSaveTimerRef.current);
       }
-      if (masterSourceUnavailable) {
-        toast.warning(
-          "Le fichier utilisait CV Master, mais aucun CV Master n'est disponible sur ce compte.",
-        );
-      }
-      toast.success("Configuration CV importée");
-    },
-    onError: (error: Error) => {
-      toast.error(error.message);
-    },
-  });
+    };
+  }, [
+    draft,
+    hasUnsavedChanges,
+    documentManagement.saveMutation.isPending,
+    selectedDocument,
+    reloadData,
+  ]);
 
   // --- Handlers ---
 
-  const handleDraftChange = useCallback((patch: Partial<Draft>) => {
-    setDraft((prev) => (prev ? { ...prev, ...patch } : prev));
-  }, []);
+  const handleDraftChange = useCallback(
+    (patch: Partial<Draft>) => {
+      setDraft((prev) => {
+        if (!prev) return prev;
+        const next = { ...prev, ...patch };
+        undoRedo.push(next);
+        return next;
+      });
+    },
+    [undoRedo],
+  );
+
+  const handleUndo = useCallback(() => {
+    const state = undoRedo.undo();
+    if (state) setDraft(state);
+  }, [undoRedo]);
+
+  const handleRedo = useCallback(() => {
+    const state = undoRedo.redo();
+    if (state) setDraft(state);
+  }, [undoRedo]);
 
   const handleSectionClick = useCallback(
     (section: string) => {
@@ -1215,27 +489,11 @@ export function useCvLabStudio() {
     });
   };
 
-  const resetDraftFromSavedDocument = () => {
-    if (!selectedDocument) return;
-    setDraft(normalizeDraft(buildDraft(selectedDocument)));
-    setAtsAnalysis(null);
-    setAtsSuggestionPreview(null);
-    setRecoverableLocalDraft(null);
-    try {
-      window.localStorage.removeItem(
-        getLocalDraftStorageKey(selectedDocument.id),
-      );
-    } catch {
-      // Ignore local storage failures.
-    }
-    toast.success("Brouillon réinitialisé");
-  };
-
   const restoreRecoverableLocalDraft = () => {
     if (!recoverableLocalDraft) return;
     setDraft(normalizeDraft(recoverableLocalDraft.draft));
-    setAtsAnalysis(null);
-    setAtsSuggestionPreview(null);
+    ats.setAtsAnalysis(null);
+    ats.setAtsSuggestionPreview(null);
     setRecoverableLocalDraft(null);
     toast.success("Brouillon local restauré");
   };
@@ -1253,301 +511,11 @@ export function useCvLabStudio() {
     toast.success("Brouillon local ignoré");
   };
 
-  const previewAtsSuggestions = () => {
-    if (!draft || !atsAnalysis) {
-      return;
-    }
-
-    const preview = buildAtsSuggestionPreview({
-      draft,
-      analysis: atsAnalysis,
-      jobDescription: atsJobDescription,
-    });
-
-    if (preview.diffItems.length === 0) {
-      toast.info("Aucune suggestion ATS actionnable pour le brouillon actuel.");
-      setAtsSuggestionPreview(null);
-      return;
-    }
-
-    setAtsSuggestionPreview(preview);
-  };
-
-  const applyAtsSuggestionsToDraft = () => {
-    if (!atsSuggestionPreview) {
-      return;
-    }
-
-    setDraft(atsSuggestionPreview.draft);
-    setAtsSuggestionPreview(null);
-    toast.success("Suggestions ATS appliquées au brouillon");
-  };
-
-  const cancelAtsPreview = () => {
-    setAtsSuggestionPreview(null);
-  };
-
-  const handleImportInputChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    event.target.value = "";
-
-    if (!file) {
-      return;
-    }
-
-    importJsonMutation.mutate(file);
-  };
-
   const handleSelectDocument = (id: string) => {
     setSelectedDocumentId(id);
     setIsEditOpen(true);
     setEditTab("settings");
   };
-
-  const patchSelectedDocument = useCallback(
-    (patch: Partial<CvDocument>) => {
-      if (!selectedDocument?.id) return;
-      setDocuments((previous) =>
-        previous.map((document) =>
-          document.id === selectedDocument.id
-            ? ({ ...document, ...patch } as CvDocument)
-            : document,
-        ),
-      );
-    },
-    [selectedDocument?.id],
-  );
-
-  const setDocumentSource = useCallback(
-    async (source: "profile" | "master") => {
-      if (!selectedDocument) return;
-
-      if (source === "master" && !masterCv?.id) {
-        toast.error("Aucun CV Master disponible");
-        return;
-      }
-
-      try {
-        const masterPatch =
-          source === "master"
-            ? ({
-                masterCvId: masterCv?.id ?? null,
-              } as Partial<CvDocument>)
-            : ({
-                masterCvId: null,
-                contentOverrides: null,
-                hiddenItems: null,
-                personalInfo: null,
-              } as Partial<CvDocument>);
-
-        await resolveActionResult(
-          updateCvLabDocumentAction({
-            id: selectedDocument.id,
-            ...(draft
-              ? {
-                  profileId: draft.profileId,
-                  name: draft.name,
-                  targetRole: draft.targetRole || null,
-                  template: draft.template,
-                  theme: draft.theme,
-                  pageSize: "A4",
-                  accentColor: draft.accentColor,
-                  fontFamily: draft.fontFamily,
-                  headlineOverride: draft.headlineOverride || null,
-                  summaryOverride: draft.summaryOverride || null,
-                  sectionOrder: draft.sectionOrder,
-                  hiddenSections: draft.hiddenSections,
-                }
-              : {}),
-            ...(source === "master"
-              ? { masterCvId: masterCv?.id }
-              : {
-                  masterCvId: null,
-                  contentOverrides: null,
-                  hiddenItems: null,
-                  personalInfo: null,
-                }),
-          }),
-        );
-        patchSelectedDocument(masterPatch);
-        toast.success(
-          source === "master"
-            ? "Source basculee sur le CV Master"
-            : "Source basculee sur le profil",
-        );
-      } catch (error) {
-        toast.error(
-          error instanceof Error ? error.message : "Erreur de mise a jour",
-        );
-      }
-    },
-    [draft, masterCv?.id, patchSelectedDocument, selectedDocument],
-  );
-
-  const toggleMasterItemVisibility = useCallback(
-    async (section: MasterCvSection, itemId: string, visible: boolean) => {
-      if (!selectedDocument?.id) return;
-
-      const currentHidden = parseHiddenItems(selectedDocument.hiddenItems);
-      const sectionHiddenIds = new Set(currentHidden[section] ?? []);
-
-      if (visible) {
-        sectionHiddenIds.delete(itemId);
-      } else {
-        sectionHiddenIds.add(itemId);
-      }
-
-      const nextHidden: Partial<Record<MasterCvSection, string[]>> = {
-        ...currentHidden,
-        [section]: Array.from(sectionHiddenIds),
-      };
-
-      const normalizedHiddenItems: Record<MasterCvSection, string[]> = {
-        experiences: nextHidden.experiences ?? [],
-        skills: nextHidden.skills ?? [],
-        education: nextHidden.education ?? [],
-        projects: nextHidden.projects ?? [],
-        languages: nextHidden.languages ?? [],
-        certifications: nextHidden.certifications ?? [],
-      };
-      const hasHiddenItems = MASTER_CV_SECTIONS.some(
-        (key) => normalizedHiddenItems[key].length > 0,
-      );
-
-      try {
-        await resolveActionResult(
-          updateCvLabDocumentAction({
-            id: selectedDocument.id,
-            hiddenItems: hasHiddenItems ? normalizedHiddenItems : null,
-          }),
-        );
-        patchSelectedDocument({
-          hiddenItems: hasHiddenItems ? normalizedHiddenItems : null,
-        });
-      } catch (error) {
-        toast.error(
-          error instanceof Error ? error.message : "Erreur de mise a jour",
-        );
-      }
-    },
-    [patchSelectedDocument, selectedDocument],
-  );
-
-  const updateMasterItemOverride = useCallback(
-    async (
-      section: MasterCvSection,
-      itemId: string,
-      patch: Record<string, unknown>,
-    ) => {
-      if (!selectedDocument?.id) return;
-
-      const currentOverrides = parseContentOverrides(
-        selectedDocument.contentOverrides,
-      );
-      const sectionOverrides = [...(currentOverrides[section] ?? [])];
-
-      const existingIndex = sectionOverrides.findIndex(
-        (item) => item.masterItemId === itemId,
-      );
-
-      const existingOverride =
-        existingIndex >= 0 ? sectionOverrides[existingIndex] : null;
-      const mergedOverride: ContentOverrideItem = {
-        ...(existingOverride ?? { masterItemId: itemId }),
-        ...patch,
-        masterItemId: itemId,
-      };
-
-      const hasRealOverrideKeys = Object.keys(mergedOverride).some(
-        (key) => key !== "masterItemId",
-      );
-
-      if (existingIndex >= 0) {
-        if (hasRealOverrideKeys) {
-          sectionOverrides[existingIndex] = mergedOverride;
-        } else {
-          sectionOverrides.splice(existingIndex, 1);
-        }
-      } else if (hasRealOverrideKeys) {
-        sectionOverrides.push(mergedOverride);
-      }
-
-      const nextOverrides: Partial<Record<MasterCvSection, ContentOverrideItem[]>> =
-        sectionOverrides.length > 0
-          ? {
-              ...currentOverrides,
-              [section]: sectionOverrides,
-            }
-          : (Object.fromEntries(
-              Object.entries(currentOverrides).filter(
-                ([entrySection]) => entrySection !== section,
-              ),
-            ) as Partial<Record<MasterCvSection, ContentOverrideItem[]>>);
-
-      try {
-        await resolveActionResult(
-          updateCvLabDocumentAction({
-            id: selectedDocument.id,
-            contentOverrides:
-              Object.keys(nextOverrides).length > 0 ? nextOverrides : null,
-          }),
-        );
-        patchSelectedDocument({
-          contentOverrides:
-            Object.keys(nextOverrides).length > 0 ? nextOverrides : null,
-        });
-      } catch (error) {
-        toast.error(
-          error instanceof Error ? error.message : "Erreur de mise a jour",
-        );
-      }
-    },
-    [patchSelectedDocument, selectedDocument],
-  );
-
-  const removeMasterItemOverride = useCallback(
-    async (section: MasterCvSection, itemId: string) => {
-      if (!selectedDocument?.id) return;
-
-      const currentOverrides = parseContentOverrides(
-        selectedDocument.contentOverrides,
-      );
-      const sectionOverrides = (currentOverrides[section] ?? []).filter(
-        (item) => item.masterItemId !== itemId,
-      );
-
-      const nextOverrides: Partial<Record<MasterCvSection, ContentOverrideItem[]>> =
-        sectionOverrides.length > 0
-          ? {
-              ...currentOverrides,
-              [section]: sectionOverrides,
-            }
-          : (Object.fromEntries(
-              Object.entries(currentOverrides).filter(
-                ([entrySection]) => entrySection !== section,
-              ),
-            ) as Partial<Record<MasterCvSection, ContentOverrideItem[]>>);
-
-      try {
-        await resolveActionResult(
-          updateCvLabDocumentAction({
-            id: selectedDocument.id,
-            contentOverrides:
-              Object.keys(nextOverrides).length > 0 ? nextOverrides : null,
-          }),
-        );
-        patchSelectedDocument({
-          contentOverrides:
-            Object.keys(nextOverrides).length > 0 ? nextOverrides : null,
-        });
-      } catch (error) {
-        toast.error(
-          error instanceof Error ? error.message : "Erreur de suppression",
-        );
-      }
-    },
-    [patchSelectedDocument, selectedDocument],
-  );
 
   return {
     // State
@@ -1557,28 +525,28 @@ export function useCvLabStudio() {
     selectedDocumentId,
     selectedDocument,
     draft,
-    versions,
-    versionLabel,
-    setVersionLabel,
-    atsJobDescription,
-    setAtsJobDescription,
-    atsAnalysis,
-    atsSuggestionPreview,
-    atsSuggestionDiffItems,
-    previewHtml,
-    previewError,
-    isPreviewLoading,
+    versions: versionHook.versions,
+    versionLabel: versionHook.versionLabel,
+    setVersionLabel: versionHook.setVersionLabel,
+    atsJobDescription: ats.atsJobDescription,
+    setAtsJobDescription: ats.setAtsJobDescription,
+    atsAnalysis: ats.atsAnalysis,
+    atsSuggestionPreview: ats.atsSuggestionPreview,
+    atsSuggestionDiffItems: ats.atsSuggestionDiffItems,
+    previewHtml: preview.previewHtml,
+    previewError: preview.previewError,
+    isPreviewLoading: preview.isPreviewLoading,
     canUseAllCvTemplates,
-    compareLeftVersionId,
-    setCompareLeftVersionId,
-    compareRightReference,
-    setCompareRightReference,
-    compareLeftDraft,
-    compareRightDraft,
-    versionDiffItems,
-    versionSectionLineDiffs,
-    compareLeftLabel,
-    compareRightLabel,
+    compareLeftVersionId: versionHook.compareLeftVersionId,
+    setCompareLeftVersionId: versionHook.setCompareLeftVersionId,
+    compareRightReference: versionHook.compareRightReference,
+    setCompareRightReference: versionHook.setCompareRightReference,
+    compareLeftDraft: versionHook.compareLeftDraft,
+    compareRightDraft: versionHook.compareRightDraft,
+    versionDiffItems: versionHook.versionDiffItems,
+    versionSectionLineDiffs: versionHook.versionSectionLineDiffs,
+    compareLeftLabel: versionHook.compareLeftLabel,
+    compareRightLabel: versionHook.compareRightLabel,
     recoverableLocalDraft,
     isLoading,
     isEditOpen,
@@ -1587,25 +555,26 @@ export function useCvLabStudio() {
     setEditTab,
     activeProfileSection,
     setActiveProfileSection,
-    importInputRef,
+    importInputRef: documentManagement.importInputRef,
     hasUnsavedChanges,
+    autoSaveStatus,
     profileById,
 
     // Mutations
-    createMutation,
-    saveMutation,
-    duplicateMutation,
-    archiveMutation,
-    restoreDocumentMutation,
-    deleteDocumentMutation,
-    createVersionMutation,
-    restoreVersionMutation,
-    atsMutation,
-    generateShareLinkMutation,
-    revokeShareLinkMutation,
-    exportPdfMutation,
-    exportJsonMutation,
-    importJsonMutation,
+    createMutation: documentManagement.createMutation,
+    saveMutation: documentManagement.saveMutation,
+    duplicateMutation: documentManagement.duplicateMutation,
+    archiveMutation: documentManagement.archiveMutation,
+    restoreDocumentMutation: documentManagement.restoreDocumentMutation,
+    deleteDocumentMutation: documentManagement.deleteDocumentMutation,
+    createVersionMutation: versionHook.createVersionMutation,
+    restoreVersionMutation: versionHook.restoreVersionMutation,
+    atsMutation: ats.atsMutation,
+    generateShareLinkMutation: documentManagement.generateShareLinkMutation,
+    revokeShareLinkMutation: documentManagement.revokeShareLinkMutation,
+    exportPdfMutation: documentManagement.exportPdfMutation,
+    exportJsonMutation: documentManagement.exportJsonMutation,
+    importJsonMutation: documentManagement.importJsonMutation,
 
     // Handlers
     handleDraftChange,
@@ -1613,18 +582,22 @@ export function useCvLabStudio() {
     handleProfileSaved,
     handleToggleSection,
     moveSection,
-    resetDraftFromSavedDocument,
+    resetDraftFromSavedDocument: documentManagement.resetDraftFromSavedDocument,
     restoreRecoverableLocalDraft,
     discardRecoverableLocalDraft,
-    previewAtsSuggestions,
-    applyAtsSuggestionsToDraft,
-    cancelAtsPreview,
-    handleImportInputChange,
-    handleDeleteDocument,
+    previewAtsSuggestions: ats.previewAtsSuggestions,
+    applyAtsSuggestionsToDraft: ats.applyAtsSuggestionsToDraft,
+    cancelAtsPreview: ats.cancelAtsPreview,
+    handleImportInputChange: documentManagement.handleImportInputChange,
+    handleDeleteDocument: documentManagement.handleDeleteDocument,
     handleSelectDocument,
-    setDocumentSource,
-    toggleMasterItemVisibility,
-    updateMasterItemOverride,
-    removeMasterItemOverride,
+    setDocumentSource: documentManagement.setDocumentSource,
+    toggleMasterItemVisibility: documentManagement.toggleMasterItemVisibility,
+    updateMasterItemOverride: documentManagement.updateMasterItemOverride,
+    removeMasterItemOverride: documentManagement.removeMasterItemOverride,
+    handleUndo,
+    handleRedo,
+    canUndo: undoRedo.canUndo,
+    canRedo: undoRedo.canRedo,
   };
 }

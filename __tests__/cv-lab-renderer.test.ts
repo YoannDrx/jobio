@@ -14,6 +14,7 @@ const makeContent = (): ResolvedCvContent => ({
   photoUrl: null,
   hobbies: [],
   driverLicenses: [],
+  socialLinks: {},
   skills: [{ id: "s1", name: "TypeScript", level: "expert" }],
   experiences: [
     {

@@ -15,6 +15,7 @@ model UserProfile {
   zone               String?
   minDuration        String?
   maxDuration        String?
+  scoringWeights     Json?
   isDefault          Boolean   @default(false)
 
   createdAt DateTime @default(now())

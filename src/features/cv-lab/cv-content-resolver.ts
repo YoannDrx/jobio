@@ -10,6 +10,7 @@ import type {
   MasterCvSection,
   MasterCvSkill,
   PersonalInfoOverrides,
+  SocialLinks,
 } from "./cv-lab.schema";
 import { MASTER_CV_SECTIONS } from "./cv-lab.schema";
 
@@ -25,6 +26,7 @@ export type ResolvedCvContent = {
   photoUrl: string | null;
   hobbies: string[];
   driverLicenses: string[];
+  socialLinks: SocialLinks;
   experiences: MasterCvExperience[];
   skills: MasterCvSkill[];
   education: MasterCvEducation[];
@@ -43,6 +45,7 @@ type MasterCvData = {
   photoUrl: string | null;
   hobbies: Prisma.JsonValue;
   driverLicenses: Prisma.JsonValue;
+  socialLinks: Prisma.JsonValue;
   experiences: Prisma.JsonValue;
   skills: Prisma.JsonValue;
   education: Prisma.JsonValue;
@@ -79,6 +82,20 @@ const parseStringArray = (
   return (value as unknown[]).filter(
     (item): item is string => typeof item === "string",
   );
+};
+
+const parseSocialLinks = (
+  value: Prisma.JsonValue | null | undefined,
+): SocialLinks => {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+  const obj = value as Record<string, unknown>;
+  return {
+    linkedinUrl:
+      typeof obj.linkedinUrl === "string" ? obj.linkedinUrl : undefined,
+    githubUrl: typeof obj.githubUrl === "string" ? obj.githubUrl : undefined,
+    websiteUrl: typeof obj.websiteUrl === "string" ? obj.websiteUrl : undefined,
+    maltUrl: typeof obj.maltUrl === "string" ? obj.maltUrl : undefined,
+  };
 };
 
 const parseContentOverrides = (
@@ -195,6 +212,7 @@ export function resolveCvContent(
   // 4. Apply personal info overrides
   const hobbies = parseStringArray(masterCv.hobbies);
   const driverLicenses = parseStringArray(masterCv.driverLicenses);
+  const masterSocialLinks = parseSocialLinks(masterCv.socialLinks);
 
   return {
     fullName: personalInfo.fullName ?? masterCv.fullName,
@@ -206,6 +224,7 @@ export function resolveCvContent(
     photoUrl: personalInfo.photoUrl ?? masterCv.photoUrl,
     hobbies: personalInfo.hobbies ?? hobbies,
     driverLicenses: personalInfo.driverLicenses ?? driverLicenses,
+    socialLinks: personalInfo.socialLinks ?? masterSocialLinks,
     experiences,
     skills,
     education,
@@ -229,6 +248,7 @@ export function resolveMasterCvContent(
 
   const hobbies = parseStringArray(masterCv.hobbies);
   const driverLicenses = parseStringArray(masterCv.driverLicenses);
+  const socialLinks = parseSocialLinks(masterCv.socialLinks);
 
   return {
     fullName: masterCv.fullName,
@@ -240,6 +260,7 @@ export function resolveMasterCvContent(
     photoUrl: masterCv.photoUrl,
     hobbies,
     driverLicenses,
+    socialLinks,
     experiences,
     skills,
     education,
@@ -288,6 +309,7 @@ export function resolveCvContentFromProfile(
     photoUrl: personalInfo.photoUrl ?? null,
     hobbies: personalInfo.hobbies ?? [],
     driverLicenses: personalInfo.driverLicenses ?? [],
+    socialLinks: personalInfo.socialLinks ?? {},
     experiences,
     skills,
     education,

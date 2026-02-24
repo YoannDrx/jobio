@@ -14,6 +14,7 @@ const baseMasterCv = {
   photoUrl: "https://example.com/photo.jpg",
   hobbies: ["Randonnée", "Musique"],
   driverLicenses: ["Permis B"],
+  socialLinks: null,
   experiences: [
     {
       id: "exp-1",

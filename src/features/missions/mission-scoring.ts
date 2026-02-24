@@ -1,5 +1,21 @@
 import { prisma } from "@/lib/prisma";
 
+export type ScoringWeights = {
+  skills: number;
+  tjm: number;
+  workType: number;
+  location: number;
+  completeness: number;
+};
+
+export const DEFAULT_SCORING_WEIGHTS: ScoringWeights = {
+  skills: 40,
+  tjm: 20,
+  workType: 15,
+  location: 15,
+  completeness: 10,
+};
+
 type MissionData = {
   stack: string[];
   tjm: number | null;
@@ -31,65 +47,73 @@ export type ScoreBreakdown = {
 export function scoreMission(
   mission: MissionData,
   profile: ProfileData,
+  weights?: Partial<ScoringWeights>,
 ): ScoreBreakdown {
-  const breakdown: ScoreBreakdown["breakdown"] = {
-    skills: { score: 0, max: 40, matched: [] },
-    tjm: { score: 0, max: 20 },
-    workType: { score: 0, max: 15 },
-    location: { score: 0, max: 15 },
-    completeness: { score: 0, max: 10 },
+  const mergedWeights: ScoringWeights = {
+    ...DEFAULT_SCORING_WEIGHTS,
+    ...weights,
   };
 
-  // Skills match: +40 max
+  const breakdown: ScoreBreakdown["breakdown"] = {
+    skills: { score: 0, max: mergedWeights.skills, matched: [] },
+    tjm: { score: 0, max: mergedWeights.tjm },
+    workType: { score: 0, max: mergedWeights.workType },
+    location: { score: 0, max: mergedWeights.location },
+    completeness: { score: 0, max: mergedWeights.completeness },
+  };
+
+  // Skills match: max based on weights
   if (mission.stack.length > 0 && profile.skills.length > 0) {
     const profileSkillNames = profile.skills.map((s) => s.name.toLowerCase());
     const matched = mission.stack.filter((tech) =>
       profileSkillNames.includes(tech.toLowerCase()),
     );
     const matchRatio = matched.length / mission.stack.length;
-    breakdown.skills.score = Math.round(matchRatio * 40);
+    breakdown.skills.score = Math.round(matchRatio * mergedWeights.skills);
     breakdown.skills.matched = matched;
   }
 
-  // TJM match: +20 if within ±20%
+  // TJM match: max based on weights if within ±20%
   if (mission.tjm && profile.tjmTarget) {
     const ratio = mission.tjm / profile.tjmTarget;
     if (ratio >= 0.8 && ratio <= 1.2) {
-      breakdown.tjm.score = 20;
+      breakdown.tjm.score = mergedWeights.tjm;
     } else if (ratio >= 0.6 && ratio <= 1.4) {
-      breakdown.tjm.score = 10;
+      breakdown.tjm.score = Math.round(mergedWeights.tjm / 2);
     }
   }
 
-  // WorkType match: +15
+  // WorkType match: max based on weights
   if (mission.workType && profile.workTypePreference) {
     if (mission.workType === profile.workTypePreference) {
-      breakdown.workType.score = 15;
+      breakdown.workType.score = mergedWeights.workType;
     } else if (
       mission.workType === "HYBRID" ||
       profile.workTypePreference === "HYBRID"
     ) {
-      breakdown.workType.score = 7;
+      breakdown.workType.score = Math.round(mergedWeights.workType / 2);
     }
   }
 
-  // Zone/Location match: +15
+  // Zone/Location match: max based on weights
   if (mission.location && profile.zone) {
     const missionLoc = mission.location.toLowerCase();
     const profileZone = profile.zone.toLowerCase();
     if (missionLoc.includes(profileZone) || profileZone.includes(missionLoc)) {
-      breakdown.location.score = 15;
+      breakdown.location.score = mergedWeights.location;
     }
   }
 
-  // Info completeness: +10
+  // Info completeness: max based on weights
   let completenessCount = 0;
   if (mission.description) completenessCount++;
   if (mission.company) completenessCount++;
   if (mission.duration) completenessCount++;
   if (mission.tjm) completenessCount++;
   if (mission.workType) completenessCount++;
-  breakdown.completeness.score = Math.round((completenessCount / 5) * 10);
+  breakdown.completeness.score = Math.round(
+    (completenessCount / 5) * mergedWeights.completeness,
+  );
 
   const totalScore =
     breakdown.skills.score +
@@ -144,6 +168,7 @@ export async function computeMissionScore(
           tjmTarget: true,
           workTypePreference: true,
           zone: true,
+          scoringWeights: true,
         },
       })
     : await prisma.userProfile.findFirst({
@@ -153,6 +178,7 @@ export async function computeMissionScore(
           tjmTarget: true,
           workTypePreference: true,
           zone: true,
+          scoringWeights: true,
         },
       });
 
@@ -181,10 +207,18 @@ export async function computeMissionScore(
     ? (profile.skills as { name: string; level: string; yearsExp?: number }[])
     : [];
 
-  return scoreMission(mission, {
-    skills,
-    tjmTarget: profile.tjmTarget,
-    workTypePreference: profile.workTypePreference,
-    zone: profile.zone,
-  });
+  const weights = profile.scoringWeights
+    ? (profile.scoringWeights as Partial<ScoringWeights>)
+    : undefined;
+
+  return scoreMission(
+    mission,
+    {
+      skills,
+      tjmTarget: profile.tjmTarget,
+      workTypePreference: profile.workTypePreference,
+      zone: profile.zone,
+    },
+    weights,
+  );
 }

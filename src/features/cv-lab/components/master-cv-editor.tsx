@@ -14,6 +14,7 @@ import { CvLabPreview } from "./cv-lab-preview";
 import { MasterCvToolbar } from "./master-cv-toolbar";
 import { MasterCvSectionRouter } from "./master-cv-sections/master-cv-section-router";
 import { useMasterCvStudio } from "../hooks/use-master-cv-studio";
+import { computeMasterCvCompleteness } from "../cv-completeness";
 
 export function MasterCvEditor() {
   const {
@@ -24,14 +25,17 @@ export function MasterCvEditor() {
     editPanelOpen,
     setEditPanelOpen,
     activeSection,
+    activeItemId,
     previewHtml,
     isPreviewLoading,
+    saveStatus,
     fileInputRef,
     handleCreate,
     handleUpdate,
     handleAddItem,
     handleUpdateItem,
     handleRemoveItem,
+    handleReorderItems,
     handleImportFromProfile,
     handleImportFromFile,
     handleSectionClick,
@@ -67,6 +71,8 @@ export function MasterCvEditor() {
     );
   }
 
+  const completeness = computeMasterCvCompleteness(masterCv);
+
   return (
     <div data-full-width>
       <DocumentStudioLayout
@@ -77,6 +83,8 @@ export function MasterCvEditor() {
             onImportFromFile={() => {
               fileInputRef.current?.click();
             }}
+            saveStatus={saveStatus}
+            completeness={completeness}
           />
         }
         preview={
@@ -122,6 +130,7 @@ export function MasterCvEditor() {
             onAddItem={handleAddItem}
             onUpdateItem={handleUpdateItem}
             onRemoveItem={handleRemoveItem}
+            onReorderItems={handleReorderItems}
           />
         }
       />
@@ -130,6 +139,7 @@ export function MasterCvEditor() {
         type="file"
         accept=".pdf,.docx"
         className="hidden"
+        aria-label="Importer un CV depuis un fichier"
         onChange={(e) => {
           const file = e.target.files?.[0];
           if (file) {

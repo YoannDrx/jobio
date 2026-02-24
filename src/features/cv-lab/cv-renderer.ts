@@ -164,6 +164,29 @@ const escapeHtml = (value: string | null | undefined) => {
     .replace(/'/g, "&#39;");
 };
 
+const renderMarkdown = (value: string | null | undefined): string => {
+  if (!value) return "";
+  const escaped = escapeHtml(value);
+  return (
+    escaped
+      // Bold: **text**
+      .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+      // Italic: *text*
+      .replace(/(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)/g, "<em>$1</em>")
+      // Links: [text](url)
+      .replace(
+        /\[([^\]]+)\]\(([^)]+)\)/g,
+        '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>',
+      )
+      // List items: lines starting with "- "
+      .replace(/^- (.+)$/gm, "<li>$1</li>")
+      .replace(
+        /(<li>.*<\/li>\n?)+/g,
+        (match) => `<ul class="list" style="margin-top:4px;">${match}</ul>`,
+      )
+  );
+};
+
 const normalizeSections = (
   sectionOrder: unknown,
   hiddenSections: unknown,
@@ -212,26 +235,62 @@ const sectionTitle: Record<CvLabSection, string> = {
 const renderSummary = (content: ResolvedCvContent): string => {
   const summary = content.summary;
   if (!summary) return "";
-  return `<p class="paragraph">${escapeHtml(summary)}</p>`;
+  return `<div class="paragraph">${renderMarkdown(summary)}</div>`;
+};
+
+const CONTRACT_TYPE_LABELS: Record<string, string> = {
+  CDI: "CDI",
+  CDD: "CDD",
+  FREELANCE: "Freelance",
+  STAGE: "Stage",
+  ALTERNANCE: "Alternance",
+  PONCTUEL: "Ponctuel",
+  HORS_TECH: "Hors tech",
+};
+
+const REMOTE_LABELS: Record<string, string> = {
+  ONSITE: "Sur site",
+  HYBRID: "Hybride",
+  REMOTE: "Remote",
 };
 
 const renderExperiences = (content: ResolvedCvContent): string => {
   if (content.experiences.length === 0) return "";
 
   return content.experiences
-    .map(
-      (experience) => `
-        <article class="item">
+    .map((experience) => {
+      const metaParts: string[] = [escapeHtml(experience.company)];
+      if (experience.location) metaParts.push(escapeHtml(experience.location));
+      if (experience.contractType)
+        metaParts.push(
+          CONTRACT_TYPE_LABELS[experience.contractType] ??
+            escapeHtml(experience.contractType),
+        );
+      if (experience.remote)
+        metaParts.push(
+          REMOTE_LABELS[experience.remote] ?? escapeHtml(experience.remote),
+        );
+
+      const datePart = [
+        experience.startDate ? escapeHtml(experience.startDate) : "",
+        experience.endDate ? escapeHtml(experience.endDate) : "",
+      ]
+        .filter(Boolean)
+        .join(" - ");
+
+      return `
+        <article class="item" data-item-id="${experience.id}">
           <h4>${escapeHtml(experience.title)}</h4>
           <p class="meta">
-            ${escapeHtml(experience.company)}
-            ${experience.startDate ? ` · ${escapeHtml(experience.startDate)}` : ""}
-            ${experience.endDate ? ` - ${escapeHtml(experience.endDate)}` : ""}
+            ${metaParts.join(" · ")}${datePart ? ` · ${datePart}` : ""}
           </p>
-          ${experience.description ? `<p class="paragraph">${escapeHtml(experience.description)}</p>` : ""}
+          ${experience.teamContext ? `<p class="meta" style="margin-top:2px;">${escapeHtml(experience.teamContext)}</p>` : ""}
+          ${experience.description ? `<div class="paragraph">${renderMarkdown(experience.description)}</div>` : ""}
+          ${experience.achievements && experience.achievements.length > 0 ? `<ul class="list" style="margin-top:6px;">${experience.achievements.map((a) => `<li>${escapeHtml(a)}</li>`).join("")}</ul>` : ""}
+          ${experience.techStack && experience.techStack.length > 0 ? `<div class="badges" style="margin-top:6px;">${experience.techStack.map((t) => `<span class="badge">${escapeHtml(t)}</span>`).join("")}</div>` : ""}
         </article>
-      `,
-    )
+      `;
+    })
     .join("");
 };
 
@@ -254,28 +313,33 @@ const renderProjects = (content: ResolvedCvContent): string => {
   if (content.projects.length === 0) return "";
 
   return content.projects
-    .map(
-      (project) => `
-      <article class="item">
+    .map((project) => {
+      const metaParts: string[] = [];
+      if (project.role) metaParts.push(escapeHtml(project.role));
+      const datePart = [
+        project.startDate ? escapeHtml(project.startDate) : "",
+        project.endDate ? escapeHtml(project.endDate) : "",
+      ]
+        .filter(Boolean)
+        .join(" - ");
+      if (datePart) metaParts.push(datePart);
+      if (project.status) metaParts.push(escapeHtml(project.status));
+      if (project.url) {
+        metaParts.push(
+          `<a href="${escapeHtml(project.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(project.url)}</a>`,
+        );
+      }
+
+      return `
+      <article class="item" data-item-id="${project.id}">
         <h4>${escapeHtml(project.name)}</h4>
-        ${
-          project.url
-            ? `<p class="meta"><a href="${escapeHtml(project.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(project.url)}</a></p>`
-            : ""
-        }
-        ${
-          project.description
-            ? `<p class="paragraph">${escapeHtml(project.description)}</p>`
-            : ""
-        }
-        ${
-          project.technologies && project.technologies.length > 0
-            ? `<div class="badges" style="margin-top:6px;">${project.technologies.map((tech) => `<span class="badge">${escapeHtml(tech)}</span>`).join("")}</div>`
-            : ""
-        }
+        ${metaParts.length > 0 ? `<p class="meta">${metaParts.join(" · ")}</p>` : ""}
+        ${project.description ? `<div class="paragraph">${renderMarkdown(project.description)}</div>` : ""}
+        ${project.highlights && project.highlights.length > 0 ? `<ul class="list" style="margin-top:6px;">${project.highlights.map((h) => `<li>${escapeHtml(h)}</li>`).join("")}</ul>` : ""}
+        ${project.technologies && project.technologies.length > 0 ? `<div class="badges" style="margin-top:6px;">${project.technologies.map((tech) => `<span class="badge">${escapeHtml(tech)}</span>`).join("")}</div>` : ""}
       </article>
-    `,
-    )
+    `;
+    })
     .join("");
 };
 
@@ -285,7 +349,7 @@ const renderEducation = (content: ResolvedCvContent): string => {
   return content.education
     .map(
       (entry) => `
-      <article class="item">
+      <article class="item" data-item-id="${entry.id}">
         <h4>${escapeHtml(entry.degree)}</h4>
         <p class="meta">
           ${escapeHtml(entry.institution)}
@@ -293,7 +357,7 @@ const renderEducation = (content: ResolvedCvContent): string => {
           ${entry.startDate ? ` · ${escapeHtml(entry.startDate)}` : ""}
           ${entry.endDate ? ` - ${escapeHtml(entry.endDate)}` : ""}
         </p>
-        ${entry.description ? `<p class="paragraph">${escapeHtml(entry.description)}</p>` : ""}
+        ${entry.description ? `<div class="paragraph">${renderMarkdown(entry.description)}</div>` : ""}
       </article>
     `,
     )
@@ -469,6 +533,26 @@ export const renderCvLabHtml = (
       ),
     );
   }
+  if (content.socialLinks.linkedinUrl) {
+    metaItems.push(
+      `<span><a href="${escapeHtml(content.socialLinks.linkedinUrl)}" target="_blank" rel="noopener noreferrer">LinkedIn</a></span>`,
+    );
+  }
+  if (content.socialLinks.githubUrl) {
+    metaItems.push(
+      `<span><a href="${escapeHtml(content.socialLinks.githubUrl)}" target="_blank" rel="noopener noreferrer">GitHub</a></span>`,
+    );
+  }
+  if (content.socialLinks.websiteUrl) {
+    metaItems.push(
+      `<span><a href="${escapeHtml(content.socialLinks.websiteUrl)}" target="_blank" rel="noopener noreferrer">Portfolio</a></span>`,
+    );
+  }
+  if (content.socialLinks.maltUrl) {
+    metaItems.push(
+      `<span><a href="${escapeHtml(content.socialLinks.maltUrl)}" target="_blank" rel="noopener noreferrer">Malt</a></span>`,
+    );
+  }
 
   return `<!DOCTYPE html>
 <html lang="fr">
@@ -617,7 +701,7 @@ export const renderCvLabHtml = (
       font-size: 12px;
       color: var(--muted);
     }
-    .meta a {
+    .meta a, .meta-line a {
       color: var(--accent);
       text-decoration: none;
       word-break: break-word;
@@ -754,14 +838,22 @@ export const renderCvLabHtml = (
       cursor: pointer;
       border-radius: 4px;
     }
+    [data-item-id]:hover {
+      outline: 1px solid rgba(59, 130, 246, 0.3);
+      outline-offset: 1px;
+      cursor: pointer;
+      border-radius: 3px;
+    }
   </style>
   <script>
     document.addEventListener('click', function(e) {
+      var item = e.target.closest('[data-item-id]');
       var section = e.target.closest('[data-section]');
       var header = e.target.closest('header');
       var target = section ? section.dataset.section : (header ? 'header' : null);
+      var itemId = item ? item.dataset.itemId : null;
       if (target && window.parent !== window) {
-        window.parent.postMessage({ type: 'cv-section-click', section: target }, '*');
+        window.parent.postMessage({ type: 'cv-section-click', section: target, itemId: itemId }, '*');
       }
     });
   </script>

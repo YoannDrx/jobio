@@ -72,6 +72,8 @@ export const createMasterCvAction = authAction
         photoUrl: parsedInput.photoUrl,
         hobbies: parsedInput.hobbies as Prisma.InputJsonValue,
         driverLicenses: parsedInput.driverLicenses as Prisma.InputJsonValue,
+        socialLinks:
+          parsedInput.socialLinks as unknown as Prisma.InputJsonValue,
       },
     });
 
@@ -116,6 +118,9 @@ export const updateMasterCvAction = authAction
     if (parsedInput.driverLicenses !== undefined)
       data.driverLicenses =
         parsedInput.driverLicenses as unknown as Prisma.InputJsonValue;
+    if (parsedInput.socialLinks !== undefined)
+      data.socialLinks =
+        parsedInput.socialLinks as unknown as Prisma.InputJsonValue;
     if (parsedInput.experiences !== undefined)
       data.experiences =
         parsedInput.experiences as unknown as Prisma.InputJsonValue;

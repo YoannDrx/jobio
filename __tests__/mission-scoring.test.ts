@@ -151,12 +151,12 @@ describe("scoreMission", () => {
       expect(result.breakdown.workType.score).toBe(15);
     });
 
-    it("should give partial score (7) when one is HYBRID", () => {
+    it("should give partial score (8) when one is HYBRID", () => {
       const result = scoreMission(
         makeMission({ workType: "HYBRID" }),
         makeProfile({ workTypePreference: "REMOTE" }),
       );
-      expect(result.breakdown.workType.score).toBe(7);
+      expect(result.breakdown.workType.score).toBe(8);
     });
 
     it("should give 0 for mismatched non-hybrid types", () => {
@@ -276,6 +276,102 @@ describe("scoreMission", () => {
       expect(result.breakdown).toHaveProperty("completeness");
       expect(result.breakdown.skills).toHaveProperty("matched");
       expect(Array.isArray(result.breakdown.skills.matched)).toBe(true);
+    });
+  });
+
+  describe("custom weights", () => {
+    it("should override defaults with custom weights", () => {
+      const customWeights = {
+        skills: 50,
+        tjm: 10,
+        workType: 20,
+        location: 10,
+        completeness: 10,
+      };
+      const result = scoreMission(makeMission(), makeProfile(), customWeights);
+      expect(result.breakdown.skills.max).toBe(50);
+      expect(result.breakdown.tjm.max).toBe(10);
+      expect(result.breakdown.workType.max).toBe(20);
+      expect(result.breakdown.location.max).toBe(10);
+      expect(result.breakdown.completeness.max).toBe(10);
+      expect(result.score).toBe(100);
+    });
+
+    it("should merge partial weights with defaults", () => {
+      const partialWeights = {
+        skills: 60,
+        tjm: 10,
+      };
+      const result = scoreMission(makeMission(), makeProfile(), partialWeights);
+      expect(result.breakdown.skills.max).toBe(60);
+      expect(result.breakdown.tjm.max).toBe(10);
+      expect(result.breakdown.workType.max).toBe(15); // default
+      expect(result.breakdown.location.max).toBe(15); // default
+      expect(result.breakdown.completeness.max).toBe(10); // default
+    });
+
+    it("should exclude 0-weight category from score", () => {
+      const customWeights = {
+        skills: 40,
+        tjm: 0, // excluded
+        workType: 15,
+        location: 15,
+        completeness: 10,
+      };
+      const result = scoreMission(makeMission(), makeProfile(), customWeights);
+      expect(result.breakdown.tjm.max).toBe(0);
+      expect(result.breakdown.tjm.score).toBe(0);
+      expect(result.score).toBe(80); // 40 + 0 + 15 + 15 + 10
+    });
+
+    it("should scale partial scores proportionally with custom weights", () => {
+      const mission = makeMission({
+        stack: ["React", "TypeScript", "Node.js", "Python", "Go"], // 3/5 match
+      });
+      const customWeights = {
+        skills: 60, // instead of 40
+        tjm: 20,
+        workType: 15,
+        location: 15,
+        completeness: 10,
+      };
+      const result = scoreMission(mission, makeProfile(), customWeights);
+      // 3/5 * 60 = 36
+      expect(result.breakdown.skills.score).toBe(36);
+    });
+
+    it("should scale TJM partial score with custom weights", () => {
+      const customWeights = {
+        skills: 40,
+        tjm: 30, // instead of 20
+        workType: 15,
+        location: 15,
+        completeness: 10,
+      };
+      const result = scoreMission(
+        makeMission({ tjm: 350 }), // partial match
+        makeProfile({ tjmTarget: 500 }),
+        customWeights,
+      );
+      // half of 30 = 15
+      expect(result.breakdown.tjm.score).toBe(15);
+    });
+
+    it("should scale workType partial score with custom weights", () => {
+      const customWeights = {
+        skills: 40,
+        tjm: 20,
+        workType: 20, // instead of 15
+        location: 15,
+        completeness: 10,
+      };
+      const result = scoreMission(
+        makeMission({ workType: "HYBRID" }),
+        makeProfile({ workTypePreference: "REMOTE" }),
+        customWeights,
+      );
+      // half of 20 = 10
+      expect(result.breakdown.workType.score).toBe(10);
     });
   });
 });

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { cn } from "@/lib/utils";
 
 const A4_WIDTH_PX = 794;
 const A4_HEIGHT_PX = 1123;
@@ -9,7 +10,9 @@ type CvLabPreviewProps = {
   previewHtml: string | null;
   previewError: string | null;
   isPreviewLoading: boolean;
-  onSectionClick?: (section: string) => void;
+  onSectionClick?: (section: string, itemId?: string) => void;
+  zoomLevel?: number;
+  onZoomChange?: (zoom: number) => void;
 };
 
 export function CvLabPreview({
@@ -17,17 +20,21 @@ export function CvLabPreview({
   previewError,
   isPreviewLoading,
   onSectionClick,
+  zoomLevel,
+  onZoomChange,
 }: CvLabPreviewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
-  const [scale, setScale] = useState(1);
+  const [autoScale, setAutoScale] = useState(1);
   const [documentHeight, setDocumentHeight] = useState(A4_HEIGHT_PX);
+
+  const effectiveScale = autoScale * (zoomLevel ?? 1);
 
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
     const observer = new ResizeObserver(([entry]) => {
-      setScale(Math.min(1, entry.contentRect.width / A4_WIDTH_PX));
+      setAutoScale(Math.min(1, entry.contentRect.width / A4_WIDTH_PX));
     });
     observer.observe(el);
     return () => observer.disconnect();
@@ -56,7 +63,7 @@ export function CvLabPreview({
   const handleMessage = useCallback(
     (event: MessageEvent) => {
       if (event.data?.type === "cv-section-click" && event.data.section) {
-        onSectionClick?.(event.data.section);
+        onSectionClick?.(event.data.section, event.data.itemId ?? undefined);
       }
     },
     [onSectionClick],
@@ -89,9 +96,9 @@ export function CvLabPreview({
     );
   }
 
-  const scaledWidth = A4_WIDTH_PX * scale;
-  const scaledHeight = documentHeight * scale;
-  const scaledA4Height = A4_HEIGHT_PX * scale;
+  const scaledWidth = A4_WIDTH_PX * effectiveScale;
+  const scaledHeight = documentHeight * effectiveScale;
+  const scaledA4Height = A4_HEIGHT_PX * effectiveScale;
   const pageBreakOffsets: number[] = [];
   if (documentHeight > A4_HEIGHT_PX + 1) {
     for (
@@ -104,14 +111,46 @@ export function CvLabPreview({
   }
 
   return (
-    <div ref={containerRef} className="w-full">
+    <div
+      ref={containerRef}
+      className="w-full"
+      role="region"
+      aria-label="Aperçu du CV"
+    >
       {isPreviewLoading ? (
-        <p className="text-muted-foreground mb-2 text-xs">
+        <p className="text-muted-foreground mb-2 text-xs" aria-live="polite">
           Mise à jour de la prévisualisation...
         </p>
       ) : null}
       <div className="bg-muted/30 rounded-md p-2">
+        {onZoomChange ? (
+          <div
+            className="mb-2 flex items-center justify-center gap-1"
+            role="group"
+            aria-label="Niveau de zoom"
+          >
+            {[0.5, 0.75, 1].map((level) => (
+              <button
+                key={level}
+                type="button"
+                className={cn(
+                  "rounded-md px-2 py-0.5 text-xs font-medium transition-colors",
+                  (zoomLevel ?? 1) === level
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:bg-muted",
+                )}
+                onClick={() => onZoomChange(level)}
+                aria-label={`Zoom ${Math.round(level * 100)}%`}
+                aria-pressed={(zoomLevel ?? 1) === level}
+              >
+                {Math.round(level * 100)}%
+              </button>
+            ))}
+          </div>
+        ) : null}
         <div
+          role="document"
+          aria-label="Aperçu du CV"
           className="relative mx-auto overflow-hidden rounded-sm bg-white shadow-xl"
           style={{
             width: scaledWidth,
@@ -141,7 +180,7 @@ export function CvLabPreview({
               left: 0,
               width: A4_WIDTH_PX,
               height: documentHeight,
-              transform: `scale(${scale})`,
+              transform: `scale(${effectiveScale})`,
               transformOrigin: "top left",
               border: "none",
             }}

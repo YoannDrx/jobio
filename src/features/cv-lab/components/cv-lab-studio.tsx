@@ -22,8 +22,9 @@ import {
   type MasterCvSkill,
 } from "@/features/cv-lab/cv-lab.schema";
 import { ArrowLeft, PencilLine, Plus, Save } from "lucide-react";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useCvLabStudio } from "../hooks/use-cv-lab-studio";
+import { useCvKeyboardShortcuts } from "../hooks/use-cv-keyboard-shortcuts";
 import { getServerUrl } from "@/lib/server-url";
 
 const parseMasterItems = <T extends { id: string }>(value: unknown): T[] => {
@@ -38,6 +39,9 @@ const parseMasterItems = <T extends { id: string }>(value: unknown): T[] => {
 };
 
 export function CvLabStudio() {
+  const [previewZoom, setPreviewZoom] = useState(1);
+  const [editPanelWidth, setEditPanelWidth] = useState(420);
+
   const {
     profiles,
     masterCv,
@@ -77,6 +81,7 @@ export function CvLabStudio() {
     setActiveProfileSection,
     importInputRef,
     hasUnsavedChanges,
+    autoSaveStatus,
     profileById,
     createMutation,
     saveMutation,
@@ -110,7 +115,19 @@ export function CvLabStudio() {
     toggleMasterItemVisibility,
     updateMasterItemOverride,
     removeMasterItemOverride,
+    handleUndo,
+    handleRedo,
+    canUndo,
+    canRedo,
   } = useCvLabStudio();
+
+  useCvKeyboardShortcuts({
+    onSave: () => saveMutation.mutate(),
+    onTogglePanel: () => setIsEditOpen((prev) => !prev),
+    onExportPdf: () => exportPdfMutation.mutate(),
+    onUndo: handleUndo,
+    onRedo: handleRedo,
+  });
 
   const hasMasterCvSource = useMemo(() => {
     if (!selectedDocument) return false;
@@ -170,6 +187,51 @@ export function CvLabStudio() {
     );
   }
 
+  const handleGenerateFromOffer = (result: {
+    targetRole: string;
+    headlineOverride: string;
+    summaryOverride: string;
+    hiddenItems: Record<string, string[]>;
+    contentOverrides: Record<
+      string,
+      { masterItemId: string; description?: string; title?: string }[]
+    >;
+  }) => {
+    if (!draft) return;
+
+    handleDraftChange({
+      ...draft,
+      targetRole: result.targetRole,
+      headlineOverride: result.headlineOverride,
+      summaryOverride: result.summaryOverride,
+    });
+
+    Object.entries(result.hiddenItems).forEach(([section, itemIds]) => {
+      itemIds.forEach((itemId) => {
+        void toggleMasterItemVisibility(
+          section as MasterCvSection,
+          itemId,
+          false,
+        );
+      });
+    });
+
+    Object.entries(result.contentOverrides).forEach(([section, items]) => {
+      items.forEach((item) => {
+        if (item.description || item.title) {
+          void updateMasterItemOverride(
+            section as MasterCvSection,
+            item.masterItemId,
+            {
+              ...(item.description && { description: item.description }),
+              ...(item.title && { title: item.title }),
+            },
+          );
+        }
+      });
+    });
+  };
+
   const editPanelContentNode =
     selectedDocument && draft ? (
       activeProfileSection ? (
@@ -178,6 +240,7 @@ export function CvLabStudio() {
             type="button"
             className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-sm"
             onClick={() => setActiveProfileSection(null)}
+            aria-label="Retour aux onglets"
           >
             <ArrowLeft className="size-4" />
             Retour aux onglets
@@ -265,7 +328,9 @@ export function CvLabStudio() {
           onDocumentSourceChange={setDocumentSource}
           masterItems={hasMasterCvSource ? masterItems : undefined}
           hiddenItemIds={hasMasterCvSource ? parsedHiddenItems : undefined}
-          contentOverrides={hasMasterCvSource ? parsedContentOverrides : undefined}
+          contentOverrides={
+            hasMasterCvSource ? parsedContentOverrides : undefined
+          }
           onToggleItem={
             hasMasterCvSource ? toggleMasterItemVisibility : undefined
           }
@@ -274,6 +339,9 @@ export function CvLabStudio() {
           }
           onRemoveOverride={
             hasMasterCvSource ? removeMasterItemOverride : undefined
+          }
+          onGenerateFromOffer={
+            hasMasterCvSource ? handleGenerateFromOffer : undefined
           }
         />
       )
@@ -290,11 +358,16 @@ export function CvLabStudio() {
             <CvLabMinimalToolbar
               documentName={draft.name}
               hasUnsavedChanges={hasUnsavedChanges}
+              autoSaveStatus={autoSaveStatus}
               documents={documents}
               selectedDocumentId={selectedDocumentId}
               onSelectDocument={handleSelectDocument}
               onCreate={() => createMutation.mutate()}
               isCreating={createMutation.isPending}
+              canUndo={canUndo}
+              canRedo={canRedo}
+              onUndo={handleUndo}
+              onRedo={handleRedo}
             />
           ) : null
         }
@@ -325,6 +398,8 @@ export function CvLabStudio() {
                 previewError={previewError}
                 isPreviewLoading={isPreviewLoading}
                 onSectionClick={handleSectionClick}
+                zoomLevel={previewZoom}
+                onZoomChange={setPreviewZoom}
               />
             </div>
           ) : null
@@ -382,6 +457,8 @@ export function CvLabStudio() {
             </Button>
           ) : null
         }
+        editPanelWidth={editPanelWidth}
+        onEditPanelWidthChange={setEditPanelWidth}
         emptyState={
           !selectedDocument || !draft ? (
             <div className="mx-auto w-full max-w-[860px] py-6">
@@ -391,9 +468,8 @@ export function CvLabStudio() {
                   variant="outline"
                   className="absolute top-4 right-4 h-8 gap-1.5 px-2.5 text-xs"
                   onClick={() => createMutation.mutate()}
-                  disabled={
-                    createMutation.isPending || profiles.length === 0
-                  }
+                  disabled={createMutation.isPending || profiles.length === 0}
+                  aria-busy={createMutation.isPending}
                 >
                   <Plus className="size-3.5" />
                   {createMutation.isPending ? "Creation..." : "Nouveau CV"}
