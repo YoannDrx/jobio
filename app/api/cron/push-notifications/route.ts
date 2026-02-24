@@ -3,6 +3,7 @@ import { route } from "@/lib/zod-route";
 import { NextResponse } from "next/server";
 import { finishCronJobRun, startCronJobRun } from "@/lib/ops/cron-job-runs";
 import { sendPushNotification } from "@/features/notifications/push/push-service";
+import { validateCronAuthorization } from "@/lib/security/cron-auth";
 
 export const GET = route.handler(async (req) => {
   const run = await startCronJobRun({
@@ -10,13 +11,18 @@ export const GET = route.handler(async (req) => {
     route: new URL(req.url).pathname,
   });
 
-  const authHeader = req.headers.get("authorization");
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  const authFailure = validateCronAuthorization(
+    req.headers.get("authorization"),
+  );
+  if (authFailure) {
     await finishCronJobRun(run?.id, {
-      status: "UNAUTHORIZED",
-      errorMessage: "Invalid authorization header",
+      status: authFailure.status === 401 ? "UNAUTHORIZED" : "FAILED",
+      errorMessage: authFailure.logMessage,
     });
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json(
+      { error: authFailure.publicError },
+      { status: authFailure.status },
+    );
   }
 
   try {
@@ -97,7 +103,7 @@ export const GET = route.handler(async (req) => {
         return sendPushNotification(userId, {
           title: "Relances du jour",
           body,
-          url: "/app/prospection",
+          url: "/job/prospection",
         });
       },
     );
@@ -118,7 +124,7 @@ export const GET = route.handler(async (req) => {
         sendPushNotification(userId, {
           title: "Relances en retard",
           body: `${count} relance${count > 1 ? "s" : ""} en retard`,
-          url: "/app/prospection",
+          url: "/job/prospection",
         }),
     );
     await Promise.all(overdueNotifications);
@@ -138,11 +144,45 @@ export const GET = route.handler(async (req) => {
         sendPushNotification(userId, {
           title: "Missions sans activité",
           body: `${count} mission${count > 1 ? "s" : ""} sans activité depuis 7+ jours`,
-          url: "/app/prospection",
+          url: "/job/prospection",
         }),
     );
     await Promise.all(staleNotifications);
     totalSent += staleNotifications.length;
+
+    // Overdue invoices (for users with pushOverdueInvoices enabled)
+    const overdueInvoices = await prisma.billingInvoice.findMany({
+      where: {
+        status: "OVERDUE",
+        deletedAt: null,
+        user: {
+          preference: { pushOverdueInvoices: true },
+        },
+      },
+      select: {
+        userId: true,
+      },
+    });
+
+    const overdueInvoicesByUser = new Map<string, number>();
+    for (const invoice of overdueInvoices) {
+      overdueInvoicesByUser.set(
+        invoice.userId,
+        (overdueInvoicesByUser.get(invoice.userId) ?? 0) + 1,
+      );
+    }
+
+    const overdueInvoiceNotifications = [
+      ...overdueInvoicesByUser.entries(),
+    ].map(async ([userId, count]) =>
+      sendPushNotification(userId, {
+        title: "Factures en retard",
+        body: `${count} facture${count > 1 ? "s" : ""} en retard de paiement`,
+        url: "/freelance/invoices",
+      }),
+    );
+    await Promise.all(overdueInvoiceNotifications);
+    totalSent += overdueInvoiceNotifications.length;
 
     await finishCronJobRun(run?.id, {
       status: "SUCCESS",
@@ -151,6 +191,7 @@ export const GET = route.handler(async (req) => {
         dueToday: dueToday.length,
         overdue: overdue.length,
         staleMissions: staleMissions.length,
+        overdueInvoices: overdueInvoices.length,
       },
     });
 
@@ -159,6 +200,7 @@ export const GET = route.handler(async (req) => {
       dueToday: dueToday.length,
       overdue: overdue.length,
       staleMissions: staleMissions.length,
+      overdueInvoices: overdueInvoices.length,
     });
   } catch (error) {
     await finishCronJobRun(run?.id, {

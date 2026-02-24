@@ -12,7 +12,7 @@ import Link from "next/link";
 
 export default function CancelPaymentPage() {
   return (
-    <Layout>
+    <Layout className="mx-auto mt-0 max-w-7xl px-4 py-14 lg:px-8">
       <LayoutHeader>
         <Badge variant="outline">Payment failed</Badge>
         <LayoutTitle>

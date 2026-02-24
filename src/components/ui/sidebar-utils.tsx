@@ -93,7 +93,7 @@ export const SidebarNavigationMenu = (props: { link: NavigationGroup }) => {
 
         return (
           <SidebarMenuItem key={item.label}>
-            <SidebarMenuButtonLink href={item.href}>
+            <SidebarMenuButtonLink href={item.href} data-tour={item.tourId}>
               <item.Icon />
               <span>{item.label}</span>
             </SidebarMenuButtonLink>

@@ -4,6 +4,7 @@ enum NotificationType {
   MISSION_STALE
   AI_QUOTA_HIGH
   SYSTEM
+  BILLING_INVOICE_OVERDUE
 }
 
 model Notification {

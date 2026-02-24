@@ -1,18 +1,6 @@
-import type { CvLabDocument, UserProfile } from "@/generated/prisma";
+import type { CvLabDocument } from "@/generated/prisma";
 import { CV_LAB_SECTIONS, type CvLabSection } from "./cv-lab.schema";
-
-type AtsProfile = Pick<
-  UserProfile,
-  | "name"
-  | "headline"
-  | "bio"
-  | "skills"
-  | "experiences"
-  | "education"
-  | "certifications"
-  | "languages"
-  | "projects"
->;
+import type { ResolvedCvContent } from "./cv-content-resolver";
 
 type AtsDocument = Pick<
   CvLabDocument,
@@ -153,8 +141,6 @@ const STOP_WORDS = new Set([
   "profil",
 ]);
 
-const asArray = <T>(value: unknown): T[] => (Array.isArray(value) ? (value as T[]) : []);
-
 const clamp = (value: number, min: number, max: number) =>
   Math.min(max, Math.max(min, value));
 
@@ -202,7 +188,9 @@ const normalizeSections = (
           .filter((value): value is CvLabSection =>
             CV_LAB_SECTIONS.includes(value as CvLabSection),
           )
-          .filter((value, index, list) => list.indexOf(value) === index) as CvLabSection[])
+          .filter(
+            (value, index, list) => list.indexOf(value) === index,
+          ) as CvLabSection[])
       : [...CV_LAB_SECTIONS];
 
   const hidden = new Set(
@@ -213,7 +201,9 @@ const normalizeSections = (
       : [],
   );
 
-  const remaining = CV_LAB_SECTIONS.filter((section) => !order.includes(section));
+  const remaining = CV_LAB_SECTIONS.filter(
+    (section) => !order.includes(section),
+  );
   return {
     order: [...order, ...remaining],
     hidden,
@@ -221,37 +211,20 @@ const normalizeSections = (
 };
 
 const getSectionPresence = (
-  profile: AtsProfile,
+  content: ResolvedCvContent,
   document: AtsDocument,
 ): SectionPresence => {
-  const skills = asArray<{ name?: string; level?: string }>(profile.skills).filter(
-    (item) => Boolean(item.name),
-  );
-  const experiences = asArray<{ description?: string; title?: string }>(
-    profile.experiences,
-  ).filter((item) => Boolean(item.title ?? item.description));
-  const projects = asArray<{ name?: string; description?: string }>(
-    profile.projects,
-  ).filter((item) => Boolean(item.name ?? item.description));
-  const education = asArray<{ degree?: string; school?: string }>(
-    profile.education,
-  ).filter((item) => Boolean(item.degree ?? item.school));
-  const languages = asArray<{ name?: string }>(profile.languages).filter((item) =>
-    Boolean(item.name),
-  );
-  const certifications = asArray<{ name?: string }>(profile.certifications).filter(
-    (item) => Boolean(item.name),
-  );
-
   return {
-    header: Boolean(profile.name && (document.headlineOverride ?? profile.headline)),
-    summary: Boolean(document.summaryOverride ?? profile.bio),
-    experiences: experiences.length > 0,
-    skills: skills.length > 0,
-    projects: projects.length > 0,
-    education: education.length > 0,
-    languages: languages.length > 0,
-    certifications: certifications.length > 0,
+    header: Boolean(
+      content.fullName && (document.headlineOverride ?? content.headline),
+    ),
+    summary: Boolean(document.summaryOverride ?? content.summary),
+    experiences: content.experiences.length > 0,
+    skills: content.skills.length > 0,
+    projects: content.projects.length > 0,
+    education: content.education.length > 0,
+    languages: content.languages.length > 0,
+    certifications: content.certifications.length > 0,
   };
 };
 
@@ -266,55 +239,42 @@ const getVisibleSectionPresence = (
   projects: hidden.has("projects") ? false : presence.projects,
   education: hidden.has("education") ? false : presence.education,
   languages: hidden.has("languages") ? false : presence.languages,
-  certifications: hidden.has("certifications") ? false : presence.certifications,
+  certifications: hidden.has("certifications")
+    ? false
+    : presence.certifications,
 });
 
 const computeCompletenessScore = (presence: SectionPresence) => {
-  const totalWeight = Object.values(SECTION_WEIGHTS).reduce((acc, value) => acc + value, 0);
+  const totalWeight = Object.values(SECTION_WEIGHTS).reduce(
+    (acc, value) => acc + value,
+    0,
+  );
   const completedWeight = (Object.keys(SECTION_WEIGHTS) as SectionKey[]).reduce(
-    (acc, section) => (presence[section] ? acc + SECTION_WEIGHTS[section] : acc),
+    (acc, section) =>
+      presence[section] ? acc + SECTION_WEIGHTS[section] : acc,
     0,
   );
   return Math.round((completedWeight / totalWeight) * 100);
 };
 
-const safeString = (value: unknown): string => (typeof value === "string" ? value : "");
+const safeString = (value: unknown): string =>
+  typeof value === "string" ? value : "";
 
-const extractCvSignals = (profile: AtsProfile, document: AtsDocument) => {
-  const skills = asArray<{ name?: string; level?: string }>(profile.skills);
-  const experiences = asArray<{
-    title?: string;
-    company?: string;
-    description?: string;
-    startDate?: string;
-    endDate?: string;
-  }>(profile.experiences);
-  const education = asArray<{
-    degree?: string;
-    school?: string;
-    startDate?: string;
-    endDate?: string;
-    year?: string;
-  }>(profile.education);
-  const languages = asArray<{ name?: string; level?: string }>(profile.languages);
-  const certifications = asArray<{ name?: string; year?: string }>(
-    profile.certifications,
-  );
-  const projects = asArray<{ name?: string; description?: string; url?: string }>(
-    profile.projects,
-  );
+const extractCvSignals = (
+  content: ResolvedCvContent,
+  document: AtsDocument,
+) => {
+  const headline = document.headlineOverride ?? content.headline;
+  const summary = document.summaryOverride ?? content.summary ?? "";
 
-  const headline = document.headlineOverride ?? profile.headline;
-  const summary = document.summaryOverride ?? profile.bio ?? "";
-
-  const skillText = skills
-    .map((skill) => [safeString(skill.name), safeString(skill.level)].join(" ").trim())
+  const skillText = content.skills
+    .map((skill) => [skill.name, safeString(skill.level)].join(" ").trim())
     .join(" ");
-  const experienceText = experiences
+  const experienceText = content.experiences
     .map((item) =>
       [
-        safeString(item.title),
-        safeString(item.company),
+        item.title,
+        item.company,
         safeString(item.startDate),
         safeString(item.endDate),
         safeString(item.description),
@@ -323,35 +283,39 @@ const extractCvSignals = (profile: AtsProfile, document: AtsDocument) => {
         .trim(),
     )
     .join(" ");
-  const educationText = education
+  const educationText = content.education
     .map((item) =>
       [
-        safeString(item.degree),
-        safeString(item.school),
+        item.degree,
+        item.institution,
+        safeString(item.field),
         safeString(item.startDate),
         safeString(item.endDate),
-        safeString(item.year),
       ]
         .join(" ")
         .trim(),
     )
     .join(" ");
-  const languageText = languages
-    .map((item) => [safeString(item.name), safeString(item.level)].join(" ").trim())
+  const languageText = content.languages
+    .map((item) => [item.name, item.level].join(" ").trim())
     .join(" ");
-  const certificationText = certifications
-    .map((item) => [safeString(item.name), safeString(item.year)].join(" ").trim())
-    .join(" ");
-  const projectText = projects
+  const certificationText = content.certifications
     .map((item) =>
-      [safeString(item.name), safeString(item.description), safeString(item.url)]
+      [item.name, safeString(item.issuer), safeString(item.date)]
+        .join(" ")
+        .trim(),
+    )
+    .join(" ");
+  const projectText = content.projects
+    .map((item) =>
+      [item.name, safeString(item.description), safeString(item.url)]
         .join(" ")
         .trim(),
     )
     .join(" ");
 
   const cvText = [
-    safeString(profile.name),
+    content.fullName,
     safeString(headline),
     safeString(summary),
     safeString(document.targetRole),
@@ -365,11 +329,17 @@ const extractCvSignals = (profile: AtsProfile, document: AtsDocument) => {
     .join(" ")
     .trim();
 
-  const measurableText = [safeString(summary), experienceText, projectText].join(" ");
+  const measurableText = [
+    safeString(summary),
+    experienceText,
+    projectText,
+  ].join(" ");
   const quantifiableMatches = measurableText.match(
     /\b\d+(?:[.,]\d+)?\s?(?:%|k|m|x|ans?|mois|jours?|euros?|€|\$)?\b/gi,
   );
-  const quantifiableCount = quantifiableMatches ? quantifiableMatches.length : 0;
+  const quantifiableCount = quantifiableMatches
+    ? quantifiableMatches.length
+    : 0;
 
   const normalizedMeasurableText = normalizeText(measurableText);
   const verbHits = ACTION_VERBS.reduce(
@@ -383,7 +353,9 @@ const extractCvSignals = (profile: AtsProfile, document: AtsDocument) => {
     .filter((part) => part.length > 0);
   const totalWords = tokenize(measurableText).length;
   const averageSentenceLength =
-    sentenceCandidates.length > 0 ? totalWords / sentenceCandidates.length : totalWords;
+    sentenceCandidates.length > 0
+      ? totalWords / sentenceCandidates.length
+      : totalWords;
 
   return {
     cvText,
@@ -395,9 +367,16 @@ const extractCvSignals = (profile: AtsProfile, document: AtsDocument) => {
   };
 };
 
-const computeKeywordScore = (targetKeywords: string[], cvKeywordsSet: Set<string>) => {
-  const matched = targetKeywords.filter((keyword) => cvKeywordsSet.has(keyword));
-  const missing = targetKeywords.filter((keyword) => !cvKeywordsSet.has(keyword));
+const computeKeywordScore = (
+  targetKeywords: string[],
+  cvKeywordsSet: Set<string>,
+) => {
+  const matched = targetKeywords.filter((keyword) =>
+    cvKeywordsSet.has(keyword),
+  );
+  const missing = targetKeywords.filter(
+    (keyword) => !cvKeywordsSet.has(keyword),
+  );
 
   const coverage =
     targetKeywords.length > 0
@@ -412,11 +391,15 @@ const computeKeywordScore = (targetKeywords: string[], cvKeywordsSet: Set<string
 };
 
 const computeImpactScore = (quantifiableCount: number, verbHits: number) => {
-  const score = 25 + Math.min(45, quantifiableCount * 9) + Math.min(30, verbHits * 5);
+  const score =
+    25 + Math.min(45, quantifiableCount * 9) + Math.min(30, verbHits * 5);
   return clamp(Math.round(score), 0, 100);
 };
 
-const computeReadabilityScore = (totalWords: number, averageSentenceLength: number) => {
+const computeReadabilityScore = (
+  totalWords: number,
+  averageSentenceLength: number,
+) => {
   if (totalWords === 0) return 35;
 
   let score = 90;
@@ -429,7 +412,8 @@ const computeReadabilityScore = (totalWords: number, averageSentenceLength: numb
   return clamp(Math.round(score), 20, 100);
 };
 
-const unique = (values: string[]) => Array.from(new Set(values.filter(Boolean)));
+const unique = (values: string[]) =>
+  Array.from(new Set(values.filter(Boolean)));
 
 export type CvAtsAnalysis = {
   generatedAt: string;
@@ -458,24 +442,27 @@ export type CvAtsAnalysis = {
 };
 
 type AnalyzeCvAtsInput = {
-  profile: AtsProfile;
+  content: ResolvedCvContent;
   document: AtsDocument;
   jobDescription?: string | null;
 };
 
 export const analyzeCvAts = ({
-  profile,
+  content,
   document,
   jobDescription,
 }: AnalyzeCvAtsInput): CvAtsAnalysis => {
-  const { hidden } = normalizeSections(document.sectionOrder, document.hiddenSections);
+  const { hidden } = normalizeSections(
+    document.sectionOrder,
+    document.hiddenSections,
+  );
 
-  const rawPresence = getSectionPresence(profile, document);
+  const rawPresence = getSectionPresence(content, document);
   const presence = getVisibleSectionPresence(rawPresence, hidden);
 
   const completenessScore = computeCompletenessScore(presence);
 
-  const cvSignals = extractCvSignals(profile, document);
+  const cvSignals = extractCvSignals(content, document);
   const cvKeywords = extractKeywords(cvSignals.cvText, 160);
   const cvKeywordsSet = new Set(cvKeywords);
 
@@ -516,7 +503,9 @@ export const analyzeCvAts = ({
     .filter((section) => !presence[section] && section !== "header")
     .map((section) => toReadableSection(section as CvLabSection));
 
-  const hiddenSections = [...hidden].map((section) => toReadableSection(section));
+  const hiddenSections = [...hidden].map((section) =>
+    toReadableSection(section),
+  );
 
   const strengths = unique([
     completenessScore >= 80

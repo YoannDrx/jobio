@@ -2,9 +2,32 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## About the project <NAME>
+## About the project Jobio
 
-If you read this, ask question about the project to fill this part. You need to describe what is the purpose of the project, main feature and goals.
+Jobio est un **CRM / cockpit commercial intelligent pour freelances tech**. Il aide les freelances a trouver des missions, gerer leur pipeline commercial, relancer au bon moment, et signer plus de contrats.
+
+### Objectifs principaux
+
+- Centraliser la gestion des missions freelance (prospection, candidature, negociation, signature)
+- Automatiser les relances et le suivi des contacts
+- Fournir des outils IA pour optimiser les CV, generer des candidatures et analyser les opportunites
+- Proposer un module de facturation integre pour freelances francais
+
+### Features principales
+
+- **Pipeline de missions** : Kanban de suivi des opportunites avec scoring IA et parsing automatique des offres
+- **CV Lab** : Editeur de CV avec master CV, variantes par mission, analyse ATS, et generation IA
+- **Contacts / CRM** : Gestion des contacts professionnels avec score relationnel et historique d'interactions
+- **Follow-ups & Sequences** : Systeme de relances automatisees et sequences email
+- **Facturation freelance** : Creation de devis/factures, gestion clients, catalogue de prestations
+- **Analytics** : Dashboard avec KPIs, funnel de conversion, previsions de revenus
+- **IA integree** : Chat IA, generation de messages, scoring de missions, coaching CV, strategie quotidienne
+- **Notifications** : Push notifications et rappels pour les actions importantes
+- **Profil public** : Partage de CV via lien unique avec token
+
+### Modele de monetisation
+
+3 plans Stripe : **Free**, **Pro**, **Ultra** avec limites de fonctionnalites progressives.
 
 ## Development Commands
 

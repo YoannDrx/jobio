@@ -72,7 +72,7 @@ export function ImpersonateUserButton({
     },
     onSuccess: () => {
       toast.success("Impersonation démarrée");
-      router.push("/app");
+      router.push("/job");
     },
     onError: (error: Error) => {
       if (error.message === "Impersonation annulée") {

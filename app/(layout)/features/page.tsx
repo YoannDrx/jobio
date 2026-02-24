@@ -1,16 +1,27 @@
+import { BreadcrumbStructuredData } from "@/components/seo/breadcrumb-structured-data";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
 import {
   PublicPageShell,
   PublicSection,
 } from "@/features/layout/public-page-shell";
-import { buildMarketingMetadata } from "@/lib/seo";
+import { RelatedResourcesSection } from "@/features/layout/related-resources-section";
+import { withPlanBadge } from "@/features/plans/plan-copy";
+import { absoluteUrl, buildMarketingMetadata } from "@/lib/seo";
 import { SiteConfig } from "@/site-config";
 import {
   BarChart3,
   Bell,
   CalendarCheck,
   Check,
+  FileText,
   Globe,
   Kanban,
+  Receipt,
   Sparkles,
   UserCircle,
   Users,
@@ -22,6 +33,13 @@ export const metadata = buildMarketingMetadata({
   description:
     "Decouvrez toutes les fonctionnalites de Jobio : pipeline commercial, CRM contacts, relances, profils freelance, IA, analytics et plus.",
   path: "/features",
+  keywords: [
+    "crm freelance tech",
+    "organiser prospection freelance",
+    "relance client freelance",
+    "outil facturation freelance",
+    "cv freelance ats",
+  ],
 });
 
 type FeatureSection = {
@@ -38,10 +56,10 @@ const featureSections: FeatureSection[] = [
     description:
       "Visualise et pilote ton cycle de vente du premier contact a la signature.",
     bullets: [
-      "Vue Kanban drag & drop avec colonnes personnalisables",
+      "Vue Kanban + liste pour piloter chaque mission",
       "Capture rapide de missions avec parsing IA",
       "Scoring automatique des opportunites",
-      "Filtres avances et export CSV",
+      withPlanBadge("Filtres avances et export CSV", "csvExport"),
     ],
   },
   {
@@ -62,9 +80,9 @@ const featureSections: FeatureSection[] = [
     description: "Ne rate plus jamais une relance au bon moment.",
     bullets: [
       "Calendrier de relances avec vue timeline",
-      "5 types de relances configurables",
+      "4 types de relances configurables",
       "Snooze et report en un clic",
-      "Sequences de relance automatisees",
+      withPlanBadge("Sequences de relance automatisees", "sequences"),
     ],
   },
   {
@@ -85,7 +103,35 @@ const featureSections: FeatureSection[] = [
     bullets: [
       "Parsing automatique des offres de missions",
       "Scoring predictif des opportunites",
-      "Generation d'emails de prospection personnalises",
+      withPlanBadge(
+        "Generation d'emails de prospection personnalises",
+        "aiEmailGeneration",
+      ),
+      withPlanBadge("Audit LinkedIn assiste", "aiLinkedinAudit"),
+    ],
+  },
+  {
+    icon: FileText,
+    title: "CV Studio IA",
+    description:
+      "Construis et adaptes tes CV selon les missions cibles, avec assistance IA.",
+    bullets: [
+      "CV Master centralise par profil freelance",
+      "CV Lab multi-documents avec versions",
+      withPlanBadge("ATS scoring et recommandations actionnables", "atsScoring"),
+      withPlanBadge("Coach CV IA et export PDF", "cvCoachAI"),
+    ],
+  },
+  {
+    icon: Receipt,
+    title: "Freelance Billing",
+    description:
+      "Gere l'administratif freelance: clients, devis, factures, paiements et registres.",
+    bullets: [
+      "Gestion clients, catalogue, devis et factures",
+      "Paiements, avoirs et exports de registres",
+      "Module depenses (factures, notes de frais, trajets)",
+      "Insights de conformite et prevision IA",
     ],
   },
   {
@@ -122,38 +168,179 @@ const featureSections: FeatureSection[] = [
   },
 ];
 
+const relatedResources = [
+  {
+    href: "/use-cases" as const,
+    title: "Parcours par profil freelance",
+    description:
+      "Choisis un use case (développeur, data/IA, product/no-code) pour voir le workflow recommandé.",
+    ctaLabel: "Voir les use cases",
+  },
+  {
+    href: "/docs" as const,
+    title: "Guide d'exécution",
+    description:
+      "Mets en place ton workflow quotidien de prospection avec la documentation opérationnelle.",
+    ctaLabel: "Lire les docs",
+  },
+  {
+    href: "/blog" as const,
+    title: "Conseils terrain",
+    description:
+      "Explore les retours d'expérience freelance sur prospection, LinkedIn et négociation.",
+    ctaLabel: "Voir le blog",
+  },
+  {
+    href: "/#pricing" as const,
+    title: "Plans & limites",
+    description:
+      "Compare Free, Pro et Ultra pour choisir les capacités adaptées à ton volume.",
+    ctaLabel: "Comparer les plans",
+  },
+];
+
+const featureFaqs = [
+  {
+    id: "crm-freelance",
+    question: "Jobio est-il un CRM freelance adapte aux profils tech ?",
+    answer:
+      "Oui. Jobio combine pipeline missions, CRM contacts, relances et analytics dans un setup pense pour les freelances tech. L'objectif est de piloter la prospection sans multiplier les outils.",
+  },
+  {
+    id: "prospection-organisation",
+    question: "Comment Jobio aide a organiser la prospection freelance ?",
+    answer:
+      "Tu centralises les opportunites, tu qualifies avec le scoring IA, tu planifies les relances et tu mesures les conversions. Chaque mission garde une prochaine action claire.",
+  },
+  {
+    id: "cv-ats",
+    question: "Le module CV couvre-t-il les besoins ATS en freelance ?",
+    answer:
+      "Oui. CV Studio IA inclut un ATS scoring (plan Pro+) avec recommandations actionnables, la gestion de plusieurs versions de CV, et un Coach CV IA reserve au plan Ultra.",
+  },
+  {
+    id: "facturation",
+    question: "Peut-on gerer devis et factures dans Jobio ?",
+    answer:
+      "Oui. Le module Freelance Billing gere clients, devis, factures, paiements, avoirs, depenses et registres exportables pour garder une continuité entre prospection et administratif.",
+  },
+  {
+    id: "plans",
+    question: "Les fonctionnalites varient-elles selon le plan ?",
+    answer:
+      "Oui. Les volumes et certaines capacites (IA, automatisation, modules avances) dependent du plan Free, Pro ou Ultra. La section pricing donne la matrice exacte a jour.",
+  },
+] as const;
+
+const featureFaqJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: featureFaqs.map((faq) => ({
+    "@type": "Question",
+    name: faq.question,
+    acceptedAnswer: {
+      "@type": "Answer",
+      text: faq.answer,
+    },
+  })),
+};
+
+const featuresWebPageJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  name: `Fonctionnalites | ${SiteConfig.title}`,
+  url: absoluteUrl("/features"),
+  inLanguage: "fr-FR",
+  description:
+    "Panorama des fonctionnalités Jobio pour freelances tech: pipeline, CRM, relances, CV Studio IA, facturation et analytics.",
+  isPartOf: {
+    "@type": "WebSite",
+    name: SiteConfig.title,
+    url: SiteConfig.prodUrl,
+  },
+  about: [
+    "crm freelance tech",
+    "prospection freelance",
+    "relances automatisées",
+    "cv freelance ats",
+    "facturation freelance",
+  ],
+};
+
 export default function FeaturesPage() {
   return (
-    <PublicPageShell
-      badge="Fonctionnalites"
-      title="Tout ce dont un freelance tech a besoin pour prospecter."
-      description="Un outil unique qui regroupe pipeline, CRM, relances, profils, IA et analytics pour structurer et accelerer ta prospection commerciale."
-      highlights={["IA integree", "Pipeline visuel", "Analytics avances"]}
-    >
-      <div className="grid w-full gap-4 md:grid-cols-2">
-        {featureSections.map((section) => (
-          <PublicSection
-            key={section.title}
-            title={section.title}
-            description={section.description}
-          >
-            <div className="mb-3 flex items-center gap-2">
-              <section.icon className="text-primary size-5" />
-              <span className="text-muted-foreground text-sm font-medium">
-                Points cles
-              </span>
-            </div>
-            <ul className="flex flex-col gap-2">
-              {section.bullets.map((bullet) => (
-                <li key={bullet} className="flex items-start gap-2 text-sm">
-                  <Check className="text-primary mt-0.5 size-4 shrink-0" />
-                  <span className="text-muted-foreground">{bullet}</span>
-                </li>
-              ))}
-            </ul>
-          </PublicSection>
-        ))}
-      </div>
-    </PublicPageShell>
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(featuresWebPageJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(featureFaqJsonLd) }}
+      />
+      <BreadcrumbStructuredData
+        items={[
+          { name: "Accueil", path: "/" },
+          { name: "Fonctionnalites", path: "/features" },
+        ]}
+      />
+      <PublicPageShell
+        badge="Fonctionnalites"
+        title="Tout ce dont un freelance tech a besoin pour prospecter."
+        description="Un outil unique qui regroupe pipeline, CRM, relances, profils, IA et analytics pour structurer et accelerer ta prospection commerciale."
+        highlights={["IA integree", "Pipeline visuel", "Analytics avances"]}
+      >
+        <div className="grid w-full gap-4 md:grid-cols-2">
+          {featureSections.map((section) => (
+            <PublicSection
+              key={section.title}
+              title={section.title}
+              description={section.description}
+            >
+              <div className="mb-3 flex items-center gap-2">
+                <section.icon className="text-primary size-5" />
+                <span className="text-muted-foreground text-sm font-medium">
+                  Points cles
+                </span>
+              </div>
+              <ul className="flex flex-col gap-2">
+                {section.bullets.map((bullet) => (
+                  <li key={bullet} className="flex items-start gap-2 text-sm">
+                    <Check className="text-primary mt-0.5 size-4 shrink-0" />
+                    <span className="text-muted-foreground">{bullet}</span>
+                  </li>
+                ))}
+              </ul>
+            </PublicSection>
+          ))}
+        </div>
+
+        <PublicSection
+          title="FAQ - CRM freelance et prospection"
+          description="Questions frequentes des freelances tech avant de choisir leur stack commerciale."
+          className="mt-4"
+        >
+          <Accordion type="single" collapsible className="w-full">
+            {featureFaqs.map((faq) => (
+              <AccordionItem key={faq.id} value={faq.id}>
+                <AccordionTrigger className="text-left">
+                  {faq.question}
+                </AccordionTrigger>
+                <AccordionContent className="text-muted-foreground text-sm leading-relaxed">
+                  {faq.answer}
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+        </PublicSection>
+
+        <RelatedResourcesSection
+          title="Pour aller plus loin"
+          description="Relie les fonctionnalités à ton setup, ton apprentissage et ton plan."
+          resources={relatedResources}
+          className="mt-4"
+        />
+      </PublicPageShell>
+    </>
   );
 }

@@ -1,3 +1,4 @@
+import { getPlanLimitsForUser } from "@/lib/auth/stripe/plan-entitlements";
 import { z } from "zod";
 
 export const dateRangeSchema = z.object({
@@ -56,4 +57,11 @@ export function parseDurationToDays(duration: string | null): number {
   if (weeksMatch) return parseInt(weeksMatch[1], 10) * 5;
 
   return 20;
+}
+
+export async function getAnalyticsHistoryDaysForUser(
+  userId: string,
+): Promise<number> {
+  const limits = await getPlanLimitsForUser(userId);
+  return limits.analyticsHistoryDays;
 }

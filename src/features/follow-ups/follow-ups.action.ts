@@ -368,6 +368,7 @@ export const getFollowUpsAction = authAction
       include: {
         mission: {
           select: {
+            id: true,
             title: true,
             company: true,
           },

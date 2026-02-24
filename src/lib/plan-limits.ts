@@ -1,6 +1,12 @@
-import { getPlanLimits } from "@/lib/auth/stripe/auth-plans";
+import { PricingFunnelEventType } from "@/generated/prisma";
+import type { PlanLimit } from "@/lib/auth/stripe/auth-plans";
+import {
+  getPlanLimitsForPlan,
+  resolvePlanLimitsForUser,
+} from "@/lib/auth/stripe/plan-entitlements";
 import { ApplicationError } from "@/lib/errors/application-error";
 import { STALE_ELIGIBLE_STATUS_VALUES } from "@/features/missions/mission-status";
+import { capturePricingFunnelEvent } from "@/lib/pricing/pricing-funnel-events";
 import { prisma } from "@/lib/prisma";
 
 type LimitFeature =
@@ -13,7 +19,41 @@ type LimitFeature =
   | "billingQuotes"
   | "billingInvoices"
   | "billingCatalogItems"
-  | "aiRequestsPerMonth";
+  | "billingRecurringInvoices"
+  | "aiRequestsPerMonth"
+  | "cvDocuments"
+  | "sequences"
+  | "messageTemplates";
+
+type BooleanFeature =
+  | "cvTemplatesAll"
+  | "cvCoachAI"
+  | "atsScoring"
+  | "autoFollowUps"
+  | "csvExport"
+  | "aiEmailGeneration"
+  | "aiLinkedinAudit";
+
+export function getPlanUpgradeLabel(plan: string): string {
+  if (plan === "free") return "Pro";
+  if (plan === "pro") return "Ultra";
+  return "";
+}
+
+export function getPlanUpgradeButtonText(plan: string): string {
+  if (plan === "free") return "Passer en Pro";
+  if (plan === "pro") return "Passer en Ultra";
+  return "Gérer l'abonnement";
+}
+
+export function getPlanLimitMessage(
+  plan: string,
+  isExhausted: boolean,
+): string {
+  if (plan === "ultra") return "Limite maximale atteinte";
+  const action = isExhausted ? "continuer" : "en avoir plus";
+  return `Passe en ${getPlanUpgradeLabel(plan)} pour ${action}.`;
+}
 
 const LIMIT_FEATURE_LABELS: Record<LimitFeature, string> = {
   missions: "missions actives",
@@ -25,27 +65,70 @@ const LIMIT_FEATURE_LABELS: Record<LimitFeature, string> = {
   billingQuotes: "devis",
   billingInvoices: "factures",
   billingCatalogItems: "éléments de catalogue",
+  billingRecurringInvoices: "factures récurrentes",
   aiRequestsPerMonth: "requêtes IA/mois",
+  cvDocuments: "documents CV",
+  sequences: "séquences",
+  messageTemplates: "templates messages",
 };
 
-async function getUserPlanLimits(userId: string) {
-  const subscription = await prisma.subscription.findUnique({
-    where: { referenceId: userId },
-  });
-  return getPlanLimits(subscription?.plan);
+const BOOLEAN_FEATURE_LABELS: Record<BooleanFeature, string> = {
+  cvTemplatesAll: "tous les templates CV",
+  cvCoachAI: "CV Coach IA",
+  atsScoring: "ATS Scoring",
+  autoFollowUps: "relances automatiques",
+  csvExport: "export CSV",
+  aiEmailGeneration: "génération emails IA",
+  aiLinkedinAudit: "LinkedIn Audit IA",
+};
+
+async function getUserPlanInfo(userId: string) {
+  const resolvedPlan = await resolvePlanLimitsForUser(userId);
+  return {
+    plan: resolvedPlan.plan,
+    limits: resolvedPlan.limits,
+  };
+}
+
+type PlanResolution = {
+  plan?: string;
+  limits?: PlanLimit;
+};
+
+const resolvePlanInfo = async (
+  userId: string,
+  resolution?: PlanResolution,
+): Promise<{ plan: string; limits: PlanLimit }> => {
+  if (resolution?.plan || resolution?.limits) {
+    const resolvedPlan = resolution.plan ?? "free";
+    return {
+      plan: resolvedPlan,
+      limits: resolution.limits ?? (await getPlanLimitsForPlan(resolvedPlan)),
+    };
+  }
+
+  return getUserPlanInfo(userId);
+};
+
+export function getUpgradeMessage(plan: string): string {
+  if (plan === "free") return "Passe en Pro pour débloquer";
+  if (plan === "pro") return "Passe en Ultra pour débloquer";
+  return "Limite maximale atteinte";
 }
 
 export async function checkPlanLimit(
   userId: string,
   feature: LimitFeature,
+  resolution?: PlanResolution,
 ): Promise<{
+  plan: string;
   allowed: boolean;
   used: number;
   limit: number;
   remaining: number;
 }> {
-  const limits = await getUserPlanLimits(userId);
-  const limit = limits[feature];
+  const { plan, limits } = await resolvePlanInfo(userId, resolution);
+  const limit = limits[feature as keyof PlanLimit];
 
   let used: number;
 
@@ -104,6 +187,11 @@ export async function checkPlanLimit(
         },
       });
       break;
+    case "billingRecurringInvoices":
+      used = await prisma.billingRecurringInvoice.count({
+        where: { userId },
+      });
+      break;
     case "aiRequestsPerMonth": {
       const now = new Date();
       const quota = await prisma.aIMonthlyQuota.findUnique({
@@ -118,11 +206,27 @@ export async function checkPlanLimit(
       used = quota?.requestsUsed ?? 0;
       break;
     }
+    case "cvDocuments":
+      used = await prisma.cvLabDocument.count({
+        where: { userId, archivedAt: null },
+      });
+      break;
+    case "sequences":
+      used = await prisma.sequence.count({
+        where: { userId },
+      });
+      break;
+    case "messageTemplates":
+      used = await prisma.messageTemplate.count({
+        where: { userId, isSystem: false },
+      });
+      break;
     default:
       throw new ApplicationError(`Unknown feature: ${feature}`);
   }
 
   return {
+    plan,
     allowed: used < limit,
     used,
     limit,
@@ -133,12 +237,70 @@ export async function checkPlanLimit(
 export async function enforcePlanLimit(
   userId: string,
   feature: LimitFeature,
-): Promise<void> {
-  const result = await checkPlanLimit(userId, feature);
+  resolution?: PlanResolution,
+): Promise<{
+  plan: string;
+  allowed: boolean;
+  used: number;
+  limit: number;
+  remaining: number;
+}> {
+  const result = await checkPlanLimit(userId, feature, resolution);
   if (!result.allowed) {
     const featureLabel = LIMIT_FEATURE_LABELS[feature];
+    const upgrade = getUpgradeMessage(result.plan);
+    const planTarget = getPlanUpgradeLabel(result.plan).toLowerCase();
+
+    await capturePricingFunnelEvent({
+      eventType: PricingFunnelEventType.PAYWALL_HIT,
+      userId,
+      planCurrent: result.plan,
+      planTarget: planTarget || result.plan,
+      featureKey: feature,
+      entryPoint: "server_enforce_limit",
+      metadata: {
+        used: result.used,
+        limit: result.limit,
+      },
+    });
+
     throw new ApplicationError(
-      `Limite atteinte : ${result.used}/${result.limit} ${featureLabel}. Passe en Pro pour débloquer.`,
+      `Limite atteinte : ${result.used}/${result.limit} ${featureLabel}. ${upgrade}.`,
+    );
+  }
+
+  return result;
+}
+
+export async function checkPlanFeature(
+  userId: string,
+  feature: BooleanFeature,
+): Promise<boolean> {
+  const { limits } = await getUserPlanInfo(userId);
+  return limits[feature] >= 1;
+}
+
+export async function enforcePlanFeature(
+  userId: string,
+  feature: BooleanFeature,
+): Promise<void> {
+  const { plan, limits } = await getUserPlanInfo(userId);
+  if (limits[feature] < 1) {
+    const featureLabel = BOOLEAN_FEATURE_LABELS[feature];
+    const upgrade = getUpgradeMessage(plan);
+    const planTarget = getPlanUpgradeLabel(plan).toLowerCase();
+
+    await capturePricingFunnelEvent({
+      eventType: PricingFunnelEventType.PAYWALL_HIT,
+      userId,
+      planCurrent: plan,
+      planTarget: planTarget || plan,
+      featureKey: feature,
+      entryPoint: "server_enforce_feature",
+    });
+
+    throw new ApplicationError(
+      `Fonctionnalité non disponible : ${featureLabel}. ${upgrade}.`,
     );
   }
 }

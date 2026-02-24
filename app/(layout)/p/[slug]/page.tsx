@@ -90,7 +90,10 @@ export default async function PortalPage({ params }: PageParams) {
         <div className="bg-brand-emerald/20 absolute top-16 right-[12%] size-44 rounded-full blur-3xl" />
       </div>
 
-      <Layout size="lg" className="pt-14 pb-8">
+      <Layout
+        size="lg"
+        className="mx-auto mt-0 max-w-7xl px-4 pt-14 pb-8 lg:px-8"
+      >
         <div className="flex w-full flex-col gap-5 rounded-3xl border border-white/60 bg-white/80 p-8 shadow-xl backdrop-blur-md dark:border-white/10 dark:bg-black/20">
           <div className="flex items-center gap-4">
             {user.image ? (
@@ -128,7 +131,7 @@ export default async function PortalPage({ params }: PageParams) {
         </div>
       </Layout>
 
-      <Layout size="lg">
+      <Layout size="lg" className="mx-auto mt-0 max-w-7xl px-4 lg:px-8">
         <div className="grid w-full gap-4 md:grid-cols-2">
           {portal.showSkills && skills.length > 0 ? (
             <Section icon={Code} title="Competences">

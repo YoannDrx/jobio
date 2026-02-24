@@ -25,7 +25,8 @@
     "better-auth:migrate": "pnpm dlx @better-auth/cli generate --output prisma/schema/better-auth.prisma",
     "prisma:seed": "NODE_ENV=development prisma db seed",
     "prisma:migrate": "pnpm prisma migrate dev",
-    "prisma:generate": "pnpm prisma generate"
+    "prisma:generate": "pnpm prisma generate",
+    "pricing:verify": "pnpm tsx scripts/pricing-verify.ts"
   },
   "prisma": {
     "seed": "pnpm tsx prisma/seed.ts"
@@ -65,6 +66,9 @@
     "@tanstack/react-form": "^1.23.7",
     "@tanstack/react-query": "^5.89.0",
     "@tanstack/react-query-devtools": "^5.89.0",
+    "@tiptap/extension-link": "^3.20.0",
+    "@tiptap/react": "^3.20.0",
+    "@tiptap/starter-kit": "^3.20.0",
     "@types/react-syntax-highlighter": "^15.5.13",
     "@vercel/blob": "^2.0.0",
     "ai": "^6.0.85",
@@ -83,6 +87,7 @@
     "lucide-react": "^0.544.0",
     "mammoth": "^1.11.0",
     "markdown-to-jsx": "^7.7.13",
+    "marked": "^17.0.3",
     "motion": "^12.23.16",
     "nanoid": "^5.1.5",
     "next": "16.1.6",

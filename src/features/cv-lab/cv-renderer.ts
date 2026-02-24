@@ -1,20 +1,6 @@
-import type { CvLabDocument, UserProfile } from "@/generated/prisma";
+import type { CvLabDocument } from "@/generated/prisma";
 import { CV_LAB_SECTIONS, type CvLabSection } from "./cv-lab.schema";
-
-type RenderableProfile = Pick<
-  UserProfile,
-  | "name"
-  | "headline"
-  | "bio"
-  | "skills"
-  | "experiences"
-  | "education"
-  | "certifications"
-  | "languages"
-  | "projects"
-  | "tjmTarget"
-  | "zone"
->;
+import type { ResolvedCvContent } from "./cv-content-resolver";
 
 type RenderableDocument = Pick<
   CvLabDocument,
@@ -66,8 +52,107 @@ const THEMES: Record<
   },
 };
 
+type TemplateStyle = {
+  cvBorderRadius: string;
+  sectionBorderRadius: string;
+  sectionBorder: string;
+  sectionBackground: string;
+  sectionPadding: string;
+  headerPadding: string;
+  headerBackground: string;
+  headerBorderBottom: string;
+  sectionTitleExtra: string;
+  bodyPadding: string;
+  contentGap: string;
+  baseFontSize: string;
+  itemSpacing: string;
+};
+
+const TEMPLATE_STYLES: Record<RenderableDocument["template"], TemplateStyle> = {
+  CLASSIC: {
+    cvBorderRadius: "16px",
+    sectionBorderRadius: "12px",
+    sectionBorder:
+      "1px solid color-mix(in srgb, var(--muted) 14%, transparent)",
+    sectionBackground: "color-mix(in srgb, var(--surface) 95%, white)",
+    sectionPadding: "14px 16px",
+    headerPadding: "28px",
+    headerBackground:
+      "linear-gradient(120deg, color-mix(in srgb, var(--accent) 12%, var(--surface)) 0%, var(--surface) 48%)",
+    headerBorderBottom:
+      "1px solid color-mix(in srgb, var(--muted) 18%, transparent)",
+    sectionTitleExtra: "",
+    bodyPadding: "28px",
+    contentGap: "16px",
+    baseFontSize: "13px",
+    itemSpacing: "12px",
+  },
+  EXECUTIVE: {
+    cvBorderRadius: "0",
+    sectionBorderRadius: "0",
+    sectionBorder:
+      "1px solid color-mix(in srgb, var(--muted) 18%, transparent)",
+    sectionBackground: "var(--surface)",
+    sectionPadding: "16px 18px",
+    headerPadding: "32px 28px",
+    headerBackground: "var(--surface)",
+    headerBorderBottom: "3px solid var(--accent)",
+    sectionTitleExtra:
+      "border-left: 3px solid var(--accent); padding-left: 10px; font-size: 13px; letter-spacing: 0.1em;",
+    bodyPadding: "28px",
+    contentGap: "16px",
+    baseFontSize: "13px",
+    itemSpacing: "12px",
+  },
+  COMPACT: {
+    cvBorderRadius: "8px",
+    sectionBorderRadius: "0",
+    sectionBorder: "none",
+    sectionBackground: "transparent",
+    sectionPadding: "10px 0",
+    headerPadding: "20px 24px",
+    headerBackground:
+      "linear-gradient(120deg, color-mix(in srgb, var(--accent) 8%, var(--surface)) 0%, var(--surface) 48%)",
+    headerBorderBottom:
+      "1px solid color-mix(in srgb, var(--muted) 22%, transparent)",
+    sectionTitleExtra: "",
+    bodyPadding: "20px",
+    contentGap: "8px",
+    baseFontSize: "12px",
+    itemSpacing: "8px",
+  },
+  TWO_COLUMN: {
+    cvBorderRadius: "16px",
+    sectionBorderRadius: "12px",
+    sectionBorder:
+      "1px solid color-mix(in srgb, var(--muted) 14%, transparent)",
+    sectionBackground: "color-mix(in srgb, var(--surface) 95%, white)",
+    sectionPadding: "14px 16px",
+    headerPadding: "28px",
+    headerBackground:
+      "linear-gradient(120deg, color-mix(in srgb, var(--accent) 12%, var(--surface)) 0%, var(--surface) 48%)",
+    headerBorderBottom:
+      "1px solid color-mix(in srgb, var(--muted) 18%, transparent)",
+    sectionTitleExtra: "",
+    bodyPadding: "28px",
+    contentGap: "16px",
+    baseFontSize: "13px",
+    itemSpacing: "12px",
+  },
+};
+
 const sanitizeHex = (value: string) =>
   /^#[0-9a-fA-F]{6}$/.test(value) ? value : "#0f172a";
+
+const normalizeAccentColor = (value: string) => {
+  const sanitized = sanitizeHex(value).toLowerCase();
+  // Historical default was dark navy and produced an almost colorless UI.
+  // Keep explicit user colors, but promote the legacy default to a visible blue.
+  if (sanitized === "#0f172a") {
+    return "#2563eb";
+  }
+  return sanitized;
+};
 
 const escapeHtml = (value: string | null | undefined) => {
   if (!value) return "";
@@ -77,6 +162,29 @@ const escapeHtml = (value: string | null | undefined) => {
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
+};
+
+const renderMarkdown = (value: string | null | undefined): string => {
+  if (!value) return "";
+  const escaped = escapeHtml(value);
+  return (
+    escaped
+      // Bold: **text**
+      .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+      // Italic: *text*
+      .replace(/(?<!\*)\*(?!\*)(.+?)(?<!\*)\*(?!\*)/g, "<em>$1</em>")
+      // Links: [text](url)
+      .replace(
+        /\[([^\]]+)\]\(([^)]+)\)/g,
+        '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>',
+      )
+      // List items: lines starting with "- "
+      .replace(/^- (.+)$/gm, "<li>$1</li>")
+      .replace(
+        /(<li>.*<\/li>\n?)+/g,
+        (match) => `<ul class="list" style="margin-top:4px;">${match}</ul>`,
+      )
+  );
 };
 
 const normalizeSections = (
@@ -92,7 +200,9 @@ const normalizeSections = (
           .filter((value): value is CvLabSection =>
             CV_LAB_SECTIONS.includes(value as CvLabSection),
           )
-          .filter((value, index, arr) => arr.indexOf(value) === index) as CvLabSection[])
+          .filter(
+            (value, index, arr) => arr.indexOf(value) === index,
+          ) as CvLabSection[])
       : [...CV_LAB_SECTIONS];
 
   const hidden = new Set(
@@ -103,14 +213,14 @@ const normalizeSections = (
       : [],
   );
 
-  const remaining = CV_LAB_SECTIONS.filter((section) => !order.includes(section));
+  const remaining = CV_LAB_SECTIONS.filter(
+    (section) => !order.includes(section),
+  );
   return {
     order: [...order, ...remaining],
     hidden,
   };
 };
-
-const asArray = <T>(value: unknown): T[] => (Array.isArray(value) ? (value as T[]) : []);
 
 const sectionTitle: Record<CvLabSection, string> = {
   summary: "Profil",
@@ -122,121 +232,146 @@ const sectionTitle: Record<CvLabSection, string> = {
   certifications: "Certifications",
 };
 
-const renderSummary = (
-  profile: RenderableProfile,
-  summaryOverride: string | null,
-): string => {
-  const summary = summaryOverride ?? profile.bio;
+const renderSummary = (content: ResolvedCvContent): string => {
+  const summary = content.summary;
   if (!summary) return "";
-  return `<p class="paragraph">${escapeHtml(summary)}</p>`;
+  return `<div class="paragraph">${renderMarkdown(summary)}</div>`;
 };
 
-const renderExperiences = (profile: RenderableProfile): string => {
-  const experiences = asArray<{
-    title?: string;
-    company?: string;
-    startDate?: string;
-    endDate?: string;
-    description?: string;
-  }>(profile.experiences);
+const CONTRACT_TYPE_LABELS: Record<string, string> = {
+  CDI: "CDI",
+  CDD: "CDD",
+  FREELANCE: "Freelance",
+  STAGE: "Stage",
+  ALTERNANCE: "Alternance",
+  PONCTUEL: "Ponctuel",
+  HORS_TECH: "Hors tech",
+};
 
-  if (experiences.length === 0) return "";
+const REMOTE_LABELS: Record<string, string> = {
+  ONSITE: "Sur site",
+  HYBRID: "Hybride",
+  REMOTE: "Remote",
+};
 
-  return experiences
-    .map(
-      (experience) => `
-        <article class="item">
-          <h4>${escapeHtml(experience.title ?? "Expérience")}</h4>
+const renderExperiences = (content: ResolvedCvContent): string => {
+  if (content.experiences.length === 0) return "";
+
+  return content.experiences
+    .map((experience) => {
+      const metaParts: string[] = [escapeHtml(experience.company)];
+      if (experience.location) metaParts.push(escapeHtml(experience.location));
+      if (experience.contractType)
+        metaParts.push(
+          CONTRACT_TYPE_LABELS[experience.contractType] ??
+            escapeHtml(experience.contractType),
+        );
+      if (experience.remote)
+        metaParts.push(
+          REMOTE_LABELS[experience.remote] ?? escapeHtml(experience.remote),
+        );
+
+      const datePart = [
+        experience.startDate ? escapeHtml(experience.startDate) : "",
+        experience.endDate ? escapeHtml(experience.endDate) : "",
+      ]
+        .filter(Boolean)
+        .join(" - ");
+
+      return `
+        <article class="item" data-item-id="${experience.id}">
+          <h4>${escapeHtml(experience.title)}</h4>
           <p class="meta">
-            ${escapeHtml(experience.company ?? "")}
-            ${experience.startDate ? ` · ${escapeHtml(experience.startDate)}` : ""}
-            ${experience.endDate ? ` - ${escapeHtml(experience.endDate)}` : ""}
+            ${metaParts.join(" · ")}${datePart ? ` · ${datePart}` : ""}
           </p>
-          ${experience.description ? `<p class="paragraph">${escapeHtml(experience.description)}</p>` : ""}
+          ${experience.teamContext ? `<p class="meta" style="margin-top:2px;">${escapeHtml(experience.teamContext)}</p>` : ""}
+          ${experience.description ? `<div class="paragraph">${renderMarkdown(experience.description)}</div>` : ""}
+          ${experience.achievements && experience.achievements.length > 0 ? `<ul class="list" style="margin-top:6px;">${experience.achievements.map((a) => `<li>${escapeHtml(a)}</li>`).join("")}</ul>` : ""}
+          ${experience.techStack && experience.techStack.length > 0 ? `<div class="badges" style="margin-top:6px;">${experience.techStack.map((t) => `<span class="badge">${escapeHtml(t)}</span>`).join("")}</div>` : ""}
         </article>
-      `,
-    )
+      `;
+    })
     .join("");
 };
 
-const renderSkills = (profile: RenderableProfile): string => {
-  const skills = asArray<{ name?: string; level?: string }>(profile.skills);
-  if (skills.length === 0) return "";
+const renderSkills = (content: ResolvedCvContent): string => {
+  if (content.skills.length === 0) return "";
 
   return `<div class="badges">
-    ${skills
+    ${content.skills
       .map(
-        (skill) => `<span class="badge">${escapeHtml(skill.name ?? "Compétence")}${
-          skill.level ? `<small>${escapeHtml(skill.level)}</small>` : ""
-        }</span>`,
+        (skill) =>
+          `<span class="badge">${escapeHtml(skill.name)}${
+            skill.level ? `<small>${escapeHtml(skill.level)}</small>` : ""
+          }</span>`,
       )
       .join("")}
   </div>`;
 };
 
-const renderProjects = (profile: RenderableProfile): string => {
-  const projects = asArray<{ name?: string; description?: string; url?: string }>(
-    profile.projects,
-  );
-  if (projects.length === 0) return "";
+const renderProjects = (content: ResolvedCvContent): string => {
+  if (content.projects.length === 0) return "";
 
-  return projects
-    .map(
-      (project) => `
-      <article class="item">
-        <h4>${escapeHtml(project.name ?? "Projet")}</h4>
-        ${
-          project.url
-            ? `<p class="meta"><a href="${escapeHtml(project.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(project.url)}</a></p>`
-            : ""
-        }
-        ${
-          project.description
-            ? `<p class="paragraph">${escapeHtml(project.description)}</p>`
-            : ""
-        }
+  return content.projects
+    .map((project) => {
+      const metaParts: string[] = [];
+      if (project.role) metaParts.push(escapeHtml(project.role));
+      const datePart = [
+        project.startDate ? escapeHtml(project.startDate) : "",
+        project.endDate ? escapeHtml(project.endDate) : "",
+      ]
+        .filter(Boolean)
+        .join(" - ");
+      if (datePart) metaParts.push(datePart);
+      if (project.status) metaParts.push(escapeHtml(project.status));
+      if (project.url) {
+        metaParts.push(
+          `<a href="${escapeHtml(project.url)}" target="_blank" rel="noopener noreferrer">${escapeHtml(project.url)}</a>`,
+        );
+      }
+
+      return `
+      <article class="item" data-item-id="${project.id}">
+        <h4>${escapeHtml(project.name)}</h4>
+        ${metaParts.length > 0 ? `<p class="meta">${metaParts.join(" · ")}</p>` : ""}
+        ${project.description ? `<div class="paragraph">${renderMarkdown(project.description)}</div>` : ""}
+        ${project.highlights && project.highlights.length > 0 ? `<ul class="list" style="margin-top:6px;">${project.highlights.map((h) => `<li>${escapeHtml(h)}</li>`).join("")}</ul>` : ""}
+        ${project.technologies && project.technologies.length > 0 ? `<div class="badges" style="margin-top:6px;">${project.technologies.map((tech) => `<span class="badge">${escapeHtml(tech)}</span>`).join("")}</div>` : ""}
       </article>
-    `,
-    )
+    `;
+    })
     .join("");
 };
 
-const renderEducation = (profile: RenderableProfile): string => {
-  const education = asArray<{
-    degree?: string;
-    school?: string;
-    startDate?: string;
-    endDate?: string;
-    year?: string;
-  }>(profile.education);
-  if (education.length === 0) return "";
+const renderEducation = (content: ResolvedCvContent): string => {
+  if (content.education.length === 0) return "";
 
-  return education
+  return content.education
     .map(
       (entry) => `
-      <article class="item">
-        <h4>${escapeHtml(entry.degree ?? "Diplôme")}</h4>
+      <article class="item" data-item-id="${entry.id}">
+        <h4>${escapeHtml(entry.degree)}</h4>
         <p class="meta">
-          ${escapeHtml(entry.school ?? "")}
+          ${escapeHtml(entry.institution)}
+          ${entry.field ? ` · ${escapeHtml(entry.field)}` : ""}
           ${entry.startDate ? ` · ${escapeHtml(entry.startDate)}` : ""}
           ${entry.endDate ? ` - ${escapeHtml(entry.endDate)}` : ""}
-          ${entry.year ? ` · ${escapeHtml(entry.year)}` : ""}
         </p>
+        ${entry.description ? `<div class="paragraph">${renderMarkdown(entry.description)}</div>` : ""}
       </article>
     `,
     )
     .join("");
 };
 
-const renderLanguages = (profile: RenderableProfile): string => {
-  const languages = asArray<{ name?: string; level?: string }>(profile.languages);
-  if (languages.length === 0) return "";
+const renderLanguages = (content: ResolvedCvContent): string => {
+  if (content.languages.length === 0) return "";
 
   return `<ul class="list">
-    ${languages
+    ${content.languages
       .map(
         (language) =>
-          `<li>${escapeHtml(language.name ?? "Langue")}${
+          `<li>${escapeHtml(language.name)}${
             language.level ? ` · ${escapeHtml(language.level)}` : ""
           }</li>`,
       )
@@ -244,44 +379,50 @@ const renderLanguages = (profile: RenderableProfile): string => {
   </ul>`;
 };
 
-const renderCertifications = (profile: RenderableProfile): string => {
-  const certifications = asArray<{ name?: string; issuer?: string; issueDate?: string }>(
-    profile.certifications,
-  );
-  if (certifications.length === 0) return "";
+const renderCertifications = (content: ResolvedCvContent): string => {
+  if (content.certifications.length === 0) return "";
 
   return `<ul class="list">
-    ${certifications
+    ${content.certifications
       .map(
         (certification) =>
-          `<li>${escapeHtml(certification.name ?? "Certification")}${
+          `<li>${escapeHtml(certification.name)}${
             certification.issuer ? ` · ${escapeHtml(certification.issuer)}` : ""
-          }${certification.issueDate ? ` (${escapeHtml(certification.issueDate)})` : ""}</li>`,
+          }${certification.date ? ` (${escapeHtml(certification.date)})` : ""}</li>`,
       )
       .join("")}
   </ul>`;
 };
 
+const renderHobbies = (content: ResolvedCvContent): string => {
+  if (content.hobbies.length === 0) return "";
+
+  return `<div class="badges">
+    ${content.hobbies
+      .map((hobby) => `<span class="badge">${escapeHtml(hobby)}</span>`)
+      .join("")}
+  </div>`;
+};
+
 const renderSection = (
   section: CvLabSection,
-  profile: RenderableProfile,
-  summaryOverride: string | null,
+  content: ResolvedCvContent,
 ): string => {
   switch (section) {
     case "summary":
-      return renderSummary(profile, summaryOverride);
+      return renderSummary(content);
     case "experiences":
-      return renderExperiences(profile);
+      return renderExperiences(content);
     case "skills":
-      return renderSkills(profile);
+      return renderSkills(content);
     case "projects":
-      return renderProjects(profile);
+      return renderProjects(content);
     case "education":
-      return renderEducation(profile);
+      return renderEducation(content);
     case "languages":
-      return renderLanguages(profile);
+      return renderLanguages(content);
     case "certifications":
-      return renderCertifications(profile);
+      return renderCertifications(content);
     default:
       return "";
   }
@@ -296,17 +437,17 @@ type RenderOptions = {
 
 export const renderCvLabHtml = (
   document: RenderableDocument,
-  profile: RenderableProfile,
+  content: ResolvedCvContent,
   options?: RenderOptions,
 ) => {
   const { order, hidden } = normalizeSections(
     document.sectionOrder,
     document.hiddenSections,
   );
-  const accentColor = sanitizeHex(document.accentColor);
+  const accentColor = normalizeAccentColor(document.accentColor);
   const theme = THEMES[document.theme];
-  const pageSize = "A4";
-  const headline = document.headlineOverride ?? profile.headline;
+  const templateStyle = TEMPLATE_STYLES[document.template];
+  const headline = document.headlineOverride ?? content.headline;
   const title = document.targetRole
     ? `${document.name} · ${document.targetRole}`
     : document.name;
@@ -314,16 +455,26 @@ export const renderCvLabHtml = (
   const sectionBlocks = order
     .filter((section) => !hidden.has(section))
     .map((section) => {
-      const content = renderSection(section, profile, document.summaryOverride);
-      if (!content) return "";
+      const sectionContent = renderSection(section, content);
+      if (!sectionContent) return "";
       return `
         <section class="section" data-section="${section}">
           <h3>${sectionTitle[section]}</h3>
-          ${content}
+          ${sectionContent}
         </section>
       `;
     })
     .filter(Boolean);
+
+  const hasHobbies = content.hobbies.length > 0;
+  const hobbiesBlock = hasHobbies
+    ? `<section class="section" data-section="hobbies">
+        <h3>Centres d'intérêt</h3>
+        ${renderHobbies(content)}
+      </section>`
+    : "";
+
+  const hasDriverLicenses = content.driverLicenses.length > 0;
 
   const isTwoColumn = document.template === "TWO_COLUMN";
 
@@ -339,15 +490,69 @@ export const renderCvLabHtml = (
     : sectionBlocks.join("");
 
   const sidebarContent = isTwoColumn
-    ? sectionBlocks
-        .filter((block) => {
+    ? [
+        ...sectionBlocks.filter((block) => {
           const section = /data-section="([^"]+)"/.exec(block)?.[1] as
             | CvLabSection
             | undefined;
           return section ? sectionShouldBeSidebar(section) : false;
-        })
+        }),
+        hobbiesBlock,
+      ]
+        .filter(Boolean)
         .join("")
     : "";
+
+  const mainContentWithHobbies = isTwoColumn
+    ? mainContent
+    : [mainContent, hobbiesBlock].filter(Boolean).join("");
+
+  const photoHtml = content.photoUrl
+    ? `<img src="${escapeHtml(content.photoUrl)}" alt="" class="header-photo" />`
+    : "";
+
+  const metaItems: string[] = [];
+  if (document.targetRole) {
+    metaItems.push(
+      `<span class="chip">${escapeHtml(document.targetRole)}</span>`,
+    );
+  }
+  if (content.email) {
+    metaItems.push(`<span>${escapeHtml(content.email)}</span>`);
+  }
+  if (content.phone) {
+    metaItems.push(`<span>${escapeHtml(content.phone)}</span>`);
+  }
+  if (content.city) {
+    metaItems.push(`<span>${escapeHtml(content.city)}</span>`);
+  }
+  if (hasDriverLicenses) {
+    metaItems.push(
+      ...content.driverLicenses.map(
+        (license) => `<span class="chip">${escapeHtml(license)}</span>`,
+      ),
+    );
+  }
+  if (content.socialLinks.linkedinUrl) {
+    metaItems.push(
+      `<span><a href="${escapeHtml(content.socialLinks.linkedinUrl)}" target="_blank" rel="noopener noreferrer">LinkedIn</a></span>`,
+    );
+  }
+  if (content.socialLinks.githubUrl) {
+    metaItems.push(
+      `<span><a href="${escapeHtml(content.socialLinks.githubUrl)}" target="_blank" rel="noopener noreferrer">GitHub</a></span>`,
+    );
+  }
+  if (content.socialLinks.websiteUrl) {
+    metaItems.push(
+      `<span><a href="${escapeHtml(content.socialLinks.websiteUrl)}" target="_blank" rel="noopener noreferrer">Portfolio</a></span>`,
+    );
+  }
+  if (content.socialLinks.maltUrl) {
+    metaItems.push(
+      `<span><a href="${escapeHtml(content.socialLinks.maltUrl)}" target="_blank" rel="noopener noreferrer">Malt</a></span>`,
+    );
+  }
 
   return `<!DOCTYPE html>
 <html lang="fr">
@@ -373,33 +578,48 @@ export const renderCvLabHtml = (
       line-height: 1.5;
     }
     @page {
-      size: ${pageSize};
-      margin: 1.25cm;
+      size: 210mm 297mm;
+      margin: 12mm 15mm;
     }
     body {
-      padding: 28px;
+      padding: ${templateStyle.bodyPadding};
     }
     .cv {
       max-width: 920px;
       margin: 0 auto;
       border: 1px solid color-mix(in srgb, var(--muted) 18%, transparent);
-      border-radius: 16px;
+      border-radius: ${templateStyle.cvBorderRadius};
       overflow: hidden;
       background: var(--surface);
     }
-    .header {
-      padding: 28px;
-      border-bottom: 1px solid color-mix(in srgb, var(--muted) 18%, transparent);
-      background:
-        linear-gradient(120deg, color-mix(in srgb, var(--accent) 12%, var(--surface)) 0%, var(--surface) 48%);
+    header {
+      padding: ${templateStyle.headerPadding};
+      border-bottom: ${templateStyle.headerBorderBottom};
+      background: ${templateStyle.headerBackground};
+      display: flex;
+      gap: 20px;
+      align-items: flex-start;
+      break-inside: avoid;
+      page-break-inside: avoid;
     }
-    .header h1 {
+    .header-photo {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      object-fit: cover;
+      flex-shrink: 0;
+    }
+    .header-info {
+      flex: 1;
+      min-width: 0;
+    }
+    .header-info h1 {
       margin: 0;
       font-size: 34px;
       line-height: 1.1;
       letter-spacing: -0.03em;
     }
-    .header h2 {
+    .header-info h2 {
       margin: 6px 0 0 0;
       color: var(--muted);
       font-size: 20px;
@@ -412,6 +632,9 @@ export const renderCvLabHtml = (
       gap: 12px;
       color: var(--muted);
       font-size: 13px;
+      align-items: center;
+      break-inside: avoid;
+      page-break-inside: avoid;
     }
     .chip {
       display: inline-flex;
@@ -424,39 +647,43 @@ export const renderCvLabHtml = (
       align-items: center;
     }
     .content {
-      padding: 24px 28px 28px;
+      padding: 24px ${templateStyle.bodyPadding} ${templateStyle.bodyPadding};
       display: grid;
-      gap: 16px;
+      gap: ${templateStyle.contentGap};
       ${
         isTwoColumn
           ? "grid-template-columns: minmax(0, 2fr) minmax(240px, 0.9fr);"
           : "grid-template-columns: minmax(0, 1fr);"
       }
     }
-    .main, .sidebar {
+    main, aside {
       display: grid;
-      gap: 14px;
+      gap: ${templateStyle.contentGap};
       align-content: start;
     }
     .section {
-      border: 1px solid color-mix(in srgb, var(--muted) 14%, transparent);
-      background: color-mix(in srgb, var(--surface) 95%, white);
-      border-radius: 12px;
-      padding: 14px 16px;
+      border: ${templateStyle.sectionBorder};
+      background: ${templateStyle.sectionBackground};
+      border-radius: ${templateStyle.sectionBorderRadius};
+      padding: ${templateStyle.sectionPadding};
       break-inside: avoid;
       page-break-inside: avoid;
       -webkit-column-break-inside: avoid;
     }
+    ${document.template === "COMPACT" ? `.section + .section { border-top: 1px solid color-mix(in srgb, var(--muted) 18%, transparent); }` : ""}
     .section h3 {
       margin: 0 0 10px 0;
       font-size: 12px;
       text-transform: uppercase;
       letter-spacing: 0.08em;
       color: color-mix(in srgb, var(--accent) 74%, var(--text));
+      break-after: avoid;
+      page-break-after: avoid;
+      ${templateStyle.sectionTitleExtra}
     }
     .item + .item {
-      margin-top: 12px;
-      padding-top: 12px;
+      margin-top: ${templateStyle.itemSpacing};
+      padding-top: ${templateStyle.itemSpacing};
       border-top: 1px dashed color-mix(in srgb, var(--muted) 22%, transparent);
     }
     .item {
@@ -474,30 +701,38 @@ export const renderCvLabHtml = (
       font-size: 12px;
       color: var(--muted);
     }
-    .meta a {
+    .meta a, .meta-line a {
       color: var(--accent);
       text-decoration: none;
       word-break: break-word;
     }
     .paragraph {
       margin: 8px 0 0 0;
-      font-size: 13px;
+      font-size: ${templateStyle.baseFontSize};
       color: var(--text);
       white-space: pre-wrap;
       orphans: 3;
       widows: 3;
+      break-inside: avoid;
+      page-break-inside: avoid;
     }
     .list {
       margin: 0;
       padding-left: 18px;
-      font-size: 13px;
+      font-size: ${templateStyle.baseFontSize};
       display: grid;
       gap: 5px;
+    }
+    .list li {
+      break-inside: avoid;
+      page-break-inside: avoid;
     }
     .badges {
       display: flex;
       flex-wrap: wrap;
       gap: 8px;
+      break-inside: avoid;
+      page-break-inside: avoid;
     }
     .badge {
       display: inline-flex;
@@ -509,6 +744,8 @@ export const renderCvLabHtml = (
       line-height: 1;
       color: color-mix(in srgb, var(--accent) 76%, var(--text));
       background: color-mix(in srgb, var(--accent) 8%, transparent);
+      break-inside: avoid;
+      page-break-inside: avoid;
     }
     .badge small {
       color: var(--muted);
@@ -526,21 +763,50 @@ export const renderCvLabHtml = (
       }
     }
     @media print {
+      html,
       body {
         padding: 0;
+        background: #ffffff !important;
       }
       .cv {
         border: none;
         border-radius: 0;
         max-width: 100%;
+        overflow: visible;
+        background: #ffffff !important;
+      }
+      header,
+      .content,
+      main,
+      aside,
+      .section {
+        background: #ffffff !important;
       }
       .section {
-        break-inside: avoid;
-        page-break-inside: avoid;
+        break-inside: auto;
+        page-break-inside: auto;
       }
       .item {
         break-inside: avoid;
         page-break-inside: avoid;
+      }
+      .paragraph {
+        break-inside: auto;
+        page-break-inside: auto;
+      }
+      .list li {
+        break-inside: auto;
+        page-break-inside: auto;
+      }
+      .meta-line,
+      .badges,
+      .badge {
+        break-inside: auto;
+        page-break-inside: auto;
+      }
+      h3 {
+        break-after: avoid;
+        page-break-after: avoid;
       }
       a[href]:after {
         content: "";
@@ -550,23 +816,47 @@ export const renderCvLabHtml = (
 </head>
 <body>
   <div class="cv">
-    <header class="header">
-      <h1>${escapeHtml(profile.name)}</h1>
-      <h2>${escapeHtml(headline)}</h2>
-      <div class="meta-line">
-        ${document.targetRole ? `<span class="chip">${escapeHtml(document.targetRole)}</span>` : ""}
-        ${profile.zone ? `<span>${escapeHtml(profile.zone)}</span>` : ""}
-        ${profile.tjmTarget ? `<span>TJM ${escapeHtml(String(profile.tjmTarget))}€</span>` : ""}
-        <span>CV ${escapeHtml(document.name)}</span>
+    <header data-section="header">
+      ${photoHtml}
+      <div class="header-info">
+        <h1>${escapeHtml(content.fullName)}</h1>
+        ${headline ? `<h2>${escapeHtml(headline)}</h2>` : ""}
+        ${metaItems.length > 0 ? `<div class="meta-line">${metaItems.join("")}</div>` : ""}
       </div>
     </header>
     <div class="content">
-      <main class="main">
-        ${mainContent}
+      <main>
+        ${mainContentWithHobbies}
       </main>
-      ${isTwoColumn ? `<aside class="sidebar">${sidebarContent}</aside>` : ""}
+      ${isTwoColumn ? `<aside>${sidebarContent}</aside>` : ""}
     </div>
   </div>
+  <style>
+    [data-section]:hover, header:hover {
+      outline: 2px solid rgba(59, 130, 246, 0.5);
+      outline-offset: 2px;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    [data-item-id]:hover {
+      outline: 1px solid rgba(59, 130, 246, 0.3);
+      outline-offset: 1px;
+      cursor: pointer;
+      border-radius: 3px;
+    }
+  </style>
+  <script>
+    document.addEventListener('click', function(e) {
+      var item = e.target.closest('[data-item-id]');
+      var section = e.target.closest('[data-section]');
+      var header = e.target.closest('header');
+      var target = section ? section.dataset.section : (header ? 'header' : null);
+      var itemId = item ? item.dataset.itemId : null;
+      if (target && window.parent !== window) {
+        window.parent.postMessage({ type: 'cv-section-click', section: target, itemId: itemId }, '*');
+      }
+    });
+  </script>
   ${
     options?.autoPrint
       ? `<script>

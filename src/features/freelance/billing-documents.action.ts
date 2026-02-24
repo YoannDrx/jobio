@@ -55,6 +55,7 @@ import {
 } from "./billing-math";
 import { reserveBillingDocumentNumber } from "./billing-numbering";
 import { resolveBillingCompliancePreset } from "./billing-compliance-rules";
+import { generateFecEntries, generateFecFile } from "./billing-fec-export";
 import { z } from "zod";
 import { randomUUID } from "node:crypto";
 
@@ -832,7 +833,6 @@ export const bulkQuoteAction = authAction
 
         try {
           if (parsedInput.operation === "DELETE") {
-             
             await tx.billingQuote.update({
               where: {
                 id: quote.id,
@@ -842,7 +842,6 @@ export const bulkQuoteAction = authAction
               },
             });
 
-             
             await createBillingAuditEvent(tx, {
               userId: user.id,
               entityType: BillingEntityType.QUOTE,
@@ -881,7 +880,6 @@ export const bulkQuoteAction = authAction
               continue;
             }
 
-             
             const updated = await tx.billingQuote.update({
               where: {
                 id: quote.id,
@@ -898,7 +896,6 @@ export const bulkQuoteAction = authAction
               },
             });
 
-             
             await persistQuoteVersion(tx, {
               quoteId: updated.id,
               userId: user.id,
@@ -907,7 +904,6 @@ export const bulkQuoteAction = authAction
               reason: `Bulk ${parsedInput.operation}: ${parsedInput.reason}`,
             });
 
-             
             await createBillingAuditEvent(tx, {
               userId: user.id,
               entityType: BillingEntityType.QUOTE,
@@ -943,7 +939,6 @@ export const bulkQuoteAction = authAction
 
           const number =
             quote.number ??
-             
             (await reserveBillingDocumentNumber(tx, {
               userId: user.id,
               kind: BillingSequenceKind.QUOTE,
@@ -968,7 +963,6 @@ export const bulkQuoteAction = authAction
             },
           });
 
-           
           await persistQuoteVersion(tx, {
             quoteId: updated.id,
             userId: user.id,
@@ -977,7 +971,6 @@ export const bulkQuoteAction = authAction
             reason: `Bulk ${parsedInput.operation}: ${parsedInput.reason}`,
           });
 
-           
           await createBillingAuditEvent(tx, {
             userId: user.id,
             entityType: BillingEntityType.QUOTE,
@@ -3513,5 +3506,127 @@ export const exportBillingCompliancePackageAction = authAction
       filename: `jobio-compliance-package-${exportDate}.zip`,
       mimeType: "application/zip",
       base64,
+    };
+  });
+
+const exportFecSchema = z.object({
+  year: z.number().int().min(2020).max(2099),
+});
+
+export const exportFecAction = authAction
+  .inputSchema(exportFecSchema)
+  .action(async ({ parsedInput: { year }, ctx: { user } }) => {
+    const startOfYear = new Date(`${year}-01-01T00:00:00Z`);
+    const endOfYear = new Date(`${year + 1}-01-01T00:00:00Z`);
+
+    const [invoices, payments, creditNotes] = await Promise.all([
+      prisma.billingInvoice.findMany({
+        where: {
+          userId: user.id,
+          deletedAt: null,
+          issueDate: {
+            gte: startOfYear,
+            lt: endOfYear,
+          },
+          status: {
+            in: ["ISSUED", "PAID", "PARTIALLY_PAID"],
+          },
+        },
+        include: {
+          client: {
+            select: {
+              displayName: true,
+            },
+          },
+        },
+        orderBy: {
+          issueDate: "asc",
+        },
+      }),
+      prisma.billingPayment.findMany({
+        where: {
+          userId: user.id,
+          deletedAt: null,
+          paidAt: {
+            gte: startOfYear,
+            lt: endOfYear,
+          },
+          status: "CONFIRMED",
+        },
+        include: {
+          client: {
+            select: {
+              displayName: true,
+            },
+          },
+          allocations: {
+            include: {
+              invoice: {
+                select: {
+                  number: true,
+                },
+              },
+            },
+          },
+        },
+        orderBy: {
+          paidAt: "asc",
+        },
+      }),
+      prisma.billingCreditNote.findMany({
+        where: {
+          userId: user.id,
+          issueDate: {
+            gte: startOfYear,
+            lt: endOfYear,
+          },
+          status: {
+            in: ["ISSUED", "APPLIED"],
+          },
+        },
+        include: {
+          invoice: {
+            select: {
+              number: true,
+              client: {
+                select: {
+                  displayName: true,
+                },
+              },
+            },
+          },
+        },
+        orderBy: {
+          issueDate: "asc",
+        },
+      }),
+    ]);
+
+    const fecEntries = generateFecEntries({
+      invoices,
+      payments,
+      creditNotes,
+    });
+
+    const fecContent = generateFecFile(fecEntries);
+
+    await prisma.$transaction(async (tx) => {
+      await createBillingAuditEvent(tx, {
+        userId: user.id,
+        entityType: BillingEntityType.PROFILE,
+        entityId: user.id,
+        eventType: BillingAuditEventType.UPDATED,
+        message: `Export FEC ${year} généré`,
+        metadata: {
+          year,
+          entriesCount: fecEntries.length,
+          generatedAt: new Date().toISOString(),
+        },
+      });
+    });
+
+    return {
+      filename: `FEC_${year}.txt`,
+      content: fecContent,
     };
   });

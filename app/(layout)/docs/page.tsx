@@ -1,7 +1,14 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { BreadcrumbStructuredData } from "@/components/seo/breadcrumb-structured-data";
 import { PublicPageShell, PublicSection } from "@/features/layout/public-page-shell";
-import { buildMarketingMetadata } from "@/lib/seo";
+import { RelatedResourcesSection } from "@/features/layout/related-resources-section";
+import {
+  formatPlanCount,
+  getPlanSupportLabel,
+} from "@/features/plans/plan-copy";
+import { getPlanLimits } from "@/lib/auth/stripe/auth-plans";
+import { absoluteUrl, buildMarketingMetadata } from "@/lib/seo";
 import { SiteConfig } from "@/site-config";
 import {
   Bot,
@@ -78,19 +85,122 @@ const workflows = [
   },
 ];
 
+const relatedResources = [
+  {
+    href: "/use-cases" as const,
+    title: "Use cases par métier freelance",
+    description:
+      "Accède au workflow recommandé selon ton profil: dev, data/IA ou product/no-code.",
+    ctaLabel: "Voir les use cases",
+  },
+  {
+    href: "/features" as const,
+    title: "Cartographie des fonctionnalités",
+    description:
+      "Visualise rapidement tout ce que Jobio couvre: pipeline, IA, CV Studio et billing.",
+    ctaLabel: "Voir les fonctionnalités",
+  },
+  {
+    href: "/blog" as const,
+    title: "Playbooks freelance",
+    description:
+      "Passe de la théorie à la pratique avec des guides prospection et négociation.",
+    ctaLabel: "Lire les articles",
+  },
+  {
+    href: "/#pricing" as const,
+    title: "Choisir le bon plan",
+    description:
+      "Aligne ton volume d'usage avec les limites Free, Pro et Ultra.",
+    ctaLabel: "Comparer les plans",
+  },
+];
+
+const freePlanLimits = getPlanLimits("free");
+const proPlanLimits = getPlanLimits("pro");
+const ultraPlanLimits = getPlanLimits("ultra");
+
+const planSummaryCards = [
+  {
+    name: "Free",
+    summary: `${formatPlanCount(freePlanLimits.missions)} missions · ${formatPlanCount(freePlanLimits.contacts)} contacts · ${formatPlanCount(freePlanLimits.aiRequestsPerMonth)} requêtes IA/mois`,
+    support: getPlanSupportLabel("free"),
+  },
+  {
+    name: "Pro",
+    summary: `${formatPlanCount(proPlanLimits.missions)} missions · ${formatPlanCount(proPlanLimits.contacts)} contacts · ${formatPlanCount(proPlanLimits.aiRequestsPerMonth)} requêtes IA/mois`,
+    support: getPlanSupportLabel("pro"),
+  },
+  {
+    name: "Ultra",
+    summary: `${formatPlanCount(ultraPlanLimits.missions)} missions · ${formatPlanCount(ultraPlanLimits.contacts)} contacts · ${formatPlanCount(ultraPlanLimits.aiRequestsPerMonth)} requêtes IA/mois`,
+    support: getPlanSupportLabel("ultra"),
+  },
+];
+
+const docsWebPageJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "WebPage",
+  name: `Documentation | ${SiteConfig.title}`,
+  url: absoluteUrl("/docs"),
+  inLanguage: "fr-FR",
+  description:
+    "Documentation opérationnelle Jobio: démarrage, workflows prospection, bonnes pratiques IA et alignement des limites Free/Pro/Ultra.",
+  isPartOf: {
+    "@type": "WebSite",
+    name: SiteConfig.title,
+    url: SiteConfig.prodUrl,
+  },
+  about: [
+    "documentation produit",
+    "workflow prospection freelance",
+    "relances et séquences",
+    "limites plans Jobio",
+  ],
+};
+
 export default function DocsPage() {
+  const howToJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "HowTo",
+    name: "Démarrage rapide Jobio",
+    description:
+      "Mise en place de Jobio pour structurer la prospection freelance en moins de 15 minutes.",
+    totalTime: "PT15M",
+    step: quickStart.map((item) => ({
+      "@type": "HowToStep",
+      name: item.title.replace(/^\d+\.\s*/, ""),
+      text: item.details,
+    })),
+  };
+
   return (
-    <PublicPageShell
-      badge="Documentation"
-      title="Mode d'emploi opérationnel de Jobio."
-      description="Cette documentation est orientée terrain: comment structurer ton flux de prospection, éviter les oublis de relance et améliorer ton taux de signature."
-      lastUpdated="11 février 2026"
-      highlights={[
-        "Guide rapide de démarrage",
-        "Workflows recommandés",
-        "Bonnes pratiques conversion",
-      ]}
-    >
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(docsWebPageJsonLd) }}
+      />
+      <BreadcrumbStructuredData
+        items={[
+          { name: "Accueil", path: "/" },
+          { name: "Documentation", path: "/docs" },
+        ]}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(howToJsonLd) }}
+      />
+      <PublicPageShell
+        badge="Documentation"
+        title="Mode d'emploi opérationnel de Jobio."
+        description="Cette documentation est orientée terrain: comment structurer ton flux de prospection, éviter les oublis de relance et améliorer ton taux de signature."
+        lastUpdated="11 février 2026"
+        highlights={[
+          "Guide rapide de démarrage",
+          "Workflows recommandés",
+          "Bonnes pratiques conversion",
+        ]}
+      >
       <div className="grid w-full gap-4 lg:grid-cols-3">
         <PublicSection
           title="Démarrage rapide"
@@ -112,19 +222,19 @@ export default function DocsPage() {
         <PublicSection title="Navigation utile" description="Raccourcis clés">
           <div className="space-y-2 text-sm">
             <Badge variant="secondary" className="w-fit">
-              /app
+              /job
             </Badge>
             <p className="text-muted-foreground">
               Today: priorités du jour, relances urgentes, signaux importants.
             </p>
             <Badge variant="secondary" className="w-fit">
-              /app/pipeline
+              /job/pipeline
             </Badge>
             <p className="text-muted-foreground">
               Vue Kanban/Liste pour piloter toutes tes missions.
             </p>
             <Badge variant="secondary" className="w-fit">
-              /app/analytics
+              /job/analytics
             </Badge>
             <p className="text-muted-foreground">
               Lecture performance: conversion, TJM, forecast.
@@ -229,24 +339,17 @@ export default function DocsPage() {
         description="Extrait des plafonds actuels pour guider les usages."
       >
         <div className="grid gap-3 sm:grid-cols-3">
-          <div className="rounded-xl border p-4">
-            <p className="font-medium">Free</p>
-            <p className="text-muted-foreground mt-1 text-sm">
-              15 missions · 30 contacts · 5 requêtes IA/mois
-            </p>
-          </div>
-          <div className="rounded-xl border p-4">
-            <p className="font-medium">Pro</p>
-            <p className="text-muted-foreground mt-1 text-sm">
-              Missions illimitées · 200 contacts · 50 requêtes IA/mois
-            </p>
-          </div>
-          <div className="rounded-xl border p-4">
-            <p className="font-medium">Ultra</p>
-            <p className="text-muted-foreground mt-1 text-sm">
-              Limites très élevées + historique analytics étendu
-            </p>
-          </div>
+          {planSummaryCards.map((card) => (
+            <div key={card.name} className="rounded-xl border p-4">
+              <p className="font-medium">{card.name}</p>
+              <p className="text-muted-foreground mt-1 text-sm">
+                {card.summary}
+              </p>
+              <p className="text-muted-foreground mt-1 text-xs">
+                Support: {card.support}
+              </p>
+            </div>
+          ))}
         </div>
         <div className="text-muted-foreground mt-3 flex items-center gap-2 text-xs">
           <ListChecks className="size-3.5" />
@@ -270,6 +373,13 @@ export default function DocsPage() {
           </div>
         </div>
       </PublicSection>
-    </PublicPageShell>
+      <RelatedResourcesSection
+        title="Ressources complémentaires"
+        description="Continue ton onboarding avec les pages les plus utiles."
+        resources={relatedResources}
+        className="mt-4"
+      />
+      </PublicPageShell>
+    </>
   );
 }

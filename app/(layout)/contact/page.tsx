@@ -1,5 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { BreadcrumbStructuredData } from "@/components/seo/breadcrumb-structured-data";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -45,16 +46,23 @@ const contactTopics = [
 
 export default function ContactPage() {
   return (
-    <PublicPageShell
-      badge="Contact"
-      title="Parlons de ton usage réel de Jobio."
-      description="Si quelque chose te freine dans ta prospection, écris-nous. On préfère des retours concrets terrain à des retours génériques."
-      highlights={[
-        "Support orienté résolution",
-        "Canal direct équipe produit",
-        "Réponse rapide en jours ouvrés",
-      ]}
-    >
+    <>
+      <BreadcrumbStructuredData
+        items={[
+          { name: "Accueil", path: "/" },
+          { name: "Contact", path: "/contact" },
+        ]}
+      />
+      <PublicPageShell
+        badge="Contact"
+        title="Parlons de ton usage réel de Jobio."
+        description="Si quelque chose te freine dans ta prospection, écris-nous. On préfère des retours concrets terrain à des retours génériques."
+        highlights={[
+          "Support orienté résolution",
+          "Canal direct équipe produit",
+          "Réponse rapide en jours ouvrés",
+        ]}
+      >
       <div className="grid w-full gap-4 lg:grid-cols-3">
         <PublicSection
           title="Comment on peut t'aider"
@@ -157,6 +165,7 @@ export default function ContactPage() {
           </div>
         </form>
       </PublicSection>
-    </PublicPageShell>
+      </PublicPageShell>
+    </>
   );
 }

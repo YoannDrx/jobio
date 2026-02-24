@@ -89,39 +89,71 @@ export function FreelanceRegistersManager({
   const [invoices, setInvoices] = useState<InvoiceRegisterRow[]>([]);
   const [payments, setPayments] = useState<PaymentRegisterRow[]>([]);
   const [creditNotes, setCreditNotes] = useState<CreditNoteRegisterRow[]>([]);
-  const [declarations, setDeclarations] = useState<DeclarationRegisterRow[]>([]);
+  const [declarations, setDeclarations] = useState<DeclarationRegisterRow[]>(
+    [],
+  );
   const [isLoading, setIsLoading] = useState(true);
   const [isExportingCompliance, setIsExportingCompliance] = useState(false);
 
   const loadData = useCallback(async () => {
     try {
       setIsLoading(true);
-      const [invoiceResult, paymentResult, creditNotesResult, snapshotResult] =
+
+      const [firstInvoices, firstPayments, firstCreditNotes, snapshotResult] =
         await Promise.all([
+          resolveActionResult(getInvoicesAction({ page: 1, pageSize: 100 })),
           resolveActionResult(
-            getInvoicesAction({
-              page: 1,
-              pageSize: 500,
-            }),
+            getBillingPaymentsAction({ page: 1, pageSize: 100 }),
           ),
-          resolveActionResult(
-            getBillingPaymentsAction({
-              page: 1,
-              pageSize: 500,
-            }),
-          ),
-          resolveActionResult(
-            getCreditNotesAction({
-              page: 1,
-              pageSize: 500,
-            }),
-          ),
+          resolveActionResult(getCreditNotesAction({ page: 1, pageSize: 100 })),
           resolveActionResult(getBillingDashboardSnapshotAction({})),
         ]);
 
-      setInvoices(invoiceResult.invoices as InvoiceRegisterRow[]);
-      setPayments(paymentResult.payments as PaymentRegisterRow[]);
-      setCreditNotes(creditNotesResult.creditNotes as CreditNoteRegisterRow[]);
+      const remainingPages: Promise<void>[] = [];
+      const allInvoices = [...(firstInvoices.invoices as InvoiceRegisterRow[])];
+      const allPayments = [...(firstPayments.payments as PaymentRegisterRow[])];
+      const allCreditNotes = [
+        ...(firstCreditNotes.creditNotes as CreditNoteRegisterRow[]),
+      ];
+
+      for (let p = 2; p <= firstInvoices.totalPages; p++) {
+        const page = p;
+        remainingPages.push(
+          resolveActionResult(getInvoicesAction({ page, pageSize: 100 })).then(
+            (r) => {
+              allInvoices.push(...(r.invoices as InvoiceRegisterRow[]));
+            },
+          ),
+        );
+      }
+
+      for (let p = 2; p <= firstPayments.totalPages; p++) {
+        const page = p;
+        remainingPages.push(
+          resolveActionResult(
+            getBillingPaymentsAction({ page, pageSize: 100 }),
+          ).then((r) => {
+            allPayments.push(...(r.payments as PaymentRegisterRow[]));
+          }),
+        );
+      }
+
+      for (let p = 2; p <= firstCreditNotes.totalPages; p++) {
+        const page = p;
+        remainingPages.push(
+          resolveActionResult(
+            getCreditNotesAction({ page, pageSize: 100 }),
+          ).then((r) => {
+            allCreditNotes.push(...(r.creditNotes as CreditNoteRegisterRow[]));
+          }),
+        );
+      }
+
+      await Promise.all(remainingPages);
+
+      setInvoices(allInvoices);
+      setPayments(allPayments);
+      setCreditNotes(allCreditNotes);
       setDeclarations(snapshotResult.declarations as DeclarationRegisterRow[]);
     } catch (error) {
       toast.error(
@@ -147,7 +179,10 @@ export function FreelanceRegistersManager({
   }, [payments]);
 
   const totalCreditedCents = useMemo(() => {
-    return creditNotes.reduce((acc, creditNote) => acc + creditNote.totalCents, 0);
+    return creditNotes.reduce(
+      (acc, creditNote) => acc + creditNote.totalCents,
+      0,
+    );
   }, [creditNotes]);
 
   const exportInvoices = () => {
@@ -247,7 +282,9 @@ export function FreelanceRegistersManager({
         facture_source: creditNote.invoice.number ?? "",
         client: creditNote.invoice.client.displayName,
         statut: creditNote.status,
-        date_emission: new Date(creditNote.issueDate).toISOString().slice(0, 10),
+        date_emission: new Date(creditNote.issueDate)
+          .toISOString()
+          .slice(0, 10),
         montant_ttc_eur: (creditNote.totalCents / 100).toFixed(2),
         montant_tva_eur: (creditNote.taxCents / 100).toFixed(2),
         motif: creditNote.reason ?? "",
@@ -276,7 +313,9 @@ export function FreelanceRegistersManager({
         date_echeance: new Date(period.dueDate).toISOString().slice(0, 10),
         ca_facture_eur: (period.invoicedCents / 100).toFixed(2),
         ca_encaisse_eur: (period.collectedCents / 100).toFixed(2),
-        charges_urssaf_estimees_eur: (period.socialChargesCents / 100).toFixed(2),
+        charges_urssaf_estimees_eur: (period.socialChargesCents / 100).toFixed(
+          2,
+        ),
       })),
       [
         { key: "periode", header: "Periode" },
@@ -347,15 +386,23 @@ export function FreelanceRegistersManager({
             <div className="grid gap-3 md:grid-cols-3">
               <div className="rounded-md border p-4">
                 <p className="text-muted-foreground text-xs">Total facturé</p>
-                <p className="text-xl font-semibold">{formatCents(totalInvoicedCents)}</p>
+                <p className="text-xl font-semibold">
+                  {formatCents(totalInvoicedCents)}
+                </p>
               </div>
               <div className="rounded-md border p-4">
                 <p className="text-muted-foreground text-xs">Total encaissé</p>
-                <p className="text-xl font-semibold">{formatCents(totalCollectedCents)}</p>
+                <p className="text-xl font-semibold">
+                  {formatCents(totalCollectedCents)}
+                </p>
               </div>
               <div className="rounded-md border p-4">
-                <p className="text-muted-foreground text-xs">Total des avoirs</p>
-                <p className="text-xl font-semibold">{formatCents(totalCreditedCents)}</p>
+                <p className="text-muted-foreground text-xs">
+                  Total des avoirs
+                </p>
+                <p className="text-xl font-semibold">
+                  {formatCents(totalCreditedCents)}
+                </p>
               </div>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -412,8 +459,8 @@ export function FreelanceRegistersManager({
             </div>
             {!canUseAdvancedExports && (
               <p className="text-muted-foreground text-xs">
-                Les exports avancés (journal détaillé, avoirs, déclarations URSSAF)
-                sont disponibles à partir du plan Pro.{" "}
+                Les exports avancés (journal détaillé, avoirs, déclarations
+                URSSAF) sont disponibles à partir du plan Pro.{" "}
                 <Link href="/account/billing" className="underline">
                   Mettre à niveau
                 </Link>

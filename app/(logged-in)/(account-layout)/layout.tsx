@@ -1,4 +1,5 @@
 import { getRequiredUser } from "@/lib/auth/auth-user";
+import { NO_INDEX_ROBOTS } from "@/lib/seo";
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { AccountNavigation } from "./account-navigation";
@@ -6,6 +7,7 @@ import { AccountNavigation } from "./account-navigation";
 export const metadata: Metadata = {
   title: "Account",
   description: "Manage your account settings.",
+  robots: NO_INDEX_ROBOTS,
 };
 
 export default function Layout(props: LayoutProps<"/">) {

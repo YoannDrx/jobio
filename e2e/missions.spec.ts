@@ -6,11 +6,11 @@ test.describe("missions", () => {
   test("create a mission and verify it appears", async ({ page }) => {
     const userData = await createTestAccount({
       page,
-      callbackURL: "/app",
+      callbackURL: "/job",
     });
 
     // Navigate to pipeline in list view (more reliable than kanban for E2E)
-    await page.goto("/app/pipeline?view=list");
+    await page.goto("/job/pipeline?view=list");
     await page.waitForLoadState("networkidle");
 
     // Click on add mission button
@@ -50,7 +50,7 @@ test.describe("missions", () => {
   test("open mission detail from pipeline", async ({ page }) => {
     const userData = await createTestAccount({
       page,
-      callbackURL: "/app",
+      callbackURL: "/job",
     });
 
     // Create a mission via the database for this test
@@ -67,7 +67,7 @@ test.describe("missions", () => {
     });
 
     // Navigate to pipeline in list view
-    await page.goto("/app/pipeline?view=list");
+    await page.goto("/job/pipeline?view=list");
     await page.waitForLoadState("networkidle");
 
     // Click on the mission to open detail
@@ -89,7 +89,7 @@ test.describe("missions", () => {
   test("show mission with EN_PAUSE status in pipeline", async ({ page }) => {
     const userData = await createTestAccount({
       page,
-      callbackURL: "/app",
+      callbackURL: "/job",
     });
 
     const user = await prisma.user.findUniqueOrThrow({
@@ -106,7 +106,7 @@ test.describe("missions", () => {
     });
 
     // Use list view and include EN_PAUSE in the status filter via URL
-    await page.goto("/app/pipeline?view=list&status=EN_PAUSE");
+    await page.goto("/job/pipeline?view=list&status=EN_PAUSE");
     await page.waitForLoadState("networkidle");
 
     await expect(page.getByText("Mission Pause Test").first()).toBeVisible({
@@ -122,7 +122,7 @@ test.describe("missions", () => {
   }) => {
     const userData = await createTestAccount({
       page,
-      callbackURL: "/app",
+      callbackURL: "/job",
     });
 
     const user = await prisma.user.findUniqueOrThrow({
@@ -147,7 +147,7 @@ test.describe("missions", () => {
       ],
     });
 
-    await page.goto("/app/pipeline?view=list");
+    await page.goto("/job/pipeline?view=list");
     await page.waitForLoadState("networkidle");
 
     await expect(page.getByText("Mission Active Visible").first()).toBeVisible({
@@ -164,7 +164,7 @@ test.describe("missions", () => {
   }) => {
     const userData = await createTestAccount({
       page,
-      callbackURL: "/app",
+      callbackURL: "/job",
     });
 
     const user = await prisma.user.findUniqueOrThrow({
@@ -180,7 +180,7 @@ test.describe("missions", () => {
       })),
     });
 
-    await page.goto("/app/pipeline?view=list");
+    await page.goto("/job/pipeline?view=list");
     await page.waitForLoadState("networkidle");
 
     await expect(page.getByText(/limite atteinte/i).first()).toBeVisible({
@@ -209,7 +209,7 @@ test.describe("missions", () => {
   }) => {
     const userData = await createTestAccount({
       page,
-      callbackURL: "/app",
+      callbackURL: "/job",
     });
 
     const user = await prisma.user.findUniqueOrThrow({
@@ -234,7 +234,7 @@ test.describe("missions", () => {
       ],
     });
 
-    await page.goto("/app/pipeline?view=list");
+    await page.goto("/job/pipeline?view=list");
     await page.waitForLoadState("networkidle");
 
     await page

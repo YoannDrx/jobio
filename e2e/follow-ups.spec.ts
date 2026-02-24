@@ -6,7 +6,7 @@ test.describe("follow-ups", () => {
   test("complete a follow-up from today view", async ({ page }) => {
     const userData = await createTestAccount({
       page,
-      callbackURL: "/app",
+      callbackURL: "/job",
     });
 
     // Create test data: mission + follow-up for today
@@ -34,7 +34,7 @@ test.describe("follow-ups", () => {
     });
 
     // Navigate to Today (dashboard)
-    await page.goto("/app");
+    await page.goto("/job");
     await page.waitForLoadState("networkidle");
 
     // Verify the follow-up appears

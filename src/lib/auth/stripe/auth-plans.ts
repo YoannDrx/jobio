@@ -6,32 +6,55 @@ import {
   Building2,
   Briefcase,
   ChartBar,
-  Clock,
   Contact,
+  Download,
   FileClock,
+  FileText,
   HeadphonesIcon,
+  ListOrdered,
+  Mail,
+  MessageSquare,
   Monitor,
+  Palette,
   Receipt,
+  RefreshCw,
+  Search,
   Shield,
+  Target,
   UserCircle,
+  Wand2,
   Zap,
 } from "lucide-react";
 
-const DEFAULT_LIMIT = {
+export const DEFAULT_LIMIT = {
   missions: 15,
   profiles: 2,
   contacts: 30,
   platforms: 3,
   companies: 10,
-  billingClients: 10,
-  billingQuotes: 20,
-  billingInvoices: 20,
-  billingCatalogItems: 25,
+  billingClients: 0,
+  billingQuotes: 0,
+  billingInvoices: 0,
+  billingCatalogItems: 0,
+  billingRecurringInvoices: 0,
   aiRequestsPerMonth: 5,
   analyticsHistoryDays: 7,
+  cvDocuments: 1,
+  cvTemplatesAll: 0,
+  cvCoachAI: 0,
+  atsScoring: 0,
+  autoFollowUps: 0,
+  sequences: 0,
+  messageTemplates: 3,
+  csvExport: 0,
+  aiEmailGeneration: 0,
+  aiLinkedinAudit: 0,
 };
 
 export type PlanLimit = typeof DEFAULT_LIMIT;
+export const PLAN_LIMIT_KEYS = Object.keys(
+  DEFAULT_LIMIT,
+) as (keyof PlanLimit)[];
 
 export type OverrideLimits = Partial<PlanLimit>;
 
@@ -101,12 +124,23 @@ export const AUTH_PLANS: AppAuthPlan[] = [
       contacts: 200,
       platforms: 10,
       companies: 50,
-      billingClients: 250,
-      billingQuotes: 999999,
-      billingInvoices: 999999,
-      billingCatalogItems: 250,
+      billingClients: 10,
+      billingQuotes: 50,
+      billingInvoices: 50,
+      billingCatalogItems: 25,
+      billingRecurringInvoices: 5,
       aiRequestsPerMonth: 50,
       analyticsHistoryDays: 90,
+      cvDocuments: 10,
+      cvTemplatesAll: 1,
+      cvCoachAI: 0,
+      atsScoring: 1,
+      autoFollowUps: 1,
+      sequences: 3,
+      messageTemplates: 20,
+      csvExport: 1,
+      aiEmailGeneration: 1,
+      aiLinkedinAudit: 1,
     },
     freeTrial: {
       days: 14,
@@ -182,8 +216,19 @@ export const AUTH_PLANS: AppAuthPlan[] = [
       billingQuotes: 999999,
       billingInvoices: 999999,
       billingCatalogItems: 999999,
+      billingRecurringInvoices: 999999,
       aiRequestsPerMonth: 999,
       analyticsHistoryDays: 999999,
+      cvDocuments: 999999,
+      cvTemplatesAll: 1,
+      cvCoachAI: 1,
+      atsScoring: 1,
+      autoFollowUps: 1,
+      sequences: 999999,
+      messageTemplates: 999999,
+      csvExport: 1,
+      aiEmailGeneration: 1,
+      aiLinkedinAudit: 1,
     },
     freeTrial: {
       days: 14,
@@ -236,7 +281,9 @@ export const LIMITS_CONFIG: Record<
   billingClients: {
     icon: Contact,
     getLabel: (value: number) =>
-      value >= 999999 ? "Clients facturation illimités" : `${value} clients facturation`,
+      value >= 999999
+        ? "Clients facturation illimités"
+        : `${value} clients facturation`,
     description: "Créer et gérer votre base clients de facturation",
   },
   billingQuotes: {
@@ -257,6 +304,14 @@ export const LIMITS_CONFIG: Record<
       value >= 999999 ? "Catalogue illimité" : `${value} éléments catalogue`,
     description: "Maintenir un catalogue de prestations réutilisables",
   },
+  billingRecurringInvoices: {
+    icon: RefreshCw,
+    getLabel: (value: number) =>
+      value >= 999999
+        ? "Factures récurrentes illimitées"
+        : `${value} factures récurrentes`,
+    description: "Automatiser la génération de factures périodiques",
+  },
   aiRequestsPerMonth: {
     icon: Bot,
     getLabel: (value: number) =>
@@ -271,39 +326,102 @@ export const LIMITS_CONFIG: Record<
         : `${value} jours d'historique analytics`,
     description: "Analyser vos performances de prospection",
   },
+  cvDocuments: {
+    icon: FileText,
+    getLabel: (value: number) =>
+      value >= 999999
+        ? "Documents CV illimités"
+        : `${value} document${value > 1 ? "s" : ""} CV`,
+    description: "Créer et personnaliser vos CV",
+  },
+  cvTemplatesAll: {
+    icon: Palette,
+    getLabel: (value: number) =>
+      value >= 1 ? "Tous les templates CV" : "Template Classic uniquement",
+    description: "Accéder à tous les designs de CV",
+  },
+  cvCoachAI: {
+    icon: MessageSquare,
+    getLabel: (value: number) =>
+      value >= 1 ? "CV Coach IA personnel" : "CV Coach IA non inclus",
+    description: "Assistant IA pour optimiser votre CV",
+  },
+  atsScoring: {
+    icon: Target,
+    getLabel: (value: number) =>
+      value >= 1 ? "ATS Scoring CV" : "ATS Scoring non inclus",
+    description: "Analyser la compatibilité ATS de votre CV",
+  },
+  autoFollowUps: {
+    icon: RefreshCw,
+    getLabel: (value: number) =>
+      value >= 1 ? "Relances automatiques" : "Relances manuelles uniquement",
+    description: "Automatiser vos relances de prospection",
+  },
+  sequences: {
+    icon: ListOrdered,
+    getLabel: (value: number) =>
+      value >= 999999
+        ? "Séquences illimitées"
+        : value === 0
+          ? "Pas de séquences"
+          : `${value} séquences`,
+    description: "Créer des séquences de relances automatisées",
+  },
+  messageTemplates: {
+    icon: Mail,
+    getLabel: (value: number) =>
+      value >= 999999
+        ? "Templates messages illimités"
+        : `${value} templates messages`,
+    description: "Modèles de messages réutilisables",
+  },
+  csvExport: {
+    icon: Download,
+    getLabel: (value: number) =>
+      value >= 1 ? "Export CSV" : "Export CSV non inclus",
+    description: "Exporter vos données en CSV",
+  },
+  aiEmailGeneration: {
+    icon: Wand2,
+    getLabel: (value: number) =>
+      value >= 1 ? "Génération emails IA" : "Génération emails IA non incluse",
+    description: "Générer des emails personnalisés avec l'IA",
+  },
+  aiLinkedinAudit: {
+    icon: Search,
+    getLabel: (value: number) =>
+      value >= 1 ? "LinkedIn Audit IA" : "LinkedIn Audit IA non inclus",
+    description: "Auditer et optimiser votre profil LinkedIn",
+  },
 };
 
-// Additional features by plan
+// Additional features by plan (features not covered by numeric limits)
 export const ADDITIONAL_FEATURES = {
   free: [
     {
       icon: Shield,
-      label: "Sécurité de base",
-      description: "Protection standard de vos données",
+      label: "Pipeline de base",
+      description: "Organise ta prospection freelance",
+    },
+    {
+      icon: HeadphonesIcon,
+      label: "Support communautaire",
+      description: "Aide via la communauté",
     },
   ],
   pro: [
     {
-      icon: Zap,
-      label: "Support prioritaire",
-      description: "Assistance rapide quand vous en avez besoin",
-    },
-    {
       icon: HeadphonesIcon,
-      label: "Support email",
-      description: "Assistance par email",
-    },
-    {
-      icon: Clock,
-      label: "Analytics avancés",
-      description: "Statistiques détaillées de votre prospection",
+      label: "Support email prioritaire",
+      description: "Assistance rapide par email",
     },
   ],
   ultra: [
     {
       icon: Zap,
-      label: "Support prioritaire",
-      description: "Assistance en priorité",
+      label: "Support chat prioritaire",
+      description: "Assistance en temps réel",
     },
   ],
 };

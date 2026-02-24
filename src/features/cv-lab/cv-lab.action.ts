@@ -4,16 +4,25 @@ import { Prisma } from "@/generated/prisma";
 import { authAction } from "@/lib/actions/safe-actions";
 import { ApplicationError } from "@/lib/errors/application-error";
 import { prisma } from "@/lib/prisma";
+import { enforcePlanLimit, enforcePlanFeature } from "@/lib/plan-limits";
+import { nanoid } from "nanoid";
 import { z } from "zod";
 import {
+  contentOverridesSchema,
   createCvLabDocumentSchema,
   createCvLabVersionSchema,
   cvLabDocumentIdSchema,
   CV_LAB_SECTIONS,
+  hiddenItemsSchema,
+  personalInfoOverridesSchema,
   restoreCvLabVersionSchema,
   updateCvLabDocumentSchema,
 } from "./cv-lab.schema";
 import { analyzeCvAts } from "./cv-ats";
+import {
+  resolveCvContent,
+  resolveCvContentFromProfile,
+} from "./cv-content-resolver";
 
 type CvLabDocumentForSnapshot = {
   id: string;
@@ -29,6 +38,10 @@ type CvLabDocumentForSnapshot = {
   summaryOverride: string | null;
   sectionOrder: Prisma.JsonValue;
   hiddenSections: Prisma.JsonValue;
+  masterCvId?: string | null;
+  contentOverrides?: Prisma.JsonValue;
+  hiddenItems?: Prisma.JsonValue;
+  personalInfo?: Prisma.JsonValue;
 };
 
 type CvLabProfileForSnapshot = {
@@ -57,6 +70,22 @@ const ensureOwnedProfile = async (userId: string, profileId: string) => {
   return profile;
 };
 
+const enforceCvTemplateLimit = async (
+  userId: string,
+  template: string,
+  options?: { allowIfCurrentTemplate?: string | null },
+) => {
+  if (template === "CLASSIC") {
+    return;
+  }
+
+  if (options?.allowIfCurrentTemplate === template) {
+    return;
+  }
+
+  await enforcePlanFeature(userId, "cvTemplatesAll");
+};
+
 const normalizeSectionOrder = (value: unknown) => {
   if (!Array.isArray(value)) {
     return [...CV_LAB_SECTIONS];
@@ -69,7 +98,9 @@ const normalizeSectionOrder = (value: unknown) => {
     );
 
   const unique = Array.from(new Set(sectionOrder));
-  const remaining = CV_LAB_SECTIONS.filter((section) => !unique.includes(section));
+  const remaining = CV_LAB_SECTIONS.filter(
+    (section) => !unique.includes(section),
+  );
   return [...unique, ...remaining];
 };
 
@@ -99,8 +130,7 @@ const buildExperienceLines = (value: unknown): string[] => {
     .map((item) => {
       if (!item || typeof item !== "object") return "";
       const data = item as Record<string, unknown>;
-      const title =
-        typeof data.title === "string" ? data.title.trim() : "";
+      const title = typeof data.title === "string" ? data.title.trim() : "";
       const company =
         typeof data.company === "string" ? data.company.trim() : "";
       const description =
@@ -134,6 +164,10 @@ const buildVersionSnapshot = (
   summaryOverride: document.summaryOverride,
   sectionOrder: normalizeSectionOrder(document.sectionOrder),
   hiddenSections: normalizeHiddenSections(document.hiddenSections),
+  masterCvId: document.masterCvId ?? null,
+  contentOverrides: document.contentOverrides ?? null,
+  hiddenItems: document.hiddenItems ?? null,
+  personalInfo: document.personalInfo ?? null,
   ...(profile
     ? {
         profileSnapshot: {
@@ -167,10 +201,7 @@ export const listCvLabDocumentsAction = authAction
           },
         },
       },
-      orderBy: [
-        { archivedAt: "asc" },
-        { updatedAt: "desc" },
-      ],
+      orderBy: [{ archivedAt: "asc" }, { updatedAt: "desc" }],
     });
 
     return documents.map((document) => ({
@@ -190,6 +221,7 @@ export const getCvLabDocumentAction = authAction
       },
       include: {
         profile: true,
+        masterCv: true,
       },
     });
 
@@ -207,7 +239,13 @@ export const getCvLabDocumentAction = authAction
 export const createCvLabDocumentAction = authAction
   .inputSchema(createCvLabDocumentSchema)
   .action(async ({ parsedInput, ctx: { user } }) => {
-    const ownedProfile = await ensureOwnedProfile(user.id, parsedInput.profileId);
+    await enforcePlanLimit(user.id, "cvDocuments");
+    await enforceCvTemplateLimit(user.id, parsedInput.template);
+
+    const ownedProfile = await ensureOwnedProfile(
+      user.id,
+      parsedInput.profileId,
+    );
 
     const createdDocument = await prisma.cvLabDocument.create({
       data: {
@@ -224,6 +262,16 @@ export const createCvLabDocumentAction = authAction
         summaryOverride: parsedInput.summaryOverride ?? null,
         sectionOrder: toJsonArray(parsedInput.sectionOrder),
         hiddenSections: toJsonArray(parsedInput.hiddenSections),
+        masterCvId: parsedInput.masterCvId ?? null,
+        contentOverrides: parsedInput.contentOverrides
+          ? (parsedInput.contentOverrides as unknown as Prisma.InputJsonValue)
+          : Prisma.JsonNull,
+        hiddenItems: parsedInput.hiddenItems
+          ? (parsedInput.hiddenItems as unknown as Prisma.InputJsonValue)
+          : Prisma.JsonNull,
+        personalInfo: parsedInput.personalInfo
+          ? (parsedInput.personalInfo as unknown as Prisma.InputJsonValue)
+          : Prisma.JsonNull,
       },
     });
 
@@ -257,6 +305,12 @@ export const updateCvLabDocumentAction = authAction
       await ensureOwnedProfile(user.id, parsedInput.profileId);
     }
 
+    if (parsedInput.template) {
+      await enforceCvTemplateLimit(user.id, parsedInput.template, {
+        allowIfCurrentTemplate: current.template,
+      });
+    }
+
     const updated = await prisma.cvLabDocument.update({
       where: {
         id: parsedInput.id,
@@ -286,6 +340,28 @@ export const updateCvLabDocumentAction = authAction
           parsedInput.hiddenSections !== undefined
             ? toJsonArray(parsedInput.hiddenSections)
             : undefined,
+        masterCvId:
+          parsedInput.masterCvId !== undefined
+            ? parsedInput.masterCvId
+            : undefined,
+        contentOverrides:
+          parsedInput.contentOverrides !== undefined
+            ? parsedInput.contentOverrides
+              ? (parsedInput.contentOverrides as unknown as Prisma.InputJsonValue)
+              : Prisma.JsonNull
+            : undefined,
+        hiddenItems:
+          parsedInput.hiddenItems !== undefined
+            ? parsedInput.hiddenItems
+              ? (parsedInput.hiddenItems as unknown as Prisma.InputJsonValue)
+              : Prisma.JsonNull
+            : undefined,
+        personalInfo:
+          parsedInput.personalInfo !== undefined
+            ? parsedInput.personalInfo
+              ? (parsedInput.personalInfo as unknown as Prisma.InputJsonValue)
+              : Prisma.JsonNull
+            : undefined,
       },
     });
 
@@ -299,6 +375,8 @@ export const duplicateCvLabDocumentAction = authAction
     }),
   )
   .action(async ({ parsedInput, ctx: { user } }) => {
+    await enforcePlanLimit(user.id, "cvDocuments");
+
     const source = await prisma.cvLabDocument.findFirst({
       where: {
         id: parsedInput.id,
@@ -318,6 +396,8 @@ export const duplicateCvLabDocumentAction = authAction
       throw new ApplicationError("Document CV introuvable");
     }
 
+    await enforceCvTemplateLimit(user.id, source.template);
+
     const copy = await prisma.cvLabDocument.create({
       data: {
         userId: user.id,
@@ -333,6 +413,10 @@ export const duplicateCvLabDocumentAction = authAction
         summaryOverride: source.summaryOverride,
         sectionOrder: source.sectionOrder ?? Prisma.JsonNull,
         hiddenSections: source.hiddenSections ?? Prisma.JsonNull,
+        masterCvId: source.masterCvId,
+        contentOverrides: source.contentOverrides ?? Prisma.JsonNull,
+        hiddenItems: source.hiddenItems ?? Prisma.JsonNull,
+        personalInfo: source.personalInfo ?? Prisma.JsonNull,
       },
     });
 
@@ -438,6 +522,85 @@ export const deleteCvLabDocumentAction = authAction
     };
   });
 
+export const generateCvLabShareTokenAction = authAction
+  .inputSchema(cvLabDocumentIdSchema)
+  .action(async ({ parsedInput, ctx: { user } }) => {
+    const document = await prisma.cvLabDocument.findFirst({
+      where: {
+        id: parsedInput.id,
+        userId: user.id,
+        archivedAt: null,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!document) {
+      throw new ApplicationError("Document CV introuvable");
+    }
+
+    const token = nanoid(32);
+
+    try {
+      await prisma.cvLabDocument.update({
+        where: {
+          id: document.id,
+        },
+        data: {
+          shareToken: token,
+        },
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2002"
+      ) {
+        throw new ApplicationError(
+          "Impossible de générer un lien de partage, réessaie",
+        );
+      }
+
+      throw error;
+    }
+
+    return {
+      token,
+      url: `/p/cv/${token}`,
+    };
+  });
+
+export const revokeCvLabShareTokenAction = authAction
+  .inputSchema(cvLabDocumentIdSchema)
+  .action(async ({ parsedInput, ctx: { user } }) => {
+    const document = await prisma.cvLabDocument.findFirst({
+      where: {
+        id: parsedInput.id,
+        userId: user.id,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    if (!document) {
+      throw new ApplicationError("Document CV introuvable");
+    }
+
+    await prisma.cvLabDocument.update({
+      where: {
+        id: document.id,
+      },
+      data: {
+        shareToken: null,
+      },
+    });
+
+    return {
+      success: true,
+    };
+  });
+
 export const createCvLabVersionAction = authAction
   .inputSchema(createCvLabVersionSchema)
   .action(async ({ parsedInput, ctx: { user } }) => {
@@ -481,7 +644,12 @@ export const createCvLabVersionAction = authAction
   });
 
 export const listCvLabVersionsAction = authAction
-  .inputSchema(z.object({ documentId: z.string().min(1), limit: z.number().min(1).max(50).default(15) }))
+  .inputSchema(
+    z.object({
+      documentId: z.string().min(1),
+      limit: z.number().min(1).max(50).default(15),
+    }),
+  )
   .action(async ({ parsedInput, ctx: { user } }) => {
     const document = await prisma.cvLabDocument.findFirst({
       where: {
@@ -511,10 +679,25 @@ export const listCvLabVersionsAction = authAction
 export const restoreCvLabVersionAction = authAction
   .inputSchema(restoreCvLabVersionSchema)
   .action(async ({ parsedInput, ctx: { user } }) => {
+    const document = await prisma.cvLabDocument.findFirst({
+      where: {
+        id: parsedInput.documentId,
+        userId: user.id,
+      },
+      select: {
+        id: true,
+        template: true,
+      },
+    });
+
+    if (!document) {
+      throw new ApplicationError("Document CV introuvable");
+    }
+
     const version = await prisma.cvLabDocumentVersion.findFirst({
       where: {
         id: parsedInput.versionId,
-        documentId: parsedInput.documentId,
+        documentId: document.id,
         userId: user.id,
       },
       select: {
@@ -541,14 +724,22 @@ export const restoreCvLabVersionAction = authAction
         summaryOverride: z.string().nullable().optional(),
         sectionOrder: z.array(z.enum(CV_LAB_SECTIONS)),
         hiddenSections: z.array(z.enum(CV_LAB_SECTIONS)),
+        masterCvId: z.string().nullable().optional(),
+        contentOverrides: contentOverridesSchema.optional().nullable(),
+        hiddenItems: hiddenItemsSchema.optional().nullable(),
+        personalInfo: personalInfoOverridesSchema.optional().nullable(),
       })
       .parse(version.snapshot);
+
+    await enforceCvTemplateLimit(user.id, snapshot.template, {
+      allowIfCurrentTemplate: document.template,
+    });
 
     await ensureOwnedProfile(user.id, snapshot.profileId);
 
     await prisma.cvLabDocument.update({
       where: {
-        id: parsedInput.documentId,
+        id: document.id,
       },
       data: {
         profileId: snapshot.profileId,
@@ -563,6 +754,26 @@ export const restoreCvLabVersionAction = authAction
         summaryOverride: snapshot.summaryOverride ?? null,
         sectionOrder: toJsonArray(snapshot.sectionOrder),
         hiddenSections: toJsonArray(snapshot.hiddenSections),
+        masterCvId:
+          snapshot.masterCvId !== undefined ? snapshot.masterCvId : undefined,
+        contentOverrides:
+          snapshot.contentOverrides !== undefined
+            ? snapshot.contentOverrides
+              ? (snapshot.contentOverrides as unknown as Prisma.InputJsonValue)
+              : Prisma.JsonNull
+            : undefined,
+        hiddenItems:
+          snapshot.hiddenItems !== undefined
+            ? snapshot.hiddenItems
+              ? (snapshot.hiddenItems as unknown as Prisma.InputJsonValue)
+              : Prisma.JsonNull
+            : undefined,
+        personalInfo:
+          snapshot.personalInfo !== undefined
+            ? snapshot.personalInfo
+              ? (snapshot.personalInfo as unknown as Prisma.InputJsonValue)
+              : Prisma.JsonNull
+            : undefined,
       },
     });
 
@@ -589,6 +800,8 @@ export const analyzeCvLabAtsAction = authAction
     }),
   )
   .action(async ({ parsedInput, ctx: { user } }) => {
+    await enforcePlanFeature(user.id, "atsScoring");
+
     const document = await prisma.cvLabDocument.findFirst({
       where: {
         id: parsedInput.documentId,
@@ -596,6 +809,7 @@ export const analyzeCvLabAtsAction = authAction
       },
       include: {
         profile: true,
+        masterCv: true,
       },
     });
 
@@ -603,25 +817,15 @@ export const analyzeCvLabAtsAction = authAction
       throw new ApplicationError("Document CV introuvable");
     }
 
-    let profile = document.profile;
-    if (
-      parsedInput.snapshot?.profileId &&
-      parsedInput.snapshot.profileId !== document.profileId
-    ) {
-      await ensureOwnedProfile(user.id, parsedInput.snapshot.profileId);
-      const selectedProfile = await prisma.userProfile.findFirst({
-        where: {
-          id: parsedInput.snapshot.profileId,
-          userId: user.id,
-        },
-      });
+    const documentOverrides = {
+      contentOverrides: document.contentOverrides,
+      hiddenItems: document.hiddenItems,
+      personalInfo: document.personalInfo,
+    };
 
-      if (!selectedProfile) {
-        throw new ApplicationError("Profil introuvable");
-      }
-
-      profile = selectedProfile;
-    }
+    const content = document.masterCv
+      ? resolveCvContent(document.masterCv, documentOverrides)
+      : resolveCvContentFromProfile(document.profile, documentOverrides);
 
     const normalizedSectionOrder = parsedInput.snapshot?.sectionOrder
       ? normalizeSectionOrder(parsedInput.snapshot.sectionOrder)
@@ -631,7 +835,7 @@ export const analyzeCvLabAtsAction = authAction
       : normalizeHiddenSections(document.hiddenSections);
 
     return analyzeCvAts({
-      profile,
+      content,
       document: {
         ...document,
         targetRole: parsedInput.snapshot?.targetRole ?? document.targetRole,

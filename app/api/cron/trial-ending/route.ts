@@ -5,6 +5,7 @@ import { SiteConfig } from "@/site-config";
 import TrialEndingEmail from "@email/trial-ending.email";
 import { NextResponse } from "next/server";
 import { finishCronJobRun, startCronJobRun } from "@/lib/ops/cron-job-runs";
+import { validateCronAuthorization } from "@/lib/security/cron-auth";
 
 export const GET = route.handler(async (req) => {
   const run = await startCronJobRun({
@@ -12,13 +13,16 @@ export const GET = route.handler(async (req) => {
     route: new URL(req.url).pathname,
   });
 
-  const authHeader = req.headers.get("authorization");
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  const authFailure = validateCronAuthorization(req.headers.get("authorization"));
+  if (authFailure) {
     await finishCronJobRun(run?.id, {
-      status: "UNAUTHORIZED",
-      errorMessage: "Invalid authorization header",
+      status: authFailure.status === 401 ? "UNAUTHORIZED" : "FAILED",
+      errorMessage: authFailure.logMessage,
     });
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json(
+      { error: authFailure.publicError },
+      { status: authFailure.status },
+    );
   }
 
   // Trouver les subscriptions dont le trial expire dans ~24h

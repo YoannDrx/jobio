@@ -3,6 +3,7 @@
 import { authAction } from "@/lib/actions/safe-actions";
 import { prisma } from "@/lib/prisma";
 import { ApplicationError } from "@/lib/errors/application-error";
+import { enforcePlanLimit } from "@/lib/plan-limits";
 import { z } from "zod";
 import {
   createSequenceSchema,
@@ -13,6 +14,8 @@ import {
 export const createSequenceAction = authAction
   .inputSchema(createSequenceSchema)
   .action(async ({ parsedInput, ctx: { user } }) => {
+    await enforcePlanLimit(user.id, "sequences");
+
     const sequence = await prisma.sequence.create({
       data: {
         ...parsedInput,

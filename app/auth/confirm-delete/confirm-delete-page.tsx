@@ -7,14 +7,16 @@ import {
   CardDescription,
   CardFooter,
   CardHeader,
+  CardTitle,
 } from "@/components/ui/card";
 import { LoadingButton } from "@/features/form/submit-button";
 import { authClient } from "@/lib/auth-client";
+import { sanitizeCallbackUrl } from "@/lib/auth/auth-utils";
 import { unwrapSafePromise } from "@/lib/promises";
 import { useMutation } from "@tanstack/react-query";
 import { Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 export function ConfirmDeletePage({
@@ -27,6 +29,10 @@ export function ConfirmDeletePage({
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const safeCallbackUrl = useMemo(
+    () => sanitizeCallbackUrl(callbackUrl, "/auth/goodbye"),
+    [callbackUrl],
+  );
 
   const confirmDeleteMutation = useMutation({
     mutationFn: async () => {
@@ -44,7 +50,7 @@ export function ConfirmDeletePage({
       toast.error(error.message);
     },
     onSuccess: () => {
-      router.push(callbackUrl);
+      router.push(safeCallbackUrl);
     },
   });
 
@@ -57,8 +63,13 @@ export function ConfirmDeletePage({
     router.push("/account");
   };
 
+  useEffect(() => {
+    if (!token) {
+      router.replace("/account");
+    }
+  }, [token, router]);
+
   if (!token) {
-    router.push("/account");
     return null;
   }
 
@@ -72,9 +83,7 @@ export function ConfirmDeletePage({
             </AvatarFallback>
           </Avatar>
         </div>
-        <CardHeader className="text-center">
-          Confirm Account Deletion
-        </CardHeader>
+        <CardTitle className="text-center">Confirm Account Deletion</CardTitle>
 
         <CardDescription className="text-center">
           Are you sure you want to delete your account? This action is permanent

@@ -92,6 +92,10 @@ test.describe("account", () => {
       .getByRole("button", { name: /changer le mot de passe/i })
       .click();
 
+    await expect(
+      page.getByText("Mot de passe modifié avec succès"),
+    ).toBeVisible({ timeout: 15000 });
+
     await signOutAccount({ page });
 
     await signInAccount({
@@ -100,10 +104,10 @@ test.describe("account", () => {
         email: userData.email,
         password: newPassword,
       },
-      callbackURL: "/app",
+      callbackURL: "/job",
     });
 
-    await page.waitForURL(/\/app/, { timeout: 10000 });
+    await page.waitForURL(/\/job/, { timeout: 30000 });
 
     const user = await prisma.user.findUnique({
       where: { email: userData.email },

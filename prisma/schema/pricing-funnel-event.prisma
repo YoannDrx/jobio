@@ -1,0 +1,37 @@
+enum PricingFunnelEventType {
+  PRICING_PAGE_VIEWED
+  PLAN_SELECTED
+  CHECKOUT_STARTED
+  SUBSCRIPTION_COMPLETED
+  PAYWALL_HIT
+}
+
+model PricingFunnelEvent {
+  id String @id @default(nanoid(11))
+
+  eventType PricingFunnelEventType
+
+  userId String?
+
+  planCurrent String?
+  planTarget  String?
+  billingCycle String?
+  entryPoint   String?
+  featureKey   String?
+  experimentVariant String?
+
+  checkoutSessionId    String?
+  stripeSubscriptionId String?
+
+  metadata Json?
+
+  createdAt DateTime @default(now())
+
+  @@unique([eventType, checkoutSessionId])
+  @@index([createdAt])
+  @@index([eventType, createdAt])
+  @@index([planTarget, eventType, createdAt])
+  @@index([experimentVariant, eventType, createdAt])
+  @@index([userId, createdAt])
+  @@map("pricing_funnel_event")
+}

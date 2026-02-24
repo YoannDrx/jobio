@@ -12,6 +12,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { resolveActionResult } from "@/lib/actions/actions-utils";
 import {
   createContactInteractionAction,
@@ -70,6 +76,27 @@ const INTERACTION_COLORS: Record<string, string> = {
   MESSAGE:
     "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-300",
   OTHER: "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300",
+};
+
+const getRelativeTime = (date: Date): string => {
+  const now = new Date();
+  const diffMs = now.getTime() - new Date(date).getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+
+  if (diffMins < 1) return "À l'instant";
+  if (diffMins < 60) return `Il y a ${diffMins} min${diffMins > 1 ? "s" : ""}`;
+  if (diffHours < 24) return `Il y a ${diffHours}h`;
+  if (diffDays < 7) return `Il y a ${diffDays}j`;
+  if (diffDays < 30) {
+    const weeks = Math.floor(diffDays / 7);
+    return `Il y a ${weeks} semaine${weeks > 1 ? "s" : ""}`;
+  }
+  const months = Math.floor(diffDays / 30);
+  if (months < 12) return `Il y a ${months} mois`;
+  const years = Math.floor(diffDays / 365);
+  return `Il y a ${years} an${years > 1 ? "s" : ""}`;
 };
 
 export function ContactInteractions({ contactId }: ContactInteractionsProps) {
@@ -145,7 +172,7 @@ export function ContactInteractions({ contactId }: ContactInteractionsProps) {
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-2">
         <h4 className="text-sm font-medium">
           Interactions ({interactions.length})
         </h4>
@@ -215,7 +242,10 @@ export function ContactInteractions({ contactId }: ContactInteractionsProps) {
           </p>
         </div>
       ) : (
-        <div className="flex flex-col gap-2">
+        <div className="relative flex flex-col gap-0">
+          {/* Vertical line */}
+          <div className="from-border absolute top-6 bottom-0 left-[15px] w-0.5 bg-gradient-to-b to-transparent" />
+
           {interactions.map((interaction) => {
             const Icon = INTERACTION_ICONS[interaction.type] ?? MoreHorizontal;
             const colorClass =
@@ -227,30 +257,76 @@ export function ContactInteractions({ contactId }: ContactInteractionsProps) {
             return (
               <div
                 key={interaction.id}
-                className="group flex items-start gap-3 rounded-lg border p-3"
+                className="group flex gap-3 pb-4 last:pb-0"
               >
-                <div className="bg-muted mt-0.5 flex size-8 shrink-0 items-center justify-center rounded-full">
-                  <Icon className="size-4" />
+                {/* Icon circle */}
+                <div className="border-background bg-background relative z-10 flex size-8 shrink-0 items-center justify-center rounded-full border-2">
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="flex items-center justify-center">
+                          <Icon className="size-4" />
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent side="left" className="text-xs">
+                        {label}
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
                 </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <Badge className={colorClass} variant="secondary">
-                      {label}
-                    </Badge>
-                    <span className="text-muted-foreground text-xs">
-                      {new Date(interaction.date).toLocaleDateString("fr-FR")}
-                    </span>
+
+                {/* Content */}
+                <div className="border-border bg-card group-hover:border-primary/30 group-hover:bg-primary/5 flex-1 rounded-lg border p-2.5 transition-colors">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex flex-1 flex-col gap-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Badge
+                          className={`${colorClass} text-xs`}
+                          variant="secondary"
+                        >
+                          {label}
+                        </Badge>
+                        <span className="text-foreground text-xs font-medium">
+                          {getRelativeTime(new Date(interaction.date))}
+                        </span>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <span className="text-muted-foreground cursor-help text-xs">
+                                •
+                              </span>
+                            </TooltipTrigger>
+                            <TooltipContent side="top" className="text-xs">
+                              {new Date(interaction.date).toLocaleString(
+                                "fr-FR",
+                                {
+                                  year: "numeric",
+                                  month: "long",
+                                  day: "numeric",
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                },
+                              )}
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      </div>
+                      {interaction.description && (
+                        <p className="text-foreground text-sm">
+                          {interaction.description}
+                        </p>
+                      )}
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
+                      onClick={async () => handleDelete(interaction.id)}
+                    >
+                      <Trash2 className="text-destructive size-4" />
+                    </Button>
                   </div>
-                  <p className="mt-1 text-sm">{interaction.description}</p>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="opacity-0 transition-opacity group-hover:opacity-100"
-                  onClick={async () => handleDelete(interaction.id)}
-                >
-                  <Trash2 className="text-destructive size-4" />
-                </Button>
               </div>
             );
           })}

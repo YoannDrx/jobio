@@ -1,19 +1,18 @@
 "use server";
 
 import { authAction } from "@/lib/actions/safe-actions";
-import { getPlanLimits } from "@/lib/auth/stripe/auth-plans";
 import { prisma } from "@/lib/prisma";
 import { MISSION_STATUS_VALUES } from "@/features/missions/mission-status";
-import { computeDateRange, dateRangeSchema } from "./shared";
+import {
+  computeDateRange,
+  dateRangeSchema,
+  getAnalyticsHistoryDaysForUser,
+} from "./shared";
 
 export const getFunnelDataAction = authAction
   .inputSchema(dateRangeSchema)
   .action(async ({ parsedInput: { startDate, endDate }, ctx: { user } }) => {
-    const subscription = await prisma.subscription.findUnique({
-      where: { referenceId: user.id },
-    });
-    const limits = getPlanLimits(subscription?.plan);
-    const historyDays = limits.analyticsHistoryDays;
+    const historyDays = await getAnalyticsHistoryDaysForUser(user.id);
     const dateRange = computeDateRange(historyDays, startDate, endDate);
 
     const funnelData = await prisma.mission.groupBy({

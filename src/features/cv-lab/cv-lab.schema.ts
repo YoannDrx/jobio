@@ -31,7 +31,9 @@ const ensureOrderedUniqueSections = (sections: string[]) => {
     CV_LAB_SECTIONS.includes(section as (typeof CV_LAB_SECTIONS)[number]),
   );
 
-  const remaining = CV_LAB_SECTIONS.filter((section) => !valid.includes(section));
+  const remaining = CV_LAB_SECTIONS.filter(
+    (section) => !valid.includes(section),
+  );
   return [...valid, ...remaining];
 };
 
@@ -44,6 +46,170 @@ const hiddenSectionsSchema = z
   .array(cvLabSectionSchema)
   .default([])
   .transform((sections) => Array.from(new Set(sections)));
+
+// --- Master CV item schemas ---
+
+export const CONTRACT_TYPES = [
+  "CDI",
+  "CDD",
+  "FREELANCE",
+  "STAGE",
+  "ALTERNANCE",
+  "PONCTUEL",
+  "HORS_TECH",
+] as const;
+
+export const REMOTE_MODES = ["ONSITE", "HYBRID", "REMOTE"] as const;
+
+export const contractTypeSchema = z.enum(CONTRACT_TYPES);
+export const remoteModeSchema = z.enum(REMOTE_MODES);
+
+export const masterCvExperienceSchema = z.object({
+  id: z.string(),
+  title: z.string().min(1),
+  company: z.string().min(1),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+  description: z.string().optional(),
+  current: z.boolean().optional(),
+  location: z.string().optional(),
+  contractType: contractTypeSchema.optional(),
+  remote: remoteModeSchema.optional(),
+  techStack: z.array(z.string()).optional(),
+  achievements: z.array(z.string()).optional(),
+  teamContext: z.string().optional(),
+});
+
+export const masterCvSkillSchema = z.object({
+  id: z.string(),
+  name: z.string().min(1),
+  level: z.string().optional(),
+});
+
+export const masterCvEducationSchema = z.object({
+  id: z.string(),
+  institution: z.string().min(1),
+  degree: z.string().min(1),
+  field: z.string().optional(),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+  description: z.string().optional(),
+});
+
+export const masterCvProjectSchema = z.object({
+  id: z.string(),
+  name: z.string().min(1),
+  description: z.string().optional(),
+  url: z.string().optional(),
+  technologies: z.array(z.string()).optional(),
+  role: z.string().optional(),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+  highlights: z.array(z.string()).optional(),
+  status: z.string().optional(),
+});
+
+export const masterCvLanguageSchema = z.object({
+  id: z.string(),
+  name: z.string().min(1),
+  level: z.string().min(1),
+});
+
+export const masterCvCertificationSchema = z.object({
+  id: z.string(),
+  name: z.string().min(1),
+  issuer: z.string().optional(),
+  date: z.string().optional(),
+  url: z.string().optional(),
+});
+
+export const socialLinksSchema = z.object({
+  linkedinUrl: z.string().optional(),
+  githubUrl: z.string().optional(),
+  websiteUrl: z.string().optional(),
+  maltUrl: z.string().optional(),
+});
+
+export const masterCvPersonalInfoSchema = z.object({
+  fullName: z.string().min(1),
+  headline: z.string().optional(),
+  summary: z.string().optional(),
+  email: z.string().optional(),
+  phone: z.string().optional(),
+  city: z.string().optional(),
+  photoUrl: z.string().optional(),
+  hobbies: z.array(z.string()).default([]),
+  driverLicenses: z.array(z.string()).default([]),
+  socialLinks: socialLinksSchema.optional(),
+});
+
+export const MASTER_CV_SECTIONS = [
+  "experiences",
+  "skills",
+  "education",
+  "projects",
+  "languages",
+  "certifications",
+] as const;
+
+export const masterCvSectionSchema = z.enum(MASTER_CV_SECTIONS);
+
+export const contentOverrideItemSchema = z.object({
+  masterItemId: z.string(),
+  title: z.string().optional(),
+  company: z.string().optional(),
+  startDate: z.string().optional(),
+  endDate: z.string().optional(),
+  current: z.boolean().optional(),
+  description: z.string().optional(),
+  name: z.string().optional(),
+  level: z.string().optional(),
+  institution: z.string().optional(),
+  degree: z.string().optional(),
+  field: z.string().optional(),
+  url: z.string().optional(),
+  issuer: z.string().optional(),
+  date: z.string().optional(),
+  technologies: z.array(z.string()).optional(),
+  // Experience enrichment fields
+  location: z.string().optional(),
+  contractType: contractTypeSchema.optional(),
+  remote: remoteModeSchema.optional(),
+  techStack: z.array(z.string()).optional(),
+  achievements: z.array(z.string()).optional(),
+  teamContext: z.string().optional(),
+  // Project enrichment fields
+  role: z.string().optional(),
+  highlights: z.array(z.string()).optional(),
+  status: z.string().optional(),
+});
+
+export const contentOverridesSchema = z.object({
+  experiences: z.array(contentOverrideItemSchema).optional(),
+  skills: z.array(contentOverrideItemSchema).optional(),
+  education: z.array(contentOverrideItemSchema).optional(),
+  projects: z.array(contentOverrideItemSchema).optional(),
+  languages: z.array(contentOverrideItemSchema).optional(),
+  certifications: z.array(contentOverrideItemSchema).optional(),
+});
+
+export const hiddenItemsSchema = z.record(
+  masterCvSectionSchema,
+  z.array(z.string()),
+);
+
+export const personalInfoOverridesSchema = z.object({
+  fullName: z.string().optional(),
+  headline: z.string().optional(),
+  summary: z.string().optional(),
+  email: z.string().optional(),
+  phone: z.string().optional(),
+  city: z.string().optional(),
+  photoUrl: z.string().optional(),
+  hobbies: z.array(z.string()).optional(),
+  driverLicenses: z.array(z.string()).optional(),
+  socialLinks: socialLinksSchema.optional(),
+});
 
 export const cvLabDocumentInputSchema = z.object({
   profileId: z.string().min(1),
@@ -58,6 +224,10 @@ export const cvLabDocumentInputSchema = z.object({
   summaryOverride: z.string().trim().max(1400).optional().nullable(),
   sectionOrder: sectionOrderSchema,
   hiddenSections: hiddenSectionsSchema,
+  masterCvId: z.string().optional().nullable(),
+  contentOverrides: contentOverridesSchema.optional().nullable(),
+  hiddenItems: hiddenItemsSchema.optional().nullable(),
+  personalInfo: personalInfoOverridesSchema.optional().nullable(),
 });
 
 export const createCvLabDocumentSchema = cvLabDocumentInputSchema;
@@ -87,3 +257,26 @@ export type CvLabTheme = z.infer<typeof cvLabThemeSchema>;
 export type CvLabPageSize = z.infer<typeof cvLabPageSizeSchema>;
 export type CvLabSection = z.infer<typeof cvLabSectionSchema>;
 export type CvLabDocumentInput = z.infer<typeof cvLabDocumentInputSchema>;
+
+export type MasterCvExperience = z.infer<typeof masterCvExperienceSchema>;
+export type MasterCvSkill = z.infer<typeof masterCvSkillSchema>;
+export type MasterCvEducation = z.infer<typeof masterCvEducationSchema>;
+export type MasterCvProject = z.infer<typeof masterCvProjectSchema>;
+export type MasterCvLanguage = z.infer<typeof masterCvLanguageSchema>;
+export type MasterCvCertification = z.infer<typeof masterCvCertificationSchema>;
+export type MasterCvItem =
+  | MasterCvExperience
+  | MasterCvSkill
+  | MasterCvEducation
+  | MasterCvProject
+  | MasterCvLanguage
+  | MasterCvCertification;
+export type MasterCvPersonalInfo = z.infer<typeof masterCvPersonalInfoSchema>;
+export type MasterCvSection = z.infer<typeof masterCvSectionSchema>;
+export type ContentOverrideItem = z.infer<typeof contentOverrideItemSchema>;
+export type ContentOverrides = z.infer<typeof contentOverridesSchema>;
+export type HiddenItems = z.infer<typeof hiddenItemsSchema>;
+export type PersonalInfoOverrides = z.infer<typeof personalInfoOverridesSchema>;
+export type SocialLinks = z.infer<typeof socialLinksSchema>;
+export type ContractType = z.infer<typeof contractTypeSchema>;
+export type RemoteMode = z.infer<typeof remoteModeSchema>;

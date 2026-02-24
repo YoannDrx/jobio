@@ -4,8 +4,8 @@ export const PROGRAM_EXPLOSER_CROISSANCE = {
   description:
     "33 templates avancés pour exploser ta visibilité LinkedIn et devenir une référence dans ton domaine IT.",
   longDescription:
-    "Thomas Rivière est passé de 2 500 à 23 000 abonnés LinkedIn en 120 jours. Dans ce programme, il partage ses 33 meilleurs templates organisés en 4 catégories : formats viraux, posts tech/cyber, posts IT/carrière et posts avancés. Chaque template est optimisé pour maximiser l'engagement et te positionner comme expert dans ton domaine.",
-  authorName: "Thomas Rivière",
+    "Naël Bouchard est passé de 2 500 à 23 000 abonnés LinkedIn en 120 jours. Dans ce programme, il partage ses 33 meilleurs templates organisés en 4 catégories : formats viraux, posts tech/cyber, posts IT/carrière et posts avancés. Chaque template est optimisé pour maximiser l'engagement et te positionner comme expert dans ton domaine.",
+  authorName: "Naël Bouchard",
   price: 3900,
   currency: "eur",
   isFree: false,

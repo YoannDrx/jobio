@@ -1,14 +1,14 @@
 import { enforcePlanLimit } from "@/lib/plan-limits";
 import { prisma } from "@/lib/prisma";
 import { createNotification } from "@/features/notifications/create-notification";
-import { getPlanLimits } from "@/lib/auth/stripe/auth-plans";
 
 export async function checkAndIncrementAIQuota(userId: string): Promise<void> {
-  await enforcePlanLimit(userId, "aiRequestsPerMonth");
+  const quotaLimit = await enforcePlanLimit(userId, "aiRequestsPerMonth");
 
   const now = new Date();
   const month = now.getMonth() + 1;
   const year = now.getFullYear();
+  const requestsLimit = quotaLimit.limit;
 
   await prisma.aIMonthlyQuota.upsert({
     where: {
@@ -22,7 +22,7 @@ export async function checkAndIncrementAIQuota(userId: string): Promise<void> {
       month,
       year,
       requestsUsed: 1,
-      requestsLimit: 999,
+      requestsLimit,
     },
   });
 
@@ -33,11 +33,7 @@ export async function checkAndIncrementAIQuota(userId: string): Promise<void> {
   });
 
   if (quota) {
-    const subscription = await prisma.subscription.findUnique({
-      where: { referenceId: userId },
-    });
-    const limits = getPlanLimits(subscription?.plan);
-    const limit = limits.aiRequestsPerMonth;
+    const limit = requestsLimit;
 
     if (
       quota.requestsUsed >= Math.floor(limit * 0.8) &&

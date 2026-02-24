@@ -1,5 +1,6 @@
 "use client";
 
+import { cn } from "@/lib/utils";
 import { Form, useForm } from "@/features/form/tanstack-form";
 import { authClient } from "@/lib/auth-client";
 import { getCallbackUrl } from "@/lib/auth/auth-utils";
@@ -8,6 +9,33 @@ import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import type { LoginCredentialsFormType } from "./signup.schema";
 import { LoginCredentialsFormScheme } from "./signup.schema";
+
+type PasswordStrength = {
+  level: 0 | 1 | 2 | 3 | 4;
+  label: string;
+  color: string;
+};
+
+function getPasswordStrength(password: string): PasswordStrength {
+  if (!password) return { level: 0, label: "", color: "" };
+  let score = 0;
+  if (password.length >= 8) score++;
+  if (/[A-Z]/.test(password)) score++;
+  if (/[0-9]/.test(password)) score++;
+  if (/[^A-Za-z0-9]/.test(password)) score++;
+  const levels = [
+    { label: "Très faible", color: "bg-red-500" },
+    { label: "Faible", color: "bg-orange-500" },
+    { label: "Moyen", color: "bg-yellow-500" },
+    { label: "Fort", color: "bg-green-500" },
+    { label: "Très fort", color: "bg-emerald-500" },
+  ];
+  return {
+    level: score as 0 | 1 | 2 | 3 | 4,
+    label: levels[score].label,
+    color: levels[score].color,
+  };
+}
 
 export const SignUpCredentialsForm = () => {
   const submitMutation = useMutation({
@@ -25,7 +53,7 @@ export const SignUpCredentialsForm = () => {
       toast.error(error.message);
     },
     onSuccess: () => {
-      const newUrl = window.location.origin + getCallbackUrl("/app");
+      const newUrl = window.location.origin + getCallbackUrl("/job");
       window.location.href = newUrl;
     },
   });
@@ -76,15 +104,38 @@ export const SignUpCredentialsForm = () => {
       </form.AppField>
 
       <form.AppField name="password">
-        {(field) => (
-          <field.Field>
-            <field.Label>Password</field.Label>
-            <field.Content>
-              <field.Input type="password" />
-              <field.Message />
-            </field.Content>
-          </field.Field>
-        )}
+        {(field) => {
+          const strength = getPasswordStrength(field.state.value);
+          return (
+            <field.Field>
+              <field.Label>Password</field.Label>
+              <field.Content>
+                <field.Input type="password" />
+                <field.Message />
+              </field.Content>
+              {field.state.value && (
+                <div className="flex flex-col gap-1">
+                  <div className="flex gap-1">
+                    {[1, 2, 3, 4].map((i) => (
+                      <div
+                        key={i}
+                        className={cn(
+                          "h-1 flex-1 rounded-full transition-all",
+                          i <= strength.level ? strength.color : "bg-muted",
+                        )}
+                      />
+                    ))}
+                  </div>
+                  {strength.label && (
+                    <p className="text-muted-foreground text-xs">
+                      {strength.label}
+                    </p>
+                  )}
+                </div>
+              )}
+            </field.Field>
+          );
+        }}
       </form.AppField>
 
       <form.AppField name="verifyPassword">

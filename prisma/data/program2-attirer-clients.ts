@@ -5,7 +5,7 @@ export const PROGRAM_ATTIRER_CLIENTS = {
     "14 templates pour convertir ton audience LinkedIn en clients et décrocher des missions freelance.",
   longDescription:
     "Tu publies sur LinkedIn mais ça ne génère pas de missions ? Ce programme te donne 14 templates éprouvés pour transformer tes posts en machine à leads. Du case study client à l'annonce de disponibilité, chaque template est conçu pour démontrer ton expertise technique et donner envie aux décideurs de te contacter.",
-  authorName: "Lucas Mercier & Sophie Laurent",
+  authorName: "Johan & Sarah",
   price: 3900,
   currency: "eur",
   isFree: false,

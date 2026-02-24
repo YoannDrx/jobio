@@ -36,7 +36,7 @@ export const SiteConfig = {
      */
     enableImageUpload: false as boolean,
     /**
-     * If enable, the user will be redirected to `/app` when he visits the landing page at `/`
+     * If enable, the user will be redirected to `/job` when he visits the landing page at `/`
      * The logic is located in middleware.ts
      */
     enableLandingRedirection: true as boolean,

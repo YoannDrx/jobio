@@ -620,3 +620,57 @@ html.dark .shiki span {
     margin: 0 !important;
   }
 }
+
+/* Landing - Pricing animated border */
+@property --angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+.pricing-popular {
+  position: relative;
+}
+
+.pricing-popular::before {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  background: conic-gradient(
+    from var(--angle),
+    #22d3ee,
+    #10b981,
+    #8b5cf6,
+    #22d3ee
+  );
+  border-radius: inherit;
+  z-index: -1;
+  animation: rotate-gradient 4s linear infinite;
+}
+
+@keyframes rotate-gradient {
+  to {
+    --angle: 360deg;
+  }
+}
+
+/* Landing - Platform logos marquee */
+.marquee-mask {
+  mask-image: linear-gradient(
+    to right,
+    transparent,
+    black 10%,
+    black 90%,
+    transparent
+  );
+}
+
+.marquee-mask:hover .marquee-track {
+  animation-play-state: paused;
+}
+
+@keyframes marquee-scroll {
+  to {
+    transform: translateX(-50%);
+  }
+}

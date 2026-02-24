@@ -9,11 +9,13 @@ model UserPreference {
   notifyMissionStale Boolean @default(true)
   notifyAiQuota      Boolean @default(true)
   weeklyDigest       Boolean @default(false)
+  notifyOverdueInvoices Boolean @default(true)
 
   pushFollowUpDue    Boolean @default(true)
   pushMissionStale   Boolean @default(true)
   pushAiQuota        Boolean @default(false)
   pushWeeklyDigest   Boolean @default(false)
+  pushOverdueInvoices Boolean @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

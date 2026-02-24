@@ -6,11 +6,11 @@ test.describe("sequences", () => {
   test("navigate to sequences page", async ({ page }) => {
     const userData = await createTestAccount({
       page,
-      callbackURL: "/app",
+      callbackURL: "/job",
     });
 
     // Navigate to sequences page
-    await page.goto("/app/sequences");
+    await page.goto("/job/sequences");
     await page.waitForLoadState("networkidle");
 
     // Verify we're on the sequences page
@@ -31,11 +31,24 @@ test.describe("sequences", () => {
   test("create a sequence with default steps", async ({ page }) => {
     const userData = await createTestAccount({
       page,
-      callbackURL: "/app",
+      callbackURL: "/job",
+    });
+
+    // Upgrade to pro plan so sequences feature is available (free plan has sequences: 0)
+    const user = await prisma.user.findUniqueOrThrow({
+      where: { email: userData.email },
+    });
+    await prisma.subscription.create({
+      data: {
+        id: `test-sub-${user.id}`,
+        plan: "pro",
+        referenceId: user.id,
+        status: "active",
+      },
     });
 
     // Navigate to sequences page
-    await page.goto("/app/sequences");
+    await page.goto("/job/sequences");
     await page.waitForLoadState("networkidle");
 
     // Click on "Nouvelle séquence" button
@@ -59,19 +72,14 @@ test.describe("sequences", () => {
     });
 
     // Clean up
-    const user = await prisma.user.findUnique({
-      where: { email: userData.email },
-    });
-    if (user) {
-      await prisma.sequence.deleteMany({ where: { userId: user.id } });
-      await prisma.user.delete({ where: { id: user.id } });
-    }
+    await prisma.sequence.deleteMany({ where: { userId: user.id } });
+    await prisma.user.delete({ where: { id: user.id } });
   });
 
   test("edit a sequence name", async ({ page }) => {
     const userData = await createTestAccount({
       page,
-      callbackURL: "/app",
+      callbackURL: "/job",
     });
 
     // Create a sequence in database
@@ -94,7 +102,7 @@ test.describe("sequences", () => {
     });
 
     // Navigate to sequences page
-    await page.goto("/app/sequences");
+    await page.goto("/job/sequences");
     await page.waitForLoadState("networkidle");
 
     // Wait for sequence to appear
@@ -139,7 +147,7 @@ test.describe("sequences", () => {
   test("delete a sequence", async ({ page }) => {
     const userData = await createTestAccount({
       page,
-      callbackURL: "/app",
+      callbackURL: "/job",
     });
 
     // Create a sequence in database
@@ -162,7 +170,7 @@ test.describe("sequences", () => {
     });
 
     // Navigate to sequences page
-    await page.goto("/app/sequences");
+    await page.goto("/job/sequences");
     await page.waitForLoadState("networkidle");
 
     // Verify sequence is visible
@@ -196,11 +204,11 @@ test.describe("sequences", () => {
   test("display empty state when no sequences exist", async ({ page }) => {
     const userData = await createTestAccount({
       page,
-      callbackURL: "/app",
+      callbackURL: "/job",
     });
 
     // Navigate to sequences page
-    await page.goto("/app/sequences");
+    await page.goto("/job/sequences");
     await page.waitForLoadState("networkidle");
 
     // Verify empty state is shown

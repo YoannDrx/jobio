@@ -6,20 +6,20 @@ test.describe("templates", () => {
   test("view templates page", async ({ page }) => {
     const userData = await createTestAccount({
       page,
-      callbackURL: "/app",
+      callbackURL: "/job",
     });
 
     // Navigate to templates page
-    await page.goto("/app/templates");
+    await page.goto("/job/templates");
     await page.waitForLoadState("networkidle");
 
     // Verify page is loaded and user can create templates
-    await expect(page.getByRole("heading", { name: "Templates" })).toBeVisible(
-      {
-        timeout: 10000,
-      },
-    );
-    await expect(page.getByRole("button", { name: "Nouveau template" })).toBeVisible({
+    await expect(page.getByRole("heading", { name: "Templates" })).toBeVisible({
+      timeout: 10000,
+    });
+    await expect(
+      page.getByRole("button", { name: "Nouveau template" }),
+    ).toBeVisible({
       timeout: 10000,
     });
 
@@ -35,11 +35,11 @@ test.describe("templates", () => {
   test("create a custom template", async ({ page }) => {
     const userData = await createTestAccount({
       page,
-      callbackURL: "/app",
+      callbackURL: "/job",
     });
 
     // Navigate to templates page
-    await page.goto("/app/templates");
+    await page.goto("/job/templates");
     await page.waitForLoadState("networkidle");
 
     // Click on create template button

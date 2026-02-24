@@ -1,6 +1,7 @@
 import { SiteConfig } from "@/site-config";
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
+import { getRequiredUser } from "@/lib/auth/auth-user";
+import { OnboardingNewUserWizard } from "@/features/onboarding/components/onboarding-new-user-wizard";
 
 export const metadata: Metadata = {
   title: `Bienvenue | ${SiteConfig.title}`,
@@ -8,8 +9,10 @@ export const metadata: Metadata = {
 };
 
 /**
- * This page is show when a user login. You can add an onboarding process here.
+ * This page is shown when a user logs in. Displays an interactive onboarding wizard.
  */
 export default async function Page(_props: PageProps<"/auth/new-user">) {
-  redirect("/app");
+  const user = await getRequiredUser();
+
+  return <OnboardingNewUserWizard user={user} />;
 }

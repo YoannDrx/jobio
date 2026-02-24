@@ -191,9 +191,66 @@ export function MissionForm({
             <FormLabel>Description</FormLabel>
             <FormControl>
               <Textarea
-                placeholder="Description de la mission..."
+                placeholder="Résumé de la mission en 2-3 phrases..."
+                rows={2}
+                {...field}
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={form.control}
+        name="tasksDescription"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Tes missions</FormLabel>
+            <FormControl>
+              <Textarea
+                placeholder="Ce que tu vas concrètement faire au quotidien..."
                 rows={3}
                 {...field}
+                value={field.value ?? ""}
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={form.control}
+        name="stackDescription"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Stack technique</FormLabel>
+            <FormControl>
+              <Textarea
+                placeholder="Contexte technique, architecture, outils..."
+                rows={2}
+                {...field}
+                value={field.value ?? ""}
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
+      <FormField
+        control={form.control}
+        name="profileDescription"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Profil recherché</FormLabel>
+            <FormControl>
+              <Textarea
+                placeholder="Expérience requise, soft skills attendus..."
+                rows={2}
+                {...field}
+                value={field.value ?? ""}
               />
             </FormControl>
             <FormMessage />

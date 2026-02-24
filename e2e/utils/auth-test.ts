@@ -48,6 +48,14 @@ export async function createTestAccount(options: {
     password: faker.internet.password({ length: 12, memorable: true }),
   };
 
+  // Dismiss onboarding tours so driver.js overlays don't block clicks
+  await options.page.addInitScript(() => {
+    localStorage.setItem("jobio-tour-completed", "true");
+    localStorage.setItem("jobio-tour-started", "true");
+    localStorage.setItem("jobio-freelance-tour-completed", "true");
+    localStorage.setItem("jobio-freelance-tour-started", "true");
+  });
+
   // Navigate to signup page
   await options.page.goto(buildAuthUrl("/auth/signup", options.callbackURL));
 

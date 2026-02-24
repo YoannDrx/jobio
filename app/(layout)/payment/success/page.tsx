@@ -11,7 +11,7 @@ import Link from "next/link";
 export default function SuccessPaymentPage() {
   return (
     <>
-      <Layout>
+      <Layout className="mx-auto mt-0 max-w-7xl px-4 py-14 lg:px-8">
         <LayoutHeader>
           <LayoutTitle>Thank You for Your Purchase!</LayoutTitle>
           <LayoutDescription>

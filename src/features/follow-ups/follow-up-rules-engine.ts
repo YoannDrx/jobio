@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { checkPlanFeature } from "@/lib/plan-limits";
 import type { MissionStatus, FollowUpType } from "@/generated/prisma";
 
 type SequenceStep = {
@@ -14,6 +15,9 @@ export async function executeFollowUpRules(
   missionId: string,
   newStatus: MissionStatus,
 ) {
+  const hasAutoFollowUps = await checkPlanFeature(userId, "autoFollowUps");
+  if (!hasAutoFollowUps) return [];
+
   const rules = await prisma.followUpRule.findMany({
     where: {
       userId,

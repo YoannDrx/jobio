@@ -5,6 +5,7 @@ import {
   LayoutTitle,
 } from "@/features/page/layout";
 import { Pricing } from "@/features/plans/pricing-section";
+import { getPlanLimitsForPlan } from "@/lib/auth/stripe/plan-entitlements";
 import { combineWithParentMetadata } from "@/lib/metadata";
 import { checkPlanLimit } from "@/lib/plan-limits";
 import { getRequiredCurrentUser } from "@/lib/user/get-user";
@@ -30,33 +31,43 @@ export default async function OrgBillingPage() {
             </LayoutDescription>
           </LayoutHeader>
         </Layout>
-        <Pricing />
+        <Pricing entryPoint="billing_page" />
       </>
     );
   }
 
   const user = await getRequiredCurrentUser();
+  const plan = subscription.plan;
+  const limits = await getPlanLimitsForPlan(plan);
 
   const [
     missions,
     profiles,
     contacts,
     platforms,
+    companies,
     aiRequestsPerMonth,
     billingClients,
     billingQuotes,
     billingInvoices,
     billingCatalogItems,
+    cvDocuments,
+    sequences,
+    messageTemplates,
   ] = await Promise.all([
-    checkPlanLimit(user.id, "missions"),
-    checkPlanLimit(user.id, "profiles"),
-    checkPlanLimit(user.id, "contacts"),
-    checkPlanLimit(user.id, "platforms"),
-    checkPlanLimit(user.id, "aiRequestsPerMonth"),
-    checkPlanLimit(user.id, "billingClients"),
-    checkPlanLimit(user.id, "billingQuotes"),
-    checkPlanLimit(user.id, "billingInvoices"),
-    checkPlanLimit(user.id, "billingCatalogItems"),
+    checkPlanLimit(user.id, "missions", { plan, limits }),
+    checkPlanLimit(user.id, "profiles", { plan, limits }),
+    checkPlanLimit(user.id, "contacts", { plan, limits }),
+    checkPlanLimit(user.id, "platforms", { plan, limits }),
+    checkPlanLimit(user.id, "companies", { plan, limits }),
+    checkPlanLimit(user.id, "aiRequestsPerMonth", { plan, limits }),
+    checkPlanLimit(user.id, "billingClients", { plan, limits }),
+    checkPlanLimit(user.id, "billingQuotes", { plan, limits }),
+    checkPlanLimit(user.id, "billingInvoices", { plan, limits }),
+    checkPlanLimit(user.id, "billingCatalogItems", { plan, limits }),
+    checkPlanLimit(user.id, "cvDocuments", { plan, limits }),
+    checkPlanLimit(user.id, "sequences", { plan, limits }),
+    checkPlanLimit(user.id, "messageTemplates", { plan, limits }),
   ]);
 
   const usage = {
@@ -64,12 +75,18 @@ export default async function OrgBillingPage() {
     profiles,
     contacts,
     platforms,
+    companies,
     aiRequestsPerMonth,
     billingClients,
     billingQuotes,
     billingInvoices,
     billingCatalogItems,
+    cvDocuments,
+    sequences,
+    messageTemplates,
   };
 
-  return <UserBilling subscription={subscription} usage={usage} />;
+  return (
+    <UserBilling subscription={subscription} usage={usage} planLimits={limits} />
+  );
 }

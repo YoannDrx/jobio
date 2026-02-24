@@ -13,11 +13,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Sheet,
-  SheetDescription,
-  SheetTitle,
-} from "@/components/ui/sheet";
+import { Sheet, SheetDescription, SheetTitle } from "@/components/ui/sheet";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -55,7 +51,10 @@ import {
   FreelanceSideSheetHeader,
 } from "@/features/freelance/components/freelance-side-sheet";
 import { FreelanceClientsImportSheet } from "@/features/freelance/components/freelance-clients-import-sheet";
-import { formatCents, formatDate } from "@/features/freelance/billing-presenter";
+import {
+  formatCents,
+  formatDate,
+} from "@/features/freelance/billing-presenter";
 import { resolveActionResult } from "@/lib/actions/actions-utils";
 import {
   Building2,
@@ -223,7 +222,9 @@ export function FreelanceClientsManager() {
   const [viewMode, setViewMode] = useState<"table" | "cards">("table");
   const [isLoading, setIsLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
-  const [archivingClientId, setArchivingClientId] = useState<string | null>(null);
+  const [archivingClientId, setArchivingClientId] = useState<string | null>(
+    null,
+  );
   const [deletingClientId, setDeletingClientId] = useState<string | null>(null);
   const [pendingHardDeleteClient, setPendingHardDeleteClient] =
     useState<BillingClientRow | null>(null);
@@ -235,7 +236,7 @@ export function FreelanceClientsManager() {
   >([]);
   const [isSearchingCompany, setIsSearchingCompany] = useState(false);
   const [activeCreateTab, setActiveCreateTab] = useState<
-    "informations" | "contacts" | "notes"
+    "informations" | "contacts" | "notes" | "documents"
   >("informations");
   const [form, setForm] = useState<FormState>(() => createInitialFormState());
 
@@ -248,9 +249,7 @@ export function FreelanceClientsManager() {
     }));
   };
 
-  const updateContactField = <
-    K extends keyof FormState["contacts"][number],
-  >(
+  const updateContactField = <K extends keyof FormState["contacts"][number]>(
     key: string,
     field: K,
     value: FormState["contacts"][number][K],
@@ -276,7 +275,9 @@ export function FreelanceClientsManager() {
         return previous;
       }
 
-      const nextContacts = previous.contacts.filter((contact) => contact.key !== key);
+      const nextContacts = previous.contacts.filter(
+        (contact) => contact.key !== key,
+      );
       if (nextContacts.some((contact) => contact.isPrimary)) {
         return {
           ...previous,
@@ -309,7 +310,9 @@ export function FreelanceClientsManager() {
       setClients(result.clients as BillingClientRow[]);
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Impossible de charger les clients",
+        error instanceof Error
+          ? error.message
+          : "Impossible de charger les clients",
       );
     } finally {
       setIsLoading(false);
@@ -328,7 +331,12 @@ export function FreelanceClientsManager() {
   }, [searchParams]);
 
   const canCreateClient = useMemo(() => {
-    if (!form.displayName || !form.addressLine1 || !form.postalCode || !form.city) {
+    if (
+      !form.displayName ||
+      !form.addressLine1 ||
+      !form.postalCode ||
+      !form.city
+    ) {
       return false;
     }
 
@@ -416,16 +424,23 @@ export function FreelanceClientsManager() {
           ].some((value) => value !== undefined),
         );
 
-      const computedNotes = [baseNotes, iban ? `IBAN client: ${iban}` : undefined]
+      const computedNotes = [
+        baseNotes,
+        iban ? `IBAN client: ${iban}` : undefined,
+      ]
         .filter(Boolean)
         .join("\n");
-      const primaryContact = normalizedContacts.find((contact) => contact.isPrimary);
+      const primaryContact = normalizedContacts.find(
+        (contact) => contact.isPrimary,
+      );
       const normalizedCompanyEmail =
         form.companyEmail.trim().length > 0
           ? form.companyEmail
           : (primaryContact?.email ?? "");
       const normalizedCompanyPhone =
-        form.phone.trim().length > 0 ? form.phone : (primaryContact?.phone ?? "");
+        form.phone.trim().length > 0
+          ? form.phone
+          : (primaryContact?.phone ?? "");
       const hasSendableContact = normalizedContacts.some(
         (contact) => contact.includeInEmail && Boolean(contact.email),
       );
@@ -486,7 +501,9 @@ export function FreelanceClientsManager() {
       setIsCreateOpen(false);
       await loadClients();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Erreur lors de la création");
+      toast.error(
+        error instanceof Error ? error.message : "Erreur lors de la création",
+      );
     } finally {
       setIsCreating(false);
     }
@@ -549,7 +566,9 @@ export function FreelanceClientsManager() {
       toast.success("Client archivé");
       await loadClients();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Suppression impossible");
+      toast.error(
+        error instanceof Error ? error.message : "Suppression impossible",
+      );
     } finally {
       setArchivingClientId(null);
     }
@@ -569,7 +588,11 @@ export function FreelanceClientsManager() {
       setPendingHardDeleteClient(null);
       await loadClients();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Suppression définitive impossible");
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Suppression définitive impossible",
+      );
     } finally {
       setDeletingClientId(null);
     }
@@ -641,7 +664,9 @@ export function FreelanceClientsManager() {
               Chargement des clients...
             </div>
           ) : clients.length === 0 ? (
-            <p className="text-muted-foreground text-sm">Aucun client pour le moment.</p>
+            <p className="text-muted-foreground text-sm">
+              Aucun client pour le moment.
+            </p>
           ) : viewMode === "table" ? (
             <Table>
               <TableHeader>
@@ -671,24 +696,48 @@ export function FreelanceClientsManager() {
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell>{formatCents(client.totalInvoicedCents)}</TableCell>
-                    <TableCell>{formatCents(client.totalPaidCents)}</TableCell>
-                    <TableCell>{formatCents(client.totalOutstandingCents)}</TableCell>
                     <TableCell>
-                      <Badge variant={client.hasOverdueInvoices ? "destructive" : "secondary"}>
+                      {formatCents(client.totalInvoicedCents)}
+                    </TableCell>
+                    <TableCell>{formatCents(client.totalPaidCents)}</TableCell>
+                    <TableCell>
+                      {formatCents(client.totalOutstandingCents)}
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={
+                          client.hasOverdueInvoices
+                            ? "destructive"
+                            : "secondary"
+                        }
+                      >
                         {client.hasOverdueInvoices ? "En retard" : "À jour"}
                       </Badge>
                     </TableCell>
                     <TableCell>{formatDate(client.createdAt)}</TableCell>
                     <TableCell>
                       <div className="flex justify-end gap-2">
-                        <Button asChild variant="outline" size="icon" title="Faire une facture">
-                          <Link href={`/freelance/invoices?create=1&clientId=${client.id}`}>
+                        <Button
+                          asChild
+                          variant="outline"
+                          size="icon"
+                          title="Faire une facture"
+                        >
+                          <Link
+                            href={`/freelance/invoices?create=1&clientId=${client.id}`}
+                          >
                             <Receipt className="size-4" />
                           </Link>
                         </Button>
-                        <Button asChild variant="outline" size="icon" title="Faire un devis">
-                          <Link href={`/freelance/quotes?create=1&clientId=${client.id}`}>
+                        <Button
+                          asChild
+                          variant="outline"
+                          size="icon"
+                          title="Faire un devis"
+                        >
+                          <Link
+                            href={`/freelance/quotes?create=1&clientId=${client.id}`}
+                          >
                             <FileClock className="size-4" />
                           </Link>
                         </Button>
@@ -705,30 +754,38 @@ export function FreelanceClientsManager() {
                         </Button>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="outline" size="icon" title="Plus d'actions">
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              title="Plus d'actions"
+                            >
                               <Ellipsis className="size-4" />
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem asChild>
-                              <Link href={`/freelance/invoices?create=1&clientId=${client.id}`}>
+                              <Link
+                                href={`/freelance/invoices?create=1&clientId=${client.id}`}
+                              >
                                 Créer une facture
                               </Link>
                             </DropdownMenuItem>
-                          <DropdownMenuItem asChild>
-                            <Link href={`/freelance/quotes?create=1&clientId=${client.id}`}>
-                              Créer un devis
-                            </Link>
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => {
-                              handleOpenEditClient(client);
-                            }}
-                          >
-                            <PencilLine className="size-4" />
-                            Éditer
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
+                            <DropdownMenuItem asChild>
+                              <Link
+                                href={`/freelance/quotes?create=1&clientId=${client.id}`}
+                              >
+                                Créer un devis
+                              </Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => {
+                                handleOpenEditClient(client);
+                              }}
+                            >
+                              <PencilLine className="size-4" />
+                              Éditer
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
                               disabled={archivingClientId === client.id}
                               onClick={() => {
                                 void handleDeleteClient(client.id);
@@ -775,13 +832,21 @@ export function FreelanceClientsManager() {
                           {getClientInitials(client.displayName)}
                         </div>
                         <div>
-                          <CardTitle className="text-base">{client.displayName}</CardTitle>
+                          <CardTitle className="text-base">
+                            {client.displayName}
+                          </CardTitle>
                           <p className="text-muted-foreground text-xs">
                             {client.postalCode} {client.city}
                           </p>
                         </div>
                       </div>
-                      <Badge variant={client.hasOverdueInvoices ? "destructive" : "secondary"}>
+                      <Badge
+                        variant={
+                          client.hasOverdueInvoices
+                            ? "destructive"
+                            : "secondary"
+                        }
+                      >
                         {client.hasOverdueInvoices ? "En retard" : "À jour"}
                       </Badge>
                     </div>
@@ -789,25 +854,45 @@ export function FreelanceClientsManager() {
                   <CardContent className="space-y-2 text-sm">
                     <div className="flex items-center justify-between">
                       <span className="text-muted-foreground">Facturé TTC</span>
-                      <span className="font-medium">{formatCents(client.totalInvoicedCents)}</span>
+                      <span className="font-medium">
+                        {formatCents(client.totalInvoicedCents)}
+                      </span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-muted-foreground">Encaissé</span>
-                      <span className="font-medium">{formatCents(client.totalPaidCents)}</span>
+                      <span className="font-medium">
+                        {formatCents(client.totalPaidCents)}
+                      </span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-muted-foreground">Encours</span>
-                      <span className="font-medium">{formatCents(client.totalOutstandingCents)}</span>
+                      <span className="font-medium">
+                        {formatCents(client.totalOutstandingCents)}
+                      </span>
                     </div>
                     <div className="flex items-center gap-2 pt-2">
-                      <Button asChild variant="outline" size="sm" className="flex-1">
-                        <Link href={`/freelance/invoices?create=1&clientId=${client.id}`}>
+                      <Button
+                        asChild
+                        variant="outline"
+                        size="sm"
+                        className="flex-1"
+                      >
+                        <Link
+                          href={`/freelance/invoices?create=1&clientId=${client.id}`}
+                        >
                           <Receipt className="size-4" />
                           Facture
                         </Link>
                       </Button>
-                      <Button asChild variant="outline" size="sm" className="flex-1">
-                        <Link href={`/freelance/quotes?create=1&clientId=${client.id}`}>
+                      <Button
+                        asChild
+                        variant="outline"
+                        size="sm"
+                        className="flex-1"
+                      >
+                        <Link
+                          href={`/freelance/quotes?create=1&clientId=${client.id}`}
+                        >
                           <FileClock className="size-4" />
                           Devis
                         </Link>
@@ -890,11 +975,13 @@ export function FreelanceClientsManager() {
       >
         <FreelanceSideSheetContent>
           <FreelanceSideSheetHeader>
-            <SheetTitle>{isEditing ? "Éditer le client" : "Nouveau client"}</SheetTitle>
+            <SheetTitle>
+              {isEditing ? "Éditer le client" : "Nouveau client"}
+            </SheetTitle>
             <SheetDescription>
               Renseigne les informations, les contacts et les notes. Tu peux
-              rechercher une entreprise par nom, SIREN ou SIRET pour pré-remplir le
-              formulaire.
+              rechercher une entreprise par nom, SIREN ou SIRET pour pré-remplir
+              le formulaire.
             </SheetDescription>
           </FreelanceSideSheetHeader>
 
@@ -902,230 +989,245 @@ export function FreelanceClientsManager() {
             <Tabs
               value={activeCreateTab}
               onValueChange={(value) => {
-                setActiveCreateTab(value as "informations" | "contacts" | "notes");
+                setActiveCreateTab(
+                  value as "informations" | "contacts" | "notes" | "documents",
+                );
               }}
             >
-              <TabsList className="grid w-full grid-cols-3">
+              <TabsList className="grid w-full grid-cols-4">
                 <TabsTrigger value="informations">Informations</TabsTrigger>
                 <TabsTrigger value="contacts">Contacts</TabsTrigger>
+                <TabsTrigger value="documents">Documents</TabsTrigger>
                 <TabsTrigger value="notes">Notes</TabsTrigger>
               </TabsList>
 
               <TabsContent value="informations" className="space-y-4 pt-2">
-              <div className="space-y-2">
-                <Label>Type de client</Label>
-                <RadioGroup
-                  value={form.type}
-                  onValueChange={(value) => {
-                    setField("type", value as BillingClientType);
-                  }}
-                  className="grid grid-cols-2 gap-3"
-                >
-                  <label className="border-muted flex cursor-pointer items-center gap-2 rounded-lg border p-3">
-                    <RadioGroupItem value={BillingClientType.COMPANY} id="client-company" />
-                    <Building2 className="size-4" />
-                    Professionnel
-                  </label>
-                  <label className="border-muted flex cursor-pointer items-center gap-2 rounded-lg border p-3">
-                    <RadioGroupItem value={BillingClientType.INDIVIDUAL} id="client-individual" />
-                    <User className="size-4" />
-                    Particulier
-                  </label>
-                </RadioGroup>
-              </div>
-
-              <div className="bg-muted/40 space-y-2 rounded-lg border p-3">
-                <Label>Rechercher votre client (nom, SIREN ou SIRET)</Label>
-                <div className="flex gap-2">
-                  <Input
-                    placeholder="Rechercher votre client"
-                    value={companySearchQuery}
-                    onChange={(event) => {
-                      setCompanySearchQuery(event.target.value);
+                <div className="space-y-2">
+                  <Label>Type de client</Label>
+                  <RadioGroup
+                    value={form.type}
+                    onValueChange={(value) => {
+                      setField("type", value as BillingClientType);
                     }}
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter") {
-                        event.preventDefault();
-                        void handleSearchCompany();
-                      }
-                    }}
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    disabled={isSearchingCompany}
-                    onClick={() => {
-                      void handleSearchCompany();
-                    }}
+                    className="grid grid-cols-2 gap-3"
                   >
-                    {isSearchingCompany ? (
-                      <Loader2 className="size-4 animate-spin" />
-                    ) : (
-                      <Search className="size-4" />
-                    )}
-                    Rechercher
-                  </Button>
+                    <label className="border-muted flex cursor-pointer items-center gap-2 rounded-lg border p-3">
+                      <RadioGroupItem
+                        value={BillingClientType.COMPANY}
+                        id="client-company"
+                      />
+                      <Building2 className="size-4" />
+                      Professionnel
+                    </label>
+                    <label className="border-muted flex cursor-pointer items-center gap-2 rounded-lg border p-3">
+                      <RadioGroupItem
+                        value={BillingClientType.INDIVIDUAL}
+                        id="client-individual"
+                      />
+                      <User className="size-4" />
+                      Particulier
+                    </label>
+                  </RadioGroup>
                 </div>
-                {companySearchResults.length > 0 ? (
-                  <div className="max-h-52 space-y-2 overflow-y-auto">
-                    {companySearchResults.map((company) => (
-                      <div
-                        key={`${company.siren}-${company.siret ?? "na"}`}
-                        className="bg-background rounded-md border p-3"
-                      >
-                        <p className="text-sm font-medium">{company.displayName}</p>
-                        <p className="text-muted-foreground text-xs">
-                          SIREN {company.siren}
-                          {company.siret ? ` · SIRET ${company.siret}` : ""}
-                        </p>
-                        <p className="text-muted-foreground text-xs">
-                          {company.addressLine1} {company.postalCode} {company.city}
-                        </p>
-                        <div className="mt-2">
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            onClick={() => {
-                              applyCompanyResult(company);
-                            }}
-                          >
-                            Appliquer
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : null}
-              </div>
 
-              <div className="grid gap-3 md:grid-cols-2">
-                <div className="space-y-1 md:col-span-2">
-                  <Label>Nom affiché</Label>
-                  <Input
-                    placeholder={
-                      form.type === BillingClientType.COMPANY
-                        ? "Nom de l'entreprise"
-                        : "Nom du client"
-                    }
-                    value={form.displayName}
-                    onChange={(event) => {
-                      setField("displayName", event.target.value);
-                    }}
-                  />
+                <div className="bg-muted/40 space-y-2 rounded-lg border p-3">
+                  <Label>Rechercher votre client (nom, SIREN ou SIRET)</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Rechercher votre client"
+                      value={companySearchQuery}
+                      onChange={(event) => {
+                        setCompanySearchQuery(event.target.value);
+                      }}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter") {
+                          event.preventDefault();
+                          void handleSearchCompany();
+                        }
+                      }}
+                    />
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled={isSearchingCompany}
+                      onClick={() => {
+                        void handleSearchCompany();
+                      }}
+                    >
+                      {isSearchingCompany ? (
+                        <Loader2 className="size-4 animate-spin" />
+                      ) : (
+                        <Search className="size-4" />
+                      )}
+                      Rechercher
+                    </Button>
+                  </div>
+                  {companySearchResults.length > 0 ? (
+                    <div className="max-h-52 space-y-2 overflow-y-auto">
+                      {companySearchResults.map((company) => (
+                        <div
+                          key={`${company.siren}-${company.siret ?? "na"}`}
+                          className="bg-background rounded-md border p-3"
+                        >
+                          <p className="text-sm font-medium">
+                            {company.displayName}
+                          </p>
+                          <p className="text-muted-foreground text-xs">
+                            SIREN {company.siren}
+                            {company.siret ? ` · SIRET ${company.siret}` : ""}
+                          </p>
+                          <p className="text-muted-foreground text-xs">
+                            {company.addressLine1} {company.postalCode}{" "}
+                            {company.city}
+                          </p>
+                          <div className="mt-2">
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                applyCompanyResult(company);
+                              }}
+                            >
+                              Appliquer
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : null}
                 </div>
-                <div className="space-y-1 md:col-span-2">
-                  <Label>Raison sociale</Label>
-                  <Input
-                    placeholder="Raison sociale"
-                    value={form.legalName}
-                    onChange={(event) => {
-                      setField("legalName", event.target.value);
-                    }}
-                  />
+
+                <div className="grid gap-3 md:grid-cols-2">
+                  <div className="space-y-1 md:col-span-2">
+                    <Label>Nom affiché</Label>
+                    <Input
+                      placeholder={
+                        form.type === BillingClientType.COMPANY
+                          ? "Nom de l'entreprise"
+                          : "Nom du client"
+                      }
+                      value={form.displayName}
+                      onChange={(event) => {
+                        setField("displayName", event.target.value);
+                      }}
+                    />
+                  </div>
+                  <div className="space-y-1 md:col-span-2">
+                    <Label>Raison sociale</Label>
+                    <Input
+                      placeholder="Raison sociale"
+                      value={form.legalName}
+                      onChange={(event) => {
+                        setField("legalName", event.target.value);
+                      }}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label>N° de SIREN ou SIRET</Label>
+                    <Input
+                      placeholder="SIREN ou SIRET"
+                      value={form.siret}
+                      onChange={(event) => {
+                        setField("siret", event.target.value);
+                      }}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label>N° de TVA intracom.</Label>
+                    <Input
+                      placeholder="FR..."
+                      value={form.vatNumber}
+                      onChange={(event) => {
+                        setField("vatNumber", event.target.value);
+                      }}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label>Mail</Label>
+                    <Input
+                      placeholder="contact@client.fr"
+                      value={form.companyEmail}
+                      onChange={(event) => {
+                        setField("companyEmail", event.target.value);
+                      }}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label>Téléphone</Label>
+                    <Input
+                      placeholder="06..."
+                      value={form.phone}
+                      onChange={(event) => {
+                        setField("phone", event.target.value);
+                      }}
+                    />
+                  </div>
+                  <div className="space-y-1 md:col-span-2">
+                    <Label>Adresse</Label>
+                    <Input
+                      placeholder="Adresse"
+                      value={form.addressLine1}
+                      onChange={(event) => {
+                        setField("addressLine1", event.target.value);
+                      }}
+                    />
+                  </div>
+                  <div className="space-y-1 md:col-span-2">
+                    <Label>Complément d'adresse</Label>
+                    <Input
+                      placeholder="Bâtiment, étage..."
+                      value={form.addressLine2}
+                      onChange={(event) => {
+                        setField("addressLine2", event.target.value);
+                      }}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label>Code postal</Label>
+                    <Input
+                      placeholder="75000"
+                      value={form.postalCode}
+                      onChange={(event) => {
+                        setField("postalCode", event.target.value);
+                      }}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label>Ville</Label>
+                    <Input
+                      placeholder="Paris"
+                      value={form.city}
+                      onChange={(event) => {
+                        setField("city", event.target.value);
+                      }}
+                    />
+                  </div>
+                  <div className="space-y-1 md:col-span-2">
+                    <Label>Pays</Label>
+                    <Input
+                      placeholder="FR"
+                      maxLength={2}
+                      value={form.countryCode}
+                      onChange={(event) => {
+                        setField(
+                          "countryCode",
+                          event.target.value.toUpperCase(),
+                        );
+                      }}
+                    />
+                  </div>
+                  <div className="space-y-1 md:col-span-2">
+                    <Label>IBAN</Label>
+                    <Input
+                      placeholder="FR76..."
+                      value={form.iban}
+                      onChange={(event) => {
+                        setField("iban", event.target.value);
+                      }}
+                    />
+                  </div>
                 </div>
-                <div className="space-y-1">
-                  <Label>N° de SIREN ou SIRET</Label>
-                  <Input
-                    placeholder="SIREN ou SIRET"
-                    value={form.siret}
-                    onChange={(event) => {
-                      setField("siret", event.target.value);
-                    }}
-                  />
-                </div>
-                <div className="space-y-1">
-                  <Label>N° de TVA intracom.</Label>
-                  <Input
-                    placeholder="FR..."
-                    value={form.vatNumber}
-                    onChange={(event) => {
-                      setField("vatNumber", event.target.value);
-                    }}
-                  />
-                </div>
-                <div className="space-y-1">
-                  <Label>Mail</Label>
-                  <Input
-                    placeholder="contact@client.fr"
-                    value={form.companyEmail}
-                    onChange={(event) => {
-                      setField("companyEmail", event.target.value);
-                    }}
-                  />
-                </div>
-                <div className="space-y-1">
-                  <Label>Téléphone</Label>
-                  <Input
-                    placeholder="06..."
-                    value={form.phone}
-                    onChange={(event) => {
-                      setField("phone", event.target.value);
-                    }}
-                  />
-                </div>
-                <div className="space-y-1 md:col-span-2">
-                  <Label>Adresse</Label>
-                  <Input
-                    placeholder="Adresse"
-                    value={form.addressLine1}
-                    onChange={(event) => {
-                      setField("addressLine1", event.target.value);
-                    }}
-                  />
-                </div>
-                <div className="space-y-1 md:col-span-2">
-                  <Label>Complément d'adresse</Label>
-                  <Input
-                    placeholder="Bâtiment, étage..."
-                    value={form.addressLine2}
-                    onChange={(event) => {
-                      setField("addressLine2", event.target.value);
-                    }}
-                  />
-                </div>
-                <div className="space-y-1">
-                  <Label>Code postal</Label>
-                  <Input
-                    placeholder="75000"
-                    value={form.postalCode}
-                    onChange={(event) => {
-                      setField("postalCode", event.target.value);
-                    }}
-                  />
-                </div>
-                <div className="space-y-1">
-                  <Label>Ville</Label>
-                  <Input
-                    placeholder="Paris"
-                    value={form.city}
-                    onChange={(event) => {
-                      setField("city", event.target.value);
-                    }}
-                  />
-                </div>
-                <div className="space-y-1 md:col-span-2">
-                  <Label>Pays</Label>
-                  <Input
-                    placeholder="FR"
-                    maxLength={2}
-                    value={form.countryCode}
-                    onChange={(event) => {
-                      setField("countryCode", event.target.value.toUpperCase());
-                    }}
-                  />
-                </div>
-                <div className="space-y-1 md:col-span-2">
-                  <Label>IBAN</Label>
-                  <Input
-                    placeholder="FR76..."
-                    value={form.iban}
-                    onChange={(event) => {
-                      setField("iban", event.target.value);
-                    }}
-                  />
-                </div>
-              </div>
               </TabsContent>
 
               <TabsContent value="contacts" className="space-y-4 pt-2">
@@ -1146,9 +1248,14 @@ export function FreelanceClientsManager() {
 
                 <div className="space-y-3">
                   {form.contacts.map((contact, index) => (
-                    <div key={contact.key} className="space-y-3 rounded-lg border p-3">
+                    <div
+                      key={contact.key}
+                      className="space-y-3 rounded-lg border p-3"
+                    >
                       <div className="flex items-center justify-between gap-2">
-                        <p className="text-sm font-medium">Contact n°{index + 1}</p>
+                        <p className="text-sm font-medium">
+                          Contact n°{index + 1}
+                        </p>
                         <Button
                           type="button"
                           variant="ghost"
@@ -1169,7 +1276,11 @@ export function FreelanceClientsManager() {
                             placeholder="Nom"
                             value={contact.lastName}
                             onChange={(event) => {
-                              updateContactField(contact.key, "lastName", event.target.value);
+                              updateContactField(
+                                contact.key,
+                                "lastName",
+                                event.target.value,
+                              );
                             }}
                           />
                         </div>
@@ -1179,7 +1290,11 @@ export function FreelanceClientsManager() {
                             placeholder="Prénom"
                             value={contact.firstName}
                             onChange={(event) => {
-                              updateContactField(contact.key, "firstName", event.target.value);
+                              updateContactField(
+                                contact.key,
+                                "firstName",
+                                event.target.value,
+                              );
                             }}
                           />
                         </div>
@@ -1189,7 +1304,11 @@ export function FreelanceClientsManager() {
                             placeholder="Fonction"
                             value={contact.role}
                             onChange={(event) => {
-                              updateContactField(contact.key, "role", event.target.value);
+                              updateContactField(
+                                contact.key,
+                                "role",
+                                event.target.value,
+                              );
                             }}
                           />
                         </div>
@@ -1199,7 +1318,11 @@ export function FreelanceClientsManager() {
                             placeholder="prenom.nom@client.fr"
                             value={contact.email}
                             onChange={(event) => {
-                              updateContactField(contact.key, "email", event.target.value);
+                              updateContactField(
+                                contact.key,
+                                "email",
+                                event.target.value,
+                              );
                             }}
                           />
                         </div>
@@ -1209,7 +1332,11 @@ export function FreelanceClientsManager() {
                             placeholder="06..."
                             value={contact.phone}
                             onChange={(event) => {
-                              updateContactField(contact.key, "phone", event.target.value);
+                              updateContactField(
+                                contact.key,
+                                "phone",
+                                event.target.value,
+                              );
                             }}
                           />
                         </div>
@@ -1219,7 +1346,11 @@ export function FreelanceClientsManager() {
                             placeholder="Ex: préfère être contacté le matin"
                             value={contact.notes}
                             onChange={(event) => {
-                              updateContactField(contact.key, "notes", event.target.value);
+                              updateContactField(
+                                contact.key,
+                                "notes",
+                                event.target.value,
+                              );
                             }}
                           />
                         </div>
@@ -1233,7 +1364,11 @@ export function FreelanceClientsManager() {
                           <Switch
                             checked={contact.includeInEmail}
                             onCheckedChange={(checked) => {
-                              updateContactField(contact.key, "includeInEmail", checked);
+                              updateContactField(
+                                contact.key,
+                                "includeInEmail",
+                                checked,
+                              );
                             }}
                           />
                         </div>
@@ -1246,7 +1381,9 @@ export function FreelanceClientsManager() {
                                 ...previous,
                                 contacts: previous.contacts.map((entry) => ({
                                   ...entry,
-                                  isPrimary: checked ? entry.key === contact.key : false,
+                                  isPrimary: checked
+                                    ? entry.key === contact.key
+                                    : false,
                                 })),
                               }));
                             }}
@@ -1258,18 +1395,25 @@ export function FreelanceClientsManager() {
                 </div>
               </TabsContent>
 
+              <TabsContent value="documents" className="space-y-4 pt-2">
+                <div className="text-muted-foreground space-y-2 rounded-lg border border-dashed p-6 text-center">
+                  <FileClock className="mx-auto size-8 opacity-50" />
+                  <p className="text-sm">Devis et factures à venir</p>
+                </div>
+              </TabsContent>
+
               <TabsContent value="notes" className="space-y-4 pt-2">
-              <div className="space-y-1">
-                <Label>Notes sur le client</Label>
-                <Textarea
-                  rows={8}
-                  placeholder="Notes sur le client"
-                  value={form.notes}
-                  onChange={(event) => {
-                    setField("notes", event.target.value);
-                  }}
-                />
-              </div>
+                <div className="space-y-1">
+                  <Label>Notes sur le client</Label>
+                  <Textarea
+                    rows={8}
+                    placeholder="Notes sur le client"
+                    value={form.notes}
+                    onChange={(event) => {
+                      setField("notes", event.target.value);
+                    }}
+                  />
+                </div>
               </TabsContent>
             </Tabs>
           </FreelanceSideSheetBody>
@@ -1278,11 +1422,11 @@ export function FreelanceClientsManager() {
             <Button
               type="button"
               variant="outline"
-                onClick={() => {
-                  setIsCreateOpen(false);
-                }}
-              >
-                Annuler
+              onClick={() => {
+                setIsCreateOpen(false);
+              }}
+            >
+              Annuler
             </Button>
             <Button
               type="button"
@@ -1308,13 +1452,15 @@ export function FreelanceClientsManager() {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Supprimer définitivement le client</AlertDialogTitle>
+            <AlertDialogTitle>
+              Supprimer définitivement le client
+            </AlertDialogTitle>
             <AlertDialogDescription>
               Cette action est irréversible. Le client{" "}
               <strong>{pendingHardDeleteClient?.displayName ?? ""}</strong> sera
-              retiré définitivement de la base Jobio. Les documents/paiements liés
-              seront automatiquement réaffectés à un client système "Client supprimé"
-              pour conserver l’historique.
+              retiré définitivement de la base Jobio. Les documents/paiements
+              liés seront automatiquement réaffectés à un client système "Client
+              supprimé" pour conserver l’historique.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

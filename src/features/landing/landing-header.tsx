@@ -35,18 +35,10 @@ function useBoundedScroll(threshold: number) {
       scrollYBounded.set(clamp(newScrollYBounded, 0, threshold));
     };
 
-    const deleteEvent = scrollY.on("change", onChange);
-
-    const listener = () => {
-      const currentScroll = window.scrollY;
-      onChange(currentScroll);
-    };
-
-    window.addEventListener("scroll", listener);
+    const unsubscribe = scrollY.on("change", onChange);
 
     return () => {
-      deleteEvent();
-      window.removeEventListener("scroll", listener);
+      unsubscribe();
     };
   }, [threshold, scrollY, scrollYBounded]);
 
@@ -54,6 +46,7 @@ function useBoundedScroll(threshold: number) {
 }
 
 export function LandingHeader() {
+  const { scrollYProgress } = useScroll();
   const { scrollYBoundedProgress } = useBoundedScroll(400);
   const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -104,6 +97,7 @@ export function LandingHeader() {
           className="text-muted-foreground hidden items-center gap-4 text-sm font-medium sm:flex"
         >
           <Link href="#features">Fonctionnalités</Link>
+          <Link href="/use-cases">Use cases</Link>
           <Link href="#pricing">Tarifs</Link>
           <AuthButtonClient />
           <ThemeToggle />
@@ -135,6 +129,13 @@ export function LandingHeader() {
                   Fonctionnalités
                 </Link>
                 <Link
+                  href="/use-cases"
+                  className="text-foreground text-lg font-medium"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Use cases
+                </Link>
+                <Link
                   href="#pricing"
                   className="text-foreground text-lg font-medium"
                   onClick={() => setMobileMenuOpen(false)}
@@ -149,6 +150,13 @@ export function LandingHeader() {
           </Sheet>
         </div>
       </div>
+      <motion.div
+        className="from-brand-cyan to-brand-emerald absolute bottom-0 left-0 h-0.5 bg-gradient-to-r"
+        style={{
+          scaleX: scrollYProgress,
+          transformOrigin: "left",
+        }}
+      />
     </motion.header>
   );
 }

@@ -89,67 +89,79 @@ const PLATFORMS_DATA = [
   {
     name: "CherryPick",
     slug: "cherrypick",
-    website: "https://www.cherrypick.io",
+    website: "https://app.cherry-pick.io",
     category: "SPECIALIZED" as const,
   },
   {
     name: "LeGratin",
     slug: "legratin",
-    website: "https://www.legratin.co",
+    website: "https://www.legratin.io",
     category: "SPECIALIZED" as const,
   },
   {
     name: "Jane Hope",
     slug: "jane-hope",
-    website: "https://www.janehope.com",
+    website: "https://janehope.com",
     category: "SPECIALIZED" as const,
   },
   {
     name: "Techplaces",
     slug: "techplaces",
-    website: "https://www.techplaces.io",
+    website: "https://techplaces.io",
     category: "SPECIALIZED" as const,
   },
   {
     name: "FreelanceDay",
     slug: "freelanceday",
-    website: "https://www.freelanceday.com",
+    website: "https://freelance-day.eu",
     category: "GENERALIST" as const,
   },
   {
     name: "La Relève",
     slug: "la-releve",
-    website: "https://www.lareleve.co",
+    website: "https://www.la-releve.com",
     category: "SPECIALIZED" as const,
   },
   {
     name: "Mobile Jobs",
     slug: "mobile-jobs",
-    website: "https://www.mobilejobs.fr",
-    category: "SPECIALIZED" as const,
-  },
-  {
-    name: "Slasheo",
-    slug: "slasheo",
-    website: "https://www.slasheo.com",
+    website: "https://www.mobilejobs.io",
     category: "SPECIALIZED" as const,
   },
   {
     name: "Trait d'Union",
     slug: "trait-d-union",
-    website: "https://www.traitdunion.co",
+    website: "https://tdu.work",
     category: "SPECIALIZED" as const,
   },
   {
     name: "Wekey",
     slug: "wekey",
-    website: "https://www.wekey.co",
+    website: "https://wekey.fr",
     category: "SPECIALIZED" as const,
   },
   {
     name: "Yeets",
     slug: "yeets",
-    website: "https://www.yeets.co",
+    website: "https://www.yeets.fr",
+    category: "SPECIALIZED" as const,
+  },
+  {
+    name: "Humancraft",
+    slug: "humancraft",
+    website: "https://www.humancraft.eu",
+    category: "SPECIALIZED" as const,
+  },
+  {
+    name: "Agrega",
+    slug: "agrega",
+    website: "https://www.agrega.io/",
+    category: "ENTERPRISE" as const,
+  },
+  {
+    name: "Slasheo",
+    slug: "slasheo",
+    website: "https://www.slasheo.com",
     category: "SPECIALIZED" as const,
   },
   {
@@ -175,18 +187,6 @@ const PLATFORMS_DATA = [
     slug: "freelanceurs-io",
     website: "https://www.freelanceurs.io",
     category: "GENERALIST" as const,
-  },
-  {
-    name: "Agrega",
-    slug: "agrega",
-    website: "https://www.agrega.fr",
-    category: "ENTERPRISE" as const,
-  },
-  {
-    name: "Humancraft",
-    slug: "humancraft",
-    website: "https://www.humancraft.co",
-    category: "SPECIALIZED" as const,
   },
   {
     name: "Upfast",
@@ -223,6 +223,60 @@ const PLATFORMS_DATA = [
     slug: "welcome-to-the-jungle",
     website: "https://www.welcometothejungle.com/fr",
     category: "GENERALIST" as const,
+  },
+  {
+    name: "JobTeaser",
+    slug: "jobteaser",
+    website: "https://www.jobteaser.com",
+    category: "SPECIALIZED" as const,
+  },
+  {
+    name: "HelloWork",
+    slug: "hellowork",
+    website: "https://www.hellowork.com",
+    category: "GENERALIST" as const,
+  },
+  {
+    name: "Monster",
+    slug: "monster",
+    website: "https://www.monster.fr",
+    category: "GENERALIST" as const,
+  },
+  {
+    name: "France Travail",
+    slug: "france-travail",
+    website: "https://www.francetravail.fr",
+    category: "GENERALIST" as const,
+  },
+  {
+    name: "Glassdoor",
+    slug: "glassdoor",
+    website: "https://www.glassdoor.fr",
+    category: "GENERALIST" as const,
+  },
+  {
+    name: "Jobs in Paris",
+    slug: "jobsinparis",
+    website: "https://jobsinparis.fr",
+    category: "SPECIALIZED" as const,
+  },
+  {
+    name: "Jooble",
+    slug: "jooble",
+    website: "https://fr.jooble.org",
+    category: "GENERALIST" as const,
+  },
+  {
+    name: "MakeSense Jobs",
+    slug: "makesense",
+    website: "https://jobs.makesense.org",
+    category: "SPECIALIZED" as const,
+  },
+  {
+    name: "Cofondateur au Chômage",
+    slug: "cofondateurauchomage",
+    website: "https://www.cofondateurauchomage.fr",
+    category: "SPECIALIZED" as const,
   },
 ] as const;
 
@@ -756,6 +810,13 @@ async function main() {
   );
   logger.info(`Created ${users.length} additional users`);
 
+  // Stripe Price IDs mapping from env vars
+  const STRIPE_PRICE_MAP: Record<string, string | undefined> = {
+    "attirer-clients": process.env.STRIPE_PROGRAM_ATTIRER_PRICE_ID,
+    "personal-branding": process.env.STRIPE_PROGRAM_BRANDING_PRICE_ID,
+    "exploser-croissance": process.env.STRIPE_PROGRAM_CROISSANCE_PRICE_ID,
+  };
+
   // Seed LinkedIn programs and templates
   for (const programData of LINKEDIN_PROGRAMS_DATA) {
     const { templates, ...programFields } = programData;
@@ -764,6 +825,8 @@ async function main() {
       "authorImage" in programFields
         ? (programFields as { authorImage?: string }).authorImage
         : undefined;
+
+    const stripePriceId = STRIPE_PRICE_MAP[programFields.slug];
 
     // eslint-disable-next-line no-await-in-loop
     const program = await prisma.linkedInProgram.upsert({
@@ -779,6 +842,7 @@ async function main() {
         isFree: programFields.isFree,
         templateCount: programFields.templateCount,
         order: programFields.order,
+        ...(stripePriceId ? { stripePriceId } : {}),
       },
       create: {
         id: nanoid(11),
@@ -793,6 +857,7 @@ async function main() {
         isFree: programFields.isFree,
         templateCount: programFields.templateCount,
         order: programFields.order,
+        ...(stripePriceId ? { stripePriceId } : {}),
       },
     });
 

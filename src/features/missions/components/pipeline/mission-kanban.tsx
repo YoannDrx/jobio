@@ -35,6 +35,7 @@ type KanbanMission = {
   stack: string[];
   platform: { name: string } | null;
   followUps: { scheduledAt: Date }[];
+  updatedAt: Date;
 };
 
 type MissionKanbanProps = {
@@ -100,6 +101,19 @@ export function MissionKanban({
 
   const getMissionsByStatus = (status: MissionStatus) =>
     missions.filter((m) => m.status === status);
+
+  const getAverageDaysInStatus = (
+    statusMissions: KanbanMission[],
+  ): number | null => {
+    if (statusMissions.length === 0) return null;
+    const now = Date.now();
+    const days = statusMissions.map((m) =>
+      Math.floor(
+        (now - new Date(m.updatedAt).getTime()) / (1000 * 60 * 60 * 24),
+      ),
+    );
+    return Math.round(days.reduce((a, b) => a + b, 0) / days.length);
+  };
 
   return (
     <>
@@ -182,15 +196,19 @@ export function MissionKanban({
       {/* Desktop kanban view */}
       <DragDropContext onDragEnd={handleDragEnd}>
         <div className="hidden gap-4 overflow-x-auto pb-4 md:flex">
-          {KANBAN_STATUSES.map((status) => (
-            <KanbanColumn
-              key={status}
-              status={status}
-              missions={getMissionsByStatus(status)}
-              count={counters[status] ?? 0}
-              onMissionClick={onMissionClick}
-            />
-          ))}
+          {KANBAN_STATUSES.map((status) => {
+            const statusMissions = getMissionsByStatus(status);
+            return (
+              <KanbanColumn
+                key={status}
+                status={status}
+                missions={statusMissions}
+                count={counters[status] ?? 0}
+                avgDaysInStatus={getAverageDaysInStatus(statusMissions)}
+                onMissionClick={onMissionClick}
+              />
+            );
+          })}
         </div>
       </DragDropContext>
       {sequenceDialogMission && (

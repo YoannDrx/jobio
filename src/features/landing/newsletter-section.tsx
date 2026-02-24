@@ -18,6 +18,7 @@ import { LoadingButton } from "@/features/form/submit-button";
 import { resolveActionResult } from "@/lib/actions/actions-utils";
 import { useMutation } from "@tanstack/react-query";
 import { CheckCircle2, Mail, Smartphone } from "lucide-react";
+import { motion } from "motion/react";
 import { toast } from "sonner";
 
 export function NewsletterSection() {
@@ -48,7 +49,7 @@ export function NewsletterSection() {
             <div className="flex flex-col gap-3">
               <Badge className="w-fit">Newsletter</Badge>
               <h2 className="font-caption text-3xl font-semibold tracking-tight sm:text-4xl">
-                Reste informé des nouveautés.
+                Ne rate aucune mise à jour produit.
               </h2>
               <p className="text-muted-foreground text-sm leading-relaxed sm:text-base">
                 Inscris-toi pour recevoir en avant-première les nouvelles
@@ -57,13 +58,22 @@ export function NewsletterSection() {
               </p>
             </div>
 
+            <p className="text-muted-foreground text-sm">
+              +200 freelances suivent déjà nos actus
+            </p>
+
             {subscribeMutation.isSuccess ? (
-              <div className="flex items-center gap-3 rounded-lg border border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-800 dark:bg-emerald-950/50">
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ type: "spring", stiffness: 300, damping: 20 }}
+                className="flex items-center gap-3 rounded-lg border border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-800 dark:bg-emerald-950/50"
+              >
                 <CheckCircle2 className="size-5 shrink-0 text-emerald-600 dark:text-emerald-400" />
                 <p className="text-sm font-medium text-emerald-800 dark:text-emerald-300">
                   Merci ! Tu recevras nos prochaines actualités par email.
                 </p>
-              </div>
+              </motion.div>
             ) : (
               <Form
                 form={form}

@@ -13,6 +13,12 @@ export function Header() {
         Features
       </Link>
       <Link
+        href="/use-cases"
+        className={buttonVariants({ variant: "ghost", size: "sm" })}
+      >
+        Use cases
+      </Link>
+      <Link
         href="/docs"
         className={buttonVariants({ variant: "ghost", size: "sm" })}
       >

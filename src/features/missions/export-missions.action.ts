@@ -1,6 +1,7 @@
 "use server";
 
 import { authAction } from "@/lib/actions/safe-actions";
+import { enforcePlanFeature } from "@/lib/plan-limits";
 import { prisma } from "@/lib/prisma";
 import {
   MISSION_STATUS_LABELS,
@@ -11,6 +12,7 @@ import { exportMissionFilterSchema } from "./missions.schema";
 export const exportMissionsAction = authAction
   .inputSchema(exportMissionFilterSchema)
   .action(async ({ parsedInput: filters, ctx: { user } }) => {
+    await enforcePlanFeature(user.id, "csvExport");
     const where: Record<string, unknown> = {
       userId: user.id,
       deletedAt: null,
@@ -45,6 +47,24 @@ export const exportMissionsAction = authAction
       }
       if (filters.tjmMax !== undefined) {
         (where.tjm as Record<string, number>).lte = filters.tjmMax;
+      }
+    }
+
+    if (filters.workType?.length) {
+      where.workType = { in: filters.workType };
+    }
+
+    if (filters.stack?.length) {
+      where.stack = { hasSome: filters.stack };
+    }
+
+    if (filters.scoreMin !== undefined || filters.scoreMax !== undefined) {
+      where.score = {};
+      if (filters.scoreMin !== undefined) {
+        (where.score as Record<string, number>).gte = filters.scoreMin;
+      }
+      if (filters.scoreMax !== undefined) {
+        (where.score as Record<string, number>).lte = filters.scoreMax;
       }
     }
 

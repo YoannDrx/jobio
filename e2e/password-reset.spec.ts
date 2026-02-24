@@ -76,7 +76,7 @@ test("password reset flow", async ({ page }) => {
       const current = new URL(page.url());
       return current.pathname;
     })
-    .toBe("/app");
+    .toBe("/job");
 
   // Clean up - delete the test user
   const user = await prisma.user.findUnique({

@@ -49,6 +49,7 @@ model User {
   cvLabDocumentVersions              CvLabDocumentVersion[]
   cvLabCoachSessions                 CvLabCoachSession[]
   cvLabCoachMessages                 CvLabCoachMessage[]
+  masterCv                           MasterCv?
   billingProfile                     BillingProfile?
   billingClients                     BillingClient[]
   billingClientContacts              BillingClientContact[]
@@ -66,6 +67,7 @@ model User {
   billingExpenseInvoices             BillingExpenseInvoice[]
   billingExpenseNotes                BillingExpenseNote[]
   billingExpenseTrips                BillingExpenseTrip[]
+  billingRecurringInvoices           BillingRecurringInvoice[]
   adminNotesReceived                 AdminUserNote[]                     @relation("AdminUserNoteTarget")
   adminNotesAuthored                 AdminUserNote[]                     @relation("AdminUserNoteAuthor")
 
@@ -73,7 +75,8 @@ model User {
   stripeCustomerId String?
 
   // Onboarding
-  onboardingDismissed Boolean @default(false)
+  onboardingDismissed          Boolean @default(false)
+  freelanceOnboardingDismissed Boolean @default(false)
 
   role       String?
   banned     Boolean?

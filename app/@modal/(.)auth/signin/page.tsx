@@ -6,8 +6,14 @@ import {
 } from "@/components/ui/dialog";
 import { InterceptDialog } from "@/components/utils/intercept-dialog";
 import { SocialProviders } from "@/lib/auth";
+import { NO_INDEX_ROBOTS } from "@/lib/seo";
 import { SiteConfig } from "@/site-config";
+import type { Metadata } from "next";
 import { SignInModal } from "./signin";
+
+export const metadata: Metadata = {
+  robots: NO_INDEX_ROBOTS,
+};
 
 export default function SignInDialogPage() {
   return (

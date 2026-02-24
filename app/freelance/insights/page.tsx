@@ -11,7 +11,11 @@ import {
 } from "@/features/freelance/billing-compliance-rules";
 import { FreelanceAiForecastPanel } from "@/features/freelance/components/freelance-ai-forecast-panel";
 import { FreelanceDeclarationsBuilder } from "@/features/freelance/components/freelance-declarations-builder";
-import { formatCents, formatDate } from "@/features/freelance/billing-presenter";
+import { FreelanceDeclarationsChart } from "@/features/freelance/components/freelance-declarations-chart";
+import {
+  formatCents,
+  formatDate,
+} from "@/features/freelance/billing-presenter";
 import {
   Layout,
   LayoutContent,
@@ -20,7 +24,10 @@ import {
   LayoutTitle,
 } from "@/features/page/layout";
 import { resolveActionResult } from "@/lib/actions/actions-utils";
-import { getPlanLimits } from "@/lib/auth/stripe/auth-plans";
+import {
+  getPlanLimitsForPlan,
+  resolvePlanLimitsForUser,
+} from "@/lib/auth/stripe/plan-entitlements";
 import { getRequiredCurrentUser } from "@/lib/user/get-user";
 import {
   Table,
@@ -77,8 +84,10 @@ export default async function FreelanceInsightsPage() {
   const statusLabel = currentStatus
     ? freelanceStatusLabel[currentStatus]
     : compliancePreset.statusLabel;
-  const planLimits = getPlanLimits(user.subscription?.plan ?? "free");
-  const freePlanLimits = getPlanLimits("free");
+  const [{ limits: planLimits }, freePlanLimits] = await Promise.all([
+    resolvePlanLimitsForUser(user.id),
+    getPlanLimitsForPlan("free"),
+  ]);
   const canUseAIForecast =
     planLimits.aiRequestsPerMonth > freePlanLimits.aiRequestsPerMonth;
 
@@ -125,8 +134,7 @@ export default async function FreelanceInsightsPage() {
               Statut: <span className="font-medium">{statusLabel}</span>
             </p>
             <p>
-              Référence URSSAF:
-              {" "}
+              Référence URSSAF:{" "}
               <span className="font-medium">
                 {compliancePreset.defaultContributionRatePercent}% -{" "}
                 {compliancePreset.defaultDeclarationType === "MONTHLY"
@@ -159,13 +167,17 @@ export default async function FreelanceInsightsPage() {
           </CardHeader>
           <CardContent className="grid gap-2 text-sm md:grid-cols-3">
             <div>
-              <p className="text-muted-foreground text-xs">CA facturé ce mois</p>
+              <p className="text-muted-foreground text-xs">
+                CA facturé ce mois
+              </p>
               <p className="text-lg font-semibold">
                 {formatCents(snapshot.turnoverInvoicedCurrentMonthCents)}
               </p>
             </div>
             <div>
-              <p className="text-muted-foreground text-xs">Encaissements cumulés</p>
+              <p className="text-muted-foreground text-xs">
+                Encaissements cumulés
+              </p>
               <p className="text-lg font-semibold">
                 {formatCents(snapshot.collectedCents)}
               </p>
@@ -182,7 +194,17 @@ export default async function FreelanceInsightsPage() {
       <LayoutContent>
         <Card>
           <CardHeader>
-            <CardTitle>Périodes de déclaration</CardTitle>
+            <CardTitle>Historique des déclarations</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <FreelanceDeclarationsChart declarations={snapshot.declarations} />
+          </CardContent>
+        </Card>
+      </LayoutContent>
+      <LayoutContent>
+        <Card>
+          <CardHeader>
+            <CardTitle>Détail des périodes</CardTitle>
           </CardHeader>
           <CardContent>
             {snapshot.declarations.length === 0 ? (
@@ -208,7 +230,9 @@ export default async function FreelanceInsightsPage() {
                       <TableCell>{period.type}</TableCell>
                       <TableCell>{formatDate(period.dueDate)}</TableCell>
                       <TableCell>{formatCents(period.invoicedCents)}</TableCell>
-                      <TableCell>{formatCents(period.collectedCents)}</TableCell>
+                      <TableCell>
+                        {formatCents(period.collectedCents)}
+                      </TableCell>
                       <TableCell>
                         {formatCents(period.socialChargesCents)}
                       </TableCell>

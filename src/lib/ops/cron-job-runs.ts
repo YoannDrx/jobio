@@ -7,6 +7,37 @@ type CronRunStatus = "RUNNING" | "SUCCESS" | "FAILED" | "UNAUTHORIZED";
 const isMissingCronJobTable = (error: unknown) =>
   error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2021";
 
+export async function findActiveCronJobRun(input: {
+  jobNames: string[];
+  maxAgeMinutes?: number;
+}) {
+  const maxAgeMinutes = input.maxAgeMinutes ?? 90;
+  const startedAfter = new Date(Date.now() - maxAgeMinutes * 60_000);
+
+  try {
+    return await prisma.cronJobRun.findFirst({
+      where: {
+        status: "RUNNING",
+        jobName: { in: input.jobNames },
+        startedAt: { gte: startedAfter },
+      },
+      orderBy: { startedAt: "desc" },
+      select: {
+        id: true,
+        jobName: true,
+        startedAt: true,
+        route: true,
+      },
+    });
+  } catch (error) {
+    if (isMissingCronJobTable(error)) {
+      return null;
+    }
+    logger.error("Impossible de verifier les cron jobs actifs", error);
+    return null;
+  }
+}
+
 export async function startCronJobRun(input: { jobName: string; route: string }) {
   try {
     return await prisma.cronJobRun.create({
@@ -72,4 +103,3 @@ export async function finishCronJobRun(
     logger.error("Impossible de finaliser un log de cron job", error);
   }
 }
-

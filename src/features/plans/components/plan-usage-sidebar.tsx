@@ -3,7 +3,14 @@
 import { Progress } from "@/components/ui/progress";
 import { resolveActionResult } from "@/lib/actions/actions-utils";
 import { getPlanUsageAction } from "@/features/plans/plan-usage.action";
-import { Bot, Briefcase, Users } from "lucide-react";
+import {
+  Bot,
+  Briefcase,
+  Users,
+  FileText,
+  ListOrdered,
+  Mail,
+} from "lucide-react";
 import { useEffect, useState } from "react";
 
 type UsageItem = {
@@ -15,12 +22,18 @@ type PlanUsage = {
   missions: UsageItem;
   contacts: UsageItem;
   aiRequests: UsageItem;
+  cvDocuments: UsageItem;
+  sequences: UsageItem;
+  messageTemplates: UsageItem;
 };
 
 const USAGE_CONFIG = [
   { key: "missions" as const, label: "Missions", icon: Briefcase },
   { key: "contacts" as const, label: "Contacts", icon: Users },
   { key: "aiRequests" as const, label: "IA / mois", icon: Bot },
+  { key: "cvDocuments" as const, label: "CV Lab", icon: FileText },
+  { key: "sequences" as const, label: "Séquences", icon: ListOrdered },
+  { key: "messageTemplates" as const, label: "Templates", icon: Mail },
 ];
 
 export function PlanUsageSidebar() {
@@ -39,6 +52,10 @@ export function PlanUsageSidebar() {
       </span>
       {USAGE_CONFIG.map(({ key, label, icon: Icon }) => {
         const item = usage[key];
+        if (item.limit <= 0) {
+          return null;
+        }
+
         const isUnlimited = item.limit >= 999999;
         const percent = isUnlimited
           ? 0

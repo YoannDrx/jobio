@@ -3,6 +3,7 @@
 import { authAction } from "@/lib/actions/safe-actions";
 import { ApplicationError } from "@/lib/errors/application-error";
 import { prisma } from "@/lib/prisma";
+import { enforcePlanFeature } from "@/lib/plan-limits";
 import { generateObject } from "ai";
 import { z } from "zod";
 import { AI_MODELS } from "./ai-config";
@@ -21,6 +22,8 @@ export const generateEmailAction = authAction
   .inputSchema(generateEmailInputSchema)
   .action(
     async ({ parsedInput: { missionId, templateType }, ctx: { user } }) => {
+      await enforcePlanFeature(user.id, "aiEmailGeneration");
+
       await checkAndIncrementAIQuota(user.id);
 
       const [mission, profile] = await Promise.all([

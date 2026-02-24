@@ -1,0 +1,30 @@
+model PlanEntitlementRelease {
+  id String @id @default(nanoid(11))
+
+  plan          String @unique
+  activeVersion Int    @default(1)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([activeVersion])
+  @@map("plan_entitlement_release")
+}
+
+model PlanEntitlement {
+  id String @id @default(nanoid(11))
+
+  plan       String
+  version    Int
+  featureKey String
+  value      Int
+  isActive   Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([plan, version, featureKey])
+  @@index([plan, version, isActive])
+  @@index([featureKey])
+  @@map("plan_entitlement")
+}

@@ -3,8 +3,14 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { EmptyState } from "@/components/nowts/empty-state";
 import { Input } from "@/components/ui/input";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { resolveActionResult } from "@/lib/actions/actions-utils";
 import {
   addUserPlatformAction,
@@ -14,20 +20,20 @@ import {
   removeUserPlatformAction,
   updateUserPlatformAction,
 } from "@/features/platforms/platforms.action";
-import { CustomPlatformDialog } from "./custom-platform-dialog";
+import { CustomPlatformSheet } from "./custom-platform-dialog";
 import {
-  Check,
   ChevronDown,
   ExternalLink,
   Globe,
   Loader2,
   Minus,
+  Pencil,
   Plus,
   Trash2,
   X,
 } from "lucide-react";
 import Image from "next/image";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 type Platform = {
@@ -70,13 +76,54 @@ const PLATFORM_STATUS_CONFIG = {
   },
 } as const;
 
+type PlatformStatus = keyof typeof PLATFORM_STATUS_CONFIG;
+
 const CATEGORY_LABELS: Record<Platform["category"], string> = {
   GENERALIST: "Généraliste",
   SPECIALIZED: "Spécialisée",
   ENTERPRISE: "Entreprise",
 };
 
-type PlatformStatus = keyof typeof PLATFORM_STATUS_CONFIG;
+const CHECKLIST_LABELS = [
+  "Compte créé",
+  "Profil rempli",
+  "Portfolio ajouté",
+  "Preuves sociales",
+];
+
+function getChecklistDefaults(userPlatform: UserPlatform): boolean[] {
+  return [
+    userPlatform.status !== "NOT_REGISTERED",
+    Boolean(userPlatform.profileUrl),
+    userPlatform.status === "ACTIVE",
+    userPlatform.status === "ACTIVE" && Boolean(userPlatform.profileUrl),
+  ];
+}
+
+function getStorageKey(userPlatformId: string) {
+  return `jobio.platforms.checklist.${userPlatformId}`;
+}
+
+function loadChecklist(userPlatform: UserPlatform): boolean[] {
+  try {
+    const raw = localStorage.getItem(getStorageKey(userPlatform.id));
+    if (raw) {
+      const parsed = JSON.parse(raw) as boolean[];
+      if (Array.isArray(parsed) && parsed.length === 4) return parsed;
+    }
+  } catch {
+    // ignore
+  }
+  return getChecklistDefaults(userPlatform);
+}
+
+function saveChecklist(userPlatformId: string, values: boolean[]) {
+  try {
+    localStorage.setItem(getStorageKey(userPlatformId), JSON.stringify(values));
+  } catch {
+    // ignore
+  }
+}
 
 function PlatformLogo({ platform }: { platform: Platform }) {
   const logoPath = platform.logoUrl ?? `/images/platforms/${platform.slug}.png`;
@@ -109,32 +156,13 @@ function PlatformLogo({ platform }: { platform: Platform }) {
 function PlatformStatusBadge({ status }: { status: PlatformStatus }) {
   const config = PLATFORM_STATUS_CONFIG[status];
   return (
-    <Badge variant="outline" className={config.className}>
+    <Badge
+      variant="outline"
+      className={`${config.className} cursor-pointer transition-transform duration-150 hover:scale-105`}
+    >
       {config.label}
     </Badge>
   );
-}
-
-function getChecklistSteps(userPlatform: UserPlatform) {
-  return [
-    {
-      label: "Compte cree",
-      done: userPlatform.status !== "NOT_REGISTERED",
-    },
-    {
-      label: "Profil rempli",
-      done: Boolean(userPlatform.profileUrl),
-    },
-    {
-      label: "Portfolio",
-      done: userPlatform.status === "ACTIVE",
-    },
-    {
-      label: "Preuves sociales",
-      done:
-        userPlatform.status === "ACTIVE" && Boolean(userPlatform.profileUrl),
-    },
-  ];
 }
 
 function getProgressColor(completed: number) {
@@ -145,10 +173,20 @@ function getProgressColor(completed: number) {
 
 function PlatformChecklist({ userPlatform }: { userPlatform: UserPlatform }) {
   const [expanded, setExpanded] = useState(false);
-  const steps = getChecklistSteps(userPlatform);
-  const completed = steps.filter((s) => s.done).length;
-  const total = steps.length;
+  const [checks, setChecks] = useState<boolean[]>(() =>
+    loadChecklist(userPlatform),
+  );
+
+  const completed = checks.filter(Boolean).length;
+  const total = checks.length;
   const color = getProgressColor(completed);
+
+  const toggleCheck = (index: number) => {
+    const next = [...checks];
+    next[index] = !next[index];
+    setChecks(next);
+    saveChecklist(userPlatform.id, next);
+  };
 
   return (
     <div className="flex flex-col gap-2">
@@ -164,7 +202,7 @@ function PlatformChecklist({ userPlatform }: { userPlatform: UserPlatform }) {
           />
         </div>
         <span className="text-muted-foreground text-xs whitespace-nowrap">
-          {completed}/{total} etapes
+          {completed}/{total} étapes
         </span>
         <ChevronDown
           className={`text-muted-foreground size-3.5 transition-transform duration-200 ${expanded ? "rotate-180" : ""}`}
@@ -175,25 +213,77 @@ function PlatformChecklist({ userPlatform }: { userPlatform: UserPlatform }) {
         className={`grid transition-all duration-200 ease-in-out ${expanded ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0"}`}
       >
         <div className="overflow-hidden">
-          <ul className="flex flex-col gap-1 pt-1">
-            {steps.map((step) => (
-              <li key={step.label} className="flex items-center gap-2 text-xs">
-                {step.done ? (
-                  <Check className="text-status-success size-3.5" />
-                ) : (
-                  <X className="text-muted-foreground size-3.5" />
-                )}
+          <ul className="flex flex-col gap-1.5 pt-1">
+            {CHECKLIST_LABELS.map((label, i) => (
+              <li key={label} className="flex items-center gap-2 text-xs">
+                <Checkbox
+                  checked={checks[i]}
+                  onCheckedChange={() => toggleCheck(i)}
+                  className="size-3.5"
+                />
                 <span
                   className={
-                    step.done ? "text-foreground" : "text-muted-foreground"
+                    checks[i] ? "text-foreground" : "text-muted-foreground"
                   }
                 >
-                  {step.label}
+                  {label}
                 </span>
               </li>
             ))}
           </ul>
         </div>
+      </div>
+    </div>
+  );
+}
+
+function CompactUrl({
+  url,
+  onEdit,
+  onDelete,
+}: {
+  url: string;
+  onEdit: () => void;
+  onDelete: () => void;
+}) {
+  let display: string;
+  try {
+    const parsed = new URL(url);
+    const path =
+      parsed.pathname.length > 15
+        ? `${parsed.pathname.slice(0, 15)}...`
+        : parsed.pathname;
+    display = parsed.host + (path !== "/" ? path : "");
+  } catch {
+    display = url.length > 30 ? `${url.slice(0, 30)}...` : url;
+  }
+
+  return (
+    <div className="group flex items-center gap-1.5">
+      <a
+        href={url}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="text-muted-foreground hover:text-foreground flex items-center gap-1.5 text-xs transition-colors"
+      >
+        <ExternalLink className="size-3.5 shrink-0" />
+        <span className="truncate">{display}</span>
+      </a>
+      <div className="flex items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
+        <button
+          type="button"
+          onClick={onEdit}
+          className="text-muted-foreground hover:text-foreground rounded p-0.5"
+        >
+          <Pencil className="size-3" />
+        </button>
+        <button
+          type="button"
+          onClick={onDelete}
+          className="text-muted-foreground hover:text-destructive rounded p-0.5"
+        >
+          <X className="size-3" />
+        </button>
       </div>
     </div>
   );
@@ -207,7 +297,16 @@ export function PlatformsGrid() {
     null,
   );
   const [editingUrl, setEditingUrl] = useState<Record<string, string>>({});
+  const [editingUrlMode, setEditingUrlMode] = useState<Record<string, boolean>>(
+    {},
+  );
   const [customDialogOpen, setCustomDialogOpen] = useState(false);
+  const [statusFilters, setStatusFilters] = useState<Set<PlatformStatus>>(
+    new Set(),
+  );
+  const [categoryFilters, setCategoryFilters] = useState<
+    Set<Platform["category"]>
+  >(new Set());
 
   const fetchData = useCallback(async () => {
     try {
@@ -308,7 +407,22 @@ export function PlatformsGrid() {
     userPlatformId: string,
     profileUrl: string,
   ) => {
-    if (!profileUrl) return;
+    if (!profileUrl) {
+      try {
+        await resolveActionResult(
+          updateUserPlatformAction({ id: userPlatformId, profileUrl: "" }),
+        );
+        toast.success("URL supprimée");
+        void fetchData();
+      } catch (error) {
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : "Erreur lors de la suppression",
+        );
+      }
+      return;
+    }
     try {
       await resolveActionResult(
         updateUserPlatformAction({ id: userPlatformId, profileUrl }),
@@ -335,6 +449,44 @@ export function PlatformsGrid() {
     void handleUpdateStatus(userPlatformId, nextStatus);
   };
 
+  const toggleStatusFilter = (status: PlatformStatus) => {
+    setStatusFilters((prev) => {
+      const next = new Set(prev);
+      if (next.has(status)) {
+        next.delete(status);
+      } else {
+        next.add(status);
+      }
+      return next;
+    });
+  };
+
+  const toggleCategoryFilter = (category: Platform["category"]) => {
+    setCategoryFilters((prev) => {
+      const next = new Set(prev);
+      if (next.has(category)) {
+        next.delete(category);
+      } else {
+        next.add(category);
+      }
+      return next;
+    });
+  };
+
+  const filteredPlatforms = useMemo(() => {
+    return platforms.filter((platform) => {
+      if (categoryFilters.size > 0 && !categoryFilters.has(platform.category)) {
+        return false;
+      }
+      if (statusFilters.size > 0) {
+        const up = userPlatforms.find((u) => u.platformId === platform.id);
+        const status: PlatformStatus = up ? up.status : "NOT_REGISTERED";
+        if (!statusFilters.has(status)) return false;
+      }
+      return true;
+    });
+  }, [platforms, userPlatforms, statusFilters, categoryFilters]);
+
   if (isLoading) {
     return (
       <div className="text-muted-foreground py-12 text-center text-sm">
@@ -343,9 +495,85 @@ export function PlatformsGrid() {
     );
   }
 
-  // Séparer les plateformes actives des inactives
-  const activePlatforms = platforms.filter((p) => getUserPlatform(p.id));
-  const inactivePlatforms = platforms.filter((p) => !getUserPlatform(p.id));
+  const renderProfileUrl = (userPlatform: UserPlatform) => {
+    const isEditing = editingUrlMode[userPlatform.id] ?? false;
+    const hasUrl = Boolean(userPlatform.profileUrl);
+
+    if (hasUrl && !isEditing) {
+      return (
+        <CompactUrl
+          url={userPlatform.profileUrl ?? ""}
+          onEdit={() =>
+            setEditingUrlMode((prev) => ({
+              ...prev,
+              [userPlatform.id]: true,
+            }))
+          }
+          onDelete={() => {
+            void handleUpdateProfileUrl(userPlatform.id, "").then(() => {
+              void fetchData();
+            });
+          }}
+        />
+      );
+    }
+
+    return (
+      <div className="flex items-center gap-2">
+        <Input
+          type="url"
+          placeholder="URL de ton profil"
+          className="h-8 text-sm"
+          defaultValue={userPlatform.profileUrl ?? ""}
+          onChange={(e) =>
+            setEditingUrl((prev) => ({
+              ...prev,
+              [userPlatform.id]: e.target.value,
+            }))
+          }
+          onBlur={() => {
+            const url = editingUrl[userPlatform.id] as string | undefined;
+            if (url !== undefined && url !== (userPlatform.profileUrl ?? "")) {
+              void handleUpdateProfileUrl(userPlatform.id, url);
+            }
+            if (hasUrl) {
+              setEditingUrlMode((prev) => ({
+                ...prev,
+                [userPlatform.id]: false,
+              }));
+            }
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              const url = editingUrl[userPlatform.id] as string | undefined;
+              if (
+                url !== undefined &&
+                url !== (userPlatform.profileUrl ?? "")
+              ) {
+                void handleUpdateProfileUrl(userPlatform.id, url);
+              }
+              if (hasUrl) {
+                setEditingUrlMode((prev) => ({
+                  ...prev,
+                  [userPlatform.id]: false,
+                }));
+              }
+            }
+          }}
+        />
+        {userPlatform.profileUrl && (
+          <a
+            href={userPlatform.profileUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-muted-foreground hover:text-foreground"
+          >
+            <ExternalLink className="size-4" />
+          </a>
+        )}
+      </div>
+    );
+  };
 
   const renderPlatformCard = (platform: Platform) => {
     const userPlatform = getUserPlatform(platform.id);
@@ -375,21 +603,25 @@ export function PlatformsGrid() {
                       </a>
                     )}
                   </span>
-                  <Badge variant="secondary" className="w-fit text-xs">
-                    {CATEGORY_LABELS[platform.category]}
-                  </Badge>
                 </div>
               </CardTitle>
               <div className="flex items-center gap-2">
                 {isAdded && userPlatform && (
-                  <button
-                    onClick={() =>
-                      cycleStatus(userPlatform.id, userPlatform.status)
-                    }
-                    className="cursor-pointer"
-                  >
-                    <PlatformStatusBadge status={userPlatform.status} />
-                  </button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <button
+                        onClick={() =>
+                          cycleStatus(userPlatform.id, userPlatform.status)
+                        }
+                        className="cursor-pointer"
+                      >
+                        <PlatformStatusBadge status={userPlatform.status} />
+                      </button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      Cliquer pour changer le statut
+                    </TooltipContent>
+                  </Tooltip>
                 )}
               </div>
             </div>
@@ -439,54 +671,7 @@ export function PlatformsGrid() {
         {isAdded && userPlatform && (
           <CardContent className="py-0">
             <div className="flex flex-col gap-3">
-              <div className="flex items-center gap-2">
-                <Input
-                  type="url"
-                  placeholder="URL de ton profil"
-                  className="h-8 text-sm"
-                  defaultValue={userPlatform.profileUrl ?? ""}
-                  onChange={(e) =>
-                    setEditingUrl((prev) => ({
-                      ...prev,
-                      [userPlatform.id]: e.target.value,
-                    }))
-                  }
-                  onBlur={() => {
-                    const url = editingUrl[userPlatform.id] as
-                      | string
-                      | undefined;
-                    if (
-                      url !== undefined &&
-                      url !== (userPlatform.profileUrl ?? "")
-                    ) {
-                      void handleUpdateProfileUrl(userPlatform.id, url);
-                    }
-                  }}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      const url = editingUrl[userPlatform.id] as
-                        | string
-                        | undefined;
-                      if (
-                        url !== undefined &&
-                        url !== (userPlatform.profileUrl ?? "")
-                      ) {
-                        void handleUpdateProfileUrl(userPlatform.id, url);
-                      }
-                    }
-                  }}
-                />
-                {userPlatform.profileUrl && (
-                  <a
-                    href={userPlatform.profileUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-muted-foreground hover:text-foreground"
-                  >
-                    <ExternalLink className="size-4" />
-                  </a>
-                )}
-              </div>
+              {renderProfileUrl(userPlatform)}
               <PlatformChecklist userPlatform={userPlatform} />
             </div>
           </CardContent>
@@ -497,53 +682,85 @@ export function PlatformsGrid() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex justify-end">
+      <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-1">
+            {(
+              Object.entries(PLATFORM_STATUS_CONFIG) as [
+                PlatformStatus,
+                (typeof PLATFORM_STATUS_CONFIG)[PlatformStatus],
+              ][]
+            ).map(([key, config]) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => toggleStatusFilter(key)}
+                className="cursor-pointer"
+              >
+                <Badge
+                  variant="outline"
+                  className={
+                    statusFilters.has(key)
+                      ? config.className
+                      : "bg-muted/50 text-muted-foreground border-border hover:bg-muted"
+                  }
+                >
+                  {config.label}
+                </Badge>
+              </button>
+            ))}
+          </div>
+          <div className="bg-border h-4 w-px" />
+          <div className="flex items-center gap-1">
+            {(
+              Object.entries(CATEGORY_LABELS) as [
+                Platform["category"],
+                string,
+              ][]
+            ).map(([key, label]) => (
+              <button
+                key={key}
+                type="button"
+                onClick={() => toggleCategoryFilter(key)}
+                className="cursor-pointer"
+              >
+                <Badge
+                  variant="outline"
+                  className={
+                    categoryFilters.has(key)
+                      ? "bg-primary/10 text-primary border-primary/30"
+                      : "bg-muted/50 text-muted-foreground border-border hover:bg-muted"
+                  }
+                >
+                  {label}
+                </Badge>
+              </button>
+            ))}
+          </div>
+          <span className="text-muted-foreground text-xs">
+            {filteredPlatforms.length} plateforme
+            {filteredPlatforms.length !== 1 ? "s" : ""}
+          </span>
+        </div>
         <Button onClick={() => setCustomDialogOpen(true)} size="sm">
           <Plus className="mr-1 size-4" />
           Ajouter une plateforme
         </Button>
       </div>
 
-      {platforms.length === 0 ? (
+      {filteredPlatforms.length === 0 ? (
         <EmptyState
           icon={Globe}
           title="Aucune plateforme disponible"
           description="Les plateformes seront bientôt disponibles."
         />
       ) : (
-        <div className="flex flex-col gap-6">
-          {/* Section Plateformes Actives */}
-          {activePlatforms.length > 0 && (
-            <div className="flex flex-col gap-4">
-              <h2 className="flex items-center gap-2 text-lg font-semibold">
-                <span className="bg-status-success/20 text-status-success rounded px-2 py-0.5 text-sm">
-                  {activePlatforms.length}
-                </span>
-                Plateformes actives
-              </h2>
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {activePlatforms.map((platform) =>
-                  renderPlatformCard(platform),
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Section Toutes les plateformes */}
-          <div className="flex flex-col gap-4">
-            <h2 className="text-muted-foreground text-lg font-semibold">
-              Toutes les plateformes
-            </h2>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {inactivePlatforms.map((platform) =>
-                renderPlatformCard(platform),
-              )}
-            </div>
-          </div>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {filteredPlatforms.map((platform) => renderPlatformCard(platform))}
         </div>
       )}
 
-      <CustomPlatformDialog
+      <CustomPlatformSheet
         open={customDialogOpen}
         onOpenChange={setCustomDialogOpen}
         onSuccess={() => void fetchData()}

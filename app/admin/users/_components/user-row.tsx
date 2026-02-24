@@ -141,7 +141,7 @@ export const UserRow = ({ user }: UserRowProps) => {
     onSuccess: () => {
       toast.success("Impersonation démarrée");
       void queryClient.invalidateQueries();
-      router.push("/app");
+      router.push("/job");
     },
     onError: (error: Error) => {
       toast.error(`Impossible d'impersonate l'utilisateur: ${error.message}`);
@@ -204,7 +204,11 @@ export const UserRow = ({ user }: UserRowProps) => {
       <TableCell>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" data-testid="user-row-menu-button">
+            <Button
+              variant="outline"
+              size="sm"
+              data-testid="user-row-menu-button"
+            >
               <MoreHorizontal className="size-4" />
             </Button>
           </DropdownMenuTrigger>
@@ -214,7 +218,8 @@ export const UserRow = ({ user }: UserRowProps) => {
                 onClick={() => {
                   const reason = askReason("Impersonate utilisateur");
                   if (!reason) return;
-                  if (!requestStrongConfirmation("Impersonate utilisateur")) return;
+                  if (!requestStrongConfirmation("Impersonate utilisateur"))
+                    return;
                   impersonateMutation.mutate({
                     userId: user.id,
                     reason,
@@ -261,7 +266,8 @@ export const UserRow = ({ user }: UserRowProps) => {
                 onClick={() => {
                   const reason = askReason("Bannir l'utilisateur");
                   if (!reason) return;
-                  if (!requestStrongConfirmation("Bannir l'utilisateur")) return;
+                  if (!requestStrongConfirmation("Bannir l'utilisateur"))
+                    return;
                   banUserMutation.mutate({ userId: user.id, reason });
                 }}
                 disabled={banUserMutation.isPending}

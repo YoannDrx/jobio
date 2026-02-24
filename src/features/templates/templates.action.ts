@@ -3,6 +3,7 @@
 import { authAction } from "@/lib/actions/safe-actions";
 import { ApplicationError } from "@/lib/errors/application-error";
 import { prisma } from "@/lib/prisma";
+import { enforcePlanLimit } from "@/lib/plan-limits";
 import { z } from "zod";
 import {
   createTemplateSchema,
@@ -13,6 +14,8 @@ import {
 export const createTemplateAction = authAction
   .inputSchema(createTemplateSchema)
   .action(async ({ parsedInput, ctx: { user } }) => {
+    await enforcePlanLimit(user.id, "messageTemplates");
+
     const template = await prisma.messageTemplate.create({
       data: {
         ...parsedInput,
@@ -28,19 +31,11 @@ export const updateTemplateAction = authAction
   .inputSchema(updateTemplateSchema)
   .action(async ({ parsedInput: { id, ...data }, ctx: { user } }) => {
     const template = await prisma.messageTemplate.findFirst({
-      where: { id },
+      where: { id, userId: user.id, isSystem: false },
     });
 
     if (!template) {
       throw new ApplicationError("Template introuvable");
-    }
-
-    if (template.isSystem) {
-      throw new ApplicationError("Impossible de modifier un template systeme");
-    }
-
-    if (template.userId !== user.id) {
-      throw new ApplicationError("Vous ne pouvez modifier que vos templates");
     }
 
     const updated = await prisma.messageTemplate.update({
@@ -55,19 +50,11 @@ export const deleteTemplateAction = authAction
   .inputSchema(z.object({ id: z.string() }))
   .action(async ({ parsedInput: { id }, ctx: { user } }) => {
     const template = await prisma.messageTemplate.findFirst({
-      where: { id },
+      where: { id, userId: user.id, isSystem: false },
     });
 
     if (!template) {
       throw new ApplicationError("Template introuvable");
-    }
-
-    if (template.isSystem) {
-      throw new ApplicationError("Impossible de supprimer un template systeme");
-    }
-
-    if (template.userId !== user.id) {
-      throw new ApplicationError("Vous ne pouvez supprimer que vos templates");
     }
 
     await prisma.messageTemplate.delete({
@@ -103,6 +90,8 @@ export const getTemplatesAction = authAction
 export const duplicateTemplateAction = authAction
   .inputSchema(z.object({ id: z.string() }))
   .action(async ({ parsedInput: { id }, ctx: { user } }) => {
+    await enforcePlanLimit(user.id, "messageTemplates");
+
     const template = await prisma.messageTemplate.findFirst({
       where: { id, OR: [{ userId: user.id }, { isSystem: true }] },
     });

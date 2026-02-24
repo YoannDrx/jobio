@@ -1,22 +1,18 @@
 "use server";
 
 import { authAction } from "@/lib/actions/safe-actions";
-import { getPlanLimits } from "@/lib/auth/stripe/auth-plans";
 import { prisma } from "@/lib/prisma";
 import {
   computeDateRange,
   dateRangeSchema,
+  getAnalyticsHistoryDaysForUser,
   parseDurationToDays,
 } from "./shared";
 
 export const getEarningsDataAction = authAction
   .inputSchema(dateRangeSchema)
   .action(async ({ parsedInput: { startDate, endDate }, ctx: { user } }) => {
-    const subscription = await prisma.subscription.findUnique({
-      where: { referenceId: user.id },
-    });
-    const limits = getPlanLimits(subscription?.plan);
-    const historyDays = limits.analyticsHistoryDays;
+    const historyDays = await getAnalyticsHistoryDaysForUser(user.id);
     const dateRange = computeDateRange(historyDays, startDate, endDate);
 
     const acceptedMissions = await prisma.mission.findMany({
@@ -76,11 +72,7 @@ export const getEarningsDataAction = authAction
 export const getRevenueForecastAction = authAction
   .inputSchema(dateRangeSchema)
   .action(async ({ parsedInput: { startDate, endDate }, ctx: { user } }) => {
-    const subscription = await prisma.subscription.findUnique({
-      where: { referenceId: user.id },
-    });
-    const limits = getPlanLimits(subscription?.plan);
-    const historyDays = limits.analyticsHistoryDays;
+    const historyDays = await getAnalyticsHistoryDaysForUser(user.id);
     const dateRange = computeDateRange(historyDays, startDate, endDate);
 
     const missions = await prisma.mission.findMany({
@@ -148,11 +140,7 @@ export const getRevenueForecastAction = authAction
 export const getAverageTJMAction = authAction
   .inputSchema(dateRangeSchema)
   .action(async ({ parsedInput: { startDate, endDate }, ctx: { user } }) => {
-    const subscription = await prisma.subscription.findUnique({
-      where: { referenceId: user.id },
-    });
-    const limits = getPlanLimits(subscription?.plan);
-    const historyDays = limits.analyticsHistoryDays;
+    const historyDays = await getAnalyticsHistoryDaysForUser(user.id);
     const dateRange = computeDateRange(historyDays, startDate, endDate);
 
     const tjmByStatus = await prisma.mission.groupBy({

@@ -19,7 +19,14 @@ import {
 import { SidebarNavigationMenu } from "@/components/ui/sidebar-utils";
 import type { NavigationGroup } from "@/features/navigation/navigation.type";
 import { SidebarUserButton } from "@/features/sidebar/sidebar-user-button";
-import { ChevronDown, FileClock, Plus, Receipt, Sparkles, Users } from "lucide-react";
+import {
+  ChevronDown,
+  FileClock,
+  Plus,
+  Receipt,
+  Sparkles,
+  Users,
+} from "lucide-react";
 import Link from "next/link";
 import type { PropsWithChildren } from "react";
 import { useState } from "react";
@@ -32,7 +39,10 @@ export function FreelanceSidebar() {
   return (
     <Sidebar variant="inset">
       <SidebarHeader className="flex flex-col gap-2">
-        <div className="flex items-center gap-2 px-2 py-1.5">
+        <div
+          className="flex items-center gap-2 px-2 py-1.5"
+          data-tour="freelance-welcome"
+        >
           <div className="bg-primary text-primary-foreground flex size-8 items-center justify-center rounded-lg">
             <Sparkles className="size-4" />
           </div>
@@ -66,26 +76,48 @@ export function FreelanceSidebar() {
       </SidebarContent>
       <SidebarFooter className="flex flex-col gap-2">
         <div className="space-y-2 rounded-lg border p-2">
-          <p className="text-muted-foreground px-1 text-xs font-medium">Actions rapides</p>
-          <Button asChild size="sm" variant="ghost" className="w-full justify-start">
+          <p className="text-muted-foreground px-1 text-xs font-medium">
+            Actions rapides
+          </p>
+          <Button
+            asChild
+            size="sm"
+            variant="ghost"
+            className="w-full justify-start"
+          >
             <Link href="/freelance/invoices?create=1">
               <Receipt className="size-4" />
               Faire une facture
             </Link>
           </Button>
-          <Button asChild size="sm" variant="ghost" className="w-full justify-start">
+          <Button
+            asChild
+            size="sm"
+            variant="ghost"
+            className="w-full justify-start"
+          >
             <Link href="/freelance/quotes?create=1">
               <FileClock className="size-4" />
               Faire un devis
             </Link>
           </Button>
-          <Button asChild size="sm" variant="ghost" className="w-full justify-start">
+          <Button
+            asChild
+            size="sm"
+            variant="ghost"
+            className="w-full justify-start"
+          >
             <Link href="/freelance/clients?create=1">
               <Users className="size-4" />
               Ajouter un client
             </Link>
           </Button>
-          <Button asChild size="sm" variant="ghost" className="w-full justify-start">
+          <Button
+            asChild
+            size="sm"
+            variant="ghost"
+            className="w-full justify-start"
+          >
             <Link href="/freelance/invoices?create=1">
               <Plus className="size-4" />
               Nouveau document

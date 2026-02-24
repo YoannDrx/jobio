@@ -12,7 +12,7 @@ test.describe("cv-lab-coach", () => {
   test("cv coach creates session and sends message", async ({ page }) => {
     const userData = await createTestAccount({
       page,
-      callbackURL: "/app",
+      callbackURL: "/job",
     });
 
     try {
@@ -33,7 +33,7 @@ test.describe("cv-lab-coach", () => {
         },
       });
 
-      await page.goto("/app/cv-lab/coach");
+      await page.goto("/job/cv-lab/coach");
       await page.waitForLoadState("networkidle");
 
       await expect(
@@ -92,7 +92,7 @@ test.describe("cv-lab-coach", () => {
   test("cv coach imports text and triggers analysis", async ({ page }) => {
     const userData = await createTestAccount({
       page,
-      callbackURL: "/app",
+      callbackURL: "/job",
     });
 
     try {
@@ -152,7 +152,7 @@ test.describe("cv-lab-coach", () => {
         },
       });
 
-      await page.goto("/app/cv-lab/coach");
+      await page.goto("/job/cv-lab/coach");
       await page.waitForLoadState("networkidle");
 
       await page
@@ -207,7 +207,7 @@ test.describe("cv-lab-coach", () => {
   test("cv coach snapshot editor persists edits", async ({ page }) => {
     const userData = await createTestAccount({
       page,
-      callbackURL: "/app",
+      callbackURL: "/job",
     });
 
     try {
@@ -268,7 +268,7 @@ test.describe("cv-lab-coach", () => {
         },
       });
 
-      await page.goto("/app/cv-lab/coach");
+      await page.goto("/job/cv-lab/coach");
       await page.waitForLoadState("networkidle");
 
       await expect(page.getByText("Session Editor Test").first()).toBeVisible({

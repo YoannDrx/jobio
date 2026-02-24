@@ -6,19 +6,17 @@ test.describe("profiles", () => {
   test("create and view a profile", async ({ page }) => {
     const userData = await createTestAccount({
       page,
-      callbackURL: "/app",
+      callbackURL: "/job",
     });
 
     // Navigate to profiles page
-    await page.goto("/app/profiles");
+    await page.goto("/job/profiles");
     await page.waitForLoadState("networkidle");
 
     await page.getByRole("button", { name: "Nouveau profil" }).click();
 
     // Fill the profile form
-    await page
-      .getByLabel(/nom du profil/i)
-      .fill("Développeur React Senior");
+    await page.getByLabel(/nom du profil/i).fill("Développeur React Senior");
     await page
       .getByLabel(/titre professionnel/i)
       .fill("Développeur Frontend React");

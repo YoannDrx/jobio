@@ -75,6 +75,11 @@ export const AnalyticsEvents = {
   FIRST_FOLLOW_UP_PLANNED: "first_follow_up_planned",
   FIRST_CONTACT_CREATED: "first_contact_created",
 
+  // Freelance Onboarding
+  FREELANCE_TOUR_STARTED: "freelance_tour_started",
+  FREELANCE_TOUR_COMPLETED: "freelance_tour_completed",
+  FREELANCE_ONBOARDING_STEP_COMPLETED: "freelance_onboarding_step_completed",
+
   // Core Product
   MISSION_CREATED: "mission_created",
   MISSION_STATUS_CHANGED: "mission_status_changed",

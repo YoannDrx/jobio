@@ -2,6 +2,7 @@
 
 import { Toaster } from "@/components/ui/sonner";
 import { DialogManagerRenderer } from "@/features/dialog-manager/dialog-manager-renderer";
+import { ChatbotLazy } from "@/features/ai/chatbot/chatbot-lazy";
 import { GlobalDialogLazy } from "@/features/global-dialog/global-dialog-lazy";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
@@ -17,6 +18,7 @@ export const Providers = ({ children }: PropsWithChildren) => {
         <Toaster />
         <DialogManagerRenderer />
         <GlobalDialogLazy />
+        <ChatbotLazy />
         {children}
         {process.env.NODE_ENV === "development" && (
           <ReactQueryDevtools initialIsOpen={false} />

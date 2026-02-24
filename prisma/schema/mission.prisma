@@ -36,7 +36,10 @@ model Mission {
   workType    WorkType?
   location    String?
   stack       String[]
-  sourceUrl   String?
+  sourceUrl          String?
+  tasksDescription   String?
+  stackDescription   String?
+  profileDescription String?
   score          Int             @default(0)
   scoreBreakdown Json?
   notes             String?

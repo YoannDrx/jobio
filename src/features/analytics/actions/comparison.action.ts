@@ -1,9 +1,9 @@
 "use server";
 
 import { authAction } from "@/lib/actions/safe-actions";
-import { getPlanLimits } from "@/lib/auth/stripe/auth-plans";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
+import { computeDateRange, getAnalyticsHistoryDaysForUser } from "./shared";
 
 const comparisonInputSchema = z.object({
   startDate: z.string(),
@@ -13,13 +13,10 @@ const comparisonInputSchema = z.object({
 export const getComparisonDataAction = authAction
   .inputSchema(comparisonInputSchema)
   .action(async ({ parsedInput: { startDate, endDate }, ctx: { user } }) => {
-    const subscription = await prisma.subscription.findUnique({
-      where: { referenceId: user.id },
-    });
-    getPlanLimits(subscription?.plan);
-
-    const currentStart = new Date(startDate);
-    const currentEnd = new Date(endDate);
+    const historyDays = await getAnalyticsHistoryDaysForUser(user.id);
+    const dateRange = computeDateRange(historyDays, startDate, endDate);
+    const currentStart = dateRange?.gte ?? new Date(startDate);
+    const currentEnd = dateRange?.lte ?? new Date(endDate);
     const duration = currentEnd.getTime() - currentStart.getTime();
     const previousEnd = new Date(currentStart.getTime() - 1);
     const previousStart = new Date(previousEnd.getTime() - duration);
