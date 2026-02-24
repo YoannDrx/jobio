@@ -82,7 +82,9 @@ export function PricingCard({
       toast.error(error.error.serverError ?? "Failed to upgrade plan");
     },
   });
-  const { execute: recordPricingEvent } = useAction(recordPricingFunnelEventAction);
+  const { execute: recordPricingEvent } = useAction(
+    recordPricingFunnelEventAction,
+  );
 
   // Calculate pricing details
   const monthlyPrice = plan.price;
@@ -113,7 +115,8 @@ export function PricingCard({
     <Card
       className={cn(
         "flex flex-col pb-0 transition-all duration-200 hover:shadow-lg",
-        plan.isPopular && "border-primary relative overflow-hidden shadow-md",
+        plan.isPopular &&
+          "pricing-popular border-primary relative overflow-hidden shadow-md",
       )}
     >
       {plan.isPopular && (

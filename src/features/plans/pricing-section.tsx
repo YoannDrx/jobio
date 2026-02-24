@@ -16,6 +16,13 @@ import { cn } from "@/lib/utils";
 import { useAction } from "next-safe-action/hooks";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
+import { motion } from "motion/react";
+import {
+  fadeInUp,
+  staggerContainer,
+  defaultTransition,
+} from "@/features/landing/motion-variants";
+import { useSectionInView } from "@/features/landing/use-section-in-view";
 import { PricingCard } from "./pricing-card";
 import { recordPricingFunnelEventAction } from "./pricing-funnel.action";
 
@@ -99,12 +106,15 @@ const resolvePricingEntryPoint = (defaultEntryPoint: string): string => {
 };
 
 export function Pricing({ entryPoint = "landing" }: { entryPoint?: string }) {
+  const { ref, isInView, shouldAnimate } = useSectionInView();
   const [isYearly, setIsYearly] = useState(false);
   const [experimentVariant, setExperimentVariant] =
     useState<PricingExperimentVariant | null>(null);
   const [resolvedEntryPoint, setResolvedEntryPoint] = useState(entryPoint);
   const hasTrackedView = useRef(false);
-  const { execute: recordPricingEvent } = useAction(recordPricingFunnelEventAction);
+  const { execute: recordPricingEvent } = useAction(
+    recordPricingFunnelEventAction,
+  );
 
   useEffect(() => {
     setResolvedEntryPoint(resolvePricingEntryPoint(entryPoint));
@@ -124,9 +134,10 @@ export function Pricing({ entryPoint = "landing" }: { entryPoint?: string }) {
     });
   }, [resolvedEntryPoint, experimentVariant, recordPricingEvent]);
 
-  const copy = PRICING_VARIANT_COPY[
-    experimentVariant ?? DEFAULT_PRICING_EXPERIMENT_VARIANT
-  ];
+  const copy =
+    PRICING_VARIANT_COPY[
+      experimentVariant ?? DEFAULT_PRICING_EXPERIMENT_VARIANT
+    ];
 
   const maxYearlyDiscount = Math.max(
     ...AUTH_PLANS.filter((plan) => plan.price > 0 && plan.yearlyPrice)
@@ -141,7 +152,10 @@ export function Pricing({ entryPoint = "landing" }: { entryPoint?: string }) {
   );
 
   return (
-    <section className="from-background to-muted/20 w-full bg-gradient-to-b py-12 md:py-24 lg:py-32">
+    <section
+      ref={ref}
+      className="from-background to-muted/20 w-full bg-gradient-to-b py-12 md:py-24 lg:py-32"
+    >
       <div className="container mx-auto px-4 md:px-6">
         <div className="flex flex-col items-center justify-center space-y-4 text-center">
           <div className="space-y-2">
@@ -188,29 +202,37 @@ export function Pricing({ entryPoint = "landing" }: { entryPoint?: string }) {
           </div>
         </div>
 
-        <div
+        <motion.div
           className="mt-16 grid gap-8 lg:gap-12"
           style={{
             gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
           }}
+          variants={staggerContainer(0.12)}
+          initial={shouldAnimate ? "initial" : "animate"}
+          animate={isInView ? "animate" : undefined}
         >
           {AUTH_PLANS.filter((p) => !p.isHidden).map((plan) => (
-            <PricingCard
+            <motion.div
               key={plan.name}
-              plan={plan}
-              isYearly={isYearly}
-              entryPoint={resolvedEntryPoint}
-              experimentVariant={
-                experimentVariant ?? DEFAULT_PRICING_EXPERIMENT_VARIANT
-              }
-            />
+              variants={fadeInUp}
+              transition={defaultTransition}
+            >
+              <PricingCard
+                plan={plan}
+                isYearly={isYearly}
+                entryPoint={resolvedEntryPoint}
+                experimentVariant={
+                  experimentVariant ?? DEFAULT_PRICING_EXPERIMENT_VARIANT
+                }
+              />
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
 
         <div className="mt-16 text-center">
           <p className="text-muted-foreground">
-            Tous les plans incluent l'accès produit. Le niveau de support
-            évolue selon le plan.
+            Tous les plans incluent l'accès produit. Le niveau de support évolue
+            selon le plan.
           </p>
           <p className="text-muted-foreground mt-2">
             Besoin d'un plan sur mesure ?{" "}

@@ -35,19 +35,39 @@ export function Footer({ alignWithLandingHeader = true }: FooterProps) {
               <div className="flex flex-col gap-3">
                 <h4 className="font-medium">Produit</h4>
                 <nav className="flex flex-col gap-2">
-                  <Button asChild variant="link" className="h-auto justify-start p-0">
+                  <Button
+                    asChild
+                    variant="link"
+                    className="h-auto justify-start p-0 transition-colors duration-200"
+                  >
                     <Link href="/features">Fonctionnalites</Link>
                   </Button>
-                  <Button asChild variant="link" className="h-auto justify-start p-0">
+                  <Button
+                    asChild
+                    variant="link"
+                    className="h-auto justify-start p-0 transition-colors duration-200"
+                  >
                     <Link href="/use-cases">Use cases</Link>
                   </Button>
-                  <Button asChild variant="link" className="h-auto justify-start p-0">
+                  <Button
+                    asChild
+                    variant="link"
+                    className="h-auto justify-start p-0 transition-colors duration-200"
+                  >
                     <Link href="/#pricing">Tarifs</Link>
                   </Button>
-                  <Button asChild variant="link" className="h-auto justify-start p-0">
+                  <Button
+                    asChild
+                    variant="link"
+                    className="h-auto justify-start p-0 transition-colors duration-200"
+                  >
                     <Link href="/app">Dashboard</Link>
                   </Button>
-                  <Button asChild variant="link" className="h-auto justify-start p-0">
+                  <Button
+                    asChild
+                    variant="link"
+                    className="h-auto justify-start p-0 transition-colors duration-200"
+                  >
                     <Link href="/docs">Docs</Link>
                   </Button>
                 </nav>
@@ -56,19 +76,39 @@ export function Footer({ alignWithLandingHeader = true }: FooterProps) {
               <div className="flex flex-col gap-3">
                 <h4 className="font-medium">Ressources</h4>
                 <nav className="flex flex-col gap-2">
-                  <Button asChild variant="link" className="h-auto justify-start p-0">
+                  <Button
+                    asChild
+                    variant="link"
+                    className="h-auto justify-start p-0 transition-colors duration-200"
+                  >
                     <Link href="/blog">Blog</Link>
                   </Button>
-                  <Button asChild variant="link" className="h-auto justify-start p-0">
+                  <Button
+                    asChild
+                    variant="link"
+                    className="h-auto justify-start p-0 transition-colors duration-200"
+                  >
                     <Link href="/about">About</Link>
                   </Button>
-                  <Button asChild variant="link" className="h-auto justify-start p-0">
+                  <Button
+                    asChild
+                    variant="link"
+                    className="h-auto justify-start p-0 transition-colors duration-200"
+                  >
                     <Link href="/contact">Contact</Link>
                   </Button>
-                  <Button asChild variant="link" className="h-auto justify-start p-0">
+                  <Button
+                    asChild
+                    variant="link"
+                    className="h-auto justify-start p-0 transition-colors duration-200"
+                  >
                     <Link href="/legal/terms">CGU</Link>
                   </Button>
-                  <Button asChild variant="link" className="h-auto justify-start p-0">
+                  <Button
+                    asChild
+                    variant="link"
+                    className="h-auto justify-start p-0 transition-colors duration-200"
+                  >
                     <Link href="/legal/privacy">Confidentialité</Link>
                   </Button>
                 </nav>

@@ -54,6 +54,7 @@ function useBoundedScroll(threshold: number) {
 }
 
 export function LandingHeader() {
+  const { scrollYProgress } = useScroll();
   const { scrollYBoundedProgress } = useBoundedScroll(400);
   const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -67,8 +68,19 @@ export function LandingHeader() {
     <motion.header
       style={{
         height: useTransform(scrollYBoundedProgressDelayed, [0, 1], [80, 50]),
+        backdropFilter: useTransform(
+          scrollYBoundedProgressDelayed,
+          [0, 1],
+          ["blur(8px)", "blur(16px)"],
+        ),
+        borderBottomColor: useTransform(
+          scrollYBoundedProgressDelayed,
+          [0, 1],
+          ["rgba(255,255,255,0)", "rgba(255,255,255,0.15)"],
+        ),
+        borderBottomWidth: "1px",
       }}
-      className="fixed inset-x-0 z-50 flex h-20 w-screen shadow backdrop-blur-md"
+      className="fixed relative inset-x-0 z-50 flex h-20 w-screen shadow"
     >
       <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-4 lg:px-8">
         <div className="flex items-center gap-1">
@@ -157,6 +169,13 @@ export function LandingHeader() {
           </Sheet>
         </div>
       </div>
+      <motion.div
+        className="from-brand-cyan to-brand-emerald absolute bottom-0 left-0 h-0.5 bg-gradient-to-r"
+        style={{
+          scaleX: scrollYProgress,
+          transformOrigin: "left",
+        }}
+      />
     </motion.header>
   );
 }
