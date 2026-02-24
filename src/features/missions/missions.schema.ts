@@ -70,6 +70,10 @@ export const missionFilterSchema = z.object({
   platformId: z.string().optional(),
   tjmMin: z.number().optional(),
   tjmMax: z.number().optional(),
+  workType: z.array(workTypeSchema).optional(),
+  stack: z.array(z.string()).optional(),
+  scoreMin: z.number().int().min(0).max(100).optional(),
+  scoreMax: z.number().int().min(0).max(100).optional(),
   sortBy: z
     .enum(["createdAt", "updatedAt", "tjm", "score", "title"])
     .default("createdAt"),
@@ -85,6 +89,10 @@ export const exportMissionFilterSchema = z.object({
   platformId: z.string().optional(),
   tjmMin: z.number().optional(),
   tjmMax: z.number().optional(),
+  workType: z.array(workTypeSchema).optional(),
+  stack: z.array(z.string()).optional(),
+  scoreMin: z.number().int().min(0).max(100).optional(),
+  scoreMax: z.number().int().min(0).max(100).optional(),
 });
 
 export type CreateMissionInput = z.infer<typeof createMissionSchema>;

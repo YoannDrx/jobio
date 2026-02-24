@@ -82,6 +82,7 @@ import {
   resolveBillingStudioUnitLabel,
 } from "@/features/freelance/components/billing-document-studio";
 import { resolveActionResult } from "@/lib/actions/actions-utils";
+import { sendManualReminderAction } from "@/features/freelance/billing-reminders.action";
 import {
   Copy,
   Ellipsis,
@@ -848,18 +849,31 @@ export function FreelanceInvoicesManager() {
   };
 
   const handleSendReminder = async (invoice: InvoiceRow) => {
-    const daysOverdue = invoice.dueDate
-      ? Math.floor(
-          (Date.now() - new Date(invoice.dueDate).getTime()) /
-            (1000 * 60 * 60 * 24),
-        )
-      : 0;
+    setActionMenuInvoiceId(invoice.id);
+    try {
+      const result = await resolveActionResult(
+        sendManualReminderAction({ invoiceId: invoice.id }),
+      );
+      toast.success(`Relance envoyée à ${result.to}`);
+    } catch (error) {
+      const daysOverdue = invoice.dueDate
+        ? Math.floor(
+            (Date.now() - new Date(invoice.dueDate).getTime()) /
+              (1000 * 60 * 60 * 24),
+          )
+        : 0;
 
-    const message = `Bonjour,\n\nJe me permets de vous relancer concernant la facture ${invoice.number ?? ""} d'un montant de ${formatCents(invoice.balanceCents)} émise le ${formatDate(invoice.issueDate)}, dont le règlement était attendu le ${formatDate(invoice.dueDate)}.\n\nElle est actuellement en retard de ${daysOverdue} jour(s).\n\nMerci de bien vouloir procéder au règlement dans les meilleurs délais.\n\nCordialement`;
+      const message = `Bonjour,\n\nJe me permets de vous relancer concernant la facture ${invoice.number ?? ""} d'un montant de ${formatCents(invoice.balanceCents)} émise le ${formatDate(invoice.issueDate)}, dont le règlement était attendu le ${formatDate(invoice.dueDate)}.\n\nElle est actuellement en retard de ${daysOverdue} jour(s).\n\nMerci de bien vouloir procéder au règlement dans les meilleurs délais.\n\nCordialement`;
 
-    await navigator.clipboard.writeText(message);
-    toast.success("Message de relance copié dans le presse-papier !");
-    setActionMenuInvoiceId(null);
+      await navigator.clipboard.writeText(message);
+      toast.info(
+        error instanceof Error
+          ? `${error.message} — Message copié dans le presse-papier`
+          : "Message de relance copié dans le presse-papier",
+      );
+    } finally {
+      setActionMenuInvoiceId(null);
+    }
   };
 
   const handleOpenPaymentDialog = (invoice: InvoiceRow) => {

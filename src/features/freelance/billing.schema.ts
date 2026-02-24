@@ -9,9 +9,7 @@ import {
   ACTIVITY_CATEGORY_VALUES,
   FREELANCE_STATUS_VALUES,
 } from "@/features/freelance/billing-compliance-rules";
-import {
-  BILLING_DOCUMENT_TEMPLATE_IDS,
-} from "@/features/freelance/billing-document-templates";
+import { BILLING_DOCUMENT_TEMPLATE_IDS } from "@/features/freelance/billing-document-templates";
 import { z } from "zod";
 
 const optionalEmailSchema = z.string().email().optional().or(z.literal(""));
@@ -200,10 +198,12 @@ export const createInvoiceDraftSchema = z.object({
   lines: z.array(billingLineSchema).min(1),
 });
 
-export const updateInvoiceDraftSchema = createInvoiceDraftSchema.partial().extend({
-  invoiceId: z.string(),
-  dueDate: z.coerce.date().nullable().optional(),
-});
+export const updateInvoiceDraftSchema = createInvoiceDraftSchema
+  .partial()
+  .extend({
+    invoiceId: z.string(),
+    dueDate: z.coerce.date().nullable().optional(),
+  });
 
 export const issueInvoiceSchema = z.object({
   invoiceId: z.string(),
@@ -278,6 +278,35 @@ export const rebuildDeclarationPeriodsSchema = z.object({
   year: z.number().int().min(2020).max(2100),
   type: z.nativeEnum(BillingDeclarationPeriodType).optional(),
   contributionRatePercent: z.number().min(0).max(100).optional(),
+});
+
+export const createRecurringInvoiceSchema = z.object({
+  clientId: z.string(),
+  name: z.string().min(1, "Le nom est requis"),
+  frequency: z.enum(["MONTHLY", "QUARTERLY", "ANNUALLY"]),
+  lines: z.array(billingLineSchema).min(1),
+  currency: z.string().length(3).default("EUR"),
+  notes: z.string().optional(),
+  terms: z.string().optional(),
+  documentTemplate: z.enum(BILLING_DOCUMENT_TEMPLATE_IDS).optional(),
+  startDate: z.coerce.date(),
+  endDate: z.coerce.date().nullable().optional(),
+});
+
+export const updateRecurringInvoiceSchema = createRecurringInvoiceSchema
+  .partial()
+  .extend({
+    id: z.string(),
+    isActive: z.boolean().optional(),
+  });
+
+export const deleteRecurringInvoiceSchema = z.object({
+  id: z.string(),
+});
+
+export const listRecurringInvoicesSchema = z.object({
+  page: z.number().int().positive().default(1),
+  pageSize: z.number().int().positive().max(100).default(20),
 });
 
 export type BillingLineInput = z.infer<typeof billingLineSchema>;

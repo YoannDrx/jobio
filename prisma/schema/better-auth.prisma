@@ -67,6 +67,7 @@ model User {
   billingExpenseInvoices             BillingExpenseInvoice[]
   billingExpenseNotes                BillingExpenseNote[]
   billingExpenseTrips                BillingExpenseTrip[]
+  billingRecurringInvoices           BillingRecurringInvoice[]
   adminNotesReceived                 AdminUserNote[]                     @relation("AdminUserNoteTarget")
   adminNotesAuthored                 AdminUserNote[]                     @relation("AdminUserNoteAuthor")
 

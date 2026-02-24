@@ -10,6 +10,7 @@ import {
   HandCoins,
   LayoutDashboard,
   Receipt,
+  Repeat,
   Settings2,
   Users,
 } from "lucide-react";
@@ -77,6 +78,11 @@ const FREELANCE_LINKS: NavigationGroup[] = [
         Icon: HandCoins,
         label: "Paiements",
         tourId: "freelance-payments",
+      },
+      {
+        href: `${FREELANCE_PATH}/recurring`,
+        Icon: Repeat,
+        label: "Récurrences",
       },
     ],
   },

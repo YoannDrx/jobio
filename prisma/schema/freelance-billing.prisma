@@ -61,6 +61,7 @@ enum BillingEntityType {
   EXPENSE_INVOICE
   EXPENSE_NOTE
   EXPENSE_TRIP
+  RECURRING_INVOICE
 }
 
 enum BillingAuditEventType {
@@ -82,6 +83,12 @@ enum BillingDeclarationPeriodStatus {
   OPEN
   READY
   SUBMITTED
+}
+
+enum BillingRecurrenceFrequency {
+  MONTHLY
+  QUARTERLY
+  ANNUALLY
 }
 
 enum BillingExpenseStatus {
@@ -178,7 +185,8 @@ model BillingClient {
   quotes          BillingQuote[]
   invoices        BillingInvoice[]
   payments        BillingPayment[]
-  declarationRows BillingDeclarationPeriod[]
+  declarationRows       BillingDeclarationPeriod[]
+  recurringInvoices     BillingRecurringInvoice[]
 
   @@index([userId, deletedAt])
   @@index([userId, displayName])
@@ -651,4 +659,35 @@ model BillingExpenseTrip {
   @@index([userId, status, deletedAt])
   @@index([userId, tripDate])
   @@map("billing_expense_trip")
+}
+
+model BillingRecurringInvoice {
+  id       String @id @default(nanoid(11))
+  userId   String
+  clientId String
+
+  name              String
+  frequency         BillingRecurrenceFrequency
+  lines             Json
+  currency          String  @default("EUR")
+  notes             String?
+  terms             String?
+  documentTemplate  String?
+
+  startDate         DateTime
+  nextInvoiceDate   DateTime
+  endDate           DateTime?
+  isActive          Boolean  @default(true)
+  lastGeneratedAt   DateTime?
+  generatedCount    Int      @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user   User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  client BillingClient @relation(fields: [clientId], references: [id], onDelete: Restrict)
+
+  @@index([userId, isActive])
+  @@index([isActive, nextInvoiceDate])
+  @@map("billing_recurring_invoice")
 }

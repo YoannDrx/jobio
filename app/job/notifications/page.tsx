@@ -40,6 +40,7 @@ const NOTIFICATION_TYPE_LABELS: Record<NotificationType, string> = {
   MISSION_STALE: "Mission inactive",
   AI_QUOTA_HIGH: "Quota IA",
   SYSTEM: "Système",
+  BILLING_INVOICE_OVERDUE: "Facture en retard",
 };
 
 const ALL_TYPES: NotificationType[] = [
@@ -48,6 +49,7 @@ const ALL_TYPES: NotificationType[] = [
   "MISSION_STALE",
   "AI_QUOTA_HIGH",
   "SYSTEM",
+  "BILLING_INVOICE_OVERDUE",
 ];
 
 export default function NotificationsPage() {

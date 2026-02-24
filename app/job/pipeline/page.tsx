@@ -104,6 +104,10 @@ type SavedPipelineView = {
     platformIdFilter: string;
     tjmMinFilter: string;
     tjmMaxFilter: string;
+    workTypeFilter?: string[];
+    stackFilter?: string[];
+    scoreMinFilter?: string;
+    scoreMaxFilter?: string;
   };
 };
 
@@ -159,6 +163,22 @@ export default function PipelinePage() {
   );
   const [tjmMaxFilter, setTjmMaxFilter] = useQueryState(
     "tjm_max",
+    parseAsString.withDefault(""),
+  );
+  const [workTypeFilter, setWorkTypeFilter] = useQueryState(
+    "workType",
+    parseAsArrayOf(parseAsString).withDefault([]),
+  );
+  const [stackFilter, setStackFilter] = useQueryState(
+    "stack",
+    parseAsArrayOf(parseAsString).withDefault([]),
+  );
+  const [scoreMinFilter, setScoreMinFilter] = useQueryState(
+    "score_min",
+    parseAsString.withDefault(""),
+  );
+  const [scoreMaxFilter, setScoreMaxFilter] = useQueryState(
+    "score_max",
     parseAsString.withDefault(""),
   );
   const [platforms, setPlatforms] = useState<
@@ -232,6 +252,13 @@ export default function PipelinePage() {
           platformId: platformIdFilter || undefined,
           tjmMin: tjmMinFilter ? Number(tjmMinFilter) : undefined,
           tjmMax: tjmMaxFilter ? Number(tjmMaxFilter) : undefined,
+          workType:
+            workTypeFilter.length > 0
+              ? (workTypeFilter as ("REMOTE" | "HYBRID" | "ONSITE")[])
+              : undefined,
+          stack: stackFilter.length > 0 ? stackFilter : undefined,
+          scoreMin: scoreMinFilter ? Number(scoreMinFilter) : undefined,
+          scoreMax: scoreMaxFilter ? Number(scoreMaxFilter) : undefined,
           sortBy,
           sortOrder,
         }),
@@ -253,6 +280,10 @@ export default function PipelinePage() {
     platformIdFilter,
     tjmMinFilter,
     tjmMaxFilter,
+    workTypeFilter,
+    stackFilter,
+    scoreMinFilter,
+    scoreMaxFilter,
     sortBy,
     sortOrder,
   ]);
@@ -336,6 +367,10 @@ export default function PipelinePage() {
       void setPlatformIdFilter(view.state.platformIdFilter);
       void setTjmMinFilter(view.state.tjmMinFilter);
       void setTjmMaxFilter(view.state.tjmMaxFilter);
+      void setWorkTypeFilter(view.state.workTypeFilter ?? []);
+      void setStackFilter(view.state.stackFilter ?? []);
+      void setScoreMinFilter(view.state.scoreMinFilter ?? "");
+      void setScoreMaxFilter(view.state.scoreMaxFilter ?? "");
       toast.success(`Vue "${view.name}" appliquée`);
     },
     [
@@ -348,6 +383,10 @@ export default function PipelinePage() {
       setStatusFilter,
       setTjmMaxFilter,
       setTjmMinFilter,
+      setWorkTypeFilter,
+      setStackFilter,
+      setScoreMinFilter,
+      setScoreMaxFilter,
       setViewMode,
     ],
   );
@@ -381,6 +420,10 @@ export default function PipelinePage() {
               platformIdFilter,
               tjmMinFilter,
               tjmMaxFilter,
+              workTypeFilter,
+              stackFilter,
+              scoreMinFilter,
+              scoreMaxFilter,
             },
           };
           setSavedViews((prev) => [next, ...prev].slice(0, 20));
@@ -399,6 +442,10 @@ export default function PipelinePage() {
     statusFilter,
     tjmMaxFilter,
     tjmMinFilter,
+    workTypeFilter,
+    stackFilter,
+    scoreMinFilter,
+    scoreMaxFilter,
     viewMode,
   ]);
 
@@ -820,6 +867,10 @@ export default function PipelinePage() {
             platformId: platformIdFilter || undefined,
             tjmMin: tjmMinFilter ? Number(tjmMinFilter) : undefined,
             tjmMax: tjmMaxFilter ? Number(tjmMaxFilter) : undefined,
+            workType: workTypeFilter as ("REMOTE" | "HYBRID" | "ONSITE")[],
+            stack: stackFilter,
+            scoreMin: scoreMinFilter ? Number(scoreMinFilter) : undefined,
+            scoreMax: scoreMaxFilter ? Number(scoreMaxFilter) : undefined,
           }}
           platforms={platforms}
           onFiltersChange={(f) => {
@@ -831,6 +882,14 @@ export default function PipelinePage() {
             );
             void setTjmMaxFilter(
               f.tjmMax !== undefined ? String(f.tjmMax) : "",
+            );
+            void setWorkTypeFilter(f.workType);
+            void setStackFilter(f.stack);
+            void setScoreMinFilter(
+              f.scoreMin !== undefined ? String(f.scoreMin) : "",
+            );
+            void setScoreMaxFilter(
+              f.scoreMax !== undefined ? String(f.scoreMax) : "",
             );
           }}
         />

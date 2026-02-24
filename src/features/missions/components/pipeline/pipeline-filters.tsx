@@ -31,6 +31,13 @@ const PRIORITY_CONFIG = {
 
 type MissionPriority = keyof typeof PRIORITY_CONFIG;
 
+type WorkType = "REMOTE" | "HYBRID" | "ONSITE";
+const WORK_TYPE_CONFIG = {
+  REMOTE: { label: "Remote" },
+  HYBRID: { label: "Hybride" },
+  ONSITE: { label: "Sur site" },
+} as const;
+
 type PipelineFiltersProps = {
   filters: {
     status: MissionStatus[];
@@ -38,6 +45,10 @@ type PipelineFiltersProps = {
     platformId: string | undefined;
     tjmMin: number | undefined;
     tjmMax: number | undefined;
+    workType: WorkType[];
+    stack: string[];
+    scoreMin: number | undefined;
+    scoreMax: number | undefined;
   };
   platforms: { id: string; platform: { id: string; name: string } }[];
   onFiltersChange: (filters: PipelineFiltersProps["filters"]) => void;
@@ -55,7 +66,11 @@ export function PipelineFilters({
     filters.priority.length +
     (filters.platformId ? 1 : 0) +
     (filters.tjmMin !== undefined ? 1 : 0) +
-    (filters.tjmMax !== undefined ? 1 : 0);
+    (filters.tjmMax !== undefined ? 1 : 0) +
+    filters.workType.length +
+    filters.stack.length +
+    (filters.scoreMin !== undefined ? 1 : 0) +
+    (filters.scoreMax !== undefined ? 1 : 0);
 
   const toggleStatus = (status: MissionStatus) => {
     const next = filters.status.includes(status)
@@ -71,6 +86,13 @@ export function PipelineFilters({
     onFiltersChange({ ...filters, priority: next });
   };
 
+  const toggleWorkType = (wt: WorkType) => {
+    const next = filters.workType.includes(wt)
+      ? filters.workType.filter((w) => w !== wt)
+      : [...filters.workType, wt];
+    onFiltersChange({ ...filters, workType: next });
+  };
+
   const handleReset = () => {
     onFiltersChange({
       status: [] as MissionStatus[],
@@ -78,6 +100,10 @@ export function PipelineFilters({
       platformId: undefined,
       tjmMin: undefined,
       tjmMax: undefined,
+      workType: [] as WorkType[],
+      stack: [],
+      scoreMin: undefined,
+      scoreMax: undefined,
     });
   };
 
@@ -114,19 +140,19 @@ export function PipelineFilters({
               {PIPELINE_STATUS_VALUES.map((key) => {
                 const config = MISSION_STATUS_CONFIG[key];
                 return (
-                <button
-                  key={key}
-                  type="button"
-                  onClick={() => toggleStatus(key)}
-                  className={cn(
-                    "inline-flex items-center rounded-md border px-2.5 py-1 text-xs font-medium transition-colors",
-                    filters.status.includes(key)
-                      ? config.className
-                      : "text-muted-foreground hover:bg-accent border-transparent opacity-60 hover:opacity-100",
-                  )}
-                >
-                  {config.label}
-                </button>
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() => toggleStatus(key)}
+                    className={cn(
+                      "inline-flex items-center rounded-md border px-2.5 py-1 text-xs font-medium transition-colors",
+                      filters.status.includes(key)
+                        ? config.className
+                        : "text-muted-foreground hover:bg-accent border-transparent opacity-60 hover:opacity-100",
+                    )}
+                  >
+                    {config.label}
+                  </button>
                 );
               })}
             </div>
@@ -224,6 +250,101 @@ export function PipelineFilters({
                   onFiltersChange({
                     ...filters,
                     tjmMax: e.target.value ? Number(e.target.value) : undefined,
+                  })
+                }
+              />
+            </div>
+          </div>
+
+          {/* Work Type */}
+          <div className="flex flex-col gap-2">
+            <span className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+              Mode de travail
+            </span>
+            <div className="flex flex-wrap gap-2">
+              {(
+                Object.entries(WORK_TYPE_CONFIG) as [
+                  WorkType,
+                  (typeof WORK_TYPE_CONFIG)[WorkType],
+                ][]
+              ).map(([key, config]) => (
+                <button
+                  key={key}
+                  type="button"
+                  onClick={() => toggleWorkType(key)}
+                  className={cn(
+                    "inline-flex items-center rounded-md border px-2.5 py-1 text-xs font-medium transition-colors",
+                    filters.workType.includes(key)
+                      ? "bg-primary text-primary-foreground border-transparent"
+                      : "text-muted-foreground hover:bg-accent border-transparent opacity-60 hover:opacity-100",
+                  )}
+                >
+                  {config.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Stack */}
+          <div className="flex flex-col gap-2">
+            <span className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+              Stack technique
+            </span>
+            <Input
+              placeholder="React, Node.js, TypeScript..."
+              className="h-8 w-[280px]"
+              value={filters.stack.join(", ")}
+              onChange={(e) => {
+                const value = e.target.value;
+                const tags = value
+                  .split(",")
+                  .map((t) => t.trim())
+                  .filter(Boolean);
+                onFiltersChange({ ...filters, stack: tags });
+              }}
+            />
+          </div>
+
+          {/* Score */}
+          <div className="flex flex-wrap items-end gap-4">
+            <div className="flex flex-col gap-2">
+              <span className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+                Score min
+              </span>
+              <Input
+                type="number"
+                min={0}
+                max={100}
+                placeholder="0"
+                className="h-8 w-[100px]"
+                value={filters.scoreMin ?? ""}
+                onChange={(e) =>
+                  onFiltersChange({
+                    ...filters,
+                    scoreMin: e.target.value
+                      ? Number(e.target.value)
+                      : undefined,
+                  })
+                }
+              />
+            </div>
+            <div className="flex flex-col gap-2">
+              <span className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+                Score max
+              </span>
+              <Input
+                type="number"
+                min={0}
+                max={100}
+                placeholder="100"
+                className="h-8 w-[100px]"
+                value={filters.scoreMax ?? ""}
+                onChange={(e) =>
+                  onFiltersChange({
+                    ...filters,
+                    scoreMax: e.target.value
+                      ? Number(e.target.value)
+                      : undefined,
                   })
                 }
               />

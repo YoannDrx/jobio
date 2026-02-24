@@ -61,6 +61,7 @@ export const entityLabel: Record<BillingEntityType, string> = {
   EXPENSE_INVOICE: "Dépense facture",
   EXPENSE_NOTE: "Note de frais",
   EXPENSE_TRIP: "Trajet",
+  RECURRING_INVOICE: "Facture récurrente",
 };
 
 export const auditEventLabel: Record<BillingAuditEventType, string> = {
