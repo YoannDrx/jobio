@@ -10,6 +10,7 @@ import {
   listRecurringInvoicesSchema,
 } from "./billing.schema";
 import { createBillingAuditEvent } from "./billing-audit";
+import { enforcePlanLimit } from "@/lib/plan-limits";
 import type { BillingRecurrenceFrequency, Prisma } from "@/generated/prisma";
 
 export const computeNextInvoiceDate = (
@@ -17,6 +18,8 @@ export const computeNextInvoiceDate = (
   frequency: BillingRecurrenceFrequency,
 ): Date => {
   const next = new Date(currentDate);
+  const originalDay = next.getDate();
+
   switch (frequency) {
     case "MONTHLY":
       next.setMonth(next.getMonth() + 1);
@@ -28,12 +31,20 @@ export const computeNextInvoiceDate = (
       next.setFullYear(next.getFullYear() + 1);
       break;
   }
+
+  // Clamp to last day of target month if overflow occurred
+  if (next.getDate() !== originalDay) {
+    next.setDate(0); // Go to last day of previous month
+  }
+
   return next;
 };
 
 export const createRecurringInvoiceAction = authAction
   .inputSchema(createRecurringInvoiceSchema)
   .action(async ({ parsedInput, ctx: { user } }) => {
+    await enforcePlanLimit(user.id, "billingRecurringInvoices");
+
     const client = await prisma.billingClient.findFirst({
       where: { id: parsedInput.clientId, userId: user.id, deletedAt: null },
     });

@@ -19,6 +19,7 @@ type LimitFeature =
   | "billingQuotes"
   | "billingInvoices"
   | "billingCatalogItems"
+  | "billingRecurringInvoices"
   | "aiRequestsPerMonth"
   | "cvDocuments"
   | "sequences"
@@ -64,6 +65,7 @@ const LIMIT_FEATURE_LABELS: Record<LimitFeature, string> = {
   billingQuotes: "devis",
   billingInvoices: "factures",
   billingCatalogItems: "éléments de catalogue",
+  billingRecurringInvoices: "factures récurrentes",
   aiRequestsPerMonth: "requêtes IA/mois",
   cvDocuments: "documents CV",
   sequences: "séquences",
@@ -183,6 +185,11 @@ export async function checkPlanLimit(
         where: {
           userId,
         },
+      });
+      break;
+    case "billingRecurringInvoices":
+      used = await prisma.billingRecurringInvoice.count({
+        where: { userId },
       });
       break;
     case "aiRequestsPerMonth": {

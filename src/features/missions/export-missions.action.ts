@@ -50,6 +50,24 @@ export const exportMissionsAction = authAction
       }
     }
 
+    if (filters.workType?.length) {
+      where.workType = { in: filters.workType };
+    }
+
+    if (filters.stack?.length) {
+      where.stack = { hasSome: filters.stack };
+    }
+
+    if (filters.scoreMin !== undefined || filters.scoreMax !== undefined) {
+      where.score = {};
+      if (filters.scoreMin !== undefined) {
+        (where.score as Record<string, number>).gte = filters.scoreMin;
+      }
+      if (filters.scoreMax !== undefined) {
+        (where.score as Record<string, number>).lte = filters.scoreMax;
+      }
+    }
+
     const missions = await prisma.mission.findMany({
       where,
       include: {

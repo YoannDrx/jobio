@@ -11,7 +11,9 @@ export const GET = route.handler(async (req) => {
     route: new URL(req.url).pathname,
   });
 
-  const authFailure = validateCronAuthorization(req.headers.get("authorization"));
+  const authFailure = validateCronAuthorization(
+    req.headers.get("authorization"),
+  );
   if (authFailure) {
     await finishCronJobRun(run?.id, {
       status: authFailure.status === 401 ? "UNAUTHORIZED" : "FAILED",
@@ -148,6 +150,40 @@ export const GET = route.handler(async (req) => {
     await Promise.all(staleNotifications);
     totalSent += staleNotifications.length;
 
+    // Overdue invoices (for users with pushOverdueInvoices enabled)
+    const overdueInvoices = await prisma.billingInvoice.findMany({
+      where: {
+        status: "OVERDUE",
+        deletedAt: null,
+        user: {
+          preference: { pushOverdueInvoices: true },
+        },
+      },
+      select: {
+        userId: true,
+      },
+    });
+
+    const overdueInvoicesByUser = new Map<string, number>();
+    for (const invoice of overdueInvoices) {
+      overdueInvoicesByUser.set(
+        invoice.userId,
+        (overdueInvoicesByUser.get(invoice.userId) ?? 0) + 1,
+      );
+    }
+
+    const overdueInvoiceNotifications = [
+      ...overdueInvoicesByUser.entries(),
+    ].map(async ([userId, count]) =>
+      sendPushNotification(userId, {
+        title: "Factures en retard",
+        body: `${count} facture${count > 1 ? "s" : ""} en retard de paiement`,
+        url: "/freelance/invoices",
+      }),
+    );
+    await Promise.all(overdueInvoiceNotifications);
+    totalSent += overdueInvoiceNotifications.length;
+
     await finishCronJobRun(run?.id, {
       status: "SUCCESS",
       processedCount: totalSent,
@@ -155,6 +191,7 @@ export const GET = route.handler(async (req) => {
         dueToday: dueToday.length,
         overdue: overdue.length,
         staleMissions: staleMissions.length,
+        overdueInvoices: overdueInvoices.length,
       },
     });
 
@@ -163,6 +200,7 @@ export const GET = route.handler(async (req) => {
       dueToday: dueToday.length,
       overdue: overdue.length,
       staleMissions: staleMissions.length,
+      overdueInvoices: overdueInvoices.length,
     });
   } catch (error) {
     await finishCronJobRun(run?.id, {

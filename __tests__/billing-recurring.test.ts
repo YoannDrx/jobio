@@ -9,9 +9,25 @@ describe("computeNextInvoiceDate", () => {
     expect(result.getDate()).toBe(15);
   });
 
-  it("should handle month overflow for MONTHLY (Jan 31 -> Feb 28)", () => {
+  it("should handle month overflow for MONTHLY (Jan 31 -> Feb 29 leap year)", () => {
     const result = computeNextInvoiceDate(new Date("2024-01-31"), "MONTHLY");
-    expect(result.getMonth()).toBe(2); // March (JS overflow from Feb 31)
+    expect(result.getFullYear()).toBe(2024);
+    expect(result.getMonth()).toBe(1); // February
+    expect(result.getDate()).toBe(29); // 2024 is a leap year
+  });
+
+  it("should handle month overflow for MONTHLY (Jan 31 -> Feb 28 non-leap year)", () => {
+    const result = computeNextInvoiceDate(new Date("2025-01-31"), "MONTHLY");
+    expect(result.getFullYear()).toBe(2025);
+    expect(result.getMonth()).toBe(1); // February
+    expect(result.getDate()).toBe(28);
+  });
+
+  it("should handle month overflow for QUARTERLY (Jan 31 -> Apr 30)", () => {
+    const result = computeNextInvoiceDate(new Date("2024-01-31"), "QUARTERLY");
+    expect(result.getFullYear()).toBe(2024);
+    expect(result.getMonth()).toBe(3); // April
+    expect(result.getDate()).toBe(30);
   });
 
   it("should handle year transition for MONTHLY", () => {

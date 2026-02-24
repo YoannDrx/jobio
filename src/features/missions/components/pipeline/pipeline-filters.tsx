@@ -19,7 +19,7 @@ import { MISSION_STATUS_CONFIG } from "@/components/nowts/status-badge";
 import type { MissionStatus } from "@/components/nowts/status-badge";
 import { PIPELINE_STATUS_VALUES } from "@/features/missions/mission-status";
 import { cn } from "@/lib/utils";
-import { RotateCcw, SlidersHorizontal } from "lucide-react";
+import { RotateCcw, SlidersHorizontal, X } from "lucide-react";
 import { useState } from "react";
 
 const PRIORITY_CONFIG = {
@@ -290,17 +290,40 @@ export function PipelineFilters({
             <span className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
               Stack technique
             </span>
+            <div className="flex flex-wrap gap-1.5">
+              {filters.stack.map((tag) => (
+                <Badge key={tag} variant="secondary" className="gap-1 pr-1">
+                  {tag}
+                  <button
+                    type="button"
+                    onClick={() =>
+                      onFiltersChange({
+                        ...filters,
+                        stack: filters.stack.filter((t) => t !== tag),
+                      })
+                    }
+                    className="hover:bg-muted rounded-sm p-0.5"
+                  >
+                    <X className="size-3" />
+                  </button>
+                </Badge>
+              ))}
+            </div>
             <Input
-              placeholder="React, Node.js, TypeScript..."
+              placeholder="Ajouter une techno (Entrée pour valider)..."
               className="h-8 w-[280px]"
-              value={filters.stack.join(", ")}
-              onChange={(e) => {
-                const value = e.target.value;
-                const tags = value
-                  .split(",")
-                  .map((t) => t.trim())
-                  .filter(Boolean);
-                onFiltersChange({ ...filters, stack: tags });
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === ",") {
+                  e.preventDefault();
+                  const value = e.currentTarget.value.trim();
+                  if (value && !filters.stack.includes(value)) {
+                    onFiltersChange({
+                      ...filters,
+                      stack: [...filters.stack, value],
+                    });
+                  }
+                  e.currentTarget.value = "";
+                }
               }}
             />
           </div>

@@ -72,6 +72,7 @@ type RecurringRow = {
   nextInvoiceDate: Date | string;
   endDate: Date | string | null;
   isActive: boolean;
+  lastGeneratedAt: Date | string | null;
   generatedCount: number;
   lines: unknown;
   client: {
@@ -284,6 +285,11 @@ export function FreelanceRecurringManager() {
       return;
     }
 
+    if (formEndDate && new Date(formEndDate) <= new Date(formStartDate)) {
+      toast.error("La date de fin doit être postérieure à la date de début");
+      return;
+    }
+
     const lines = formLines.map(parseLineForm);
     if (lines.some((l) => l === null) || lines.length === 0) {
       toast.error("Chaque ligne doit être valide");
@@ -472,7 +478,16 @@ export function FreelanceRecurringManager() {
                         {formatDate(recurring.nextInvoiceDate)}
                       </TableCell>
                       <TableCell>{formatCents(totalCents)}</TableCell>
-                      <TableCell>{recurring.generatedCount}</TableCell>
+                      <TableCell>
+                        <div className="flex flex-col">
+                          <span>{recurring.generatedCount}</span>
+                          {recurring.lastGeneratedAt && (
+                            <span className="text-muted-foreground text-xs">
+                              {formatDate(recurring.lastGeneratedAt)}
+                            </span>
+                          )}
+                        </div>
+                      </TableCell>
                       <TableCell>
                         <Badge
                           variant={recurring.isActive ? "default" : "outline"}
@@ -594,6 +609,7 @@ export function FreelanceRecurringManager() {
                 <Input
                   type="date"
                   value={formEndDate}
+                  min={formStartDate}
                   onChange={(e) => setFormEndDate(e.target.value)}
                 />
               </div>

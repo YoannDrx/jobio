@@ -280,7 +280,7 @@ export const rebuildDeclarationPeriodsSchema = z.object({
   contributionRatePercent: z.number().min(0).max(100).optional(),
 });
 
-export const createRecurringInvoiceSchema = z.object({
+const recurringInvoiceBaseSchema = z.object({
   clientId: z.string(),
   name: z.string().min(1, "Le nom est requis"),
   frequency: z.enum(["MONTHLY", "QUARTERLY", "ANNUALLY"]),
@@ -293,7 +293,15 @@ export const createRecurringInvoiceSchema = z.object({
   endDate: z.coerce.date().nullable().optional(),
 });
 
-export const updateRecurringInvoiceSchema = createRecurringInvoiceSchema
+export const createRecurringInvoiceSchema = recurringInvoiceBaseSchema.refine(
+  (data) => !data.endDate || data.endDate > data.startDate,
+  {
+    message: "La date de fin doit être postérieure à la date de début",
+    path: ["endDate"],
+  },
+);
+
+export const updateRecurringInvoiceSchema = recurringInvoiceBaseSchema
   .partial()
   .extend({
     id: z.string(),

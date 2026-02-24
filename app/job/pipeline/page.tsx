@@ -652,6 +652,13 @@ export default function PipelinePage() {
                   platformId: platformIdFilter || undefined,
                   tjmMin: tjmMinFilter ? Number(tjmMinFilter) : undefined,
                   tjmMax: tjmMaxFilter ? Number(tjmMaxFilter) : undefined,
+                  workType:
+                    workTypeFilter.length > 0
+                      ? (workTypeFilter as ("REMOTE" | "HYBRID" | "ONSITE")[])
+                      : undefined,
+                  stack: stackFilter.length > 0 ? stackFilter : undefined,
+                  scoreMin: scoreMinFilter ? Number(scoreMinFilter) : undefined,
+                  scoreMax: scoreMaxFilter ? Number(scoreMaxFilter) : undefined,
                 }),
               );
               const csv = generateCsv(rows, [
@@ -893,6 +900,25 @@ export default function PipelinePage() {
             );
           }}
         />
+
+        {/* Filtered results count */}
+        {missions &&
+          statusFilter.length +
+            priorityFilter.length +
+            (platformIdFilter ? 1 : 0) +
+            (tjmMinFilter ? 1 : 0) +
+            (tjmMaxFilter ? 1 : 0) +
+            workTypeFilter.length +
+            stackFilter.length +
+            (scoreMinFilter ? 1 : 0) +
+            (scoreMaxFilter ? 1 : 0) >
+            0 && (
+            <p className="text-muted-foreground text-sm">
+              {missions.total} mission
+              {missions.total !== 1 ? "s" : ""} correspondante
+              {missions.total !== 1 ? "s" : ""}
+            </p>
+          )}
 
         {/* Content */}
         {isLoading ? (

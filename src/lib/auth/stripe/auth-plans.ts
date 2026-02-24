@@ -36,6 +36,7 @@ export const DEFAULT_LIMIT = {
   billingQuotes: 0,
   billingInvoices: 0,
   billingCatalogItems: 0,
+  billingRecurringInvoices: 0,
   aiRequestsPerMonth: 5,
   analyticsHistoryDays: 7,
   cvDocuments: 1,
@@ -51,7 +52,9 @@ export const DEFAULT_LIMIT = {
 };
 
 export type PlanLimit = typeof DEFAULT_LIMIT;
-export const PLAN_LIMIT_KEYS = Object.keys(DEFAULT_LIMIT) as (keyof PlanLimit)[];
+export const PLAN_LIMIT_KEYS = Object.keys(
+  DEFAULT_LIMIT,
+) as (keyof PlanLimit)[];
 
 export type OverrideLimits = Partial<PlanLimit>;
 
@@ -125,6 +128,7 @@ export const AUTH_PLANS: AppAuthPlan[] = [
       billingQuotes: 50,
       billingInvoices: 50,
       billingCatalogItems: 25,
+      billingRecurringInvoices: 5,
       aiRequestsPerMonth: 50,
       analyticsHistoryDays: 90,
       cvDocuments: 10,
@@ -212,6 +216,7 @@ export const AUTH_PLANS: AppAuthPlan[] = [
       billingQuotes: 999999,
       billingInvoices: 999999,
       billingCatalogItems: 999999,
+      billingRecurringInvoices: 999999,
       aiRequestsPerMonth: 999,
       analyticsHistoryDays: 999999,
       cvDocuments: 999999,
@@ -298,6 +303,14 @@ export const LIMITS_CONFIG: Record<
     getLabel: (value: number) =>
       value >= 999999 ? "Catalogue illimité" : `${value} éléments catalogue`,
     description: "Maintenir un catalogue de prestations réutilisables",
+  },
+  billingRecurringInvoices: {
+    icon: RefreshCw,
+    getLabel: (value: number) =>
+      value >= 999999
+        ? "Factures récurrentes illimitées"
+        : `${value} factures récurrentes`,
+    description: "Automatiser la génération de factures périodiques",
   },
   aiRequestsPerMonth: {
     icon: Bot,

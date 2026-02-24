@@ -42,6 +42,7 @@ export const GET = route.handler(async (req) => {
         isActive: true,
         nextInvoiceDate: { lte: today },
         OR: [{ endDate: null }, { endDate: { gte: today } }],
+        client: { deletedAt: null },
       },
       include: {
         user: { select: { id: true, name: true, email: true } },
