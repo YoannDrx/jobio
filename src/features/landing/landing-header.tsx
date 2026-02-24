@@ -68,19 +68,8 @@ export function LandingHeader() {
     <motion.header
       style={{
         height: useTransform(scrollYBoundedProgressDelayed, [0, 1], [80, 50]),
-        backdropFilter: useTransform(
-          scrollYBoundedProgressDelayed,
-          [0, 1],
-          ["blur(8px)", "blur(16px)"],
-        ),
-        borderBottomColor: useTransform(
-          scrollYBoundedProgressDelayed,
-          [0, 1],
-          ["rgba(255,255,255,0)", "rgba(255,255,255,0.15)"],
-        ),
-        borderBottomWidth: "1px",
       }}
-      className="fixed relative inset-x-0 z-50 flex h-20 w-screen shadow"
+      className="fixed inset-x-0 z-50 flex h-20 w-screen shadow backdrop-blur-md"
     >
       <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-4 lg:px-8">
         <div className="flex items-center gap-1">

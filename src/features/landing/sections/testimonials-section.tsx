@@ -1,7 +1,6 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import { Typography } from "@/components/nowts/typography";
 import { motion } from "motion/react";
 import {
@@ -10,14 +9,11 @@ import {
   defaultTransition,
 } from "@/features/landing/motion-variants";
 import { useSectionInView } from "@/features/landing/use-section-in-view";
-import { Quote, Star } from "lucide-react";
 
 type Testimonial = {
   name: string;
   role: string;
   quote: string;
-  initials: string;
-  color: string;
 };
 
 const testimonials: Testimonial[] = [
@@ -26,29 +22,23 @@ const testimonials: Testimonial[] = [
     role: "Dev React freelance",
     quote:
       "Avant Jobio, je perdais 2h par semaine à suivre mes missions dans Notion. Maintenant tout est au même endroit et je ne rate plus aucune relance.",
-    initials: "TR",
-    color: "bg-brand-cyan",
   },
   {
     name: "Sarah M.",
     role: "Data Engineer freelance",
     quote:
       "Le scoring IA m'a fait gagner un temps fou. Je sais tout de suite si une mission vaut le coup.",
-    initials: "SM",
-    color: "bg-brand-violet",
   },
   {
     name: "Alex P.",
     role: "Product Manager freelance",
     quote:
       "La facturation intégrée, c'est le game changer. Plus besoin de jongler entre 3 outils.",
-    initials: "AP",
-    color: "bg-brand-emerald",
   },
 ];
 
 export const TestimonialsSection = () => {
-  const { ref, isInView, shouldAnimate } = useSectionInView();
+  const { ref, isInView } = useSectionInView();
 
   return (
     <section ref={ref} className="bg-muted/30 py-16 lg:py-24" id="testimonials">
@@ -64,7 +54,7 @@ export const TestimonialsSection = () => {
         </div>
 
         <motion.div
-          className="grid gap-6 md:grid-cols-2 lg:grid-cols-3"
+          className="mx-auto grid max-w-4xl gap-6 md:grid-cols-3"
           initial="initial"
           animate={isInView ? "animate" : "initial"}
           variants={staggerContainer(0.15)}
@@ -76,58 +66,17 @@ export const TestimonialsSection = () => {
               variants={fadeInUp}
               transition={defaultTransition}
             >
-              <Card className="border-border/70 h-full">
-                <CardContent className="flex flex-col gap-4 p-6">
-                  <motion.div
-                    initial={shouldAnimate ? { opacity: 0, scale: 0.95 } : {}}
-                    animate={isInView ? { opacity: 1, scale: 1 } : {}}
-                    transition={{
-                      type: "spring",
-                      stiffness: 300,
-                      damping: 15,
-                      delay: index * 0.1,
-                    }}
-                  >
-                    <Quote className="text-primary/20 size-8" />
-                  </motion.div>
-
-                  <p className="text-sm leading-relaxed italic">
-                    "{testimonial.quote}"
+              <div className="border-border/40 flex h-full flex-col justify-between rounded-xl border p-6">
+                <p className="text-foreground/80 text-sm leading-relaxed">
+                  &laquo;&nbsp;{testimonial.quote}&nbsp;&raquo;
+                </p>
+                <div className="border-border/30 mt-5 border-t pt-4">
+                  <p className="text-sm font-medium">{testimonial.name}</p>
+                  <p className="text-muted-foreground text-xs">
+                    {testimonial.role}
                   </p>
-
-                  <div className="flex gap-0.5">
-                    {Array.from({ length: 5 }).map((_, i) => (
-                      <motion.div
-                        key={i}
-                        initial={shouldAnimate ? { scale: 0 } : { scale: 1 }}
-                        animate={isInView ? { scale: 1 } : {}}
-                        transition={{
-                          type: "spring",
-                          stiffness: 300,
-                          damping: 15,
-                          delay: i * 0.06,
-                        }}
-                      >
-                        <Star className="fill-brand-amber text-brand-amber size-4" />
-                      </motion.div>
-                    ))}
-                  </div>
-
-                  <div className="flex items-center gap-3 border-t pt-4">
-                    <div
-                      className={`flex size-10 items-center justify-center rounded-full text-sm font-bold text-white ${testimonial.color}`}
-                    >
-                      {testimonial.initials}
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium">{testimonial.name}</p>
-                      <p className="text-muted-foreground text-xs">
-                        {testimonial.role}
-                      </p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             </motion.div>
           ))}
         </motion.div>

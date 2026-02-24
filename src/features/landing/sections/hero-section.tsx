@@ -12,7 +12,7 @@ import {
 import { useSectionInView } from "@/features/landing/use-section-in-view";
 import { getPlanLimits } from "@/lib/auth/stripe/auth-plans";
 import { motion, useScroll, useTransform } from "motion/react";
-import { ArrowRight, Target } from "lucide-react";
+import { ArrowRight, ChevronDown } from "lucide-react";
 import Link from "next/link";
 import { useRef } from "react";
 
@@ -53,42 +53,43 @@ export function HeroSection() {
   ];
 
   return (
-    <section ref={ref} className="relative isolate py-24 sm:py-32 lg:pb-40">
-      {/* Animated blobs background */}
-      <motion.div
-        className="bg-brand-cyan/25 absolute top-20 left-[8%] size-64 rounded-full blur-[90px]"
-        animate={
-          shouldAnimate ? { x: [0, 30, -20, 0], y: [0, -20, 15, 0] } : {}
-        }
-        transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
-      />
-      <motion.div
-        className="absolute top-40 right-[10%] size-72 rounded-full bg-emerald-500/25 blur-[90px]"
-        animate={
-          shouldAnimate ? { x: [0, -40, 20, 0], y: [0, 30, -20, 0] } : {}
-        }
-        transition={{
-          duration: 24,
-          repeat: Infinity,
-          ease: "easeInOut",
-          delay: 0.5,
-        }}
-      />
-      <motion.div
-        className="absolute bottom-20 left-1/3 size-80 rounded-full bg-amber-500/20 blur-[90px]"
-        animate={
-          shouldAnimate ? { x: [0, 25, -30, 0], y: [0, -30, 10, 0] } : {}
-        }
-        transition={{
-          duration: 22,
-          repeat: Infinity,
-          ease: "easeInOut",
-          delay: 1,
-        }}
-      />
+    <section ref={ref} className="relative isolate">
+      {/* ── Above the fold: full viewport height ── */}
+      <div className="relative flex min-h-[calc(100dvh-5rem)] flex-col items-center justify-center overflow-hidden px-6 lg:px-8">
+        {/* Animated blobs background */}
+        <motion.div
+          className="bg-brand-cyan/25 pointer-events-none absolute top-20 left-[8%] size-64 rounded-full blur-[90px]"
+          animate={
+            shouldAnimate ? { x: [0, 30, -20, 0], y: [0, -20, 15, 0] } : {}
+          }
+          transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
+        />
+        <motion.div
+          className="pointer-events-none absolute top-40 right-[10%] size-72 rounded-full bg-emerald-500/25 blur-[90px]"
+          animate={
+            shouldAnimate ? { x: [0, -40, 20, 0], y: [0, 30, -20, 0] } : {}
+          }
+          transition={{
+            duration: 24,
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: 0.5,
+          }}
+        />
+        <motion.div
+          className="pointer-events-none absolute bottom-20 left-1/3 size-80 rounded-full bg-amber-500/20 blur-[90px]"
+          animate={
+            shouldAnimate ? { x: [0, 25, -30, 0], y: [0, -30, 10, 0] } : {}
+          }
+          transition={{
+            duration: 22,
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: 1,
+          }}
+        />
 
-      <div className="mx-auto max-w-7xl px-6 lg:px-8">
-        {/* Hero content */}
+        {/* Hero copy */}
         <motion.div
           className="mx-auto max-w-2xl text-center"
           variants={staggerContainer(0.1)}
@@ -96,7 +97,6 @@ export function HeroSection() {
           animate="animate"
           transition={defaultTransition}
         >
-          {/* Badge */}
           <motion.div
             variants={fadeInUp}
             transition={{ ...defaultTransition, delay: 0.1 }}
@@ -106,20 +106,17 @@ export function HeroSection() {
             </Badge>
           </motion.div>
 
-          {/* H1 */}
           <div className="mt-6 space-y-2">
-            {/* Line 1 */}
             <motion.h1
-              className="text-5xl font-bold tracking-tight text-balance sm:text-7xl lg:text-7xl"
+              className="text-5xl font-bold tracking-tight text-balance sm:text-7xl"
               variants={fadeInUp}
               transition={{ ...defaultTransition, delay: 0.2 }}
             >
               Prospection premium.
             </motion.h1>
 
-            {/* Line 2 with gradient animation */}
             <motion.h1
-              className="bg-clip-text text-5xl font-bold tracking-tight text-balance text-transparent sm:text-7xl lg:text-7xl"
+              className="bg-clip-text text-5xl font-bold tracking-tight text-balance text-transparent sm:text-7xl"
               style={{
                 backgroundImage:
                   "linear-gradient(90deg, rgb(56, 189, 248), rgb(34, 197, 94), rgb(56, 189, 248))",
@@ -138,7 +135,6 @@ export function HeroSection() {
             </motion.h1>
           </div>
 
-          {/* Subtitle */}
           <motion.p
             className="text-muted-foreground mt-6 text-lg font-medium text-pretty sm:text-xl/8"
             variants={fadeInUp}
@@ -148,7 +144,6 @@ export function HeroSection() {
             les insights pour transformer chaque opportunité en contrat signé.
           </motion.p>
 
-          {/* CTAs */}
           <motion.div
             className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row sm:gap-6"
             variants={fadeInUp}
@@ -181,7 +176,6 @@ export function HeroSection() {
             </Link>
           </motion.div>
 
-          {/* Trust line */}
           <motion.p
             className="text-muted-foreground mt-6 text-sm font-medium"
             variants={fadeInUp}
@@ -192,9 +186,31 @@ export function HeroSection() {
           </motion.p>
         </motion.div>
 
-        {/* Stats section */}
+        {/* Scroll chevron */}
         <motion.div
-          className="mt-16 grid grid-cols-2 gap-4 sm:mt-24 md:grid-cols-4"
+          className="absolute bottom-6 left-1/2 -translate-x-1/2"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1.2, duration: 0.6 }}
+        >
+          <motion.div
+            animate={shouldAnimate ? { y: [0, 6, 0] } : {}}
+            transition={{
+              duration: 1.8,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+          >
+            <ChevronDown className="text-muted-foreground/50 size-6" />
+          </motion.div>
+        </motion.div>
+      </div>
+
+      {/* ── Below the fold: stats + demos ── */}
+      <div className="mx-auto max-w-7xl px-6 pb-16 lg:px-8 lg:pb-24">
+        {/* Stats */}
+        <motion.div
+          className="grid grid-cols-2 gap-4 md:grid-cols-4"
           variants={staggerContainer(0.08)}
           initial={shouldAnimate ? "initial" : "animate"}
           animate="animate"
@@ -211,33 +227,26 @@ export function HeroSection() {
         </motion.div>
 
         {/* Demo section with parallax */}
-        <div ref={heroRef} className="mt-16 sm:mt-24">
+        <div ref={heroRef} className="mt-12 sm:mt-16">
           <motion.div
             className="grid gap-4 lg:grid-cols-[1.3fr_0.7fr]"
             initial={shouldAnimate ? "initial" : "animate"}
             animate="animate"
           >
             {/* Left: Kanban demo */}
-            <motion.div
-              style={{ y: y1 }}
-              className="rounded-xl border border-white/20 bg-white/5 p-4 backdrop-blur-sm"
-            >
-              <div className="mb-4 flex items-center gap-2">
-                <Target className="text-brand-cyan size-5" />
-                <span className="text-sm font-medium">Kanban de missions</span>
-              </div>
+            <motion.div style={{ y: y1 }}>
               <LazyLandingDemo demo="kanban" skeletonClassName="h-96" />
             </motion.div>
 
             {/* Right column: Score ring + Sequence */}
             <motion.div style={{ y: y2 }} className="flex flex-col gap-4">
-              <div className="rounded-xl border border-white/20 bg-white/5 p-4 backdrop-blur-sm">
+              <div className="rounded-xl border border-white/20 bg-white/5 p-4 backdrop-blur-sm dark:border-white/10 dark:bg-black/20">
                 <div className="mb-4 flex items-center gap-2">
                   <span className="text-sm font-medium">Score de mission</span>
                 </div>
                 <LazyLandingDemo demo="score-ring" skeletonClassName="h-48" />
               </div>
-              <div className="rounded-xl border border-white/20 bg-white/5 p-4 backdrop-blur-sm">
+              <div className="rounded-xl border border-white/20 bg-white/5 p-4 backdrop-blur-sm dark:border-white/10 dark:bg-black/20">
                 <div className="mb-4 flex items-center gap-2">
                   <span className="text-sm font-medium">
                     Séquences de relance
