@@ -106,32 +106,13 @@ export function HeroSection() {
             </Badge>
           </motion.div>
 
-          <div className="mt-6 space-y-2">
+          <div className="mt-6">
             <motion.h1
               className="text-5xl font-bold tracking-tight text-balance sm:text-7xl"
               variants={fadeInUp}
               transition={{ ...defaultTransition, delay: 0.2 }}
             >
-              Prospection premium.
-            </motion.h1>
-
-            <motion.h1
-              className="bg-clip-text text-5xl font-bold tracking-tight text-balance text-transparent sm:text-7xl"
-              style={{
-                backgroundImage:
-                  "linear-gradient(90deg, rgb(56, 189, 248), rgb(34, 197, 94), rgb(56, 189, 248))",
-                backgroundSize: "200% 100%",
-              }}
-              animate={
-                shouldAnimate
-                  ? { backgroundPosition: ["0% 50%", "100% 50%", "0% 50%"] }
-                  : {}
-              }
-              transition={{ duration: 6, repeat: Infinity, ease: "linear" }}
-              variants={fadeInUp}
-              initial={shouldAnimate ? "initial" : "animate"}
-            >
-              Exécution sans friction.
+              Trouve. Relance. Signe.
             </motion.h1>
           </div>
 
@@ -140,8 +121,8 @@ export function HeroSection() {
             variants={fadeInUp}
             transition={{ ...defaultTransition, delay: 0.45 }}
           >
-            Jobio structure ton pipeline, automatise tes relances et te donne
-            les insights pour transformer chaque opportunité en contrat signé.
+            Jobio structure ton pipeline freelance pour que chaque opportunité
+            devienne un contrat.
           </motion.p>
 
           <motion.div
