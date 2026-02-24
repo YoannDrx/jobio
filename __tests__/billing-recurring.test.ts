@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { computeNextInvoiceDate } from "@/features/freelance/billing-recurring.action";
+import { computeNextInvoiceDate } from "@/features/freelance/billing-recurring-utils";
 
 describe("computeNextInvoiceDate", () => {
   it("should add 1 month for MONTHLY", () => {

@@ -9,7 +9,7 @@ import {
   computeDocumentLines,
   computeDocumentTotals,
 } from "@/features/freelance/billing-math";
-import { computeNextInvoiceDate } from "@/features/freelance/billing-recurring.action";
+import { computeNextInvoiceDate } from "@/features/freelance/billing-recurring-utils";
 import { createBillingAuditEvent } from "@/features/freelance/billing-audit";
 import type { BillingLineInput } from "@/features/freelance/billing-math";
 
