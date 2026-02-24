@@ -30,14 +30,9 @@ export const ProviderButton = (props: ProviderButtonProps) => {
 
   const githubSignInMutation = useMutation({
     mutationFn: async () => {
-      const callbackParams = new URLSearchParams({
-        provider: props.providerId,
-        callbackUrl: safeCallbackUrl,
-      });
-
       await authClient.signIn.social({
         provider: props.providerId,
-        callbackURL: getCallbackUrl(`/auth/last-used-provider?${callbackParams}`),
+        callbackURL: getCallbackUrl(safeCallbackUrl),
       });
     },
   });

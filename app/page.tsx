@@ -130,7 +130,7 @@ const faqJsonLd = {
 
 export default function HomePage() {
   return (
-    <div className="bg-background text-foreground relative min-h-screen overflow-x-hidden">
+    <div className="bg-background text-foreground relative min-h-screen overflow-x-clip">
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}

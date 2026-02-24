@@ -36,7 +36,8 @@ export function FaqSection({ faqs }: { faqs: FaqItem[] }) {
           className="flex flex-col gap-3"
           variants={fadeInLeft}
           initial={shouldAnimate ? "initial" : "animate"}
-          animate="animate"
+          whileInView="animate"
+          viewport={{ once: true, margin: "-80px" }}
           transition={{ ...defaultTransition, duration: 0.5 }}
         >
           <Badge className="w-fit">FAQ</Badge>
@@ -52,7 +53,8 @@ export function FaqSection({ faqs }: { faqs: FaqItem[] }) {
         <motion.div
           variants={staggerContainer(0.06)}
           initial={shouldAnimate ? "initial" : "animate"}
-          animate="animate"
+          whileInView="animate"
+          viewport={{ once: true, margin: "-80px" }}
         >
           <Card className="border-border/70">
             <CardContent className="p-2 sm:p-4">

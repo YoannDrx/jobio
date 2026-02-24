@@ -55,7 +55,8 @@ export function UseCasesSection() {
             className="flex flex-col items-center gap-2"
             variants={fadeInUp}
             initial={shouldAnimate ? "initial" : "animate"}
-            animate="animate"
+            whileInView="animate"
+            viewport={{ once: true, margin: "-80px" }}
             transition={{ ...defaultTransition, duration: 0.5 }}
           >
             <Badge variant="default">Use cases</Badge>
@@ -73,7 +74,8 @@ export function UseCasesSection() {
             className="grid gap-4 md:grid-cols-3"
             variants={staggerContainer(0.12)}
             initial={shouldAnimate ? "initial" : "animate"}
-            animate="animate"
+            whileInView="animate"
+            viewport={{ once: true, margin: "-80px" }}
           >
             {useCaseCtas.map((item, index) => {
               const Icon = item.icon;

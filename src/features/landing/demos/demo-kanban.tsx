@@ -12,7 +12,7 @@ const columns = [
       {
         name: "Dev React Senior",
         company: "BNP Paribas",
-        tjm: "600\u20AC/j",
+        tjm: "600€/j",
         score: 87,
         scoreColor: "text-emerald-400",
         tags: ["React", "TypeScript"],
@@ -20,7 +20,7 @@ const columns = [
       {
         name: "Fullstack Node",
         company: "Qonto",
-        tjm: "550\u20AC/j",
+        tjm: "550€/j",
         score: 72,
         scoreColor: "text-amber-400",
         tags: ["Node.js", "PostgreSQL"],
@@ -28,7 +28,7 @@ const columns = [
     ],
   },
   {
-    title: "Postul\u00E9",
+    title: "Postulé",
     count: 1,
     dot: "bg-amber-400",
     headerBorder: "border-amber-400/40",
@@ -36,7 +36,7 @@ const columns = [
       {
         name: "Lead Front",
         company: "Alan",
-        tjm: "650\u20AC/j",
+        tjm: "650€/j",
         score: 91,
         scoreColor: "text-emerald-400",
         tags: ["React", "Design System"],
@@ -52,7 +52,7 @@ const columns = [
       {
         name: "Archi Cloud",
         company: "Doctolib",
-        tjm: "700\u20AC/j",
+        tjm: "700€/j",
         score: 95,
         scoreColor: "text-emerald-400",
         tags: ["AWS", "Terraform"],
@@ -60,7 +60,7 @@ const columns = [
     ],
   },
   {
-    title: "Gagn\u00E9",
+    title: "Gagné",
     count: 1,
     dot: "bg-emerald-400",
     headerBorder: "border-emerald-400/40",
@@ -68,7 +68,7 @@ const columns = [
       {
         name: "Tech Lead",
         company: "Swile",
-        tjm: "680\u20AC/j",
+        tjm: "680€/j",
         score: 93,
         scoreColor: "text-emerald-400",
         tags: ["React", "Node.js"],

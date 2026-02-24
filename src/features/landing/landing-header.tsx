@@ -35,18 +35,10 @@ function useBoundedScroll(threshold: number) {
       scrollYBounded.set(clamp(newScrollYBounded, 0, threshold));
     };
 
-    const deleteEvent = scrollY.on("change", onChange);
-
-    const listener = () => {
-      const currentScroll = window.scrollY;
-      onChange(currentScroll);
-    };
-
-    window.addEventListener("scroll", listener);
+    const unsubscribe = scrollY.on("change", onChange);
 
     return () => {
-      deleteEvent();
-      window.removeEventListener("scroll", listener);
+      unsubscribe();
     };
   }, [threshold, scrollY, scrollYBounded]);
 

@@ -2,7 +2,13 @@
 
 import { cn } from "@/lib/utils";
 import dynamic from "next/dynamic";
-import { type ComponentType, useEffect, useRef, useState } from "react";
+import {
+  type ComponentType,
+  Suspense,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 
 type LandingDemoKind = "kanban" | "score-ring" | "sequence" | "analytics";
 
@@ -23,7 +29,22 @@ type LazyLandingDemoProps = {
   skeletonClassName?: string;
 };
 
-export function LazyLandingDemo({ demo, skeletonClassName }: LazyLandingDemoProps) {
+function DemoSkeleton({ className }: { className?: string }) {
+  return (
+    <div
+      className={cn(
+        "border-border/50 bg-card/70 animate-pulse rounded-xl border",
+        className,
+      )}
+      aria-hidden="true"
+    />
+  );
+}
+
+export function LazyLandingDemo({
+  demo,
+  skeletonClassName,
+}: LazyLandingDemoProps) {
   const anchorRef = useRef<HTMLDivElement>(null);
   const [shouldRenderDemo, setShouldRenderDemo] = useState(false);
 
@@ -59,15 +80,11 @@ export function LazyLandingDemo({ demo, skeletonClassName }: LazyLandingDemoProp
   return (
     <div ref={anchorRef}>
       {shouldRenderDemo ? (
-        <DemoComponent />
+        <Suspense fallback={<DemoSkeleton className={skeletonClassName} />}>
+          <DemoComponent />
+        </Suspense>
       ) : (
-        <div
-          className={cn(
-            "border-border/50 bg-card/70 animate-pulse rounded-xl border",
-            skeletonClassName,
-          )}
-          aria-hidden="true"
-        />
+        <DemoSkeleton className={skeletonClassName} />
       )}
     </div>
   );

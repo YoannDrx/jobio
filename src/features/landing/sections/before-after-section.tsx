@@ -81,7 +81,8 @@ export function BeforeAfterSection() {
             className="flex flex-col items-center gap-4 text-center"
             variants={fadeInUp}
             initial={shouldAnimate ? "initial" : "animate"}
-            animate="animate"
+            whileInView="animate"
+            viewport={{ once: true, margin: "-80px" }}
             transition={{ ...defaultTransition, duration: 0.5 }}
           >
             <Badge>Transformation</Badge>
@@ -94,7 +95,8 @@ export function BeforeAfterSection() {
           <motion.div
             variants={fadeInUp}
             initial={shouldAnimate ? "initial" : "animate"}
-            animate="animate"
+            whileInView="animate"
+            viewport={{ once: true, margin: "-80px" }}
             transition={{ ...defaultTransition, delay: 0.15 }}
           >
             <div className="bg-muted/80 relative flex rounded-full border p-1">
@@ -140,7 +142,8 @@ export function BeforeAfterSection() {
             className="grid w-full gap-4 sm:grid-cols-2 lg:grid-cols-5"
             variants={staggerContainer(0.06)}
             initial={shouldAnimate ? "initial" : "animate"}
-            animate="animate"
+            whileInView="animate"
+            viewport={{ once: true, margin: "-80px" }}
           >
             {comparisons.map((item, index) => {
               const Icon = item.icon;

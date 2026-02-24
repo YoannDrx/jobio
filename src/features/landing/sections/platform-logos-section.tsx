@@ -34,7 +34,8 @@ export function PlatformLogosSection() {
           className="text-center"
           variants={fadeInUp}
           initial={shouldAnimate ? "initial" : "animate"}
-          animate={shouldAnimate ? "animate" : "animate"}
+          whileInView="animate"
+          viewport={{ once: true, margin: "-40px" }}
           transition={defaultTransition}
         >
           <p className="text-muted-foreground text-sm font-medium">

@@ -19,7 +19,7 @@ const criteria = [
   { label: "TJM", score: "15/20" },
   { label: "Profil", score: "12/15" },
   { label: "Localisation", score: "13/15" },
-  { label: "Compl\u00E9tude", score: "12/10" },
+  { label: "Complétude", score: "12/10" },
 ];
 
 function AnimatedCounter({ target }: { target: number }) {

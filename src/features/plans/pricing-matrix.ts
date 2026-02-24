@@ -39,12 +39,14 @@ const asCount = (value: number): string =>
 
 const asBoolean = (value: number): boolean => value >= 1;
 
-const asCvTemplate = (value: number): string => (value >= 1 ? "Tous" : "Classic");
+const asCvTemplate = (value: number): string =>
+  value >= 1 ? "Tous" : "Classic";
 
 const asAnalyticsHistory = (value: number): string =>
   isUnlimited(value) ? "Illimité" : `${value} jours`;
 
-const asSupportType = (planName: PlanName): string => SUPPORT_LABEL_BY_PLAN[planName];
+const asSupportType = (planName: PlanName): string =>
+  SUPPORT_LABEL_BY_PLAN[planName];
 
 const buildLimitFeature = (
   name: string,
@@ -105,6 +107,7 @@ export const PRICING_COMPARISON_CATEGORIES: PricingMatrixCategory[] = [
       buildLimitFeature("Devis", "billingQuotes"),
       buildLimitFeature("Factures", "billingInvoices"),
       buildLimitFeature("Catalogue", "billingCatalogItems"),
+      buildLimitFeature("Factures récurrentes", "billingRecurringInvoices"),
     ],
   },
   {
@@ -117,7 +120,13 @@ export const PRICING_COMPARISON_CATEGORIES: PricingMatrixCategory[] = [
   },
   {
     name: "Analytics",
-    features: [buildLimitFeature("Historique", "analyticsHistoryDays", asAnalyticsHistory)],
+    features: [
+      buildLimitFeature(
+        "Historique",
+        "analyticsHistoryDays",
+        asAnalyticsHistory,
+      ),
+    ],
   },
   {
     name: "Support",

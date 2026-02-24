@@ -95,7 +95,8 @@ export function MetricsSection() {
           className="grid grid-cols-2 gap-8 lg:grid-cols-4"
           variants={staggerContainer(0.12)}
           initial={shouldAnimate ? "initial" : "animate"}
-          animate={shouldAnimate ? "animate" : "animate"}
+          whileInView="animate"
+          viewport={{ once: true, margin: "-80px" }}
           transition={defaultTransition}
         >
           {metrics.map((metric) => (

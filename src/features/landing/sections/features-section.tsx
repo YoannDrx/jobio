@@ -68,7 +68,8 @@ export function FeaturesSection() {
           className="flex flex-col items-center gap-2"
           variants={fadeInUp}
           initial={shouldAnimate ? "initial" : "animate"}
-          animate="animate"
+          whileInView="animate"
+          viewport={{ once: true, margin: "-80px" }}
           transition={{ ...defaultTransition, duration: 0.5 }}
         >
           <Badge variant="default">Features</Badge>
@@ -86,7 +87,8 @@ export function FeaturesSection() {
           className="grid gap-6 sm:grid-cols-2"
           variants={staggerContainer(0.1)}
           initial={shouldAnimate ? "initial" : "animate"}
-          animate="animate"
+          whileInView="animate"
+          viewport={{ once: true, margin: "-80px" }}
         >
           {pillars.map((pillar, idx) => {
             const Icon = pillar.icon;
@@ -126,7 +128,8 @@ export function FeaturesSection() {
           className="grid gap-6 lg:grid-cols-2"
           variants={staggerContainer(0.1)}
           initial={shouldAnimate ? "initial" : "animate"}
-          animate="animate"
+          whileInView="animate"
+          viewport={{ once: true, margin: "-80px" }}
         >
           {/* Left: Analytics demo */}
           <motion.div variants={fadeInUp} transition={defaultTransition}>

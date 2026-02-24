@@ -10,9 +10,9 @@ import {
 import { useEffect, useRef } from "react";
 
 const stats = [
-  { label: "Taux de r\u00E9ponse", value: 85, color: "bg-emerald-500" },
-  { label: "Missions sign\u00E9es", value: 62, color: "bg-primary" },
-  { label: "Entretiens d\u00E9croch\u00E9s", value: 78, color: "bg-brand-cyan" },
+  { label: "Taux de réponse", value: 85, color: "bg-emerald-500" },
+  { label: "Missions signées", value: 62, color: "bg-primary" },
+  { label: "Entretiens décrochés", value: 78, color: "bg-brand-cyan" },
 ];
 
 function AnimatedPercent({
@@ -74,7 +74,7 @@ export default function DemoAnalytics() {
       <div className="flex flex-col items-center gap-1">
         <AnimatedBigPercent target={85} isInView={isInView} />
         <span className="text-muted-foreground text-xs font-medium">
-          Taux de r\u00E9ponse
+          Taux de réponse
         </span>
       </div>
 

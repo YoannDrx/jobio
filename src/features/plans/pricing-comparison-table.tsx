@@ -1,8 +1,9 @@
-import { Check, X } from "lucide-react";
-import { Card } from "@/components/ui/card";
-import { Typography } from "@/components/nowts/typography";
+"use client";
+
+import { Check, ChevronDown, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { Fragment } from "react";
+import { AnimatePresence, motion } from "motion/react";
+import { useState } from "react";
 import { PRICING_COMPARISON_CATEGORIES } from "./pricing-matrix";
 
 function FeatureValue({ value }: { value: string | boolean }) {
@@ -13,97 +14,122 @@ function FeatureValue({ value }: { value: string | boolean }) {
       </span>
     ) : (
       <span className="flex items-center justify-center">
-        <X className="text-muted-foreground size-4" />
+        <X className="text-muted-foreground/40 size-4" />
       </span>
     );
   }
-  return <span>{value}</span>;
+  return <span className="text-sm font-medium">{value}</span>;
 }
 
 export function PricingComparisonTable() {
+  const [openCategories, setOpenCategories] = useState<Set<string>>(
+    () => new Set([PRICING_COMPARISON_CATEGORIES[0].name]),
+  );
+
+  const toggle = (name: string) => {
+    setOpenCategories((prev) => {
+      const next = new Set(prev);
+      if (next.has(name)) {
+        next.delete(name);
+      } else {
+        next.add(name);
+      }
+      return next;
+    });
+  };
+
   return (
-    <Card className="overflow-hidden">
-      <div className="overflow-x-auto">
-        <table className="w-full">
-          <thead>
-            <tr className="bg-muted/50 sticky top-0 border-b">
-              <th className="px-4 py-4 text-left">
-                <Typography variant="small" className="font-semibold">
-                  Plan
-                </Typography>
-              </th>
-              <th
-                className={cn(
-                  "min-w-[120px] px-4 py-4 text-center",
-                  "bg-muted/30",
-                )}
-              >
-                <Typography variant="small" className="font-semibold">
-                  Free
-                </Typography>
-              </th>
-              <th
-                className={cn(
-                  "min-w-[120px] px-4 py-4 text-center",
-                  "bg-primary/10",
-                )}
-              >
-                <Typography
-                  variant="small"
-                  className="text-primary font-semibold"
-                >
-                  Pro
-                </Typography>
-              </th>
-              <th
-                className={cn(
-                  "min-w-[120px] px-4 py-4 text-center",
-                  "bg-muted/30",
-                )}
-              >
-                <Typography variant="small" className="font-semibold">
-                  Ultra
-                </Typography>
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {PRICING_COMPARISON_CATEGORIES.map((category) => (
-              <Fragment key={category.name}>
-                <tr>
-                  <td
-                    colSpan={4}
-                    className="bg-muted/20 border-t border-b px-4 py-3"
-                  >
-                    <Typography variant="h3" className="text-sm">
-                      {category.name}
-                    </Typography>
-                  </td>
-                </tr>
-                {category.features.map((feature, featureIdx) => (
-                  <tr
-                    key={`${category.name}-${featureIdx}`}
-                    className="hover:bg-muted/30 border-b transition-colors"
-                  >
-                    <td className="px-4 py-4">
-                      <Typography variant="muted">{feature.name}</Typography>
-                    </td>
-                    <td className={cn("px-4 py-4 text-center", "bg-muted/5")}>
-                      <FeatureValue value={feature.free} />
-                    </td>
-                    <td className={cn("px-4 py-4 text-center", "bg-primary/5")}>
-                      <FeatureValue value={feature.pro} />
-                    </td>
-                    <td className={cn("px-4 py-4 text-center", "bg-muted/5")}>
-                      <FeatureValue value={feature.ultra} />
-                    </td>
-                  </tr>
-                ))}
-              </Fragment>
-            ))}
-          </tbody>
-        </table>
+    <div className="space-y-3">
+      {/* Sticky plan header */}
+      <div className="bg-background/80 sticky top-0 z-10 backdrop-blur-sm">
+        <div className="grid grid-cols-[1fr_repeat(3,80px)] gap-1 px-4 py-3 sm:grid-cols-[1fr_repeat(3,minmax(100px,1fr))]">
+          <div />
+          <div className="text-muted-foreground text-center text-xs font-semibold tracking-wider uppercase">
+            Free
+          </div>
+          <div className="text-primary text-center text-xs font-semibold tracking-wider uppercase">
+            Pro
+          </div>
+          <div className="text-muted-foreground text-center text-xs font-semibold tracking-wider uppercase">
+            Ultra
+          </div>
+        </div>
       </div>
-    </Card>
+
+      {/* Categories */}
+      {PRICING_COMPARISON_CATEGORIES.map((category) => {
+        const isOpen = openCategories.has(category.name);
+
+        return (
+          <div
+            key={category.name}
+            className="border-border/50 overflow-hidden rounded-lg border"
+          >
+            {/* Category header — clickable */}
+            <button
+              type="button"
+              onClick={() => toggle(category.name)}
+              className={cn(
+                "hover:bg-muted/50 flex w-full items-center gap-3 px-4 py-3.5 text-left transition-colors",
+                isOpen && "bg-muted/30",
+              )}
+            >
+              <ChevronDown
+                className={cn(
+                  "text-muted-foreground size-4 shrink-0 transition-transform duration-200",
+                  isOpen && "rotate-180",
+                )}
+              />
+              <span className="text-sm font-semibold">{category.name}</span>
+              <span className="text-muted-foreground/60 ml-auto text-xs">
+                {category.features.length}
+              </span>
+            </button>
+
+            {/* Expandable feature rows */}
+            <AnimatePresence initial={false}>
+              {isOpen && (
+                <motion.div
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{
+                    duration: 0.25,
+                    ease: [0.25, 0.46, 0.45, 0.94],
+                  }}
+                  className="overflow-hidden"
+                >
+                  <div className="border-t">
+                    {category.features.map((feature, idx) => (
+                      <div
+                        key={`${category.name}-${idx}`}
+                        className={cn(
+                          "grid grid-cols-[1fr_repeat(3,80px)] gap-1 px-4 py-3 sm:grid-cols-[1fr_repeat(3,minmax(100px,1fr))]",
+                          idx !== category.features.length - 1 &&
+                            "border-border/30 border-b",
+                        )}
+                      >
+                        <span className="text-muted-foreground text-sm">
+                          {feature.name}
+                        </span>
+                        <div className="text-center">
+                          <FeatureValue value={feature.free} />
+                        </div>
+                        <div className="bg-primary/5 -my-3 flex items-center justify-center rounded-sm py-3">
+                          <FeatureValue value={feature.pro} />
+                        </div>
+                        <div className="text-center">
+                          <FeatureValue value={feature.ultra} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        );
+      })}
+    </div>
   );
 }

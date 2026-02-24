@@ -11,7 +11,7 @@ const steps = [
   },
   {
     delay: "J+7",
-    label: "Appel t\u00E9l\u00E9phonique",
+    label: "Appel téléphonique",
     done: true,
   },
   {

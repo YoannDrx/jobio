@@ -58,26 +58,9 @@ export function NewsletterSection() {
               </p>
             </div>
 
-            <div className="flex items-center gap-3">
-              <div className="flex -space-x-2">
-                {[
-                  { initials: "YA", color: "bg-brand-cyan" },
-                  { initials: "ML", color: "bg-brand-violet" },
-                  { initials: "TR", color: "bg-brand-emerald" },
-                  { initials: "SK", color: "bg-brand-amber" },
-                ].map((avatar) => (
-                  <div
-                    key={avatar.initials}
-                    className={`border-background flex size-8 items-center justify-center rounded-full border-2 text-xs font-bold text-white ${avatar.color}`}
-                  >
-                    {avatar.initials}
-                  </div>
-                ))}
-              </div>
-              <p className="text-muted-foreground text-sm">
-                +200 freelances suivent déjà nos actus
-              </p>
-            </div>
+            <p className="text-muted-foreground text-sm">
+              +200 freelances suivent déjà nos actus
+            </p>
 
             {subscribeMutation.isSuccess ? (
               <motion.div
