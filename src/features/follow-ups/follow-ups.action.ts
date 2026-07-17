@@ -12,17 +12,120 @@ import {
 } from "./follow-ups.schema";
 import { createNotification } from "@/features/notifications/create-notification";
 import { isFeatureEnabled } from "@/lib/ops/feature-flags";
+import {
+  evaluateFollowUpPolicy,
+  FOLLOW_UP_POLICY_MESSAGES,
+} from "./follow-up-policy";
+
+const getFollowUpPolicyContext = async (params: {
+  userId: string;
+  missionId: string;
+  scheduledAt: Date;
+  excludeFollowUpId?: string;
+}) => {
+  const mission = await prisma.mission.findFirst({
+    where: {
+      id: params.missionId,
+      userId: params.userId,
+      deletedAt: null,
+    },
+    include: {
+      contact: { select: { id: true, tags: true, deletedAt: true } },
+    },
+  });
+
+  if (!mission) throw new ApplicationError("Mission introuvable");
+
+  const windowStart = new Date(
+    params.scheduledAt.getTime() - 24 * 60 * 60 * 1000,
+  );
+  const windowEnd = new Date(
+    params.scheduledAt.getTime() + 24 * 60 * 60 * 1000,
+  );
+  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+
+  const [pendingNearTarget, recentSentEmails, recentCompletedFollowUps] =
+    await Promise.all([
+      prisma.followUp.count({
+        where: {
+          userId: params.userId,
+          missionId: params.missionId,
+          completedAt: null,
+          scheduledAt: { gte: windowStart, lte: windowEnd },
+          ...(params.excludeFollowUpId
+            ? { id: { not: params.excludeFollowUpId } }
+            : {}),
+        },
+      }),
+      mission.contactId
+        ? prisma.sentEmail.count({
+            where: {
+              userId: params.userId,
+              contactId: mission.contactId,
+              isDraft: false,
+              OR: [
+                { sentAt: { gte: sevenDaysAgo } },
+                { sentAt: null, createdAt: { gte: sevenDaysAgo } },
+              ],
+            },
+          })
+        : Promise.resolve(0),
+      mission.contactId
+        ? prisma.followUp.count({
+            where: {
+              userId: params.userId,
+              completedAt: { gte: sevenDaysAgo },
+              mission: { contactId: mission.contactId },
+              ...(params.excludeFollowUpId
+                ? { id: { not: params.excludeFollowUpId } }
+                : {}),
+            },
+          })
+        : Promise.resolve(0),
+    ]);
+
+  return {
+    mission,
+    pendingNearTarget,
+    recentContactTouches: recentSentEmails + recentCompletedFollowUps,
+  };
+};
+
+const assertFollowUpAllowed = async (params: {
+  userId: string;
+  missionId: string;
+  scheduledAt: Date;
+  excludeFollowUpId?: string;
+}) => {
+  if (params.scheduledAt <= new Date()) {
+    throw new ApplicationError("La date de relance doit être dans le futur");
+  }
+
+  const context = await getFollowUpPolicyContext(params);
+  const reason = evaluateFollowUpPolicy({
+    missionStatus: context.mission.status,
+    isAutomated: false,
+    contactTags: context.mission.contact
+      ? context.mission.contact.deletedAt === null
+        ? context.mission.contact.tags
+        : ["do-not-contact"]
+      : [],
+    pendingNearTarget: context.pendingNearTarget,
+    recentContactTouches: context.recentContactTouches,
+  });
+
+  if (reason) throw new ApplicationError(FOLLOW_UP_POLICY_MESSAGES[reason]);
+  return context.mission;
+};
 
 export const createFollowUpAction = authAction
   .inputSchema(createFollowUpSchema)
   .action(async ({ parsedInput, ctx: { user } }) => {
-    const mission = await prisma.mission.findFirst({
-      where: { id: parsedInput.missionId, userId: user.id, deletedAt: null },
+    const mission = await assertFollowUpAllowed({
+      userId: user.id,
+      missionId: parsedInput.missionId,
+      scheduledAt: parsedInput.scheduledAt,
     });
-
-    if (!mission) {
-      throw new ApplicationError("Mission introuvable");
-    }
 
     const followUp = await prisma.followUp.create({
       data: {
@@ -216,6 +319,13 @@ export const updateFollowUpAction = authAction
       throw new ApplicationError("Relance introuvable");
     }
 
+    await assertFollowUpAllowed({
+      userId: user.id,
+      missionId: followUp.missionId,
+      scheduledAt: data.scheduledAt ?? followUp.scheduledAt,
+      excludeFollowUpId: id,
+    });
+
     const updated = await prisma.followUp.update({
       where: { id },
       data,
@@ -282,6 +392,13 @@ export const snoozeFollowUpAction = authAction
     if (scheduledAt <= new Date()) {
       throw new ApplicationError("La nouvelle date doit être dans le futur");
     }
+
+    await assertFollowUpAllowed({
+      userId: user.id,
+      missionId: followUp.missionId,
+      scheduledAt,
+      excludeFollowUpId: id,
+    });
 
     const updated = await prisma.followUp.update({
       where: { id },

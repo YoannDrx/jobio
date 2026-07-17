@@ -19,9 +19,11 @@ model User {
   subscription Subscription?
 
   missions                           Mission[]
+  pipelineSavedViews                 PipelineSavedView[]
   followUps                          FollowUp[]
   activityEvents                     ActivityEvent[]
   contacts                           Contact[]
+  contactMergeLogs                   ContactMergeLog[]
   profiles                           UserProfile[]
   userPlatforms                      UserPlatform[]
   messageTemplates                   MessageTemplate[]

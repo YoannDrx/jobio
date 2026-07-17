@@ -422,6 +422,50 @@ export function useCvDocumentManagement(params: UseCvDocumentManagementParams) {
     },
   });
 
+  const exportAtsMutation = useMutation({
+    mutationFn: async () => {
+      if (!selectedDocument || !draft) {
+        throw new Error("Aucun document sélectionné");
+      }
+
+      const response = await fetch("/api/cv-lab/render", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          documentId: selectedDocument.id,
+          mode: "ats",
+          download: true,
+          snapshot: buildRenderSnapshot(draft),
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Impossible de générer la version ATS");
+      }
+
+      return {
+        blob: await response.blob(),
+        filename: getFilenameFromDisposition(
+          response.headers.get("content-disposition"),
+        ),
+      };
+    },
+    onSuccess: ({ blob, filename }) => {
+      const url = window.URL.createObjectURL(blob);
+      const anchor = window.document.createElement("a");
+      anchor.href = url;
+      anchor.download = filename;
+      anchor.click();
+      window.URL.revokeObjectURL(url);
+      toast.success("Version ATS exportée");
+    },
+    onError: (error: Error) => {
+      toast.error(error.message);
+    },
+  });
+
   const exportJsonMutation = useMutation({
     mutationFn: async () => {
       if (!selectedDocument || !draft) {
@@ -923,6 +967,7 @@ export function useCvDocumentManagement(params: UseCvDocumentManagementParams) {
     generateShareLinkMutation,
     revokeShareLinkMutation,
     exportPdfMutation,
+    exportAtsMutation,
     exportJsonMutation,
     importJsonMutation,
     handleDeleteDocument,

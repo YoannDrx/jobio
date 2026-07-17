@@ -69,4 +69,23 @@ describe("renderCvLabHtml", () => {
     expect(html).toContain("page-break-inside: avoid;");
     expect(html).toContain("-webkit-column-break-inside: avoid;");
   });
+
+  it("keeps the two-column grid when Chromium switches to print media", () => {
+    const html = renderCvLabHtml(
+      { ...makeDocument("A4"), template: "TWO_COLUMN" },
+      makeContent(),
+    );
+
+    expect(html).toContain(
+      "grid-template-columns: minmax(0, 2fr) minmax(240px, 0.9fr);",
+    );
+    expect(html).toContain("@media screen and (max-width: 960px)");
+    expect(html).not.toContain("@media (max-width: 960px)");
+    expect(html).toContain(
+      ".content {\n        display: table;\n        width: 100%;\n        table-layout: fixed;",
+    );
+    expect(html).toContain(
+      ".item {\n        break-inside: auto;\n        page-break-inside: auto;",
+    );
+  });
 });

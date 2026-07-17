@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { ZodRouteError } from "@/lib/errors/zod-route-error";
 import { renderCvLabHtml } from "@/features/cv-lab/cv-renderer";
 import { generateCvPdfBuffer } from "@/features/cv-lab/cv-pdf";
+import { renderCvAtsText } from "@/features/cv-lab/cv-ats-export";
 import {
   resolveCvContent,
   resolveCvContentFromProfile,
@@ -17,7 +18,7 @@ import {
 } from "@/features/cv-lab/cv-lab.schema";
 import { z } from "zod";
 
-const renderModeSchema = z.enum(["preview", "pdf"]);
+const renderModeSchema = z.enum(["preview", "pdf", "ats"]);
 
 const querySchema = z.object({
   documentId: z.string().min(1).optional(),
@@ -158,6 +159,17 @@ const renderDocumentResponse = async (params: {
     .toLowerCase();
 
   const content = resolveContent(params.document);
+
+  if (params.mode === "ats") {
+    return new Response(renderCvAtsText(params.document, content), {
+      headers: {
+        "Content-Type": "text/plain; charset=utf-8",
+        "Cache-Control": "private, max-age=0, must-revalidate",
+        "Content-Disposition": `attachment; filename="${safeName || "cv"}-ats.txt"`,
+      },
+    });
+  }
+
   const html = renderCvLabHtml(params.document, content, {
     autoPrint: false,
   });
@@ -282,6 +294,16 @@ const renderMasterCvResponse = async (params: {
     sectionOrder: [...CV_LAB_SECTIONS],
     hiddenSections: [] as (typeof CV_LAB_SECTIONS)[number][],
   };
+
+  if (params.mode === "ats") {
+    return new Response(renderCvAtsText(mockDocument, content), {
+      headers: {
+        "Content-Type": "text/plain; charset=utf-8",
+        "Cache-Control": "private, max-age=0, must-revalidate",
+        "Content-Disposition": `attachment; filename="${safeName || "cv"}-ats.txt"`,
+      },
+    });
+  }
 
   const html = renderCvLabHtml(mockDocument, content, {
     autoPrint: false,

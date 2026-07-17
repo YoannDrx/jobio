@@ -26,7 +26,8 @@
     "prisma:seed": "NODE_ENV=development prisma db seed",
     "prisma:migrate": "pnpm prisma migrate dev",
     "prisma:generate": "pnpm prisma generate",
-    "pricing:verify": "pnpm tsx scripts/pricing-verify.ts"
+    "pricing:verify": "pnpm tsx scripts/pricing-verify.ts",
+    "cv-pdf:verify": "pnpm tsx scripts/verify-cv-pdf.ts"
   },
   "prisma": {
     "seed": "pnpm tsx prisma/seed.ts"

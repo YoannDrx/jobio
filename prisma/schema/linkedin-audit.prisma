@@ -1,5 +1,5 @@
 model LinkedInAudit {
-  id           String @id @default(nanoid(11))
+  id           String   @id @default(nanoid(11))
   userId       String
   profileId    String
   overallScore Int

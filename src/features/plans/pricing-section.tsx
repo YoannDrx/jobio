@@ -12,6 +12,7 @@ import {
   type PricingExperimentVariant,
 } from "@/lib/pricing/pricing-experiments";
 import { AUTH_PLANS } from "@/lib/auth/stripe/auth-plans";
+import { isPlanAvailableForNewSubscription } from "@/config/product-features";
 import { cn } from "@/lib/utils";
 import { useAction } from "next-safe-action/hooks";
 import Link from "next/link";
@@ -139,8 +140,15 @@ export function Pricing({ entryPoint = "landing" }: { entryPoint?: string }) {
       experimentVariant ?? DEFAULT_PRICING_EXPERIMENT_VARIANT
     ];
 
+  const availablePlans = AUTH_PLANS.filter(
+    (plan) =>
+      !plan.isHidden &&
+      (plan.price === 0 || isPlanAvailableForNewSubscription(plan.name)),
+  );
+
   const maxYearlyDiscount = Math.max(
-    ...AUTH_PLANS.filter((plan) => plan.price > 0 && plan.yearlyPrice)
+    ...availablePlans
+      .filter((plan) => plan.price > 0 && plan.yearlyPrice)
       .map((plan) => {
         const yearlyPrice = plan.yearlyPrice ?? plan.price * 12;
         const annualCost = plan.price * 12;
@@ -211,7 +219,7 @@ export function Pricing({ entryPoint = "landing" }: { entryPoint?: string }) {
           initial={shouldAnimate ? "initial" : "animate"}
           animate={isInView ? "animate" : undefined}
         >
-          {AUTH_PLANS.filter((p) => !p.isHidden).map((plan) => (
+          {availablePlans.map((plan) => (
             <motion.div
               key={plan.name}
               variants={fadeInUp}

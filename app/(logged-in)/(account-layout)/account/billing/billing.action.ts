@@ -7,6 +7,11 @@ import { getServerUrl } from "@/lib/server-url";
 import { stripe } from "@/lib/stripe";
 import { z } from "zod";
 
+const internalPathSchema = z
+  .string()
+  .startsWith("/")
+  .refine((value) => !value.startsWith("//"), "Invalid internal path");
+
 const getStripeCustomerId = async (userId: string) => {
   const user = await prisma.user.findUnique({
     where: { id: userId },
@@ -46,7 +51,7 @@ export const openStripePortalAction = authAction.action(
 export const cancelSubscriptionAction = authAction
   .inputSchema(
     z.object({
-      returnUrl: z.string().url(),
+      returnUrl: internalPathSchema,
     }),
   )
   .action(async ({ parsedInput: { returnUrl }, ctx: { user } }) => {

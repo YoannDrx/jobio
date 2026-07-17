@@ -2,46 +2,46 @@
 
 ## Description
 
-Jobio est un CRM / cockpit commercial intelligent concu pour les freelances tech. Il centralise l'ensemble du cycle commercial : de la recherche de missions a la signature de contrats, en passant par le suivi des relances et la facturation.
+Jobio est un cockpit commercial concu pour les freelances tech. Sa V1 aide a savoir quoi faire aujourd'hui pour signer la prochaine mission : suivre les opportunites, programmer les relances, adapter son CV et entretenir ses contacts.
 
-L'objectif est d'offrir aux freelances un outil tout-en-un qui les aide a trouver des missions plus rapidement, relancer au bon moment et signer davantage de contrats. Jobio integre une couche d'intelligence artificielle pour scorer les opportunites, optimiser les CV et generer des messages de candidature personnalises.
+Le produit assume un perimetre resserre. Les anciens modules de facturation avancee, programmes, plateformes, profil public et assistant IA generaliste sont conserves temporairement dans le code mais bloques par le manifeste serveur.
 
-Le modele de monetisation repose sur trois plans Stripe : **Free**, **Pro** et **Ultra**, offrant des fonctionnalites progressives selon les besoins du freelance.
+Le modele de validation repose sur **Free** et un seul plan **Pro**. Ultra n'est plus propose aux nouveaux utilisateurs ; aucun abonnement historique n'est modifie sans audit Stripe.
 
 ## Fonctionnalites
 
 - **Pipeline de missions** : Kanban de suivi des opportunites avec scoring IA et parsing automatique des offres
 - **CV Lab** : Editeur de CV avec master CV, variantes par mission, analyse de compatibilite ATS et generation IA
 - **Contacts / CRM** : Gestion des contacts professionnels avec score relationnel et historique d'interactions
-- **Follow-ups et Sequences** : Systeme de relances automatisees et sequences email configurables
-- **Facturation freelance** : Creation de devis et factures, gestion clients, catalogue de prestations
-- **Analytics et Dashboard** : KPIs, funnel de conversion, previsions de revenus
-- **IA integree** : Chat IA, generation de messages, scoring de missions, coaching CV, strategie quotidienne
+- **Relances** : liste, calendrier, snooze et prevention de sur-sollicitation
+- **Aujourd'hui** : trois actions prioritaires maximum, avec impact, urgence et contexte
+- **Onboarding actionnable** : profil minimal, compétences, première opportunité et première relance, avec reprise au premier jalon incomplet
+- **CV Lab** : profil maitre, variante par mission, apercu A4 et export ATS
 - **Notifications push** : Rappels et alertes pour les actions importantes via Web Push (VAPID)
 - **Profil public** : Partage de CV via lien unique avec token securise
 
 ## Stack technique
 
-| Categorie | Technologie |
-|-----------|-------------|
-| Framework | Next.js 16 (App Router, Turbopack) |
-| Langage | TypeScript (mode strict) |
-| UI | TailwindCSS v4, Shadcn/UI, Radix UI |
-| Base de donnees | PostgreSQL + Prisma ORM |
-| Cache | Redis (ioredis) |
-| Authentification | Better Auth (email/password, magic links, OAuth GitHub/Google) |
-| Paiements | Stripe (abonnements, webhooks) |
-| Email | Resend + React Email |
-| IA | OpenAI via AI SDK (Vercel) |
-| Formulaires | React Hook Form + Zod |
-| Etat global | Zustand, nuqs (URL state), TanStack Query |
-| Editeur riche | TipTap |
-| Graphiques | Recharts |
-| Drag & Drop | @hello-pangea/dnd |
-| Animations | Motion (Framer Motion) |
-| Tests unitaires | Vitest + React Testing Library |
-| Tests e2e | Playwright |
-| Gestionnaire de paquets | pnpm 10 |
+| Categorie               | Technologie                                                    |
+| ----------------------- | -------------------------------------------------------------- |
+| Framework               | Next.js 16 (App Router, Turbopack)                             |
+| Langage                 | TypeScript (mode strict)                                       |
+| UI                      | TailwindCSS v4, Shadcn/UI, Radix UI                            |
+| Base de donnees         | PostgreSQL + Prisma ORM                                        |
+| Cache                   | Redis (ioredis)                                                |
+| Authentification        | Better Auth (email/password, magic links, OAuth GitHub/Google) |
+| Paiements               | Stripe (abonnements, webhooks)                                 |
+| Email                   | Resend + React Email                                           |
+| IA                      | OpenAI via AI SDK (Vercel)                                     |
+| Formulaires             | React Hook Form + Zod                                          |
+| Etat global             | Zustand, nuqs (URL state), TanStack Query                      |
+| Editeur riche           | TipTap                                                         |
+| Graphiques              | Recharts                                                       |
+| Drag & Drop             | @hello-pangea/dnd                                              |
+| Animations              | Motion (Framer Motion)                                         |
+| Tests unitaires         | Vitest + React Testing Library                                 |
+| Tests e2e               | Playwright                                                     |
+| Gestionnaire de paquets | pnpm 10                                                        |
 
 ## Prerequis
 
@@ -85,74 +85,74 @@ L'application sera accessible sur `http://localhost:3000`.
 
 Toutes les variables sont definies dans le fichier `.env-template`. Voici les principales :
 
-| Variable | Description | Requis |
-|----------|-------------|--------|
-| `DATABASE_URL` | URL de connexion PostgreSQL | Oui |
-| `DATABASE_URL_UNPOOLED` | URL PostgreSQL sans pooling (migrations) | Non |
-| `REDIS_URL` | URL de connexion Redis | Oui |
-| `BETTER_AUTH_URL` | URL de base de l'application (ex: `http://localhost:3000`) | Oui |
-| `BETTER_AUTH_SECRET` | Secret pour Better Auth | Oui |
-| `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | OAuth GitHub | Non |
-| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | OAuth Google | Non |
-| `RESEND_API_KEY` | Cle API Resend | Oui |
-| `EMAIL_FROM` | Adresse email d'expedition | Oui |
-| `NEXT_PUBLIC_EMAIL_CONTACT` | Email de contact public | Oui |
-| `STRIPE_SECRET_KEY` | Cle secrete Stripe | Oui |
-| `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | Cle publique Stripe | Oui |
-| `STRIPE_WEBHOOK_SECRET` | Secret webhook Stripe | Non |
-| `STRIPE_PRO_PLAN_ID` | ID du plan Pro Stripe (mensuel) | Oui |
-| `STRIPE_PRO_YEARLY_PLAN_ID` | ID du plan Pro Stripe (annuel) | Oui |
-| `STRIPE_ULTRA_PLAN_ID` | ID du plan Ultra Stripe (mensuel) | Oui |
-| `STRIPE_ULTRA_YEARLY_PLAN_ID` | ID du plan Ultra Stripe (annuel) | Oui |
-| `OPENAI_API_KEY` | Cle API OpenAI | Oui |
-| `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY` | Cles VAPID pour les notifications push | Non |
-| `NEXT_PUBLIC_POSTHOG_KEY` | Cle PostHog (analytics) | Non |
+| Variable                                    | Description                                                | Requis |
+| ------------------------------------------- | ---------------------------------------------------------- | ------ |
+| `DATABASE_URL`                              | URL de connexion PostgreSQL                                | Oui    |
+| `DATABASE_URL_UNPOOLED`                     | URL PostgreSQL sans pooling (migrations)                   | Non    |
+| `REDIS_URL`                                 | URL de connexion Redis                                     | Oui    |
+| `BETTER_AUTH_URL`                           | URL de base de l'application (ex: `http://localhost:3000`) | Oui    |
+| `BETTER_AUTH_SECRET`                        | Secret pour Better Auth                                    | Oui    |
+| `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | OAuth GitHub                                               | Non    |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | OAuth Google                                               | Non    |
+| `RESEND_API_KEY`                            | Cle API Resend                                             | Oui    |
+| `EMAIL_FROM`                                | Adresse email d'expedition                                 | Oui    |
+| `NEXT_PUBLIC_EMAIL_CONTACT`                 | Email de contact public                                    | Oui    |
+| `STRIPE_SECRET_KEY`                         | Cle secrete Stripe                                         | Oui    |
+| `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`        | Cle publique Stripe                                        | Oui    |
+| `STRIPE_WEBHOOK_SECRET`                     | Secret webhook Stripe                                      | Non    |
+| `STRIPE_PRO_PLAN_ID`                        | ID du plan Pro Stripe (mensuel)                            | Oui    |
+| `STRIPE_PRO_YEARLY_PLAN_ID`                 | ID du plan Pro Stripe (annuel)                             | Oui    |
+| `STRIPE_ULTRA_PLAN_ID`                      | ID du plan Ultra Stripe (mensuel)                          | Oui    |
+| `STRIPE_ULTRA_YEARLY_PLAN_ID`               | ID du plan Ultra Stripe (annuel)                           | Oui    |
+| `OPENAI_API_KEY`                            | Cle API OpenAI                                             | Oui    |
+| `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY`    | Cles VAPID pour les notifications push                     | Non    |
+| `NEXT_PUBLIC_POSTHOG_KEY`                   | Cle PostHog (analytics)                                    | Non    |
 
 ## Commandes
 
 ### Developpement
 
-| Commande | Description |
-|----------|-------------|
-| `pnpm dev` | Lancer le serveur de developpement (Turbopack) |
-| `pnpm build` | Build de production |
-| `pnpm start` | Lancer le serveur de production |
+| Commande     | Description                                    |
+| ------------ | ---------------------------------------------- |
+| `pnpm dev`   | Lancer le serveur de developpement (Turbopack) |
+| `pnpm build` | Build de production                            |
+| `pnpm start` | Lancer le serveur de production                |
 
 ### Qualite du code
 
-| Commande | Description |
-|----------|-------------|
-| `pnpm ts` | Verification des types TypeScript |
-| `pnpm lint` | ESLint avec correction automatique |
-| `pnpm lint:ci` | ESLint sans correction (CI) |
-| `pnpm format` | Formatter le code avec Prettier |
-| `pnpm clean` | Lint + type check + format |
-| `pnpm knip` | Detection du code inutilise |
+| Commande       | Description                        |
+| -------------- | ---------------------------------- |
+| `pnpm ts`      | Verification des types TypeScript  |
+| `pnpm lint`    | ESLint avec correction automatique |
+| `pnpm lint:ci` | ESLint sans correction (CI)        |
+| `pnpm format`  | Formatter le code avec Prettier    |
+| `pnpm clean`   | Lint + type check + format         |
+| `pnpm knip`    | Detection du code inutilise        |
 
 ### Tests
 
-| Commande | Description |
-|----------|-------------|
-| `pnpm test` | Tests unitaires (mode watch) |
-| `pnpm test:ci` | Tests unitaires (CI, une seule execution) |
-| `pnpm test:e2e` | Tests e2e avec interface Playwright |
-| `pnpm test:e2e:ci` | Tests e2e en mode headless (CI) |
+| Commande           | Description                               |
+| ------------------ | ----------------------------------------- |
+| `pnpm test`        | Tests unitaires (mode watch)              |
+| `pnpm test:ci`     | Tests unitaires (CI, une seule execution) |
+| `pnpm test:e2e`    | Tests e2e avec interface Playwright       |
+| `pnpm test:e2e:ci` | Tests e2e en mode headless (CI)           |
 
 ### Base de donnees
 
-| Commande | Description |
-|----------|-------------|
-| `pnpm prisma:generate` | Generer le client Prisma |
-| `pnpm prisma:migrate` | Appliquer les migrations |
-| `pnpm prisma:seed` | Peupler la base avec des donnees de test |
+| Commande                   | Description                               |
+| -------------------------- | ----------------------------------------- |
+| `pnpm prisma:generate`     | Generer le client Prisma                  |
+| `pnpm prisma:migrate`      | Appliquer les migrations                  |
+| `pnpm prisma:seed`         | Peupler la base avec des donnees de test  |
 | `pnpm better-auth:migrate` | Generer le schema Prisma pour Better Auth |
 
 ### Outils
 
-| Commande | Description |
-|----------|-------------|
-| `pnpm email` | Serveur de developpement pour les emails |
-| `pnpm stripe-webhooks` | Ecouter les webhooks Stripe en local |
+| Commande               | Description                              |
+| ---------------------- | ---------------------------------------- |
+| `pnpm email`           | Serveur de developpement pour les emails |
+| `pnpm stripe-webhooks` | Ecouter les webhooks Stripe en local     |
 
 ## Architecture
 

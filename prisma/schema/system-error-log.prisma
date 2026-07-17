@@ -19,7 +19,7 @@ model SystemErrorLog {
   route     String?
 
   resolvedAt DateTime?
-  createdAt  DateTime @default(now())
+  createdAt  DateTime  @default(now())
 
   @@index([createdAt])
   @@index([severity, createdAt])

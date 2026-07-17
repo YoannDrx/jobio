@@ -25,7 +25,10 @@ type Attachment = {
 };
 
 export type MailAdapter = {
-  send: (params: EmailParams) => Promise<
+  send: (
+    params: EmailParams,
+    options?: SendEmailOptions,
+  ) => Promise<
     | {
         error: null;
         data: {
@@ -37,6 +40,10 @@ export type MailAdapter = {
         data: null;
       }
   >;
+};
+
+export type SendEmailOptions = {
+  idempotencyKey?: string;
 };
 
 /**
@@ -56,7 +63,10 @@ type SendEmailParams = Omit<EmailParams, "from" | "html"> & {
   html?: string | React.ReactElement;
 };
 
-export const sendEmail = async (params: SendEmailParams) => {
+export const sendEmail = async (
+  params: SendEmailParams,
+  options?: SendEmailOptions,
+) => {
   if (env.NODE_ENV === "development") {
     params.subject = `[DEV] ${params.subject}`;
   }
@@ -88,12 +98,15 @@ export const sendEmail = async (params: SendEmailParams) => {
     html = await pretty(await render(params.html));
   }
 
-  const result = await mailAdapter.send({
-    ...params,
-    from: params.from ?? env.EMAIL_FROM,
-    replyTo: params.replyTo ?? env.NEXT_PUBLIC_EMAIL_CONTACT,
-    html,
-  });
+  const result = await mailAdapter.send(
+    {
+      ...params,
+      from: params.from ?? env.EMAIL_FROM,
+      replyTo: params.replyTo ?? env.NEXT_PUBLIC_EMAIL_CONTACT,
+      html,
+    },
+    options,
+  );
 
   if (result.error) {
     logger.error("[sendEmail] Error", { result, subject: params.subject });

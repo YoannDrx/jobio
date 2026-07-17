@@ -34,6 +34,17 @@ export const updateContactSchema = z.object({
   tags: z.array(z.string()).optional(),
 });
 
+export const mergeContactFieldChoicesSchema = z.object({
+  firstName: z.enum(["target", "source"]),
+  lastName: z.enum(["target", "source"]),
+  company: z.enum(["target", "source"]),
+  email: z.enum(["target", "source"]),
+  phone: z.enum(["target", "source"]),
+  role: z.enum(["target", "source"]),
+  notes: z.enum(["target", "source"]),
+  linkedinUrl: z.enum(["target", "source"]),
+});
+
 export const addInteractionSchema = z.object({
   contactId: z.string(),
   type: interactionTypeSchema,
@@ -57,3 +68,6 @@ export type CreateContactInput = z.infer<typeof createContactSchema>;
 export type UpdateContactInput = z.infer<typeof updateContactSchema>;
 export type AddInteractionInput = z.infer<typeof addInteractionSchema>;
 export type ContactFilter = z.infer<typeof contactFilterSchema>;
+export type MergeContactFieldChoices = z.infer<
+  typeof mergeContactFieldChoicesSchema
+>;

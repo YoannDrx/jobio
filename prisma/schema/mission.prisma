@@ -24,39 +24,39 @@ enum WorkType {
 }
 
 model Mission {
-  id          String          @id @default(nanoid(11))
-  userId      String
-  title       String
-  company     String?
-  description String?
-  status      MissionStatus   @default(A_POSTULER)
-  priority    MissionPriority @default(MEDIUM)
-  tjm         Int?
-  duration    String?
-  workType    WorkType?
-  location    String?
-  stack       String[]
+  id                 String          @id @default(nanoid(11))
+  userId             String
+  title              String
+  company            String?
+  description        String?
+  status             MissionStatus   @default(A_POSTULER)
+  priority           MissionPriority @default(MEDIUM)
+  tjm                Int?
+  duration           String?
+  workType           WorkType?
+  location           String?
+  stack              String[]
   sourceUrl          String?
   tasksDescription   String?
   stackDescription   String?
   profileDescription String?
-  score          Int             @default(0)
-  scoreBreakdown Json?
-  notes             String?
-  rejectionReason   String?
-  platformId  String?
-  contactId   String?
-  profileId   String?
+  score              Int             @default(0)
+  scoreBreakdown     Json?
+  notes              String?
+  rejectionReason    String?
+  platformId         String?
+  contactId          String?
+  profileId          String?
 
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
   archivedAt DateTime?
   deletedAt  DateTime?
 
-  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
-  platform       Platform?        @relation(fields: [platformId], references: [id], onDelete: SetNull)
-  contact        Contact?         @relation(fields: [contactId], references: [id], onDelete: SetNull)
-  profile        UserProfile?     @relation(fields: [profileId], references: [id], onDelete: SetNull)
+  user           User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  platform       Platform?              @relation(fields: [platformId], references: [id], onDelete: SetNull)
+  contact        Contact?               @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  profile        UserProfile?           @relation(fields: [profileId], references: [id], onDelete: SetNull)
   followUps      FollowUp[]
   activityEvents ActivityEvent[]
   sentEmails     SentEmail[]
@@ -67,4 +67,20 @@ model Mission {
   @@index([userId, deletedAt])
   @@index([userId, status, deletedAt])
   @@map("mission")
+}
+
+model PipelineSavedView {
+  id     String @id @default(nanoid(11))
+  userId String
+  name   String
+  state  Json
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, name])
+  @@index([userId, updatedAt])
+  @@map("pipeline_saved_view")
 }

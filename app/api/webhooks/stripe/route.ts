@@ -25,6 +25,13 @@ export const POST = async (req: NextRequest) => {
 
   const stripeSignature = headerList.get("stripe-signature");
 
+  if (!env.STRIPE_WEBHOOK_SECRET) {
+    return NextResponse.json(
+      { error: "Stripe webhook is not configured" },
+      { status: 503 },
+    );
+  }
+
   if (!stripeSignature) {
     return NextResponse.json(
       { error: "Missing stripe-signature header" },
@@ -37,12 +44,12 @@ export const POST = async (req: NextRequest) => {
     event = stripe.webhooks.constructEvent(
       body,
       stripeSignature,
-      env.STRIPE_WEBHOOK_SECRET ?? "",
+      env.STRIPE_WEBHOOK_SECRET,
     );
   } catch (err: unknown) {
     logger.error("Stripe webhook signature verification failed:", err);
     return NextResponse.json(
-      { error: "Invalid Stripe webhook signature", details: err },
+      { error: "Invalid Stripe webhook signature" },
       { status: 400 },
     );
   }
@@ -59,7 +66,7 @@ export const POST = async (req: NextRequest) => {
         await customerSubscriptionDeleted(event.data.object, req);
         break;
       default:
-        logger.error(`Unhandled event type: ${event.type}`);
+        logger.info(`Ignored Stripe event type: ${event.type}`);
         break;
     }
   } catch (error) {

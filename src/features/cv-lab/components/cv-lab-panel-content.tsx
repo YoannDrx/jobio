@@ -16,6 +16,7 @@ import {
   ExternalLink,
   Eye,
   FileDown,
+  FileText,
   Link2,
   RotateCcw,
   Trash2,
@@ -49,6 +50,8 @@ type CvLabPanelContentProps = {
   isRevokingShareLink: boolean;
   onExportPdf: () => void;
   isExportingPdf: boolean;
+  onExportAts: () => void;
+  isExportingAts: boolean;
   isArchived: boolean;
   onArchive: () => void;
   isArchiving: boolean;
@@ -83,6 +86,8 @@ export function CvLabPanelContent({
   isRevokingShareLink,
   onExportPdf,
   isExportingPdf,
+  onExportAts,
+  isExportingAts,
   isArchived,
   onArchive,
   isArchiving,
@@ -240,6 +245,16 @@ export function CvLabPanelContent({
           >
             <FileDown className="mr-2 size-3.5" />
             {isExportingPdf ? "Export..." : "Export PDF"}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full justify-start"
+            onClick={onExportAts}
+            disabled={isExportingAts}
+          >
+            <FileText className="mr-2 size-3.5" />
+            {isExportingAts ? "Export..." : "Export ATS (.txt)"}
           </Button>
           <Button
             variant="outline"

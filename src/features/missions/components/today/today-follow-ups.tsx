@@ -19,7 +19,12 @@ type TodayFollowUp = {
   title: string;
   type: string;
   scheduledAt: string;
-  mission: { title: string; company: string | null; status: string };
+  mission: {
+    id: string;
+    title: string;
+    company: string | null;
+    status: string;
+  };
 };
 
 type TodayFollowUpsProps = {
@@ -147,7 +152,7 @@ export function TodayFollowUps({ todayFollowUps }: TodayFollowUpsProps) {
                   Reporter +1j
                 </Button>
                 <Link
-                  href="/app/pipeline"
+                  href={`/job/pipeline?missionId=${followUp.mission.id}`}
                   className="text-primary hover:bg-muted flex items-center gap-1 rounded-md px-2 py-1 text-xs"
                 >
                   Voir

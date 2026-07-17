@@ -5,13 +5,13 @@ model ClientPortal {
   slug      String  @unique
   isPublic  Boolean @default(false)
 
-  customBio       String?
-  showSkills      Boolean @default(true)
-  showExperiences Boolean @default(true)
-  showEducation   Boolean @default(true)
-  showProjects    Boolean @default(true)
-  showLanguages   Boolean @default(true)
-  showTjm         Boolean @default(false)
+  customBio        String?
+  showSkills       Boolean @default(true)
+  showExperiences  Boolean @default(true)
+  showEducation    Boolean @default(true)
+  showProjects     Boolean @default(true)
+  showLanguages    Boolean @default(true)
+  showTjm          Boolean @default(false)
   showAvailability Boolean @default(true)
 
   createdAt DateTime @default(now())

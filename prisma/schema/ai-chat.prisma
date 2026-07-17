@@ -13,7 +13,7 @@ model AIChatThread {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  user     User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user     User            @relation(fields: [userId], references: [id], onDelete: Cascade)
   messages AIChatMessage[]
 
   @@index([userId])
@@ -21,10 +21,10 @@ model AIChatThread {
 }
 
 model AIChatMessage {
-  id       String             @id @default(nanoid(11))
-  threadId String
-  role     AIChatMessageRole
-  content  String
+  id          String            @id @default(nanoid(11))
+  threadId    String
+  role        AIChatMessageRole
+  content     String
   toolCalls   Json?
   toolResults Json?
 

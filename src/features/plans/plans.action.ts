@@ -3,6 +3,7 @@
 import { PricingFunnelEventType } from "@/generated/prisma";
 import { authAction } from "@/lib/actions/safe-actions";
 import { AUTH_PLANS } from "@/lib/auth/stripe/auth-plans";
+import { isPlanAvailableForNewSubscription } from "@/config/product-features";
 import { ActionError } from "@/lib/errors/action-error";
 import { capturePricingFunnelEvent } from "@/lib/pricing/pricing-funnel-events";
 import { prisma } from "@/lib/prisma";
@@ -10,13 +11,23 @@ import { getServerUrl } from "@/lib/server-url";
 import { stripe } from "@/lib/stripe";
 import { z } from "zod";
 
+const internalPathSchema = z
+  .string()
+  .startsWith("/")
+  .refine((value) => !value.startsWith("//"), "Invalid internal path");
+
+const getCheckoutSuccessUrl = (path: string) => {
+  const separator = path.includes("?") ? "&" : "?";
+  return `${getServerUrl()}${path}${separator}session_id={CHECKOUT_SESSION_ID}`;
+};
+
 export const upgradeUserAction = authAction
   .inputSchema(
     z.object({
       plan: z.string(),
       annual: z.boolean().default(false),
-      successUrl: z.string(),
-      cancelUrl: z.string(),
+      successUrl: internalPathSchema,
+      cancelUrl: internalPathSchema,
       entryPoint: z.string().min(2).max(64).optional(),
       experimentVariant: z.string().min(2).max(32).optional(),
     }),
@@ -37,6 +48,12 @@ export const upgradeUserAction = authAction
       const authPlan = AUTH_PLANS.find((p) => p.name === plan);
       if (!authPlan) {
         throw new ActionError(`Plan "${plan}" not found`);
+      }
+
+      if (!isPlanAvailableForNewSubscription(plan)) {
+        throw new ActionError(
+          "Ce plan n'est pas disponible à la souscription.",
+        );
       }
 
       // Get the price ID based on annual or monthly
@@ -69,7 +86,6 @@ export const upgradeUserAction = authAction
       // Create checkout session
       const session = await stripe.checkout.sessions.create({
         customer: customerId,
-        payment_method_types: ["card"],
         line_items: [
           {
             price: priceId,
@@ -77,7 +93,7 @@ export const upgradeUserAction = authAction
           },
         ],
         mode: "subscription",
-        success_url: `${getServerUrl()}${successUrl}?session_id={CHECKOUT_SESSION_ID}`,
+        success_url: getCheckoutSuccessUrl(successUrl),
         cancel_url: `${getServerUrl()}${cancelUrl}`,
         metadata: {
           userId: user.id,

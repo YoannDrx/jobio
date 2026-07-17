@@ -10,15 +10,10 @@ import { MissionPreview } from "@/features/missions/components/capture/mission-p
 import { OnboardingWizard } from "@/features/onboarding/components/onboarding-wizard";
 import { triggerCelebration } from "@/features/onboarding/components/celebration";
 import { track, AnalyticsEvents } from "@/lib/analytics";
-import {
-  TodaySuggestions,
-  type Suggestion,
-} from "@/features/missions/components/today/today-suggestions";
-import { TodayUrgent } from "@/features/missions/components/today/today-urgent";
-import { TodayFollowUps } from "@/features/missions/components/today/today-follow-ups";
+import { type Suggestion } from "@/features/missions/components/today/today-suggestions";
+import { TodayPriorities } from "@/features/missions/components/today/today-priorities";
 import { TodayStats } from "@/features/missions/components/today/today-stats";
 import { TodayMissions } from "@/features/missions/components/today/today-missions";
-import { TodayExecutionAssistant } from "@/features/missions/components/today/today-execution-assistant";
 import { ArrowRight, CheckCircle2, Kanban, Rocket } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -28,8 +23,6 @@ import { MISSION_STATUS_CONFIG } from "@/components/nowts/status-badge";
 import type { MissionStatus } from "@/components/nowts/status-badge";
 import { TODAY_SUMMARY_STATUS_VALUES } from "@/features/missions/mission-status";
 import { checkTodayNotificationsAction } from "@/features/notifications/check-today-notifications.action";
-import { ProfileCompleteness } from "@/features/profiles/components/profile-completeness";
-import { AIInsightsWidget } from "@/features/analytics/components/ai-insights-widget";
 
 type RecentMission = {
   id: string;
@@ -88,12 +81,6 @@ type TodayContentProps = {
   staleMissions: StaleMission[];
   weekStats: WeekStats;
   suggestions: Suggestion[];
-  batchFollowUpCandidates: {
-    id: string;
-    title: string;
-    company: string | null;
-    daysWithoutFollowUp: number;
-  }[];
   onboardingStatus?: {
     hasProfile: boolean;
     hasPlatforms: boolean;
@@ -118,7 +105,6 @@ export function TodayContent({
   staleMissions,
   weekStats,
   suggestions,
-  batchFollowUpCandidates,
   onboardingStatus,
 }: TodayContentProps) {
   const router = useRouter();
@@ -276,30 +262,12 @@ export function TodayContent({
         />
       )}
 
-      {/* Profile completeness */}
-      <ProfileCompleteness />
-
-      {/* AI Insights */}
-      <AIInsightsWidget />
-
-      {/* Suggestions */}
-      <TodaySuggestions suggestions={suggestions} />
-
-      {/* Execution assistant */}
-      <TodayExecutionAssistant batchCandidates={batchFollowUpCandidates} />
-
-      {/* Urgent actions section */}
-      {hasUrgencies && (
-        <TodayUrgent
-          overdueFollowUps={overdueFollowUps}
-          staleMissions={staleMissions}
-        />
-      )}
-
-      {/* Today follow-ups section */}
-      {todayFollowUps.length > 0 && (
-        <TodayFollowUps todayFollowUps={todayFollowUps} />
-      )}
+      <TodayPriorities
+        overdueFollowUps={overdueFollowUps}
+        todayFollowUps={todayFollowUps}
+        staleMissions={staleMissions}
+        suggestions={suggestions}
+      />
 
       {/* Week summary section */}
       <TodayStats weekStats={weekStats} />
@@ -330,7 +298,7 @@ export function TodayContent({
               </span>
             </CardTitle>
             <Link
-              href="/app/pipeline"
+              href="/job/pipeline"
               className="text-primary flex items-center gap-1 text-sm hover:underline"
             >
               Voir tout
@@ -353,7 +321,7 @@ export function TodayContent({
                 return (
                   <Link
                     key={status}
-                    href={`/app/pipeline?status=${status}`}
+                    href={`/job/pipeline?status=${status}`}
                     className="hover:bg-muted flex items-center gap-2 rounded-lg border px-3 py-2 transition-colors"
                   >
                     <span className="font-mono text-sm font-bold">{count}</span>

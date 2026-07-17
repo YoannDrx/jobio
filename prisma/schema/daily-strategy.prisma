@@ -4,9 +4,9 @@ model DailyStrategy {
 
   date                DateTime @default(now()) @db.Date
   summary             String
-  priorities          Json     // string[]
-  quickWins           Json     // string[]
-  risks               Json     // string[]
+  priorities          Json // string[]
+  quickWins           Json // string[]
+  risks               Json // string[]
   completedPriorities Json     @default("[]") // number[] (index des items cochés)
   completedQuickWins  Json     @default("[]") // number[]
 

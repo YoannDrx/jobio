@@ -573,6 +573,7 @@ export function useCvLabStudio() {
     generateShareLinkMutation: documentManagement.generateShareLinkMutation,
     revokeShareLinkMutation: documentManagement.revokeShareLinkMutation,
     exportPdfMutation: documentManagement.exportPdfMutation,
+    exportAtsMutation: documentManagement.exportAtsMutation,
     exportJsonMutation: documentManagement.exportJsonMutation,
     importJsonMutation: documentManagement.importJsonMutation,
 

@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { SiteConfig } from "@/site-config";
 import type { LayoutParams } from "@/types/next";
 import type { Metadata } from "next";
-import { Geist_Mono, Inter, Space_Grotesk } from "next/font/google";
+import { Geist, Geist_Mono, Space_Grotesk } from "next/font/google";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { type ReactNode, Suspense } from "react";
 import "./globals.css";
@@ -64,7 +64,7 @@ const CaptionFont = Space_Grotesk({
   variable: "--font-caption",
 });
 
-const GeistSans = Inter({
+const GeistSans = Geist({
   subsets: ["latin"],
   variable: "--font-geist-sans",
 });

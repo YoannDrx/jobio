@@ -362,7 +362,7 @@ export default function CalendarPage() {
                                 </p>
                                 {event.missionTitle && (
                                   <Link
-                                    href={`/app/pipeline`}
+                                    href={`/job/pipeline?missionId=${event.missionId}`}
                                     className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-xs"
                                   >
                                     <ExternalLink className="size-3" />

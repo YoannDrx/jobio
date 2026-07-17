@@ -6,7 +6,7 @@ import { resolveActionResult } from "@/lib/actions/actions-utils";
 import { updateMissionStatusAction } from "@/features/missions/missions.action";
 import { KANBAN_STATUS_VALUES } from "@/features/missions/mission-status";
 import { DragDropContext, type DropResult } from "@hello-pangea/dnd";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { ApplySequenceDialog } from "@/features/follow-ups/components/apply-sequence-dialog";
 import {
@@ -19,6 +19,10 @@ import { ScoreRing } from "@/components/nowts/score-ring";
 import { Building2, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { KanbanColumn } from "./kanban-column";
+import {
+  applyOptimisticMissionStatus,
+  applyOptimisticStatusCounters,
+} from "./kanban-transition";
 
 const KANBAN_STATUSES: MissionStatus[] = [...KANBAN_STATUS_VALUES];
 
@@ -52,6 +56,11 @@ export function MissionKanban({
   onRefresh,
 }: MissionKanbanProps) {
   const [missions, setMissions] = useState(initialMissions);
+  const [localCounters, setLocalCounters] = useState(counters);
+  const [pendingMissionIds, setPendingMissionIds] = useState<Set<string>>(
+    new Set(),
+  );
+  const pendingMissionIdsRef = useRef(new Set<string>());
   const [sequenceDialogMission, setSequenceDialogMission] = useState<{
     id: string;
     title: string;
@@ -61,42 +70,135 @@ export function MissionKanban({
     setMissions(initialMissions);
   }, [initialMissions]);
 
-  const handleDragEnd = async (result: DropResult) => {
+  useEffect(() => {
+    setLocalCounters(counters);
+  }, [counters]);
+
+  const setMissionPending = (missionId: string, pending: boolean) => {
+    if (pending) {
+      pendingMissionIdsRef.current.add(missionId);
+    } else {
+      pendingMissionIdsRef.current.delete(missionId);
+    }
+    setPendingMissionIds(new Set(pendingMissionIdsRef.current));
+  };
+
+  const transitionMission = async (params: {
+    missionId: string;
+    missionTitle: string;
+    previousStatus: MissionStatus;
+    nextStatus: MissionStatus;
+    offerUndo?: boolean;
+  }): Promise<void> => {
+    if (pendingMissionIdsRef.current.has(params.missionId)) return;
+
+    setMissionPending(params.missionId, true);
+    setMissions((current) =>
+      applyOptimisticMissionStatus(
+        current,
+        params.missionId,
+        params.nextStatus,
+      ),
+    );
+    setLocalCounters((current) =>
+      applyOptimisticStatusCounters(
+        current,
+        params.previousStatus,
+        params.nextStatus,
+      ),
+    );
+
+    try {
+      await resolveActionResult(
+        updateMissionStatusAction({
+          id: params.missionId,
+          status: params.nextStatus,
+          expectedStatus: params.previousStatus,
+        }),
+      );
+      setMissionPending(params.missionId, false);
+      onRefresh();
+
+      const previousLabel = MISSION_STATUS_CONFIG[params.previousStatus].label;
+      const nextLabel = MISSION_STATUS_CONFIG[params.nextStatus].label;
+      toast.success(`${params.missionTitle} déplacée vers ${nextLabel}`, {
+        description: `Statut précédent : ${previousLabel}`,
+        duration: params.offerUndo === false ? 3500 : 7000,
+        ...(params.offerUndo === false
+          ? {}
+          : {
+              action: {
+                label: "Annuler",
+                onClick: () => {
+                  setSequenceDialogMission((current) =>
+                    current?.id === params.missionId ? null : current,
+                  );
+                  void transitionMission({
+                    missionId: params.missionId,
+                    missionTitle: params.missionTitle,
+                    previousStatus: params.nextStatus,
+                    nextStatus: params.previousStatus,
+                    offerUndo: false,
+                  });
+                },
+              },
+            }),
+      });
+
+      if (params.nextStatus === "POSTULE") {
+        setSequenceDialogMission({
+          id: params.missionId,
+          title: params.missionTitle,
+        });
+      }
+    } catch (error) {
+      setMissionPending(params.missionId, false);
+      setMissions((current) =>
+        applyOptimisticMissionStatus(
+          current,
+          params.missionId,
+          params.previousStatus,
+        ),
+      );
+      setLocalCounters((current) =>
+        applyOptimisticStatusCounters(
+          current,
+          params.nextStatus,
+          params.previousStatus,
+        ),
+      );
+      onRefresh();
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Erreur lors du changement de statut",
+        {
+          action: {
+            label: "Réessayer",
+            onClick: () => void transitionMission(params),
+          },
+        },
+      );
+    }
+  };
+
+  const handleDragEnd = (result: DropResult) => {
     const { draggableId, destination } = result;
 
     if (!destination) return;
+    if (pendingMissionIdsRef.current.has(draggableId)) return;
 
     const newStatus = destination.droppableId as MissionStatus;
     const mission = missions.find((m) => m.id === draggableId);
 
     if (!mission || mission.status === newStatus) return;
 
-    // Optimistic update
-    setMissions((prev) =>
-      prev.map((m) => (m.id === draggableId ? { ...m, status: newStatus } : m)),
-    );
-
-    try {
-      await resolveActionResult(
-        updateMissionStatusAction({ id: draggableId, status: newStatus }),
-      );
-      if (newStatus === "POSTULE") {
-        setSequenceDialogMission({ id: draggableId, title: mission.title });
-      }
-      onRefresh();
-    } catch (error) {
-      // Revert on error
-      setMissions((prev) =>
-        prev.map((m) =>
-          m.id === draggableId ? { ...m, status: mission.status } : m,
-        ),
-      );
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Erreur lors du changement de statut",
-      );
-    }
+    void transitionMission({
+      missionId: draggableId,
+      missionTitle: mission.title,
+      previousStatus: mission.status as MissionStatus,
+      nextStatus: newStatus,
+    });
   };
 
   const getMissionsByStatus = (status: MissionStatus) =>
@@ -122,7 +224,7 @@ export function MissionKanban({
         {KANBAN_STATUSES.map((status) => {
           const config = MISSION_STATUS_CONFIG[status];
           const statusMissions = getMissionsByStatus(status);
-          const count = counters[status] ?? 0;
+          const count = localCounters[status] ?? 0;
 
           return (
             <Collapsible key={status} defaultOpen={statusMissions.length > 0}>
@@ -150,10 +252,11 @@ export function MissionKanban({
                     </p>
                   ) : (
                     statusMissions.map((mission) => (
-                      <div
+                      <button
+                        type="button"
                         key={mission.id}
                         onClick={() => onMissionClick(mission.id)}
-                        className="bg-card hover:border-primary/50 flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition-colors"
+                        className="bg-card hover:border-primary/50 flex w-full cursor-pointer items-center gap-3 rounded-lg border p-3 text-left transition-colors"
                       >
                         <ScoreRing score={mission.score} size={28} />
                         <div className="min-w-0 flex-1">
@@ -183,7 +286,7 @@ export function MissionKanban({
                             </Badge>
                           ))}
                         </div>
-                      </div>
+                      </button>
                     ))
                   )}
                 </div>
@@ -203,9 +306,10 @@ export function MissionKanban({
                 key={status}
                 status={status}
                 missions={statusMissions}
-                count={counters[status] ?? 0}
+                count={localCounters[status] ?? 0}
                 avgDaysInStatus={getAverageDaysInStatus(statusMissions)}
                 onMissionClick={onMissionClick}
+                pendingMissionIds={pendingMissionIds}
               />
             );
           })}

@@ -32,7 +32,7 @@ export function TodayMissions({ recentMissions }: TodayMissionsProps) {
           </CardTitle>
           {recentMissions.length > 0 && (
             <Link
-              href="/app/pipeline"
+              href="/job/pipeline"
               className="text-primary flex items-center gap-1 text-sm hover:underline"
             >
               Tout voir
@@ -54,7 +54,7 @@ export function TodayMissions({ recentMissions }: TodayMissionsProps) {
             {recentMissions.map((mission) => (
               <Link
                 key={mission.id}
-                href={`/app/pipeline`}
+                href={`/job/pipeline?missionId=${mission.id}`}
                 className="hover:bg-muted flex items-center gap-3 rounded-lg border p-3 transition-colors"
               >
                 <ScoreRing score={mission.score} size={28} />
