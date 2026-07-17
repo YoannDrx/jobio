@@ -1,0 +1,26 @@
+model ContactMergeLog {
+  id              String @id @default(nanoid(11))
+  userId          String
+  targetContactId String
+  sourceContactId String
+
+  targetSnapshot            Json
+  sourceSnapshot            Json
+  movedMissionIds           String[]
+  movedInteractionIds       String[]
+  movedSentEmailIds         String[]
+  movedTargetCompanyIds     String[]
+  targetUpdatedAtAfterMerge DateTime
+
+  mergedAt DateTime  @default(now())
+  undoneAt DateTime?
+
+  user          User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  targetContact Contact @relation("ContactMergeTarget", fields: [targetContactId], references: [id], onDelete: Cascade)
+  sourceContact Contact @relation("ContactMergeSource", fields: [sourceContactId], references: [id], onDelete: Cascade)
+
+  @@index([userId, mergedAt])
+  @@index([targetContactId])
+  @@index([sourceContactId])
+  @@map("contact_merge_log")
+}

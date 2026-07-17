@@ -1,76 +1,54 @@
 import type { NavigationGroup } from "@/features/navigation/navigation.type";
 import {
-  BarChart3,
-  BookOpen,
+  isProductFeatureVisible,
+  type ProductFeatureKey,
+} from "@/config/product-features";
+import {
   CalendarCheck,
   CalendarClock,
-  CalendarDays,
   FileText,
-  Globe,
   Kanban,
-  ListOrdered,
-  Mail,
-  Receipt,
-  UserCircle,
   Users,
 } from "lucide-react";
 
 const APP_PATH = "/job";
 
+const whenVisible = <T>(feature: ProductFeatureKey, link: T): T[] =>
+  isProductFeatureVisible(feature) ? [link] : [];
+
 export const APP_LINKS: NavigationGroup[] = [
   {
     title: "Principal",
     links: [
-      {
+      ...whenVisible("today", {
         href: APP_PATH,
         Icon: CalendarCheck,
-        label: "Today",
+        label: "Aujourd'hui",
         tourId: "dashboard",
-      },
-      {
+      }),
+      ...whenVisible("pipeline", {
         href: `${APP_PATH}/pipeline`,
         Icon: Kanban,
         label: "Pipeline",
         tourId: "pipeline-nav",
-      },
-      {
-        href: `${APP_PATH}/contacts`,
-        Icon: Users,
-        label: "Contacts",
-        tourId: "contacts-nav",
-      },
-      {
+      }),
+      ...whenVisible("followUps", {
         href: `${APP_PATH}/follow-ups`,
         Icon: CalendarClock,
         label: "Relances",
         tourId: "followups-nav",
-      },
-      {
-        href: `${APP_PATH}/sequences`,
-        Icon: ListOrdered,
-        label: "Séquences",
-      },
-      { href: `${APP_PATH}/emails`, Icon: Mail, label: "Emails" },
-    ],
-  },
-  {
-    title: "Outils",
-    links: [
-      {
-        href: `${APP_PATH}/calendar`,
-        Icon: CalendarDays,
-        label: "Calendrier",
-      },
-      { href: `${APP_PATH}/profiles`, Icon: UserCircle, label: "Profils" },
-      { href: `${APP_PATH}/cv-studio`, Icon: FileText, label: "CV Studio IA" },
-      { href: `${APP_PATH}/platforms`, Icon: Globe, label: "Plateformes" },
-      {
-        href: `${APP_PATH}/programmes`,
-        Icon: BookOpen,
-        label: "Programmes",
-      },
-      { href: `${APP_PATH}/analytics`, Icon: BarChart3, label: "Analytics" },
-      { href: "/freelance", Icon: Receipt, label: "Facturation" },
+      }),
+      ...whenVisible("cv", {
+        href: `${APP_PATH}/cv-studio`,
+        Icon: FileText,
+        label: "CV",
+      }),
+      ...whenVisible("contacts", {
+        href: `${APP_PATH}/contacts`,
+        Icon: Users,
+        label: "Contacts",
+        tourId: "contacts-nav",
+      }),
     ],
   },
 ];

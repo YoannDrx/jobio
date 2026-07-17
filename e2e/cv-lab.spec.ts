@@ -1,14 +1,26 @@
 import { prisma } from "@/lib/prisma";
 import { expect, test } from "@playwright/test";
+import type { Page } from "@playwright/test";
 import { createTestAccount } from "./utils/auth-test";
 
-test.describe("cv-lab", () => {
-  // TODO: These tests need to be updated for the new cv-studio layout.
-  // The page was moved from /job/cv-lab to /job/cv-studio and refactored
-  // with a DocumentStudioLayout where the edit panel (containing Archiver,
-  // reset, ATS, etc.) is closed by default.
-  test.skip();
+const openCvEditor = async (page: Page) => {
+  await page.goto("/job/cv-studio?tab=editor");
+  await page.waitForLoadState("networkidle");
 
+  const editButton = page.getByRole("button", { name: "Éditer", exact: true });
+  if (await editButton.isVisible()) {
+    await editButton.click();
+  }
+
+  const dialog = page.getByRole("dialog");
+  await expect(dialog).toBeVisible({ timeout: 10000 });
+  await expect(
+    page.getByRole("button", { name: "Fermer", exact: true }),
+  ).toBeVisible({ timeout: 10000 });
+  return dialog;
+};
+
+test.describe("cv-lab", () => {
   test("archive and restore a cv document", async ({ page }) => {
     const userData = await createTestAccount({
       page,
@@ -57,45 +69,43 @@ test.describe("cv-lab", () => {
         },
       });
 
-      await page.goto("/job/cv-lab");
-      await page.waitForLoadState("networkidle");
+      const editor = await openCvEditor(page);
 
-      await expect(page.getByRole("button", { name: "Archiver" })).toBeVisible({
+      await expect(
+        editor.getByRole("button", { name: "Archiver" }),
+      ).toBeVisible({
         timeout: 10000,
       });
-      await expect(page.getByText("A4 (verrouillé)")).toBeVisible({
+      await expect(editor.getByText("A4 (verrouillé)")).toBeVisible({
         timeout: 10000,
       });
       await expect(
-        page.getByRole("button", { name: "Export JSON" }),
+        editor.getByRole("button", { name: "Export JSON" }),
       ).toBeVisible({
         timeout: 10000,
       });
       await expect(
-        page.getByRole("button", { name: "Import JSON" }),
+        editor.getByRole("button", { name: "Import JSON" }),
       ).toBeVisible({
         timeout: 10000,
       });
 
-      await page.getByRole("button", { name: "Archiver" }).click();
+      await editor.getByRole("button", { name: "Archiver" }).click({
+        force: true,
+      });
       await expect(page.getByText("CV archivé")).toBeVisible({
         timeout: 10000,
       });
-
-      await page.getByTestId("cv-lab-view-filter-trigger").click();
-      await page.getByRole("option", { name: "Archivés" }).click();
-      await expect(page.getByText(/^Archivé$/)).toBeVisible({ timeout: 10000 });
 
       await page.getByRole("button", { name: "Restaurer" }).click();
       await expect(page.getByText("CV restauré")).toBeVisible({
         timeout: 10000,
       });
 
-      await page.getByTestId("cv-lab-view-filter-trigger").click();
-      await page.getByRole("option", { name: "Actifs" }).click();
-      await expect(page.getByRole("button", { name: "Archiver" })).toBeVisible({
-        timeout: 10000,
-      });
+      const restoredEditor = await openCvEditor(page);
+      await expect(
+        restoredEditor.getByRole("button", { name: "Archiver" }),
+      ).toBeVisible({ timeout: 10000 });
     } finally {
       const user = await prisma.user.findUnique({
         where: { email: userData.email },
@@ -157,23 +167,22 @@ test.describe("cv-lab", () => {
         },
       });
 
-      await page.goto("/job/cv-lab");
-      await page.waitForLoadState("networkidle");
+      const editor = await openCvEditor(page);
 
-      const cvNameInput = page.getByLabel("Nom du CV");
-      await expect(cvNameInput).toBeVisible({ timeout: 10000 });
-      await expect(cvNameInput).toHaveValue("CV initial");
+      const targetRoleInput = editor.getByLabel("Poste ciblé");
+      await expect(targetRoleInput).toBeVisible({ timeout: 10000 });
+      await expect(targetRoleInput).toHaveValue("Frontend Engineer");
 
-      await cvNameInput.fill("CV brouillon live");
+      await targetRoleInput.fill("Staff Frontend Engineer");
       await expect(
-        page.getByRole("button", { name: "Réinitialiser brouillon" }),
-      ).toBeVisible({
+        editor.getByRole("button", { name: "Réinitialiser", exact: true }),
+      ).toBeEnabled({
         timeout: 10000,
       });
 
       const previewFrame = page.frameLocator('iframe[title="cv-preview"]');
       await expect(
-        previewFrame.getByText(/CV\s+CV brouillon live/i),
+        previewFrame.getByText("Staff Frontend Engineer"),
       ).toBeVisible({
         timeout: 10000,
       });
@@ -183,11 +192,11 @@ test.describe("cv-lab", () => {
           id: document.id,
         },
         select: {
-          name: true,
+          targetRole: true,
         },
       });
 
-      expect(persistedDocument?.name).toBe("CV initial");
+      expect(persistedDocument?.targetRole).toBe("Frontend Engineer");
     } finally {
       const user = await prisma.user.findUnique({
         where: { email: userData.email },
@@ -225,7 +234,7 @@ test.describe("cv-lab", () => {
         },
       });
 
-      await prisma.cvLabDocument.create({
+      const document = await prisma.cvLabDocument.create({
         data: {
           userId: user.id,
           profileId: profile.id,
@@ -249,24 +258,45 @@ test.describe("cv-lab", () => {
         },
       });
 
-      await page.goto("/job/cv-lab");
-      await page.waitForLoadState("networkidle");
+      const editor = await openCvEditor(page);
 
-      const cvNameInput = page.getByLabel("Nom du CV");
+      const cvNameInput = editor.getByLabel("Nom du CV");
       await expect(cvNameInput).toHaveValue("CV recovery");
+      await page.context().setOffline(true);
       await cvNameInput.fill("CV recovery draft local");
 
-      await page.waitForTimeout(900);
+      const localDraftKey = `jobio.cv-lab.local-draft.v1:${document.id}`;
+      await expect
+        .poll(
+          async () =>
+            page.evaluate(
+              (key) => window.localStorage.getItem(key),
+              localDraftKey,
+            ),
+          { timeout: 5000 },
+        )
+        .toContain("CV recovery draft local");
+      await page.context().setOffline(false);
       await page.reload();
       await page.waitForLoadState("networkidle");
 
-      await expect(page.getByTestId("cv-lab-local-recovery-card")).toBeVisible({
-        timeout: 10000,
+      const reopenEditorButton = page.getByRole("button", {
+        name: "Éditer",
+        exact: true,
       });
-      await page
+      await expect(reopenEditorButton).toBeVisible({ timeout: 10000 });
+      await reopenEditorButton.click();
+      const reopenedEditor = page.getByRole("dialog");
+      await expect(reopenedEditor).toBeVisible({ timeout: 10000 });
+
+      await expect(
+        reopenedEditor.getByTestId("cv-lab-local-recovery-card"),
+      ).toBeVisible({ timeout: 10000 });
+
+      await reopenedEditor
         .getByRole("button", { name: "Restaurer le brouillon local" })
         .click();
-      await expect(page.getByLabel("Nom du CV")).toHaveValue(
+      await expect(reopenedEditor.getByLabel("Nom du CV")).toHaveValue(
         "CV recovery draft local",
         {
           timeout: 10000,
@@ -379,10 +409,10 @@ test.describe("cv-lab", () => {
         ],
       });
 
-      await page.goto("/job/cv-lab");
-      await page.waitForLoadState("networkidle");
+      const editor = await openCvEditor(page);
+      await editor.getByRole("tab", { name: "Versions" }).click();
 
-      await expect(page.getByText("Comparateur de versions")).toBeVisible({
+      await expect(editor.getByText("Comparateur de versions")).toBeVisible({
         timeout: 10000,
       });
 
@@ -440,6 +470,15 @@ test.describe("cv-lab", () => {
         },
       });
 
+      await prisma.subscription.create({
+        data: {
+          id: `sub_e2e_${user.id}`,
+          referenceId: user.id,
+          plan: "pro",
+          status: "active",
+        },
+      });
+
       await prisma.cvLabDocument.create({
         data: {
           userId: user.id,
@@ -465,16 +504,18 @@ test.describe("cv-lab", () => {
         },
       });
 
-      await page.goto("/job/cv-lab");
-      await page.waitForLoadState("networkidle");
+      const editor = await openCvEditor(page);
+      await editor.getByRole("tab", { name: "ATS" }).click();
 
-      await page
+      await editor
         .getByLabel("Fiche de poste (optionnel, recommande)")
         .fill(
           "Nous recherchons un Senior React TypeScript Engineer avec experience Node.js et optimisation de performance.",
         );
 
-      await page.getByRole("button", { name: "Lancer l'analyse ATS" }).click();
+      await editor
+        .getByRole("button", { name: "Lancer l'analyse ATS" })
+        .click();
       await expect(page.getByTestId("cv-lab-ats-preview-button")).toBeVisible({
         timeout: 10000,
       });
@@ -487,8 +528,9 @@ test.describe("cv-lab", () => {
       });
 
       await page.getByTestId("cv-lab-ats-apply-button").click();
-      await expect(page.getByLabel("Résumé personnalisé")).toContainText(
-        "Impact chiffré à compléter",
+      await editor.getByRole("tab", { name: "Paramètres" }).click();
+      await expect(editor.getByLabel("Résumé personnalisé")).toHaveValue(
+        /Impact chiffré à compléter/,
         {
           timeout: 10000,
         },

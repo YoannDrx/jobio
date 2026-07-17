@@ -9,10 +9,16 @@ import {
   addInteractionSchema,
   contactFilterSchema,
   createContactSchema,
+  mergeContactFieldChoicesSchema,
   updateContactSchema,
 } from "./contacts.schema";
 import { checkDuplicateContact } from "./duplicate-detection";
 import { computeContactRelationship } from "./contact-relationship";
+import {
+  buildMergedContactData,
+  contactMergeSnapshotSchema,
+  createContactMergeSnapshot,
+} from "./contact-merge";
 import { STALE_ELIGIBLE_STATUS_VALUES } from "@/features/missions/mission-status";
 
 export const checkDuplicateContactAction = authAction
@@ -520,11 +526,17 @@ export const mergeContactsAction = authAction
     z.object({
       targetId: z.string(),
       sourceId: z.string(),
-      fields: z.record(z.string(), z.enum(["target", "source"])),
+      fields: mergeContactFieldChoicesSchema,
     }),
   )
   .action(
     async ({ parsedInput: { targetId, sourceId, fields }, ctx: { user } }) => {
+      if (targetId === sourceId) {
+        throw new ApplicationError(
+          "Impossible de fusionner un contact avec lui-même",
+        );
+      }
+
       const [targetContact, sourceContact] = await Promise.all([
         prisma.contact.findFirst({
           where: { id: targetId, userId: user.id, deletedAt: null },
@@ -538,37 +550,55 @@ export const mergeContactsAction = authAction
         throw new ApplicationError("Un des contacts est introuvable");
       }
 
-      const updateData: Record<string, unknown> = {};
-      const fieldMap = {
-        firstName: "firstName",
-        lastName: "lastName",
-        company: "company",
-        email: "email",
-        phone: "phone",
-        role: "role",
-        notes: "notes",
-        linkedinUrl: "linkedinUrl",
-      };
+      const updateData = buildMergedContactData(
+        targetContact,
+        sourceContact,
+        fields,
+      );
 
-      Object.entries(fieldMap).forEach(([key, dbField]) => {
-        const fieldChoice = fields[key] as "target" | "source" | undefined;
-        if (fieldChoice === "source") {
-          updateData[dbField] =
-            sourceContact[key as keyof typeof sourceContact];
-        } else {
-          updateData[dbField] =
-            targetContact[key as keyof typeof targetContact];
-        }
-      });
+      const [missions, interactions, sentEmails, targetCompanies] =
+        await Promise.all([
+          prisma.mission.findMany({
+            where: { contactId: sourceId, userId: user.id },
+            select: { id: true },
+          }),
+          prisma.contactInteraction.findMany({
+            where: { contactId: sourceId },
+            select: { id: true },
+          }),
+          prisma.sentEmail.findMany({
+            where: { contactId: sourceId, userId: user.id },
+            select: { id: true },
+          }),
+          prisma.targetCompany.findMany({
+            where: { contactId: sourceId, userId: user.id },
+            select: { id: true },
+          }),
+        ]);
 
       return prisma.$transaction(async (tx) => {
-        await tx.contact.update({
+        const mergedContact = await tx.contact.update({
           where: { id: targetId },
           data: updateData,
         });
 
         await tx.mission.updateMany({
+          where: { contactId: sourceId, userId: user.id },
+          data: { contactId: targetId },
+        });
+
+        await tx.contactInteraction.updateMany({
           where: { contactId: sourceId },
+          data: { contactId: targetId },
+        });
+
+        await tx.sentEmail.updateMany({
+          where: { contactId: sourceId, userId: user.id },
+          data: { contactId: targetId },
+        });
+
+        await tx.targetCompany.updateMany({
+          where: { contactId: sourceId, userId: user.id },
           data: { contactId: targetId },
         });
 
@@ -577,9 +607,121 @@ export const mergeContactsAction = authAction
           data: { deletedAt: new Date() },
         });
 
-        return tx.contact.findFirst({
-          where: { id: targetId, userId: user.id, deletedAt: null },
+        const mergeLog = await tx.contactMergeLog.create({
+          data: {
+            userId: user.id,
+            targetContactId: targetId,
+            sourceContactId: sourceId,
+            targetSnapshot: createContactMergeSnapshot(targetContact),
+            sourceSnapshot: createContactMergeSnapshot(sourceContact),
+            movedMissionIds: missions.map(({ id }) => id),
+            movedInteractionIds: interactions.map(({ id }) => id),
+            movedSentEmailIds: sentEmails.map(({ id }) => id),
+            movedTargetCompanyIds: targetCompanies.map(({ id }) => id),
+            targetUpdatedAtAfterMerge: mergedContact.updatedAt,
+          },
         });
+
+        return { contact: mergedContact, mergeLogId: mergeLog.id };
+      });
+    },
+  );
+
+export const undoContactMergeAction = authAction
+  .inputSchema(z.object({ mergeLogId: z.string() }))
+  .action(async ({ parsedInput: { mergeLogId }, ctx: { user } }) => {
+    const mergeLog = await prisma.contactMergeLog.findFirst({
+      where: { id: mergeLogId, userId: user.id, undoneAt: null },
+      include: { targetContact: true, sourceContact: true },
+    });
+
+    if (!mergeLog) throw new ApplicationError("Fusion introuvable ou annulée");
+    if (
+      mergeLog.targetContact.updatedAt.getTime() !==
+      mergeLog.targetUpdatedAtAfterMerge.getTime()
+    ) {
+      throw new ApplicationError(
+        "Le contact fusionné a été modifié depuis. L’annulation automatique est bloquée pour éviter de perdre ces changements.",
+      );
+    }
+
+    const targetSnapshot = contactMergeSnapshotSchema.parse(
+      mergeLog.targetSnapshot,
+    );
+    const sourceSnapshot = contactMergeSnapshotSchema.parse(
+      mergeLog.sourceSnapshot,
+    );
+
+    return prisma.$transaction(async (tx) => {
+      await tx.contact.update({
+        where: { id: mergeLog.targetContactId },
+        data: targetSnapshot,
+      });
+      await tx.contact.update({
+        where: { id: mergeLog.sourceContactId },
+        data: { ...sourceSnapshot, deletedAt: null },
+      });
+      await tx.mission.updateMany({
+        where: {
+          id: { in: mergeLog.movedMissionIds },
+          userId: user.id,
+          contactId: mergeLog.targetContactId,
+        },
+        data: { contactId: mergeLog.sourceContactId },
+      });
+      await tx.contactInteraction.updateMany({
+        where: {
+          id: { in: mergeLog.movedInteractionIds },
+          contactId: mergeLog.targetContactId,
+        },
+        data: { contactId: mergeLog.sourceContactId },
+      });
+      await tx.sentEmail.updateMany({
+        where: {
+          id: { in: mergeLog.movedSentEmailIds },
+          userId: user.id,
+          contactId: mergeLog.targetContactId,
+        },
+        data: { contactId: mergeLog.sourceContactId },
+      });
+      await tx.targetCompany.updateMany({
+        where: {
+          id: { in: mergeLog.movedTargetCompanyIds },
+          userId: user.id,
+          contactId: mergeLog.targetContactId,
+        },
+        data: { contactId: mergeLog.sourceContactId },
+      });
+      await tx.contactMergeLog.update({
+        where: { id: mergeLog.id },
+        data: { undoneAt: new Date() },
+      });
+
+      return { restoredContactId: mergeLog.sourceContactId };
+    });
+  });
+
+export const mergeIncomingContactAction = authAction
+  .inputSchema(
+    z.object({
+      targetId: z.string(),
+      source: createContactSchema,
+      fields: mergeContactFieldChoicesSchema,
+    }),
+  )
+  .action(
+    async ({ parsedInput: { targetId, source, fields }, ctx: { user } }) => {
+      const targetContact = await prisma.contact.findFirst({
+        where: { id: targetId, userId: user.id, deletedAt: null },
+      });
+
+      if (!targetContact) {
+        throw new ApplicationError("Contact existant introuvable");
+      }
+
+      return prisma.contact.update({
+        where: { id: targetId },
+        data: buildMergedContactData(targetContact, source, fields),
       });
     },
   );

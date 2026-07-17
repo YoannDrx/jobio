@@ -25,24 +25,19 @@ import {
   getContactAction,
   getContactsAction,
   getTagsAction,
+  mergeIncomingContactAction,
   updateContactAction,
 } from "@/features/contacts/contacts.action";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { ContactForm } from "@/features/contacts/components/contact-form";
 import { ContactList } from "@/features/contacts/components/contact-list";
 import { ContactDetailSheet } from "@/features/contacts/components/contact-detail-sheet";
+import { MergeContactsDialog } from "@/features/contacts/components/merge-contacts-dialog";
 import { exportContactsAction } from "@/features/contacts/export-contacts.action";
 import { computeContactRelationship } from "@/features/contacts/contact-relationship";
-import type { CreateContactInput } from "@/features/contacts/contacts.schema";
+import type {
+  CreateContactInput,
+  MergeContactFieldChoices,
+} from "@/features/contacts/contacts.schema";
 import { downloadCsv, generateCsv } from "@/lib/csv-export";
 import { openGlobalDialog } from "@/features/global-dialog/global-dialog.store";
 import dynamic from "next/dynamic";
@@ -167,13 +162,7 @@ export default function ContactsPage() {
 
   // Duplicate detection
   const [duplicateWarning, setDuplicateWarning] = useState<{
-    existingContact: {
-      id: string;
-      firstName: string;
-      lastName: string;
-      company: string | null;
-      email: string | null;
-    };
+    existingContact: ContactDetail;
     reason: "email" | "name_company";
     pendingData: CreateContactInput;
   } | null>(null);
@@ -278,8 +267,11 @@ export default function ContactsPage() {
         checkDuplicateContactAction(data),
       );
       if (check.duplicate) {
+        const existingContact = await resolveActionResult(
+          getContactAction({ id: check.existingContact.id }),
+        );
         setDuplicateWarning({
-          existingContact: check.existingContact,
+          existingContact,
           reason: check.reason,
           pendingData: data,
         });
@@ -289,6 +281,18 @@ export default function ContactsPage() {
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Erreur");
     }
+  };
+
+  const handleMergeDuplicate = async (choices: MergeContactFieldChoices) => {
+    if (!duplicateWarning) return;
+
+    await resolveActionResult(
+      mergeIncomingContactAction({
+        targetId: duplicateWarning.existingContact.id,
+        source: duplicateWarning.pendingData,
+        fields: choices,
+      }),
+    );
   };
 
   const handleUpdate = async (data: CreateContactInput) => {
@@ -541,57 +545,43 @@ export default function ContactsPage() {
         onSuccess={() => void fetchContacts()}
       />
 
-      {/* Duplicate warning dialog */}
-      <AlertDialog
-        open={duplicateWarning !== null}
-        onOpenChange={(open) => {
-          if (!open) setDuplicateWarning(null);
-        }}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Doublon détecté</AlertDialogTitle>
-            <AlertDialogDescription>
-              {duplicateWarning?.reason === "email" ? (
-                <>
-                  Un contact avec l&apos;email{" "}
-                  <strong>{duplicateWarning.existingContact.email}</strong>{" "}
-                  existe déjà : {duplicateWarning.existingContact.firstName}{" "}
-                  {duplicateWarning.existingContact.lastName}
-                  {duplicateWarning.existingContact.company &&
-                    ` (${duplicateWarning.existingContact.company})`}
-                  .
-                </>
-              ) : duplicateWarning?.reason === "name_company" ? (
-                <>
-                  Un contact nommé{" "}
-                  <strong>
-                    {duplicateWarning.existingContact.firstName}{" "}
-                    {duplicateWarning.existingContact.lastName}
-                  </strong>{" "}
-                  chez{" "}
-                  <strong>{duplicateWarning.existingContact.company}</strong>{" "}
-                  existe déjà.
-                </>
-              ) : null}
-              <br />
-              Veux-tu créer le contact quand même ?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                if (duplicateWarning) {
-                  void forceCreateContact(duplicateWarning.pendingData);
-                }
-              }}
-            >
-              Créer quand même
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {duplicateWarning ? (
+        <MergeContactsDialog
+          open
+          contactA={duplicateWarning.existingContact}
+          contactB={{
+            id: "incoming-contact",
+            firstName: duplicateWarning.pendingData.firstName,
+            lastName: duplicateWarning.pendingData.lastName,
+            company: duplicateWarning.pendingData.company ?? null,
+            email: duplicateWarning.pendingData.email ?? null,
+            phone: duplicateWarning.pendingData.phone ?? null,
+            role: duplicateWarning.pendingData.role ?? null,
+            notes: duplicateWarning.pendingData.notes ?? null,
+            linkedinUrl: duplicateWarning.pendingData.linkedinUrl ?? null,
+            tags: duplicateWarning.pendingData.tags,
+          }}
+          description={
+            duplicateWarning.reason === "email"
+              ? "Cette adresse email appartient déjà à un contact. Compare les deux fiches avant de décider."
+              : "Un contact porte déjà ce nom dans cette entreprise. Compare les deux fiches avant de décider."
+          }
+          sourceLabel="Nouvelles informations"
+          onOpenChange={(open) => {
+            if (!open) setDuplicateWarning(null);
+          }}
+          onMerge={handleMergeDuplicate}
+          onKeepBoth={async () =>
+            forceCreateContact(duplicateWarning.pendingData)
+          }
+          onMerged={() => {
+            setDuplicateWarning(null);
+            setShowForm(false);
+            void setPage(1);
+            void fetchContacts();
+          }}
+        />
+      ) : null}
     </Layout>
   );
 }

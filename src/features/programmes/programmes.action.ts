@@ -13,6 +13,11 @@ import {
   verifyProgramPurchaseSchema,
 } from "./programmes.schema";
 
+const getCheckoutSuccessUrl = (path: string) => {
+  const separator = path.includes("?") ? "&" : "?";
+  return `${getServerUrl()}${path}${separator}session_id={CHECKOUT_SESSION_ID}`;
+};
+
 export const getProgrammesAction = authAction.action(
   async ({ ctx: { user } }) => {
     const programs = await prisma.linkedInProgram.findMany({
@@ -155,10 +160,9 @@ export const createProgramCheckoutAction = authAction
         customer_email: !dbUser?.stripeCustomerId
           ? (dbUser?.email ?? undefined)
           : undefined,
-        payment_method_types: ["card"],
         line_items: [{ price: program.stripePriceId, quantity: 1 }],
         mode: "payment",
-        success_url: `${getServerUrl()}${successUrl}?session_id={CHECKOUT_SESSION_ID}`,
+        success_url: getCheckoutSuccessUrl(successUrl),
         cancel_url: `${getServerUrl()}${cancelUrl}`,
         metadata: {
           type: "linkedin_program",

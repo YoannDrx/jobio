@@ -1,6 +1,10 @@
 import { prisma } from "@/lib/prisma";
 import { checkPlanFeature } from "@/lib/plan-limits";
-import type { MissionStatus, FollowUpType } from "@/generated/prisma";
+import type { FollowUp, FollowUpType, MissionStatus } from "@/generated/prisma";
+import {
+  evaluateFollowUpPolicy,
+  type FollowUpPolicyReason,
+} from "./follow-up-policy";
 
 type SequenceStep = {
   delayDays: number;
@@ -8,6 +12,73 @@ type SequenceStep = {
   title: string;
   description?: string;
   templateId?: string;
+};
+
+type AutomatedMissionContext = {
+  id: string;
+  status: MissionStatus;
+  contactId: string | null;
+  contact: { tags: string[]; deletedAt: Date | null } | null;
+};
+
+const getAutomatedFollowUpBlockReason = async (params: {
+  userId: string;
+  mission: AutomatedMissionContext;
+  scheduledAt: Date;
+}): Promise<FollowUpPolicyReason | null> => {
+  const windowStart = new Date(
+    params.scheduledAt.getTime() - 24 * 60 * 60 * 1000,
+  );
+  const windowEnd = new Date(
+    params.scheduledAt.getTime() + 24 * 60 * 60 * 1000,
+  );
+  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+  const [pendingNearTarget, recentSentEmails, recentCompletedFollowUps] =
+    await Promise.all([
+      prisma.followUp.count({
+        where: {
+          userId: params.userId,
+          missionId: params.mission.id,
+          completedAt: null,
+          scheduledAt: { gte: windowStart, lte: windowEnd },
+        },
+      }),
+      params.mission.contactId
+        ? prisma.sentEmail.count({
+            where: {
+              userId: params.userId,
+              contactId: params.mission.contactId,
+              isDraft: false,
+              OR: [
+                { sentAt: { gte: sevenDaysAgo } },
+                { sentAt: null, createdAt: { gte: sevenDaysAgo } },
+              ],
+            },
+          })
+        : Promise.resolve(0),
+      params.mission.contactId
+        ? prisma.followUp.count({
+            where: {
+              userId: params.userId,
+              completedAt: { gte: sevenDaysAgo },
+              mission: { contactId: params.mission.contactId },
+            },
+          })
+        : Promise.resolve(0),
+    ]);
+
+  return evaluateFollowUpPolicy({
+    missionStatus: params.mission.status,
+    isAutomated: true,
+    contactTags:
+      params.mission.contact?.deletedAt === null
+        ? params.mission.contact.tags
+        : params.mission.contact
+          ? ["do-not-contact"]
+          : [],
+    pendingNearTarget,
+    recentContactTouches: recentSentEmails + recentCompletedFollowUps,
+  });
 };
 
 export async function executeFollowUpRules(
@@ -33,18 +104,31 @@ export async function executeFollowUpRules(
 
   const mission = await prisma.mission.findFirst({
     where: { id: missionId, userId, deletedAt: null },
+    include: {
+      contact: { select: { tags: true, deletedAt: true } },
+    },
   });
 
   if (!mission) return [];
 
   const now = new Date();
 
-  const createdFollowUps = await Promise.all(
-    rules.map(async (rule) => {
-      const scheduledAt = new Date(now);
-      scheduledAt.setDate(scheduledAt.getDate() + rule.delayDays);
+  const createdFollowUps: FollowUp[] = [];
+  for (const rule of rules) {
+    const scheduledAt = new Date(now);
+    scheduledAt.setDate(scheduledAt.getDate() + rule.delayDays);
+    // Sequential by design: each created follow-up must affect the next policy check.
+    // eslint-disable-next-line no-await-in-loop
+    const blockReason = await getAutomatedFollowUpBlockReason({
+      userId,
+      mission,
+      scheduledAt,
+    });
+    if (blockReason) continue;
 
-      const followUp = await prisma.followUp.create({
+    // eslint-disable-next-line no-await-in-loop
+    const followUp = await prisma.$transaction(async (tx) => {
+      const created = await tx.followUp.create({
         data: {
           missionId,
           userId,
@@ -55,7 +139,7 @@ export async function executeFollowUpRules(
         },
       });
 
-      await prisma.activityEvent.create({
+      await tx.activityEvent.create({
         data: {
           missionId,
           userId,
@@ -63,10 +147,10 @@ export async function executeFollowUpRules(
           description: `Relance auto "${rule.name}" planifiée (règle: ${rule.name})`,
         },
       });
-
-      return followUp;
-    }),
-  );
+      return created;
+    });
+    createdFollowUps.push(followUp);
+  }
 
   return createdFollowUps;
 }
@@ -84,6 +168,9 @@ export async function executeSequence(
 
   const mission = await prisma.mission.findFirst({
     where: { id: missionId, userId, deletedAt: null },
+    include: {
+      contact: { select: { tags: true, deletedAt: true } },
+    },
   });
 
   if (!mission) return [];
@@ -93,12 +180,22 @@ export async function executeSequence(
 
   const now = new Date();
 
-  const createdFollowUps = await Promise.all(
-    steps.map(async (step) => {
-      const scheduledAt = new Date(now);
-      scheduledAt.setDate(scheduledAt.getDate() + step.delayDays);
+  const createdFollowUps: FollowUp[] = [];
+  for (const step of steps) {
+    const scheduledAt = new Date(now);
+    scheduledAt.setDate(scheduledAt.getDate() + step.delayDays);
+    // Sequential by design: each created follow-up must affect the next policy check.
+    // eslint-disable-next-line no-await-in-loop
+    const blockReason = await getAutomatedFollowUpBlockReason({
+      userId,
+      mission,
+      scheduledAt,
+    });
+    if (blockReason) continue;
 
-      const followUp = await prisma.followUp.create({
+    // eslint-disable-next-line no-await-in-loop
+    const followUp = await prisma.$transaction(async (tx) => {
+      const created = await tx.followUp.create({
         data: {
           missionId,
           userId,
@@ -110,7 +207,7 @@ export async function executeSequence(
         },
       });
 
-      await prisma.activityEvent.create({
+      await tx.activityEvent.create({
         data: {
           missionId,
           userId,
@@ -118,10 +215,10 @@ export async function executeSequence(
           description: `Relance "${step.title}" planifiée (séquence: ${sequence.name})`,
         },
       });
-
-      return followUp;
-    }),
-  );
+      return created;
+    });
+    createdFollowUps.push(followUp);
+  }
 
   return createdFollowUps;
 }

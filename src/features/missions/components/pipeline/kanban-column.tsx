@@ -27,6 +27,7 @@ type KanbanColumnProps = {
   count: number;
   avgDaysInStatus?: number | null;
   onMissionClick: (missionId: string) => void;
+  pendingMissionIds: Set<string>;
 };
 
 export function KanbanColumn({
@@ -35,6 +36,7 @@ export function KanbanColumn({
   count,
   avgDaysInStatus,
   onMissionClick,
+  pendingMissionIds,
 }: KanbanColumnProps) {
   const config = MISSION_STATUS_CONFIG[status];
 
@@ -79,6 +81,7 @@ export function KanbanColumn({
                 key={mission.id}
                 draggableId={mission.id}
                 index={index}
+                isDragDisabled={pendingMissionIds.has(mission.id)}
               >
                 {(provided, snapshot) => (
                   <div
@@ -89,6 +92,7 @@ export function KanbanColumn({
                     <MissionCardKanban
                       mission={mission}
                       onClick={() => onMissionClick(mission.id)}
+                      isPending={pendingMissionIds.has(mission.id)}
                       className={cn(
                         snapshot.isDragging && "rotate-2 shadow-lg",
                       )}

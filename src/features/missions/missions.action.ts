@@ -15,6 +15,8 @@ import {
 import { computeMissionScore } from "./mission-scoring";
 import { createNotification } from "@/features/notifications/create-notification";
 import { Prisma } from "@/generated/prisma";
+import { logger } from "@/lib/logger";
+import { resolveMissionStatusTransition } from "./mission-status-transition";
 
 export const createMissionAction = authAction
   .inputSchema(createMissionSchema)
@@ -96,63 +98,120 @@ export const updateMissionAction = authAction
 
 export const updateMissionStatusAction = authAction
   .inputSchema(updateMissionStatusSchema)
-  .action(async ({ parsedInput: { id, status }, ctx: { user } }) => {
-    const mission = await prisma.mission.findFirst({
-      where: { id, userId: user.id, deletedAt: null },
-    });
-
-    if (!mission) {
-      throw new ApplicationError("Mission introuvable");
-    }
-
-    const updated = await prisma.mission.update({
-      where: { id },
-      data: { status },
-    });
-
-    await prisma.activityEvent.create({
-      data: {
-        missionId: id,
-        userId: user.id,
-        type: "STATUS_CHANGE",
-        description: `Statut changé de ${mission.status} à ${status}`,
-        previousValue: mission.status,
-        newValue: status,
-      },
-    });
-
-    if (status === "POSTULE") {
-      await createNotification({
-        userId: user.id,
-        type: "SYSTEM",
-        title: "Mission postulée !",
-        message: `Pense à planifier des relances pour "${updated.title}"`,
-        link: `/app/pipeline?missionId=${id}`,
+  .action(
+    async ({ parsedInput: { id, status, expectedStatus }, ctx: { user } }) => {
+      const mission = await prisma.mission.findFirst({
+        where: { id, userId: user.id, deletedAt: null },
       });
-    }
 
-    if (status === "ENTRETIEN") {
-      await createNotification({
-        userId: user.id,
-        type: "SYSTEM",
-        title: "Entretien décroché !",
-        message: `Mission "${updated.title}" chez ${updated.company ?? "?"} passe en entretien`,
-        link: `/app/pipeline?missionId=${id}`,
+      if (!mission) {
+        throw new ApplicationError("Mission introuvable");
+      }
+
+      const transition = resolveMissionStatusTransition({
+        currentStatus: mission.status,
+        nextStatus: status,
+        expectedStatus,
       });
-    }
 
-    if (status === "ACCEPTE") {
-      await createNotification({
-        userId: user.id,
-        type: "SYSTEM",
-        title: "Mission acceptée !",
-        message: `Félicitations ! Mission "${updated.title}" acceptée`,
-        link: `/app/pipeline?missionId=${id}`,
+      if (transition === "noop") {
+        return {
+          mission,
+          applied: false,
+          previousStatus: mission.status,
+        };
+      }
+
+      if (transition === "conflict") {
+        throw new ApplicationError(
+          "Cette mission a été modifiée ailleurs. Recharge le pipeline avant de réessayer.",
+        );
+      }
+
+      const previousStatus = mission.status;
+      const updated = await prisma.$transaction(async (tx) => {
+        const result = await tx.mission.updateMany({
+          where: {
+            id,
+            userId: user.id,
+            deletedAt: null,
+            status: expectedStatus ?? previousStatus,
+          },
+          data: { status },
+        });
+
+        if (result.count !== 1) {
+          throw new ApplicationError(
+            "Le statut a changé pendant l'opération. Le pipeline va être actualisé.",
+          );
+        }
+
+        const changedMission = await tx.mission.findUniqueOrThrow({
+          where: { id },
+        });
+
+        await tx.activityEvent.create({
+          data: {
+            missionId: id,
+            userId: user.id,
+            type: "STATUS_CHANGE",
+            description: `Statut changé de ${previousStatus} à ${status}`,
+            previousValue: previousStatus,
+            newValue: status,
+          },
+        });
+
+        return changedMission;
       });
-    }
 
-    return updated;
-  });
+      try {
+        if (status === "POSTULE") {
+          await createNotification({
+            userId: user.id,
+            type: "SYSTEM",
+            title: "Mission postulée !",
+            message: `Pense à planifier des relances pour "${updated.title}"`,
+            link: `/job/pipeline?missionId=${id}`,
+            dedupeHours: 0,
+          });
+        }
+
+        if (status === "ENTRETIEN") {
+          await createNotification({
+            userId: user.id,
+            type: "SYSTEM",
+            title: "Entretien décroché !",
+            message: `Mission "${updated.title}" chez ${updated.company ?? "?"} passe en entretien`,
+            link: `/job/pipeline?missionId=${id}`,
+            dedupeHours: 0,
+          });
+        }
+
+        if (status === "ACCEPTE") {
+          await createNotification({
+            userId: user.id,
+            type: "SYSTEM",
+            title: "Mission acceptée !",
+            message: `Félicitations ! Mission "${updated.title}" acceptée`,
+            link: `/job/pipeline?missionId=${id}`,
+            dedupeHours: 0,
+          });
+        }
+      } catch (error) {
+        logger.warn("Statut mis à jour mais notification non créée", {
+          error,
+          missionId: id,
+          status,
+        });
+      }
+
+      return {
+        mission: updated,
+        applied: true,
+        previousStatus,
+      };
+    },
+  );
 
 export const archiveMissionAction = authAction
   .inputSchema(z.object({ id: z.string() }))

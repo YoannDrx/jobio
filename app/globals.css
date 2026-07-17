@@ -8,6 +8,7 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-caption: var(--font-caption);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -83,42 +84,42 @@
 
 :root,
 .force-light-theme {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.3211 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.3211 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.3211 0 0);
-  --primary: oklch(0.6518 0.1654 194.77);
-  --primary-foreground: oklch(1 0 0);
-  --secondary: oklch(0.967 0.0029 194.77);
-  --secondary-foreground: oklch(0.4461 0.0263 194.77);
-  --muted: oklch(0.9846 0.0017 194.77);
-  --muted-foreground: oklch(0.551 0.0234 194.77);
-  --accent: oklch(0.9165 0.0584 194.77);
-  --accent-foreground: oklch(0.4227 0.1194 194.77);
-  --destructive: oklch(0.6368 0.2078 25.3313);
-  --destructive-foreground: oklch(1 0 0);
-  --border: oklch(0.9276 0.0058 264.5313);
-  --input: oklch(0.9276 0.0058 264.5313);
-  --ring: oklch(0.6518 0.1654 194.77);
-  --chart-1: #f43f5e;
-  --chart-2: #22d3ee;
-  --chart-3: #8b5cf6;
-  --chart-4: #f59e0b;
-  --chart-5: #10b981;
-  --sidebar: oklch(0.9846 0.0017 247.8389);
-  --sidebar-foreground: oklch(0.3211 0 0);
-  --sidebar-primary: oklch(0.6518 0.1654 194.77);
-  --sidebar-primary-foreground: oklch(1 0 0);
-  --sidebar-accent: oklch(0.9165 0.0584 194.77);
-  --sidebar-accent-foreground: oklch(0.4227 0.1194 194.77);
-  --sidebar-border: oklch(0.9276 0.0058 264.5313);
-  --sidebar-ring: oklch(0.6518 0.1654 194.77);
+  --background: #f7f8fc;
+  --foreground: #0b132b;
+  --card: #ffffff;
+  --card-foreground: #0b132b;
+  --popover: #ffffff;
+  --popover-foreground: #0b132b;
+  --primary: #3b5ccc;
+  --primary-foreground: #ffffff;
+  --secondary: #eef1fa;
+  --secondary-foreground: #1f3474;
+  --muted: #f0f2f7;
+  --muted-foreground: #566078;
+  --accent: #ddf7fc;
+  --accent-foreground: #0b5260;
+  --destructive: #c83e4d;
+  --destructive-foreground: #ffffff;
+  --border: #dce1ec;
+  --input: #dce1ec;
+  --ring: #3b5ccc;
+  --chart-1: #3b5ccc;
+  --chart-2: #20b8d8;
+  --chart-3: #16865c;
+  --chart-4: #b7791f;
+  --chart-5: #c83e4d;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #0b132b;
+  --sidebar-primary: #3b5ccc;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #eef1fa;
+  --sidebar-accent-foreground: #1f3474;
+  --sidebar-border: #dce1ec;
+  --sidebar-ring: #3b5ccc;
   --font-sans: Inter, sans-serif;
   --font-serif: Source Serif 4, serif;
   --font-mono: JetBrains Mono, monospace;
-  --radius: 0.375rem;
+  --radius: 0.5rem;
   --shadow-x: 0;
   --shadow-y: 1px;
   --shadow-blur: 3px;
@@ -140,19 +141,37 @@
   --tracking-normal: 0em;
   --spacing: 0.25rem;
 
+  /* Semantic product contract */
+  --canvas: #f7f8fc;
+  --surface: #ffffff;
+  --surface-elevated: #ffffff;
+  --text: #0b132b;
+  --text-muted: #566078;
+  --text-subtle: #737d93;
+  --brand: #3b5ccc;
+  --brand-hover: #304eaf;
+  --focus-ring: #3b5ccc;
+  --radius-control: 8px;
+  --radius-card: 8px;
+  --radius-modal: 12px;
+  --duration-instant: 80ms;
+  --duration-fast: 120ms;
+  --duration-normal: 200ms;
+  --duration-slow: 400ms;
+
   /* NOWTS */
-  --success: hsl(151 55% 41%);
-  --success-foreground: hsl(137 72% 94%);
-  --warning: hsl(24 94% 50%);
-  --warning-foreground: hsl(24 97% 93%);
-  --info: hsl(221.2 83.2% 53.3%);
-  --info-foreground: hsl(210 40% 98%);
-  --status-hot: #F97316;
-  --status-success: #22C55E;
-  --status-danger: #EF4444;
-  --status-warning: #EAB308;
-  --status-info: #3B82F6;
-  --status-neutral: #64748B;
+  --success: #16865c;
+  --success-foreground: #ffffff;
+  --warning: #b7791f;
+  --warning-foreground: #ffffff;
+  --info: #20b8d8;
+  --info-foreground: #082f37;
+  --status-hot: #f97316;
+  --status-success: #22c55e;
+  --status-danger: #ef4444;
+  --status-warning: #eab308;
+  --status-info: #3b82f6;
+  --status-neutral: #64748b;
 
   /* Brand — Playful Bounce palette */
   --brand-rose: #f43f5e;
@@ -160,6 +179,17 @@
   --brand-cyan: #22d3ee;
   --brand-amber: #f59e0b;
   --brand-emerald: #10b981;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 .dark {
@@ -225,12 +255,12 @@
   --warning-foreground: hsl(24deg 97% 93.2%);
   --info: hsl(217.2 91.2% 59.8%);
   --info-foreground: hsl(222.2 47.4% 11.2%);
-  --status-hot: #F97316;
-  --status-success: #22C55E;
-  --status-danger: #EF4444;
-  --status-warning: #EAB308;
-  --status-info: #3B82F6;
-  --status-neutral: #64748B;
+  --status-hot: #f97316;
+  --status-success: #22c55e;
+  --status-danger: #ef4444;
+  --status-warning: #eab308;
+  --status-info: #3b82f6;
+  --status-neutral: #64748b;
 
   /* Brand — Playful Bounce palette */
   --brand-rose: #f43f5e;

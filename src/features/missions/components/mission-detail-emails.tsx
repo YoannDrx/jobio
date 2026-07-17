@@ -16,12 +16,25 @@ import {
 } from "@/features/emails/send-mission-email.action";
 import { getTemplatesAction } from "@/features/templates/templates.action";
 import { resolveActionResult } from "@/lib/actions/actions-utils";
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { MissionWithRelations } from "./mission-detail-header";
 
 type MissionDetailEmailsProps = {
   mission: MissionWithRelations;
   onRefresh?: () => void;
+};
+
+const EMAIL_STATUS_LABELS: Record<string, string> = {
+  pending: "En attente",
+  sending: "Envoi en cours",
+  sent: "Accepté",
+  delivered: "Livré",
+  opened: "Ouvert",
+  clicked: "Lien cliqué",
+  failed: "Échec d’envoi",
+  bounced: "Rejeté",
+  complained: "Signalé comme indésirable",
+  suppressed: "Adresse supprimée des envois",
 };
 
 export function MissionDetailEmails({
@@ -47,10 +60,20 @@ export function MissionDetailEmails({
       isDraft: boolean;
       createdAt: Date;
       sentAt: Date | null;
+      failureReason: string | null;
       template: { name: string } | null;
     }[]
   >([]);
   const [draftCount, setDraftCount] = useState(0);
+
+  const loadEmailHistory = useCallback(async () => {
+    const [emails, drafts] = await Promise.all([
+      resolveActionResult(getSentEmailsAction({ missionId: mission.id })),
+      resolveActionResult(getDraftsAction({ missionId: mission.id })),
+    ]);
+    setSentEmails(emails);
+    setDraftCount(drafts.length);
+  }, [mission.id]);
 
   useEffect(() => {
     resolveActionResult(getTemplatesAction({}))
@@ -61,22 +84,10 @@ export function MissionDetailEmails({
         // silently fail, templates are optional
       });
 
-    resolveActionResult(getSentEmailsAction({ missionId: mission.id }))
-      .then((result) => {
-        setSentEmails(result);
-      })
-      .catch(() => {
-        // silently fail, sent emails are optional
-      });
-
-    resolveActionResult(getDraftsAction({ missionId: mission.id }))
-      .then((result) => {
-        setDraftCount(result.length);
-      })
-      .catch(() => {
-        // silently fail
-      });
-  }, [mission.id]);
+    loadEmailHistory().catch(() => {
+      // The mission remains usable if the optional email history is unavailable.
+    });
+  }, [loadEmailHistory]);
 
   if (sentEmails.length === 0 && draftCount === 0) {
     return null;
@@ -111,13 +122,27 @@ export function MissionDetailEmails({
               {email.status === "sent" && (
                 <Clock className="text-muted-foreground size-3" />
               )}
+              {(email.status === "pending" || email.status === "sending") && (
+                <Clock className="size-3 text-amber-600" />
+              )}
               {(email.status === "bounced" ||
-                email.status === "complained") && (
+                email.status === "complained" ||
+                email.status === "suppressed" ||
+                email.status === "failed") && (
                 <AlertCircle className="size-3 text-red-500" />
               )}
               <span className="flex-1 truncate">{email.subject}</span>
+              <Badge
+                variant="outline"
+                className="text-xs"
+                title={email.failureReason ?? undefined}
+              >
+                {EMAIL_STATUS_LABELS[email.status] ?? email.status}
+              </Badge>
               <span className="text-muted-foreground text-xs whitespace-nowrap">
-                {new Date(email.createdAt).toLocaleDateString("fr-FR")}
+                {new Date(email.sentAt ?? email.createdAt).toLocaleDateString(
+                  "fr-FR",
+                )}
               </span>
             </div>
           ))}
@@ -129,7 +154,10 @@ export function MissionDetailEmails({
         onOpenChange={setShowEmailDialog}
         mission={mission}
         templates={templates}
-        onSent={onRefresh}
+        onSent={() => {
+          void loadEmailHistory();
+          onRefresh?.();
+        }}
       />
     </>
   );

@@ -103,45 +103,45 @@ model BillingProfile {
   id     String @id @default(nanoid(11))
   userId String @unique
 
-  legalName             String
-  tradeName             String?
-  legalForm             String?
-  siret                 String?
-  siren                 String?
-  vatNumber             String?
-  rcsNumber             String?
-  rmNumber              String?
-  activityLabel         String?
-  addressLine1          String
-  addressLine2          String?
-  postalCode            String
-  city                  String
-  countryCode           String  @default("FR")
-  email                 String?
-  phone                 String?
-  website               String?
-  iban                  String?
-  bic                   String?
-  paymentTermsInDays    Int     @default(30)
-  latePenaltyRate       Float?
-  latePenaltyFlatFeeEur Int?    @default(40)
-  notes                 String?
-  freelanceStatus       String?
-  activityCategory      String?
-  urssafDeclarationType BillingDeclarationPeriodType?
-  urssafContributionRate Float?
-  vatExemptionMention   String?
-  documentTemplate      String  @default("jobio-octamy")
-  documentPrimaryColor  String?
-  documentAccentColor   String?
-  documentLogoUrl       String?
-  documentFooterText    String?
-  documentShowNotes     Boolean @default(true)
-  documentShowTerms     Boolean @default(true)
-  documentShowBankDetails Boolean @default(true)
-  documentShowClientContact Boolean @default(true)
-  documentShowIssuerContact Boolean @default(true)
-  documentShowLineVat   Boolean @default(true)
+  legalName                 String
+  tradeName                 String?
+  legalForm                 String?
+  siret                     String?
+  siren                     String?
+  vatNumber                 String?
+  rcsNumber                 String?
+  rmNumber                  String?
+  activityLabel             String?
+  addressLine1              String
+  addressLine2              String?
+  postalCode                String
+  city                      String
+  countryCode               String                        @default("FR")
+  email                     String?
+  phone                     String?
+  website                   String?
+  iban                      String?
+  bic                       String?
+  paymentTermsInDays        Int                           @default(30)
+  latePenaltyRate           Float?
+  latePenaltyFlatFeeEur     Int?                          @default(40)
+  notes                     String?
+  freelanceStatus           String?
+  activityCategory          String?
+  urssafDeclarationType     BillingDeclarationPeriodType?
+  urssafContributionRate    Float?
+  vatExemptionMention       String?
+  documentTemplate          String                        @default("jobio-octamy")
+  documentPrimaryColor      String?
+  documentAccentColor       String?
+  documentLogoUrl           String?
+  documentFooterText        String?
+  documentShowNotes         Boolean                       @default(true)
+  documentShowTerms         Boolean                       @default(true)
+  documentShowBankDetails   Boolean                       @default(true)
+  documentShowClientContact Boolean                       @default(true)
+  documentShowIssuerContact Boolean                       @default(true)
+  documentShowLineVat       Boolean                       @default(true)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -180,13 +180,13 @@ model BillingClient {
   updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
-  user            User                       @relation(fields: [userId], references: [id], onDelete: Cascade)
-  contacts        BillingClientContact[]
-  quotes          BillingQuote[]
-  invoices        BillingInvoice[]
-  payments        BillingPayment[]
-  declarationRows       BillingDeclarationPeriod[]
-  recurringInvoices     BillingRecurringInvoice[]
+  user              User                       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  contacts          BillingClientContact[]
+  quotes            BillingQuote[]
+  invoices          BillingInvoice[]
+  payments          BillingPayment[]
+  declarationRows   BillingDeclarationPeriod[]
+  recurringInvoices BillingRecurringInvoice[]
 
   @@index([userId, deletedAt])
   @@index([userId, displayName])
@@ -211,7 +211,7 @@ model BillingClientContact {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  user   User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user   User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   client BillingClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
 
   @@index([userId, clientId])
@@ -344,14 +344,14 @@ model BillingInvoice {
   clientId      String
   sourceQuoteId String?
 
-  number    String?              @unique
-  status    BillingInvoiceStatus @default(DRAFT)
-  issueDate DateTime
-  dueDate   DateTime?
-  currency  String               @default("EUR")
+  number           String?              @unique
+  status           BillingInvoiceStatus @default(DRAFT)
+  issueDate        DateTime
+  dueDate          DateTime?
+  currency         String               @default("EUR")
   documentTemplate String?
-  notes     String?
-  terms     String?
+  notes            String?
+  terms            String?
 
   subtotalCents Int @default(0)
   discountCents Int @default(0)
@@ -464,8 +464,8 @@ model BillingPayment {
   amountCents Int
   paidAt      DateTime
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
   deletedAt DateTime?
 
   user        User                       @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -567,24 +567,24 @@ model BillingExpenseInvoice {
   id     String @id @default(nanoid(11))
   userId String
 
-  vendorName        String
-  vendorVatNumber   String?
-  documentNumber    String?
-  issueDate         DateTime
-  dueDate           DateTime?
-  currency          String               @default("EUR")
-  category          String?
-  status            BillingExpenseStatus @default(DRAFT)
-  totalExclTaxCents Int                  @default(0)
-  taxCents          Int                  @default(0)
-  totalInclTaxCents Int                  @default(0)
-  deductibleTaxCents Int                 @default(0)
-  isPaid            Boolean              @default(false)
-  paidAt            DateTime?
-  paymentReference  String?
+  vendorName         String
+  vendorVatNumber    String?
+  documentNumber     String?
+  issueDate          DateTime
+  dueDate            DateTime?
+  currency           String               @default("EUR")
+  category           String?
+  status             BillingExpenseStatus @default(DRAFT)
+  totalExclTaxCents  Int                  @default(0)
+  taxCents           Int                  @default(0)
+  totalInclTaxCents  Int                  @default(0)
+  deductibleTaxCents Int                  @default(0)
+  isPaid             Boolean              @default(false)
+  paidAt             DateTime?
+  paymentReference   String?
   matchedRegisterRef String?
-  attachmentUrl     String?
-  notes             String?
+  attachmentUrl      String?
+  notes              String?
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -601,22 +601,22 @@ model BillingExpenseNote {
   id     String @id @default(nanoid(11))
   userId String
 
-  label             String
-  category          String?
-  expenseDate       DateTime
-  currency          String               @default("EUR")
-  status            BillingExpenseStatus @default(DRAFT)
-  amountExclTaxCents Int                 @default(0)
-  taxCents          Int                  @default(0)
-  amountInclTaxCents Int                 @default(0)
-  deductibleTaxCents Int                 @default(0)
-  isReimbursable    Boolean              @default(true)
-  isPaid            Boolean              @default(false)
-  paidAt            DateTime?
-  paymentReference  String?
+  label              String
+  category           String?
+  expenseDate        DateTime
+  currency           String               @default("EUR")
+  status             BillingExpenseStatus @default(DRAFT)
+  amountExclTaxCents Int                  @default(0)
+  taxCents           Int                  @default(0)
+  amountInclTaxCents Int                  @default(0)
+  deductibleTaxCents Int                  @default(0)
+  isReimbursable     Boolean              @default(true)
+  isPaid             Boolean              @default(false)
+  paidAt             DateTime?
+  paymentReference   String?
   matchedRegisterRef String?
-  attachmentUrl     String?
-  notes             String?
+  attachmentUrl      String?
+  notes              String?
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -633,22 +633,22 @@ model BillingExpenseTrip {
   id     String @id @default(nanoid(11))
   userId String
 
-  tripDate               DateTime
-  fromAddress            String
-  toAddress              String
-  distanceKm             Float
-  roundTrip              Boolean              @default(false)
-  vehiclePower           String?
-  allowanceRateCentsPerKm Int                 @default(0)
-  tollCents              Int                  @default(0)
-  parkingCents           Int                  @default(0)
-  totalCents             Int                  @default(0)
-  status                 BillingExpenseStatus @default(DRAFT)
-  isPaid                 Boolean              @default(false)
-  paidAt                 DateTime?
-  paymentReference       String?
-  matchedRegisterRef     String?
-  notes                  String?
+  tripDate                DateTime
+  fromAddress             String
+  toAddress               String
+  distanceKm              Float
+  roundTrip               Boolean              @default(false)
+  vehiclePower            String?
+  allowanceRateCentsPerKm Int                  @default(0)
+  tollCents               Int                  @default(0)
+  parkingCents            Int                  @default(0)
+  totalCents              Int                  @default(0)
+  status                  BillingExpenseStatus @default(DRAFT)
+  isPaid                  Boolean              @default(false)
+  paidAt                  DateTime?
+  paymentReference        String?
+  matchedRegisterRef      String?
+  notes                   String?
 
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
@@ -666,20 +666,20 @@ model BillingRecurringInvoice {
   userId   String
   clientId String
 
-  name              String
-  frequency         BillingRecurrenceFrequency
-  lines             Json
-  currency          String  @default("EUR")
-  notes             String?
-  terms             String?
-  documentTemplate  String?
+  name             String
+  frequency        BillingRecurrenceFrequency
+  lines            Json
+  currency         String                     @default("EUR")
+  notes            String?
+  terms            String?
+  documentTemplate String?
 
-  startDate         DateTime
-  nextInvoiceDate   DateTime
-  endDate           DateTime?
-  isActive          Boolean  @default(true)
-  lastGeneratedAt   DateTime?
-  generatedCount    Int      @default(0)
+  startDate       DateTime
+  nextInvoiceDate DateTime
+  endDate         DateTime?
+  isActive        Boolean   @default(true)
+  lastGeneratedAt DateTime?
+  generatedCount  Int       @default(0)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

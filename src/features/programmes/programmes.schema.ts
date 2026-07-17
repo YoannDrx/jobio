@@ -1,5 +1,10 @@
 import { z } from "zod";
 
+const internalPathSchema = z
+  .string()
+  .startsWith("/")
+  .refine((value) => !value.startsWith("//"), "Invalid internal path");
+
 export const getProgramDetailSchema = z.object({
   slug: z.string().min(1),
 });
@@ -10,8 +15,8 @@ export const unlockFreeProgramSchema = z.object({
 
 export const createProgramCheckoutSchema = z.object({
   programId: z.string().min(1),
-  successUrl: z.string().min(1),
-  cancelUrl: z.string().min(1),
+  successUrl: internalPathSchema,
+  cancelUrl: internalPathSchema,
 });
 
 export const getLinkedInTemplateSchema = z.object({

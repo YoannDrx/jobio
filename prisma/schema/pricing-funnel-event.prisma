@@ -13,11 +13,11 @@ model PricingFunnelEvent {
 
   userId String?
 
-  planCurrent String?
-  planTarget  String?
-  billingCycle String?
-  entryPoint   String?
-  featureKey   String?
+  planCurrent       String?
+  planTarget        String?
+  billingCycle      String?
+  entryPoint        String?
+  featureKey        String?
   experimentVariant String?
 
   checkoutSessionId    String?

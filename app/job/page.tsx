@@ -362,12 +362,6 @@ export default async function TodayPage() {
       </LayoutHeader>
       <LayoutContent>
         <div className="flex flex-col gap-6">
-          <TodayWeeklySummary
-            weekFollowUpsCompleted={followUpsCompletedThisWeek}
-            weekMissionsAdded={missionsAddedThisWeek}
-            weekResponseRate={weekResponseRate}
-            staleCount={staleMissions.length}
-          />
           <TodayContent
             recentMissions={recentMissions.map((m) => ({
               id: m.id,
@@ -415,20 +409,6 @@ export default async function TodayPage() {
               followUpsCompleted: followUpsCompletedThisWeek,
             }}
             suggestions={suggestions}
-            batchFollowUpCandidates={missionsWithoutRecentFollowUp.map(
-              (mission) => ({
-                id: mission.id,
-                title: mission.title,
-                company: mission.company,
-                daysWithoutFollowUp: Math.max(
-                  1,
-                  Math.floor(
-                    (now.getTime() - mission.updatedAt.getTime()) /
-                      (1000 * 60 * 60 * 24),
-                  ),
-                ),
-              }),
-            )}
             onboardingStatus={
               isOnboardingComplete
                 ? null
@@ -447,6 +427,12 @@ export default async function TodayPage() {
                     isDismissed: onboardingStatus.isDismissed,
                   }
             }
+          />
+          <TodayWeeklySummary
+            weekFollowUpsCompleted={followUpsCompletedThisWeek}
+            weekMissionsAdded={missionsAddedThisWeek}
+            weekResponseRate={weekResponseRate}
+            staleCount={staleMissions.length}
           />
         </div>
       </LayoutContent>

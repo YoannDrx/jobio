@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { globalSearchAction } from "@/features/search/search.action";
 import { useDebounceFn } from "@/hooks/use-debounce-fn";
 import { resolveActionResult } from "@/lib/actions/actions-utils";
+import { isProductPathAvailable } from "@/config/product-features";
 import {
   Bell,
   Briefcase,
@@ -63,7 +64,7 @@ const PAGES: CommandPage[] = [
   { label: "Facturation", href: "/freelance", icon: Receipt },
   { label: "Notifications", href: "/job/notifications", icon: Bell },
   { label: "Parametres", href: "/account", icon: Settings },
-];
+].filter((page) => isProductPathAvailable(page.href));
 
 type CommandAction = {
   label: string;

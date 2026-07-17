@@ -95,6 +95,7 @@ export function CvLabStudio() {
     generateShareLinkMutation,
     revokeShareLinkMutation,
     exportPdfMutation,
+    exportAtsMutation,
     exportJsonMutation,
     importJsonMutation,
     handleDraftChange,
@@ -434,6 +435,8 @@ export function CvLabStudio() {
               isRevokingShareLink={revokeShareLinkMutation.isPending}
               onExportPdf={() => exportPdfMutation.mutate()}
               isExportingPdf={exportPdfMutation.isPending}
+              onExportAts={() => exportAtsMutation.mutate()}
+              isExportingAts={exportAtsMutation.isPending}
               isArchived={Boolean(selectedDocument.archivedAt)}
               onArchive={() => archiveMutation.mutate()}
               isArchiving={archiveMutation.isPending}

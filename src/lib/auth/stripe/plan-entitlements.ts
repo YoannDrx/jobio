@@ -21,7 +21,8 @@ export type PlanLimitsResolution = {
 
 const PLAN_LIMIT_KEY_SET = new Set<string>(PLAN_LIMIT_KEYS);
 
-const sanitizeLimitValue = (value: number): number => Math.max(0, Math.trunc(value));
+const sanitizeLimitValue = (value: number): number =>
+  Math.max(0, Math.trunc(value));
 
 const applyOverrides = (
   baseLimits: PlanLimit,
@@ -62,7 +63,9 @@ export const parsePlanEntitlementOverrides = (
       continue;
     }
 
-    overrides[row.featureKey as keyof PlanLimit] = sanitizeLimitValue(row.value);
+    overrides[row.featureKey as keyof PlanLimit] = sanitizeLimitValue(
+      row.value,
+    );
   }
 
   return {
@@ -114,7 +117,8 @@ export const resolvePlanLimitsForPlan = async (
       },
     });
 
-    const { overrides, ignoredFeatureKeys } = parsePlanEntitlementOverrides(rows);
+    const { overrides, ignoredFeatureKeys } =
+      parsePlanEntitlementOverrides(rows);
 
     if (ignoredFeatureKeys.length > 0) {
       logger.warn(
@@ -157,10 +161,18 @@ export const resolvePlanLimitsForUser = async (
 ): Promise<PlanLimitsResolution> => {
   const subscription = await prisma.subscription.findUnique({
     where: { referenceId: userId },
-    select: { plan: true },
+    select: { plan: true, status: true },
   });
 
-  return resolvePlanLimitsForPlan(subscription?.plan ?? "free", overrideLimits);
+  const hasPaidAccess =
+    subscription?.status === "active" ||
+    subscription?.status === "trialing" ||
+    subscription?.status === "past_due";
+
+  return resolvePlanLimitsForPlan(
+    hasPaidAccess ? subscription.plan : "free",
+    overrideLimits,
+  );
 };
 
 export const getPlanLimitsForPlan = async (

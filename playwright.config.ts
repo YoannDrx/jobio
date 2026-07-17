@@ -57,7 +57,8 @@ const config: PlaywrightTestConfig = {
     ? {}
     : {
         webServer: {
-          command: "pnpm prisma migrate deploy; pnpm run build; pnpm run start",
+          command:
+            "pnpm prisma migrate deploy && pnpm run build && pnpm run start",
           url: SERVER_URL,
           timeout: 120 * 1000,
           // Default to false to avoid silently reusing an unrelated app already

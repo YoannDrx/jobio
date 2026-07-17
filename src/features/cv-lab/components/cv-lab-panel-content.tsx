@@ -16,6 +16,7 @@ import {
   ExternalLink,
   Eye,
   FileDown,
+  FileText,
   Link2,
   RotateCcw,
   Trash2,
@@ -49,6 +50,8 @@ type CvLabPanelContentProps = {
   isRevokingShareLink: boolean;
   onExportPdf: () => void;
   isExportingPdf: boolean;
+  onExportAts: () => void;
+  isExportingAts: boolean;
   isArchived: boolean;
   onArchive: () => void;
   isArchiving: boolean;
@@ -83,6 +86,8 @@ export function CvLabPanelContent({
   isRevokingShareLink,
   onExportPdf,
   isExportingPdf,
+  onExportAts,
+  isExportingAts,
   isArchived,
   onArchive,
   isArchiving,
@@ -115,7 +120,7 @@ export function CvLabPanelContent({
       />
 
       {recoverableLocalDraft ? (
-        <Card>
+        <Card data-testid="cv-lab-local-recovery-card">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm">Brouillon local détecté</CardTitle>
           </CardHeader>
@@ -126,10 +131,10 @@ export function CvLabPanelContent({
             </p>
             <div className="flex flex-wrap gap-2">
               <Button size="sm" onClick={onRestoreLocalDraft}>
-                Restaurer
+                Restaurer le brouillon local
               </Button>
               <Button size="sm" variant="outline" onClick={onDiscardLocalDraft}>
-                Ignorer
+                Ignorer le brouillon local
               </Button>
             </div>
           </CardContent>
@@ -240,6 +245,16 @@ export function CvLabPanelContent({
           >
             <FileDown className="mr-2 size-3.5" />
             {isExportingPdf ? "Export..." : "Export PDF"}
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="w-full justify-start"
+            onClick={onExportAts}
+            disabled={isExportingAts}
+          >
+            <FileText className="mr-2 size-3.5" />
+            {isExportingAts ? "Export..." : "Export ATS (.txt)"}
           </Button>
           <Button
             variant="outline"

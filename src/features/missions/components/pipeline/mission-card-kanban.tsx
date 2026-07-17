@@ -23,12 +23,14 @@ type MissionCardKanbanProps = {
   mission: KanbanMission;
   onClick?: () => void;
   className?: string;
+  isPending?: boolean;
 };
 
 export function MissionCardKanban({
   mission,
   onClick,
   className,
+  isPending = false,
 }: MissionCardKanbanProps) {
   const hasFollowUp = mission.followUps.length > 0;
   const isUrgent = hasFollowUp
@@ -37,10 +39,13 @@ export function MissionCardKanban({
     : false;
 
   return (
-    <div
+    <button
+      type="button"
       onClick={onClick}
+      disabled={isPending}
+      aria-busy={isPending}
       className={cn(
-        "bg-card hover:border-primary/50 flex cursor-pointer flex-col gap-2 rounded-lg border p-3 transition-colors",
+        "bg-card hover:border-primary/50 flex w-full cursor-pointer flex-col gap-2 rounded-lg border p-3 text-left transition-colors disabled:cursor-wait disabled:opacity-70",
         className,
       )}
     >
@@ -114,6 +119,11 @@ export function MissionCardKanban({
           </span>
         )}
       </div>
-    </div>
+      {isPending ? (
+        <span className="text-muted-foreground text-xs" role="status">
+          Enregistrement…
+        </span>
+      ) : null}
+    </button>
   );
 }

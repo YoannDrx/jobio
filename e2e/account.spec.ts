@@ -92,9 +92,12 @@ test.describe("account", () => {
       .getByRole("button", { name: /changer le mot de passe/i })
       .click();
 
-    await expect(
-      page.getByText("Mot de passe modifié avec succès"),
-    ).toBeVisible({ timeout: 15000 });
+    // The success toast is intentionally transient and may disappear during
+    // the redirect. The durable outcome is landing back on the account page,
+    // then being able to authenticate with the new password.
+    await page.waitForURL((url) => url.pathname === "/account", {
+      timeout: 15000,
+    });
 
     await signOutAccount({ page });
 

@@ -54,6 +54,12 @@ import { MissionListTable } from "@/features/missions/components/pipeline/missio
 import { exportMissionsAction } from "@/features/missions/export-missions.action";
 import { getUserPlatformsAction } from "@/features/platforms/platforms.action";
 import { PipelineFilters } from "@/features/missions/components/pipeline/pipeline-filters";
+import {
+  deletePipelineSavedViewAction,
+  getPipelineSavedViewsAction,
+  savePipelineSavedViewAction,
+} from "@/features/missions/pipeline-views.action";
+import type { SavedPipelineView } from "@/features/missions/pipeline-views.schema";
 import { downloadCsv, generateCsv } from "@/lib/csv-export";
 import {
   Archive,
@@ -91,32 +97,10 @@ type SelectedMission = ComponentProps<typeof MissionDetailSheet>["mission"];
 
 type SortField = "createdAt" | "updatedAt" | "tjm" | "score" | "title";
 
-type SavedPipelineView = {
-  id: string;
-  name: string;
-  state: {
-    viewMode: "kanban" | "list";
-    search: string;
-    sortBy: SortField;
-    sortOrder: "asc" | "desc";
-    statusFilter: string[];
-    priorityFilter: string[];
-    platformIdFilter: string;
-    tjmMinFilter: string;
-    tjmMaxFilter: string;
-    workTypeFilter?: string[];
-    stackFilter?: string[];
-    scoreMinFilter?: string;
-    scoreMaxFilter?: string;
-  };
-};
-
 type MissionsData =
   Awaited<ReturnType<typeof getMissionsAction>> extends { data?: infer D }
     ? NonNullable<D>
     : never;
-
-const SAVED_PIPELINE_VIEWS_STORAGE_KEY = "jobio.pipeline.saved-views.v1";
 
 export default function PipelinePage() {
   // URL-synced state via nuqs
@@ -322,28 +306,16 @@ export default function PipelinePage() {
   }, [missionIdParam, openMissionDetail]);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    try {
-      const serialized = window.localStorage.getItem(
-        SAVED_PIPELINE_VIEWS_STORAGE_KEY,
-      );
-      if (!serialized) return;
-      const parsed = JSON.parse(serialized) as SavedPipelineView[];
-      if (Array.isArray(parsed)) {
-        setSavedViews(parsed);
-      }
-    } catch {
-      // Ignore invalid local cache.
-    }
+    void resolveActionResult(getPipelineSavedViewsAction())
+      .then(setSavedViews)
+      .catch((error: unknown) => {
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : "Impossible de charger les vues sauvegardées",
+        );
+      });
   }, []);
-
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    window.localStorage.setItem(
-      SAVED_PIPELINE_VIEWS_STORAGE_KEY,
-      JSON.stringify(savedViews),
-    );
-  }, [savedViews]);
 
   useEffect(() => {
     if (!selectedSavedViewId) return;
@@ -367,10 +339,10 @@ export default function PipelinePage() {
       void setPlatformIdFilter(view.state.platformIdFilter);
       void setTjmMinFilter(view.state.tjmMinFilter);
       void setTjmMaxFilter(view.state.tjmMaxFilter);
-      void setWorkTypeFilter(view.state.workTypeFilter ?? []);
-      void setStackFilter(view.state.stackFilter ?? []);
-      void setScoreMinFilter(view.state.scoreMinFilter ?? "");
-      void setScoreMaxFilter(view.state.scoreMaxFilter ?? "");
+      void setWorkTypeFilter(view.state.workTypeFilter);
+      void setStackFilter(view.state.stackFilter);
+      void setScoreMinFilter(view.state.scoreMinFilter);
+      void setScoreMaxFilter(view.state.scoreMaxFilter);
       toast.success(`Vue "${view.name}" appliquée`);
     },
     [
@@ -407,26 +379,39 @@ export default function PipelinePage() {
             toast.error("Nom invalide");
             return;
           }
-          const next: SavedPipelineView = {
-            id: `view-${Date.now()}`,
-            name,
-            state: {
-              viewMode,
-              search,
-              sortBy,
-              sortOrder,
-              statusFilter,
-              priorityFilter,
-              platformIdFilter,
-              tjmMinFilter,
-              tjmMaxFilter,
-              workTypeFilter,
-              stackFilter,
-              scoreMinFilter,
-              scoreMaxFilter,
-            },
-          };
-          setSavedViews((prev) => [next, ...prev].slice(0, 20));
+          const next = await resolveActionResult(
+            savePipelineSavedViewAction({
+              name,
+              state: {
+                viewMode,
+                search,
+                sortBy,
+                sortOrder,
+                statusFilter: statusFilter as MissionStatus[],
+                priorityFilter: priorityFilter as (
+                  | "LOW"
+                  | "MEDIUM"
+                  | "HIGH"
+                  | "URGENT"
+                )[],
+                platformIdFilter,
+                tjmMinFilter,
+                tjmMaxFilter,
+                workTypeFilter: workTypeFilter as (
+                  | "REMOTE"
+                  | "HYBRID"
+                  | "ONSITE"
+                )[],
+                stackFilter,
+                scoreMinFilter,
+                scoreMaxFilter,
+              },
+            }),
+          );
+          setSavedViews((previous) => [
+            next,
+            ...previous.filter((view) => view.id !== next.id),
+          ]);
           setSelectedSavedViewId(next.id);
           toast.success(`Vue "${name}" sauvegardée`);
         },
@@ -449,13 +434,24 @@ export default function PipelinePage() {
     viewMode,
   ]);
 
-  const deleteSelectedView = useCallback(() => {
+  const deleteSelectedView = useCallback(async () => {
     if (!selectedSavedViewId) return;
-    setSavedViews((prev) =>
-      prev.filter((view) => view.id !== selectedSavedViewId),
-    );
-    setSelectedSavedViewId("");
-    toast.success("Vue supprimée");
+    try {
+      await resolveActionResult(
+        deletePipelineSavedViewAction({ id: selectedSavedViewId }),
+      );
+      setSavedViews((previous) =>
+        previous.filter((view) => view.id !== selectedSavedViewId),
+      );
+      setSelectedSavedViewId("");
+      toast.success("Vue supprimée");
+    } catch (error) {
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Impossible de supprimer la vue",
+      );
+    }
   }, [selectedSavedViewId]);
 
   const handleParse = async (source: "url" | "text", content: string) => {

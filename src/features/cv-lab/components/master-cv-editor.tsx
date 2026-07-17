@@ -25,7 +25,6 @@ export function MasterCvEditor() {
     editPanelOpen,
     setEditPanelOpen,
     activeSection,
-    activeItemId,
     previewHtml,
     isPreviewLoading,
     saveStatus,

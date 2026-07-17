@@ -8,7 +8,15 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import { Check, ChevronDown, Loader2, Plus, Undo2, Redo2 } from "lucide-react";
+import {
+  Archive,
+  Check,
+  ChevronDown,
+  Loader2,
+  Plus,
+  Undo2,
+  Redo2,
+} from "lucide-react";
 import { useState } from "react";
 import { dialogManager } from "@/features/dialog-manager/dialog-manager";
 
@@ -50,6 +58,8 @@ export function CvLabMinimalToolbar({
   onRedo,
 }: CvLabMinimalToolbarProps) {
   const [isDocPickerOpen, setIsDocPickerOpen] = useState(false);
+  const activeDocuments = documents.filter((document) => !document.archivedAt);
+  const archivedDocuments = documents.filter((document) => document.archivedAt);
 
   const handleSelectDocument = (id: string) => {
     if (id === selectedDocumentId) {
@@ -98,7 +108,7 @@ export function CvLabMinimalToolbar({
           </PopoverTrigger>
           <PopoverContent align="start" className="w-72 p-2">
             <div className="flex max-h-64 flex-col gap-1 overflow-y-auto">
-              {documents.map((doc) => (
+              {activeDocuments.map((doc) => (
                 <button
                   key={doc.id}
                   type="button"
@@ -116,10 +126,36 @@ export function CvLabMinimalToolbar({
                   </p>
                 </button>
               ))}
-              {documents.length === 0 ? (
+              {activeDocuments.length === 0 ? (
                 <p className="text-muted-foreground px-3 py-2 text-xs">
-                  Aucun CV.
+                  Aucun CV actif.
                 </p>
+              ) : null}
+              {archivedDocuments.length > 0 ? (
+                <>
+                  <div className="text-muted-foreground mt-2 flex items-center gap-1 border-t px-3 pt-2 pb-1 text-[11px] font-medium tracking-wide uppercase">
+                    <Archive className="size-3" aria-hidden="true" />
+                    Archivés
+                  </div>
+                  {archivedDocuments.map((doc) => (
+                    <button
+                      key={doc.id}
+                      type="button"
+                      className={cn(
+                        "w-full rounded-md px-3 py-2 text-left transition-colors",
+                        doc.id === selectedDocumentId
+                          ? "bg-primary/10 text-primary"
+                          : "hover:bg-muted text-muted-foreground",
+                      )}
+                      onClick={() => handleSelectDocument(doc.id)}
+                    >
+                      <p className="truncate text-sm font-medium">{doc.name}</p>
+                      <p className="truncate text-xs">
+                        {doc.targetRole ?? "Poste non défini"}
+                      </p>
+                    </button>
+                  ))}
+                </>
               ) : null}
             </div>
             <div className="mt-1 border-t pt-1">

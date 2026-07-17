@@ -5,6 +5,7 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { Webhook } from "svix";
 import { z } from "zod";
+import { getDeliveryEventUpdate } from "@/features/emails/delivery-status";
 
 const ResendWebhookSchema = z.object({
   type: z.string(),
@@ -56,43 +57,28 @@ export const POST = async (req: NextRequest) => {
     });
 
     if (sentEmail) {
-      const now = new Date();
-      switch (event.type) {
-        case "email.delivered":
-          await prisma.sentEmail.update({
-            where: { id: sentEmail.id },
-            data: { status: "delivered", deliveredAt: now },
-          });
-          break;
-        case "email.opened":
-          await prisma.sentEmail.update({
-            where: { id: sentEmail.id },
-            data: { status: "opened", openedAt: now },
-          });
-          break;
-        case "email.clicked":
-          await prisma.sentEmail.update({
-            where: { id: sentEmail.id },
-            data: { status: "clicked", clickedAt: now },
-          });
-          break;
-        case "email.bounced":
-          await prisma.sentEmail.update({
-            where: { id: sentEmail.id },
-            data: { status: "bounced", bouncedAt: now },
-          });
-          break;
-        case "email.complained":
-          await prisma.sentEmail.update({
-            where: { id: sentEmail.id },
-            data: { status: "complained" },
-          });
-          break;
+      const occurredAt = new Date(event.created_at);
+      const update = getDeliveryEventUpdate({
+        currentStatus: sentEmail.status,
+        eventType: event.type,
+        occurredAt: Number.isNaN(occurredAt.getTime())
+          ? new Date()
+          : occurredAt,
+      });
+      if (update) {
+        await prisma.sentEmail.update({
+          where: { id: sentEmail.id },
+          data: update,
+        });
       }
     }
   }
 
-  if (event.type === "email.bounced" || event.type === "email.complained") {
+  if (
+    event.type === "email.bounced" ||
+    event.type === "email.complained" ||
+    event.type === "email.suppressed"
+  ) {
     logger.warn(`Email ${event.type}`, event.data);
   }
 

@@ -61,6 +61,7 @@ export const updateMissionSchema = z.object({
 export const updateMissionStatusSchema = z.object({
   id: z.string(),
   status: missionStatusSchema,
+  expectedStatus: missionStatusSchema.optional(),
 });
 
 export const missionFilterSchema = z.object({

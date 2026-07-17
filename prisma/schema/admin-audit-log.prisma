@@ -1,14 +1,14 @@
 model AdminAuditLog {
   id String @id @default(nanoid(11))
 
-  action      String
-  actorUserId String
-  actorEmail  String
+  action       String
+  actorUserId  String
+  actorEmail   String
   targetUserId String?
   targetEmail  String?
-  metadata    Json?
-  ipAddress   String?
-  userAgent   String?
+  metadata     Json?
+  ipAddress    String?
+  userAgent    String?
 
   createdAt DateTime @default(now())
 

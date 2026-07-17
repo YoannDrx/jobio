@@ -5,8 +5,8 @@ import type { MailAdapter } from "./send-email";
 export const resend = new Resend(env.RESEND_API_KEY);
 
 export const resendMailAdapter: MailAdapter = {
-  send: async (params) => {
-    const result = await resend.emails.send(params);
+  send: async (params, options) => {
+    const result = await resend.emails.send(params, options);
 
     if (result.error) {
       return { error: new Error(result.error.message), data: null };

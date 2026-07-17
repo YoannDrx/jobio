@@ -45,4 +45,5 @@ src/generated
 .playwright-mcp
 
 .conductor
-.grepai/
+/tmp/pdfs/*.pdf
+/tmp/pdfs/*.png

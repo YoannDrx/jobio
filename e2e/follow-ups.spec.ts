@@ -42,7 +42,7 @@ test.describe("follow-ups", () => {
       timeout: 10000,
     });
 
-    await page.getByRole("button", { name: "Compléter" }).first().click();
+    await page.getByRole("button", { name: "Terminer" }).first().click();
     await expect
       .poll(async () => {
         const updatedFollowUp = await prisma.followUp.findUnique({

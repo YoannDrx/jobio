@@ -15,6 +15,7 @@
     "lint": "eslint . --fix",
     "start": "next start",
     "stripe-webhooks": "stripe listen --forward-to localhost:3000/api/webhooks/stripe",
+    "stripe:webhook:smoke": "tsx scripts/stripe-webhook-smoke.ts",
     "ts": "tsc --noEmit",
     "vercel-build": "prisma generate && pnpm build && prisma migrate deploy",
     "test": "vitest",
@@ -26,7 +27,8 @@
     "prisma:seed": "NODE_ENV=development prisma db seed",
     "prisma:migrate": "pnpm prisma migrate dev",
     "prisma:generate": "pnpm prisma generate",
-    "pricing:verify": "pnpm tsx scripts/pricing-verify.ts"
+    "pricing:verify": "pnpm tsx scripts/pricing-verify.ts",
+    "cv-pdf:verify": "pnpm tsx scripts/verify-cv-pdf.ts"
   },
   "prisma": {
     "seed": "pnpm tsx prisma/seed.ts"

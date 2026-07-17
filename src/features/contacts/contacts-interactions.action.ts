@@ -52,7 +52,7 @@ export const deleteContactInteractionAction = authAction
       include: { contact: { select: { userId: true } } },
     });
 
-    if (!interaction || interaction.contact.userId !== user.id) {
+    if (interaction?.contact.userId !== user.id) {
       throw new ApplicationError("Interaction introuvable");
     }
 

@@ -22,7 +22,7 @@ export async function generateMetadata({
   const { slug } = await params;
   const portal = await getPublicPortalBySlug(slug);
 
-  if (!portal || !portal.isPublic) {
+  if (!portal?.isPublic) {
     return { title: "Profil introuvable" };
   }
 
@@ -68,7 +68,7 @@ export default async function PortalPage({ params }: PageParams) {
   const { slug } = await params;
   const portal = await getPublicPortalBySlug(slug);
 
-  if (!portal || !portal.isPublic) {
+  if (!portal?.isPublic) {
     notFound();
   }
 

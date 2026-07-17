@@ -93,7 +93,7 @@ export function HeroSection() {
         <motion.div
           className="mx-auto max-w-2xl text-center"
           variants={staggerContainer(0.1)}
-          initial={shouldAnimate ? "initial" : "animate"}
+          initial={false}
           animate="animate"
           transition={defaultTransition}
         >

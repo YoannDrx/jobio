@@ -7,6 +7,7 @@ import {
   getPlanLimits,
   type PlanLimit,
 } from "@/lib/auth/stripe/auth-plans";
+import { isPlanAvailableForNewSubscription } from "@/config/product-features";
 import Stripe from "stripe";
 
 type Severity = "error" | "warning" | "info";
@@ -41,10 +42,12 @@ const pushIssue = (
   });
 };
 
-const findPlan = (planName: PlanName) => AUTH_PLANS.find((plan) => plan.name === planName);
+const findPlan = (planName: PlanName) =>
+  AUTH_PLANS.find((plan) => plan.name === planName);
 
 const isMissingPlanEntitlementsTables = (error: unknown) =>
-  error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2021";
+  error instanceof Prisma.PrismaClientKnownRequestError &&
+  error.code === "P2021";
 
 const formatSummary = () => {
   const errors = issues.filter((item) => item.severity === "error");
@@ -65,13 +68,18 @@ const hasFailingStatus = () => {
   return false;
 };
 
-const getExpectedLimits = (planName: PlanName): PlanLimit => getPlanLimits(planName);
+const getExpectedLimits = (planName: PlanName): PlanLimit =>
+  getPlanLimits(planName);
 
 async function verifyStaticPlanDefinitions() {
   for (const planName of PLAN_NAMES) {
     const plan = findPlan(planName);
     if (!plan) {
-      pushIssue("error", "plans.static", `Plan manquant dans AUTH_PLANS: ${planName}`);
+      pushIssue(
+        "error",
+        "plans.static",
+        `Plan manquant dans AUTH_PLANS: ${planName}`,
+      );
       continue;
     }
 
@@ -111,7 +119,11 @@ async function verifyStaticPlanDefinitions() {
     }
   }
 
-  pushIssue("info", "plans.static", "Vérification des définitions statiques terminée");
+  pushIssue(
+    "info",
+    "plans.static",
+    "Vérification des définitions statiques terminée",
+  );
 }
 
 async function verifyDbEntitlements() {
@@ -183,7 +195,9 @@ async function verifyDbEntitlements() {
       }
 
       const expected = getExpectedLimits(planName);
-      const byFeature = new Map(activeRows.map((row) => [row.featureKey, row.value]));
+      const byFeature = new Map(
+        activeRows.map((row) => [row.featureKey, row.value]),
+      );
 
       for (const featureKey of PLAN_LIMIT_KEYS) {
         if (!byFeature.has(featureKey)) {
@@ -217,7 +231,11 @@ async function verifyDbEntitlements() {
       }
     }
 
-    pushIssue("info", "entitlements.db", "Vérification entitlements DB terminée");
+    pushIssue(
+      "info",
+      "entitlements.db",
+      "Vérification entitlements DB terminée",
+    );
   } catch (error) {
     if (isMissingPlanEntitlementsTables(error)) {
       pushIssue(
@@ -251,6 +269,14 @@ const getPriceChecks = (): PriceCheck[] => {
 
   for (const planName of PLAN_NAMES) {
     if (planName === "free") continue;
+    if (!isPlanAvailableForNewSubscription(planName)) {
+      pushIssue(
+        "info",
+        "stripe.catalog",
+        `${planName}: offre historique conservée mais fermée aux nouvelles souscriptions`,
+      );
+      continue;
+    }
     const plan = findPlan(planName);
     if (!plan) continue;
 
@@ -280,7 +306,11 @@ const getPriceChecks = (): PriceCheck[] => {
 
 async function verifyStripePrices() {
   if (skipStripe) {
-    pushIssue("info", "stripe.live", "Vérification Stripe ignorée (--skip-stripe)");
+    pushIssue(
+      "info",
+      "stripe.live",
+      "Vérification Stripe ignorée (--skip-stripe)",
+    );
     return;
   }
 

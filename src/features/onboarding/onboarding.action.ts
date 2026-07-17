@@ -4,6 +4,82 @@ import { authAction } from "@/lib/actions/safe-actions";
 import { isFeatureEnabled } from "@/lib/ops/feature-flags";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
+import {
+  extractOnboardingSkillNames,
+  getSuggestedOnboardingStep,
+} from "./onboarding-state";
+
+export const getNewUserOnboardingStateAction = authAction.action(
+  async ({ ctx: { user } }) => {
+    const profile = await prisma.userProfile.findFirst({
+      where: { userId: user.id },
+      orderBy: [{ isDefault: "desc" }, { createdAt: "asc" }],
+      select: {
+        id: true,
+        headline: true,
+        tjmTarget: true,
+        workTypePreference: true,
+        skills: true,
+      },
+    });
+
+    const mission = await prisma.mission.findFirst({
+      where: { userId: user.id, deletedAt: null },
+      orderBy: { createdAt: "asc" },
+      select: {
+        id: true,
+        title: true,
+        company: true,
+        status: true,
+        notes: true,
+        followUps: {
+          orderBy: { createdAt: "asc" },
+          take: 1,
+          select: {
+            id: true,
+            title: true,
+            type: true,
+            scheduledAt: true,
+          },
+        },
+      },
+    });
+
+    const skills = extractOnboardingSkillNames(profile?.skills);
+    const followUp = mission?.followUps[0] ?? null;
+    const suggestedStep = getSuggestedOnboardingStep({
+      hasProfile: profile !== null,
+      skillCount: skills.length,
+      hasMission: mission !== null,
+      hasFollowUp: followUp !== null,
+    });
+
+    return {
+      suggestedStep,
+      profile: profile
+        ? {
+            ...profile,
+            skills,
+          }
+        : null,
+      mission: mission
+        ? {
+            id: mission.id,
+            title: mission.title,
+            company: mission.company,
+            status: mission.status,
+            isExample: mission.notes?.includes("[JOBIO_EXAMPLE]") ?? false,
+          }
+        : null,
+      followUp: followUp
+        ? {
+            ...followUp,
+            scheduledAt: followUp.scheduledAt.toISOString(),
+          }
+        : null,
+    };
+  },
+);
 
 export const getOnboardingStatusAction = authAction.action(
   async ({ ctx: { user } }) => {

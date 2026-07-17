@@ -750,7 +750,7 @@ export const renderCvLabHtml = (
     .badge small {
       color: var(--muted);
     }
-    @media (max-width: 960px) {
+    @media screen and (max-width: 960px) {
       body {
         padding: 0;
       }
@@ -767,6 +767,28 @@ export const renderCvLabHtml = (
       body {
         padding: 0;
         background: #ffffff !important;
+      }
+      ${
+        isTwoColumn
+          ? `.content {
+        display: table;
+        width: 100%;
+        table-layout: fixed;
+      }
+      main,
+      aside {
+        display: table-cell;
+        vertical-align: top;
+      }
+      main {
+        width: 66%;
+        padding-right: 10px;
+      }
+      aside {
+        width: 34%;
+        padding-left: 10px;
+      }`
+          : ""
       }
       .cv {
         border: none;
@@ -787,8 +809,8 @@ export const renderCvLabHtml = (
         page-break-inside: auto;
       }
       .item {
-        break-inside: avoid;
-        page-break-inside: avoid;
+        break-inside: ${isTwoColumn ? "auto" : "avoid"};
+        page-break-inside: ${isTwoColumn ? "auto" : "avoid"};
       }
       .paragraph {
         break-inside: auto;

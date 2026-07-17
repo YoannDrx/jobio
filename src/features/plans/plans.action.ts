@@ -3,6 +3,7 @@
 import { PricingFunnelEventType } from "@/generated/prisma";
 import { authAction } from "@/lib/actions/safe-actions";
 import { AUTH_PLANS } from "@/lib/auth/stripe/auth-plans";
+import { isPlanAvailableForNewSubscription } from "@/config/product-features";
 import { ActionError } from "@/lib/errors/action-error";
 import { capturePricingFunnelEvent } from "@/lib/pricing/pricing-funnel-events";
 import { prisma } from "@/lib/prisma";
@@ -10,13 +11,23 @@ import { getServerUrl } from "@/lib/server-url";
 import { stripe } from "@/lib/stripe";
 import { z } from "zod";
 
+const internalPathSchema = z
+  .string()
+  .startsWith("/")
+  .refine((value) => !value.startsWith("//"), "Invalid internal path");
+
+const getCheckoutSuccessUrl = (path: string) => {
+  const separator = path.includes("?") ? "&" : "?";
+  return `${getServerUrl()}${path}${separator}session_id={CHECKOUT_SESSION_ID}`;
+};
+
 export const upgradeUserAction = authAction
   .inputSchema(
     z.object({
       plan: z.string(),
       annual: z.boolean().default(false),
-      successUrl: z.string(),
-      cancelUrl: z.string(),
+      successUrl: internalPathSchema,
+      cancelUrl: internalPathSchema,
       entryPoint: z.string().min(2).max(64).optional(),
       experimentVariant: z.string().min(2).max(32).optional(),
     }),
@@ -39,6 +50,12 @@ export const upgradeUserAction = authAction
         throw new ActionError(`Plan "${plan}" not found`);
       }
 
+      if (!isPlanAvailableForNewSubscription(plan)) {
+        throw new ActionError(
+          "Ce plan n'est pas disponible à la souscription.",
+        );
+      }
+
       // Get the price ID based on annual or monthly
       const priceId = annual
         ? authPlan.annualDiscountPriceId
@@ -51,6 +68,8 @@ export const upgradeUserAction = authAction
       const dbUser = await prisma.user.findUnique({
         where: { id: user.id },
         select: {
+          name: true,
+          email: true,
           stripeCustomerId: true,
           subscription: {
             select: {
@@ -60,16 +79,48 @@ export const upgradeUserAction = authAction
         },
       });
 
-      if (!dbUser?.stripeCustomerId) {
-        throw new ActionError("No Stripe customer ID found");
+      if (!dbUser) {
+        throw new ActionError("Utilisateur introuvable");
       }
 
-      const customerId = dbUser.stripeCustomerId;
+      const expectedInterval = annual ? "year" : "month";
+      const stripePrice = await stripe.prices.retrieve(priceId);
+      if (
+        !stripePrice.active ||
+        stripePrice.type !== "recurring" ||
+        stripePrice.recurring?.interval !== expectedInterval ||
+        stripePrice.metadata.plan !== plan
+      ) {
+        throw new ActionError(
+          "Cette offre est temporairement indisponible. Réessaie plus tard.",
+        );
+      }
+
+      let customerId = dbUser.stripeCustomerId;
+      if (!customerId) {
+        const customer = await stripe.customers.create(
+          {
+            email: dbUser.email,
+            name: dbUser.name,
+            metadata: {
+              app: "jobio",
+              userId: user.id,
+            },
+          },
+          {
+            idempotencyKey: `jobio-customer-${user.id}`,
+          },
+        );
+        customerId = customer.id;
+        await prisma.user.update({
+          where: { id: user.id },
+          data: { stripeCustomerId: customerId },
+        });
+      }
 
       // Create checkout session
       const session = await stripe.checkout.sessions.create({
         customer: customerId,
-        payment_method_types: ["card"],
         line_items: [
           {
             price: priceId,
@@ -77,7 +128,8 @@ export const upgradeUserAction = authAction
           },
         ],
         mode: "subscription",
-        success_url: `${getServerUrl()}${successUrl}?session_id={CHECKOUT_SESSION_ID}`,
+        client_reference_id: user.id,
+        success_url: getCheckoutSuccessUrl(successUrl),
         cancel_url: `${getServerUrl()}${cancelUrl}`,
         metadata: {
           userId: user.id,
