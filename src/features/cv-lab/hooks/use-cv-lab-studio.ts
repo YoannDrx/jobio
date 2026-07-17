@@ -105,10 +105,6 @@ export function useCvLabStudio() {
   const { refreshVersions, setVersions: setVersionsList } = versionHook;
   const { resetAtsState } = ats;
 
-  const filterDocumentsByView = useCallback((sourceDocuments: CvDocument[]) => {
-    return sourceDocuments.filter((document) => !document.archivedAt);
-  }, []);
-
   const reloadData = useCallback(
     async (nextSelectedId?: string | null) => {
       const [profileRows, documentRows, planInfo, masterCvRow] =
@@ -116,7 +112,7 @@ export function useCvLabStudio() {
           resolveActionResult(getProfilesAction({})),
           resolveActionResult(
             listCvLabDocumentsAction({
-              includeArchived: false,
+              includeArchived: true,
             }),
           ),
           resolveActionResult(getCurrentPlanAction()),
@@ -137,15 +133,17 @@ export function useCvLabStudio() {
       }));
       const normalizedDocuments = documentRows as unknown as CvDocument[];
       setCanUseAllCvTemplates(planInfo.plan !== "free");
-      const visibleDocuments = filterDocumentsByView(normalizedDocuments);
       setMasterCv((masterCvRow as MasterCvData | null) ?? null);
 
       setProfiles(normalizedProfiles);
-      setDocuments(visibleDocuments);
+      setDocuments(normalizedDocuments);
 
-      const fallbackId = visibleDocuments[0]?.id ?? null;
+      const fallbackId =
+        normalizedDocuments.find((document) => !document.archivedAt)?.id ??
+        normalizedDocuments.at(0)?.id ??
+        null;
       const candidateId = nextSelectedId ?? selectedDocumentId ?? fallbackId;
-      const existingCandidate = visibleDocuments.find(
+      const existingCandidate = normalizedDocuments.find(
         (document) => document.id === candidateId,
       );
 
@@ -153,7 +151,7 @@ export function useCvLabStudio() {
       setSelectedDocumentId(finalSelectedId);
 
       if (finalSelectedId) {
-        const targetDocument = visibleDocuments.find(
+        const targetDocument = normalizedDocuments.find(
           (document) => document.id === finalSelectedId,
         );
         if (targetDocument) {
@@ -165,12 +163,7 @@ export function useCvLabStudio() {
         setVersionsList([]);
       }
     },
-    [
-      filterDocumentsByView,
-      refreshVersions,
-      setVersionsList,
-      selectedDocumentId,
-    ],
+    [refreshVersions, setVersionsList, selectedDocumentId],
   );
 
   const patchSelectedDocument = useCallback(
@@ -306,7 +299,7 @@ export function useCvLabStudio() {
 
   // Auto-save draft to local storage
   useEffect(() => {
-    if (!selectedDocument || !draft) {
+    if (!selectedDocument || !draft || !hasUnsavedChanges) {
       return;
     }
 
@@ -331,7 +324,7 @@ export function useCvLabStudio() {
     return () => {
       window.clearTimeout(timeoutId);
     };
-  }, [draft, selectedDocument]);
+  }, [draft, hasUnsavedChanges, selectedDocument]);
 
   // Auto-save to server with debounce
   useEffect(() => {

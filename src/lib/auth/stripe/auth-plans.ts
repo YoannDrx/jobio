@@ -201,6 +201,7 @@ export const AUTH_PLANS: AppAuthPlan[] = [
   },
   {
     name: "ultra",
+    isHidden: true,
     isPopular: false,
     description:
       "Pour les freelances exigeants avec accès illimité et IA avancée",

@@ -120,7 +120,7 @@ export function CvLabPanelContent({
       />
 
       {recoverableLocalDraft ? (
-        <Card>
+        <Card data-testid="cv-lab-local-recovery-card">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm">Brouillon local détecté</CardTitle>
           </CardHeader>
@@ -131,10 +131,10 @@ export function CvLabPanelContent({
             </p>
             <div className="flex flex-wrap gap-2">
               <Button size="sm" onClick={onRestoreLocalDraft}>
-                Restaurer
+                Restaurer le brouillon local
               </Button>
               <Button size="sm" variant="outline" onClick={onDiscardLocalDraft}>
-                Ignorer
+                Ignorer le brouillon local
               </Button>
             </div>
           </CardContent>

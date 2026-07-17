@@ -241,7 +241,7 @@ export function useCvDocumentManagement(params: UseCvDocumentManagementParams) {
     },
     onSuccess: async () => {
       toast.success("CV archivé");
-      await reloadData(null);
+      await reloadData(selectedDocumentId);
     },
     onError: (error: Error) => {
       toast.error(error.message);
