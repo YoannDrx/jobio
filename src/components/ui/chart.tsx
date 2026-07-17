@@ -33,6 +33,9 @@ type ChartContextProps = {
   config: ChartConfig;
 };
 
+// Both generics are required by Recharts 3 even though the lint rule sees the
+// constraint aliases as their own defaults.
+// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-arguments
 export type CustomTooltipProps = TooltipContentProps<ValueType, NameType> & {
   className?: string;
   hideLabel?: boolean;
@@ -224,7 +227,7 @@ function ChartTooltipContent({
 
           return (
             <div
-              key={item.dataKey}
+              key={`${key}-${index}`}
               className={cn(
                 "[&>svg]:text-muted-foreground flex w-full flex-wrap items-stretch gap-2 [&>svg]:h-2.5 [&>svg]:w-2.5",
                 indicator === "dot" && "items-center",
