@@ -71,7 +71,7 @@ export function PublicSection({
   return (
     <section
       className={cn(
-        "w-full rounded-2xl border border-black/5 bg-white/80 p-6 shadow-sm backdrop-blur-md dark:border-white/10 dark:bg-black/20 sm:p-7",
+        "w-full rounded-2xl border border-black/5 bg-white/80 p-6 shadow-sm backdrop-blur-md sm:p-7 dark:border-white/10 dark:bg-black/20",
         className,
       )}
     >

@@ -3,19 +3,25 @@
 import { Prisma } from "@/generated/prisma";
 import { authAction } from "@/lib/actions/safe-actions";
 import { ApplicationError } from "@/lib/errors/application-error";
-import { getFeatureFlags, DEFAULT_FEATURE_FLAGS } from "@/lib/ops/feature-flags";
+import {
+  getFeatureFlags,
+  DEFAULT_FEATURE_FLAGS,
+} from "@/lib/ops/feature-flags";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { createAdminAuditLog } from "./admin-audit";
 
 const isMissingFeatureFlagsTable = (error: unknown) =>
-  error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2021";
+  error instanceof Prisma.PrismaClientKnownRequestError &&
+  error.code === "P2021";
 
 const isMissingCronRunsTable = (error: unknown) =>
-  error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2021";
+  error instanceof Prisma.PrismaClientKnownRequestError &&
+  error.code === "P2021";
 
 const isMissingSystemErrorsTable = (error: unknown) =>
-  error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2021";
+  error instanceof Prisma.PrismaClientKnownRequestError &&
+  error.code === "P2021";
 
 export const getCronJobRuns = async (limit = 25) => {
   try {

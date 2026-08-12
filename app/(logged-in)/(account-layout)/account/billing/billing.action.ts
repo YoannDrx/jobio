@@ -19,7 +19,7 @@ const getStripeCustomerId = async (userId: string) => {
   });
 
   if (!user?.stripeCustomerId) {
-    throw new ActionError("No stripe customer id found");
+    throw new ActionError("Aucun compte de facturation Stripe n’est associé.");
   }
 
   return user.stripeCustomerId;
@@ -30,16 +30,19 @@ export const openStripePortalAction = authAction.action(
     const stripeCustomerId = await getStripeCustomerId(user.id);
 
     if (!stripeCustomerId) {
-      throw new ActionError("No stripe customer id found");
+      throw new ActionError(
+        "Aucun compte de facturation Stripe n’est associé.",
+      );
     }
 
     const stripeBilling = await stripe.billingPortal.sessions.create({
       customer: stripeCustomerId,
+      configuration: process.env.STRIPE_JOBIO_PORTAL_CONFIGURATION_ID,
       return_url: `${getServerUrl()}/account/billing`,
     });
 
     if (!stripeBilling.url) {
-      throw new ActionError("Failed to create stripe billing portal session");
+      throw new ActionError("Impossible d’ouvrir le portail de facturation.");
     }
 
     return {
@@ -58,7 +61,9 @@ export const cancelSubscriptionAction = authAction
     const stripeCustomerId = await getStripeCustomerId(user.id);
 
     if (!stripeCustomerId) {
-      throw new ActionError("No stripe customer id found");
+      throw new ActionError(
+        "Aucun compte de facturation Stripe n’est associé.",
+      );
     }
 
     // Get the current subscription
@@ -67,17 +72,18 @@ export const cancelSubscriptionAction = authAction
     });
 
     if (!subscription?.stripeSubscriptionId) {
-      throw new ActionError("No active subscription found");
+      throw new ActionError("Aucun abonnement actif n’a été trouvé.");
     }
 
     // Create billing portal session which allows the user to cancel
     const stripeBilling = await stripe.billingPortal.sessions.create({
       customer: stripeCustomerId,
+      configuration: process.env.STRIPE_JOBIO_PORTAL_CONFIGURATION_ID,
       return_url: `${getServerUrl()}${returnUrl}`,
     });
 
     if (!stripeBilling.url) {
-      throw new ActionError("Failed to create stripe billing portal session");
+      throw new ActionError("Impossible d’ouvrir le portail de facturation.");
     }
 
     return {

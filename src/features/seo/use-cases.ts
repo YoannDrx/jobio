@@ -6,7 +6,7 @@ export type JobioUseCase = {
   title: string;
   description: string;
   summary: string;
-  recommendedPlan: "free" | "pro" | "ultra";
+  recommendedPlan: "free" | "pro";
   experimentVariant: "control" | "value_stack" | "roi_focus";
   keywords: string[];
   painPoints: string[];
@@ -27,7 +27,8 @@ export const JOBIO_USE_CASES: JobioUseCase[] = [
   {
     slug: "developpeur-freelance",
     persona: "Développeur freelance",
-    title: "Structurer sa prospection développeur freelance sans perdre de temps",
+    title:
+      "Structurer sa prospection développeur freelance sans perdre de temps",
     description:
       "Pipeline missions, relances automatisées, CV ciblés et pilotage de conversion pour les développeurs freelance.",
     summary:
@@ -72,7 +73,7 @@ export const JOBIO_USE_CASES: JobioUseCase[] = [
       {
         title: "Pricing aligné volume",
         description:
-          "Commence en Free puis débloque automatisation et IA avancée en Pro/Ultra.",
+          "Commence en Free puis débloque automatisation et IA avancée en Pro.",
         href: "/#pricing",
       },
     ],
@@ -83,7 +84,8 @@ export const JOBIO_USE_CASES: JobioUseCase[] = [
           "Oui. C’est précisément le cas d’usage visé: centraliser la prospection, éviter les oublis et standardiser les relances.",
       },
       {
-        question: "Puis-je garder plusieurs variantes de CV selon le type de mission ?",
+        question:
+          "Puis-je garder plusieurs variantes de CV selon le type de mission ?",
         answer:
           "Oui. Le CV Studio permet de maintenir plusieurs documents et de les ajuster selon la mission cible.",
       },
@@ -97,7 +99,7 @@ export const JOBIO_USE_CASES: JobioUseCase[] = [
       "Priorise les opportunités data/IA, améliore ton positionnement et accélère le passage proposition -> signature.",
     summary:
       "Jobio t’aide à qualifier les briefs data/IA et à montrer ta valeur métier avec un suivi commercial rigoureux.",
-    recommendedPlan: "ultra",
+    recommendedPlan: "pro",
     experimentVariant: "value_stack",
     keywords: [
       "data freelance",
@@ -135,7 +137,7 @@ export const JOBIO_USE_CASES: JobioUseCase[] = [
         href: "/docs",
       },
       {
-        title: "Comparaison plans Free/Pro/Ultra",
+        title: "Comparaison plans Free/Pro",
         description:
           "Choisis la capacité IA et l’automatisation alignées avec ton volume de prospection.",
         href: "/#pricing",
@@ -143,12 +145,14 @@ export const JOBIO_USE_CASES: JobioUseCase[] = [
     ],
     faq: [
       {
-        question: "Le plan Ultra est-il pertinent pour un freelance data/IA solo ?",
+        question:
+          "Le plan Pro est-il pertinent pour un freelance data/IA solo ?",
         answer:
           "Oui si tu as un volume régulier de candidatures et que tu veux maximiser l’itération IA (CV, messages, qualification).",
       },
       {
-        question: "Puis-je suivre des cycles de vente longs (plusieurs semaines) ?",
+        question:
+          "Puis-je suivre des cycles de vente longs (plusieurs semaines) ?",
         answer:
           "Oui. Les séquences et l’historique d’interactions permettent de conserver le contexte sur des cycles complexes.",
       },
@@ -228,4 +232,3 @@ export const getUseCaseBySlug = (slug: string) => bySlug.get(slug) ?? null;
 
 export const getUseCaseCanonicalUrl = (slug: string) =>
   absoluteUrl(`/use-cases/${slug}`);
-

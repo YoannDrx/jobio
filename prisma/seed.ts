@@ -786,7 +786,7 @@ async function main() {
         })
         .then(async (user) => {
           if (faker.datatype.boolean(0.4)) {
-            const plans = ["free", "pro", "ultra"];
+            const plans = ["free", "pro"];
             const selectedPlan = faker.helpers.arrayElement(plans);
             await prisma.subscription.upsert({
               where: { referenceId: user.id },

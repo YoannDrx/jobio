@@ -37,7 +37,7 @@ const productSuites = [
       "CV Master centralisé par profil freelance",
       "Éditeur CV Lab multi-documents avec versions",
       "ATS scoring et recommandations d'amélioration",
-      "Coach CV IA (plan Ultra) + export PDF",
+      "Coach CV IA (plan Pro) + export PDF",
     ],
     gradient: "from-brand-violet/20 to-brand-violet/5",
     iconColor: "text-brand-violet",

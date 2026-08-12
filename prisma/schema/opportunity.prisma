@@ -1,0 +1,223 @@
+enum OpportunitySource {
+  FRANCE_TRAVAIL
+  ADZUNA
+  JOOBLE
+  INBOUND_EMAIL
+  MANUAL
+}
+
+enum OpportunityMatchStatus {
+  NEW
+  SAVED
+  DISMISSED
+  CONVERTED
+  EXPIRED
+}
+
+enum OpportunitySourceRunStatus {
+  RUNNING
+  SUCCEEDED
+  FAILED
+  SKIPPED
+}
+
+enum InboundOpportunityAlertStatus {
+  RECEIVED
+  PROCESSING
+  PROCESSED
+  REJECTED
+  FAILED
+}
+
+enum OpportunityDigestDeliveryStatus {
+  PENDING
+  SENDING
+  SENT
+  FAILED
+}
+
+model OpportunityWatch {
+  id       String              @id @default(nanoid(11))
+  userId   String
+  name     String
+  criteria Json
+  sources  OpportunitySource[]
+  cadence  String              @default("DAILY")
+  isActive Boolean             @default(true)
+
+  lastSyncedAt  DateTime?
+  syncStartedAt DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  user       User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  hits       OpportunityWatchHit[]
+  sourceRuns OpportunitySourceRun[]
+
+  @@index([userId, isActive])
+  @@index([isActive, lastSyncedAt])
+  @@map("opportunity_watch")
+}
+
+model OpportunityListing {
+  id                 String            @id @default(nanoid(11))
+  source             OpportunitySource
+  externalIdentifier String
+  canonicalUrl       String?
+  fingerprint        String
+  title              String
+  company            String?
+  description        String?
+  location           String?
+  workType           WorkType?
+  skills             String[]
+  dailyRateMin       Int?
+  dailyRateMax       Int?
+  salaryMin          Int?
+  salaryMax          Int?
+  currency           String            @default("EUR")
+  duration           String?
+  provenance         Json
+  publishedAt        DateTime?
+  expiresAt          DateTime?
+  firstSeenAt        DateTime          @default(now())
+  lastSeenAt         DateTime          @default(now())
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+
+  matches OpportunityMatch[]
+  hits    OpportunityWatchHit[]
+
+  @@unique([source, externalIdentifier])
+  @@index([fingerprint])
+  @@index([source, lastSeenAt])
+  @@index([publishedAt])
+  @@map("opportunity_listing")
+}
+
+model OpportunityMatch {
+  id          String                 @id @default(nanoid(11))
+  userId      String
+  listingId   String
+  missionId   String?                @unique
+  score       Int
+  breakdown   Json
+  explanation String
+  status      OpportunityMatchStatus @default(NEW)
+  feedback    String?
+  savedAt     DateTime?
+  dismissedAt DateTime?
+  convertedAt DateTime?
+  createdAt   DateTime               @default(now())
+  updatedAt   DateTime               @updatedAt
+
+  user    User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  listing OpportunityListing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  mission Mission?           @relation(fields: [missionId], references: [id], onDelete: SetNull)
+
+  @@unique([userId, listingId])
+  @@index([userId, status, score])
+  @@index([listingId])
+  @@map("opportunity_match")
+}
+
+model OpportunityWatchHit {
+  id        String @id @default(nanoid(11))
+  watchId   String
+  listingId String
+
+  firstMatchedAt DateTime @default(now())
+  lastMatchedAt  DateTime @default(now())
+
+  watch   OpportunityWatch   @relation(fields: [watchId], references: [id], onDelete: Cascade)
+  listing OpportunityListing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@unique([watchId, listingId])
+  @@index([listingId])
+  @@map("opportunity_watch_hit")
+}
+
+model OpportunitySourceRun {
+  id       String                     @id @default(nanoid(11))
+  userId   String
+  watchId  String
+  provider OpportunitySource
+  status   OpportunitySourceRunStatus @default(RUNNING)
+  cursor   String?
+
+  fetchedCount Int       @default(0)
+  matchedCount Int       @default(0)
+  errorCode    String?
+  errorMessage String?
+  latencyMs    Int?
+  startedAt    DateTime  @default(now())
+  finishedAt   DateTime?
+
+  user  User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  watch OpportunityWatch @relation(fields: [watchId], references: [id], onDelete: Cascade)
+
+  @@index([watchId, startedAt])
+  @@index([userId, status])
+  @@map("opportunity_source_run")
+}
+
+model OpportunityInbox {
+  id           String   @id @default(nanoid(11))
+  userId       String   @unique
+  addressToken String   @unique @default(uuid())
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user   User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  alerts InboundOpportunityAlert[]
+
+  @@map("opportunity_inbox")
+}
+
+model InboundOpportunityAlert {
+  id              String                        @id @default(nanoid(11))
+  userId          String
+  inboxId         String
+  providerEmailId String                        @unique
+  recipient       String
+  senderDomain    String?
+  subject         String?
+  status          InboundOpportunityAlertStatus @default(RECEIVED)
+  parsedCount     Int                           @default(0)
+  errorCode       String?
+  rawPurgedAt     DateTime?
+  receivedAt      DateTime
+  processedAt     DateTime?
+  createdAt       DateTime                      @default(now())
+  updatedAt       DateTime                      @updatedAt
+
+  user  User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  inbox OpportunityInbox @relation(fields: [inboxId], references: [id], onDelete: Cascade)
+
+  @@index([userId, receivedAt])
+  @@index([status, receivedAt])
+  @@map("inbound_opportunity_alert")
+}
+
+model OpportunityDigestDelivery {
+  id         String                          @id @default(nanoid(11))
+  userId     String
+  digestDate DateTime                        @db.Date
+  status     OpportunityDigestDeliveryStatus @default(PENDING)
+
+  attemptCount    Int       @default(0)
+  providerEmailId String?
+  errorCode       String?
+  claimedAt       DateTime?
+  lastAttemptAt   DateTime?
+  sentAt          DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, digestDate])
+  @@index([status, lastAttemptAt])
+  @@map("opportunity_digest_delivery")
+}

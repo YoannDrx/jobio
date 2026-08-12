@@ -1,6 +1,9 @@
 import type { NextConfig } from "next";
 
 const isDev = process.env.NODE_ENV === "development";
+const isHttpsDeployment =
+  Boolean(process.env.VERCEL_ENV) ||
+  process.env.BETTER_AUTH_URL?.startsWith("https://") === true;
 
 // Content Security Policy directives
 const cspDirectives = [
@@ -17,10 +20,23 @@ const cspDirectives = [
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",
-  "upgrade-insecure-requests",
+  ...(isHttpsDeployment ? ["upgrade-insecure-requests"] : []),
 ].join("; ");
 
 const nextConfig: NextConfig = {
+  outputFileTracingExcludes: {
+    "/*": [
+      ".claude/**/*",
+      ".github/**/*",
+      "__tests__/**/*",
+      "coverage/**/*",
+      "docs/**/*",
+      "e2e/**/*",
+      "playwright-report/**/*",
+      "public/**/*",
+      "test-results/**/*",
+    ],
+  },
   experimental: {
     authInterrupts: true,
   },
@@ -65,6 +81,16 @@ const nextConfig: NextConfig = {
       {
         source: "/app/:path*",
         destination: "/job/:path*",
+        permanent: true,
+      },
+      {
+        source: "/freelance",
+        destination: "/job/gestion",
+        permanent: true,
+      },
+      {
+        source: "/freelance/:path*",
+        destination: "/job/gestion/:path*",
         permanent: true,
       },
     ];

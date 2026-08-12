@@ -7,7 +7,8 @@ export const PRICING_EXPERIMENT_VARIANTS = [
 export type PricingExperimentVariant =
   (typeof PRICING_EXPERIMENT_VARIANTS)[number];
 
-export const PRICING_EXPERIMENT_STORAGE_KEY = "jobio_pricing_experiment_variant";
+export const PRICING_EXPERIMENT_STORAGE_KEY =
+  "jobio_pricing_experiment_variant";
 export const PRICING_EXPERIMENT_QUERY_PARAM = "pv";
 export const DEFAULT_PRICING_EXPERIMENT_VARIANT: PricingExperimentVariant =
   "control";
@@ -30,4 +31,3 @@ export const normalizePricingExperimentVariant = (
     ? (normalized as PricingExperimentVariant)
     : null;
 };
-

@@ -32,12 +32,14 @@ describe("SignUpCredentialsForm", () => {
     setup(<SignUpCredentialsForm />);
 
     // Check all fields are rendered
-    expect(screen.getByLabelText(/name/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/nom/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/^password$/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/verify password/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/^mot de passe$/i)).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: /sign up/i }),
+      screen.getByLabelText(/confirmer le mot de passe/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /créer mon compte/i }),
     ).toBeInTheDocument();
   });
 
@@ -45,17 +47,22 @@ describe("SignUpCredentialsForm", () => {
     const { user } = setup(<SignUpCredentialsForm />);
 
     // Fill the form with mismatched passwords
-    await user.type(screen.getByLabelText(/name/i), "John Doe");
+    await user.type(screen.getByLabelText(/nom/i), "John Doe");
     await user.type(screen.getByLabelText(/email/i), "john@example.com");
-    await user.type(screen.getByLabelText(/^password$/i), "password123");
-    await user.type(screen.getByLabelText(/verify password/i), "password456");
+    await user.type(screen.getByLabelText(/^mot de passe$/i), "password123");
+    await user.type(
+      screen.getByLabelText(/confirmer le mot de passe/i),
+      "password456",
+    );
 
     // Submit the form
-    await user.click(screen.getByRole("button", { name: /sign up/i }));
+    await user.click(screen.getByRole("button", { name: /créer mon compte/i }));
 
     // Should show error message via toast
     await waitFor(() => {
-      expect(toast.error).toHaveBeenCalledWith("Password does not match");
+      expect(toast.error).toHaveBeenCalledWith(
+        "Les mots de passe ne correspondent pas",
+      );
     });
 
     // Should not call signup API
@@ -66,13 +73,16 @@ describe("SignUpCredentialsForm", () => {
     const { user } = setup(<SignUpCredentialsForm />);
 
     // Fill all fields correctly
-    await user.type(screen.getByLabelText(/name/i), "John Doe");
+    await user.type(screen.getByLabelText(/nom/i), "John Doe");
     await user.type(screen.getByLabelText(/email/i), "john@example.com");
-    await user.type(screen.getByLabelText(/^password$/i), "password123");
-    await user.type(screen.getByLabelText(/verify password/i), "password123");
+    await user.type(screen.getByLabelText(/^mot de passe$/i), "password123");
+    await user.type(
+      screen.getByLabelText(/confirmer le mot de passe/i),
+      "password123",
+    );
 
     // Submit the form
-    await user.click(screen.getByRole("button", { name: /sign up/i }));
+    await user.click(screen.getByRole("button", { name: /créer mon compte/i }));
 
     // Verify API was called with correct data
     await waitFor(() => {
@@ -102,13 +112,16 @@ describe("SignUpCredentialsForm", () => {
     const { user } = setup(<SignUpCredentialsForm />);
 
     // Fill all fields correctly
-    await user.type(screen.getByLabelText(/name/i), "John Doe");
+    await user.type(screen.getByLabelText(/nom/i), "John Doe");
     await user.type(screen.getByLabelText(/email/i), "john@example.com");
-    await user.type(screen.getByLabelText(/^password$/i), "password123");
-    await user.type(screen.getByLabelText(/verify password/i), "password123");
+    await user.type(screen.getByLabelText(/^mot de passe$/i), "password123");
+    await user.type(
+      screen.getByLabelText(/confirmer le mot de passe/i),
+      "password123",
+    );
 
     // Submit the form
-    await user.click(screen.getByRole("button", { name: /sign up/i }));
+    await user.click(screen.getByRole("button", { name: /créer mon compte/i }));
 
     // Wait for submission to complete
     await waitFor(() => {
@@ -131,12 +144,15 @@ describe("SignUpCredentialsForm", () => {
 
     const { user } = setup(<SignUpCredentialsForm />);
 
-    await user.type(screen.getByLabelText(/name/i), "John Doe");
+    await user.type(screen.getByLabelText(/nom/i), "John Doe");
     await user.type(screen.getByLabelText(/email/i), "john@example.com");
-    await user.type(screen.getByLabelText(/^password$/i), "password123");
-    await user.type(screen.getByLabelText(/verify password/i), "password123");
+    await user.type(screen.getByLabelText(/^mot de passe$/i), "password123");
+    await user.type(
+      screen.getByLabelText(/confirmer le mot de passe/i),
+      "password123",
+    );
 
-    await user.click(screen.getByRole("button", { name: /sign up/i }));
+    await user.click(screen.getByRole("button", { name: /créer mon compte/i }));
 
     await waitFor(() => {
       expect(authClient.signUp.email).toHaveBeenCalled();

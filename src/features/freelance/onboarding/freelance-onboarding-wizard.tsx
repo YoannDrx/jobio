@@ -45,14 +45,14 @@ export function FreelanceOnboardingWizard({
       title: "Configure ton profil de facturation",
       description:
         "Renseigne tes informations légales, SIRET et coordonnées bancaires",
-      href: "/freelance/settings",
+      href: "/job/gestion/settings",
       completed: status.hasProfile,
     },
     {
       icon: Users,
       title: "Ajoute ton premier client",
       description: "Crée un client pour pouvoir émettre des devis et factures",
-      href: "/freelance/clients",
+      href: "/job/gestion/clients",
       completed: status.hasClient,
     },
     {
@@ -60,7 +60,7 @@ export function FreelanceOnboardingWizard({
       title: "Crée un article au catalogue",
       description:
         "Ajoute une prestation type pour gagner du temps sur tes documents",
-      href: "/freelance/catalog",
+      href: "/job/gestion/catalog",
       completed: status.hasCatalogItem,
     },
   ];
@@ -71,7 +71,7 @@ export function FreelanceOnboardingWizard({
       title: "Émets ta première facture",
       description:
         "Crée et émets une facture pour valider ton workflow complet",
-      href: "/freelance/invoices",
+      href: "/job/gestion/invoices",
       completed: status.hasIssuedInvoice,
     },
     {
@@ -79,14 +79,14 @@ export function FreelanceOnboardingWizard({
       title: "Enregistre un premier paiement",
       description:
         "Confirme un règlement reçu pour boucler le cycle facturation",
-      href: "/freelance/payments",
+      href: "/job/gestion/payments",
       completed: status.hasPayment,
     },
     {
       icon: BarChart3,
       title: "Configure tes déclarations URSSAF",
       description: "Définis ton type de déclaration et ton taux de cotisation",
-      href: "/freelance/insights",
+      href: "/job/gestion/insights",
       completed: status.hasUrssafConfig,
     },
   ];

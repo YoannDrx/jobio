@@ -23,7 +23,7 @@ export function AccountSidebar() {
   return (
     <Sidebar variant="inset">
       <SidebarHeader>
-        <Typography variant="large">Account</Typography>
+        <Typography variant="large">Compte</Typography>
       </SidebarHeader>
       <SidebarContent>
         {links.map((link) => (

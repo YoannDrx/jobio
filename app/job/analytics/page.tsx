@@ -30,6 +30,7 @@ import { EarningsDashboard } from "@/features/analytics/components/earnings-dash
 import { RevenueForecast } from "@/features/analytics/components/revenue-forecast";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { EmptyState } from "@/components/nowts/empty-state";
 import { PipelineHealthWidget } from "@/features/analytics/components/pipeline-health-widget";
@@ -112,10 +113,10 @@ function formatDisplayDate(dateStr: string): string {
 const PLAN_LABELS: Record<string, string> = {
   free: "Gratuit",
   pro: "Pro",
-  ultra: "Ultra",
 };
 
 export default function AnalyticsPage() {
+  const router = useRouter();
   const [funnelData, setFunnelData] = useState<FunnelData>([]);
   const [platformData, setPlatformData] = useState<PlatformData>([]);
   const [tjmData, setTJMData] = useState<TJMData>([]);
@@ -318,7 +319,7 @@ export default function AnalyticsPage() {
             action={{
               label: "Créer une mission",
               onClick: () => {
-                window.location.href = "/job/pipeline";
+                router.push("/job/pipeline");
               },
             }}
           />

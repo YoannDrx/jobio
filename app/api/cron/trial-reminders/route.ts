@@ -8,6 +8,7 @@ import TrialDay12Email from "@email/trial-day12.email";
 import { NextResponse } from "next/server";
 import { finishCronJobRun, startCronJobRun } from "@/lib/ops/cron-job-runs";
 import { validateCronAuthorization } from "@/lib/security/cron-auth";
+import { purgeExpiredTrialIdentities } from "@/lib/auth/stripe/pro-trial";
 
 type DripConfig = {
   daysAgo: number;
@@ -22,11 +23,14 @@ const DRIP_SCHEDULE: DripConfig[] = [
   {
     daysAgo: 3,
     sendFn: async (user) => {
-      await sendEmail({
-        to: user.email,
-        subject: `3 astuces pour booster ta prospection ${SiteConfig.title}`,
-        html: TrialDay3Email({ name: user.name ?? "Freelance" }),
-      });
+      await sendEmail(
+        {
+          to: user.email,
+          subject: `3 astuces pour booster ta prospection ${SiteConfig.title}`,
+          html: TrialDay3Email({ name: user.name ?? "Freelance" }),
+        },
+        { idempotencyKey: `trial-reminder-day-3-${user.id}` },
+      );
     },
   },
   {
@@ -38,15 +42,18 @@ const DRIP_SCHEDULE: DripConfig[] = [
           where: { userId: user.id, completedAt: { not: null } },
         }),
       ]);
-      await sendEmail({
-        to: user.email,
-        subject: `Une semaine avec ${SiteConfig.title} !`,
-        html: TrialReminderEmail({
-          name: user.name ?? "Freelance",
-          missionsCount,
-          followUpsCount,
-        }),
-      });
+      await sendEmail(
+        {
+          to: user.email,
+          subject: `Une semaine avec ${SiteConfig.title} !`,
+          html: TrialReminderEmail({
+            name: user.name ?? "Freelance",
+            missionsCount,
+            followUpsCount,
+          }),
+        },
+        { idempotencyKey: `trial-reminder-day-7-${user.id}` },
+      );
     },
   },
   {
@@ -55,14 +62,17 @@ const DRIP_SCHEDULE: DripConfig[] = [
       const missionsCount = await prisma.mission.count({
         where: { userId: user.id, deletedAt: null },
       });
-      await sendEmail({
-        to: user.email,
-        subject: `Plus que 2 jours d'essai ${SiteConfig.title}`,
-        html: TrialDay12Email({
-          name: user.name ?? "Freelance",
-          missionsCount,
-        }),
-      });
+      await sendEmail(
+        {
+          to: user.email,
+          subject: `Plus que 2 jours d'essai ${SiteConfig.title}`,
+          html: TrialDay12Email({
+            name: user.name ?? "Freelance",
+            missionsCount,
+          }),
+        },
+        { idempotencyKey: `trial-reminder-day-12-${user.id}` },
+      );
     },
   },
 ];
@@ -73,7 +83,9 @@ export const GET = route.handler(async (req) => {
     route: new URL(req.url).pathname,
   });
 
-  const authFailure = validateCronAuthorization(req.headers.get("authorization"));
+  const authFailure = validateCronAuthorization(
+    req.headers.get("authorization"),
+  );
   if (authFailure) {
     await finishCronJobRun(run?.id, {
       status: authFailure.status === 401 ? "UNAUTHORIZED" : "FAILED",
@@ -86,50 +98,58 @@ export const GET = route.handler(async (req) => {
   }
 
   try {
-    const results = await Promise.all(
-      DRIP_SCHEDULE.map(async (config) => {
-        const targetDate = new Date();
-        targetDate.setDate(targetDate.getDate() - config.daysAgo);
+    const [results, purgedTrialIdentities] = await Promise.all([
+      Promise.all(
+        DRIP_SCHEDULE.map(async (config) => {
+          const targetDate = new Date();
+          targetDate.setDate(targetDate.getDate() - config.daysAgo);
 
-        const startOfDay = new Date(
-          targetDate.getFullYear(),
-          targetDate.getMonth(),
-          targetDate.getDate(),
-        );
-        const endOfDay = new Date(
-          targetDate.getFullYear(),
-          targetDate.getMonth(),
-          targetDate.getDate(),
-          23,
-          59,
-          59,
-          999,
-        );
+          const startOfDay = new Date(
+            targetDate.getFullYear(),
+            targetDate.getMonth(),
+            targetDate.getDate(),
+          );
+          const endOfDay = new Date(
+            targetDate.getFullYear(),
+            targetDate.getMonth(),
+            targetDate.getDate(),
+            23,
+            59,
+            59,
+            999,
+          );
 
-        const subscriptions = await prisma.subscription.findMany({
-          where: {
-            status: "trialing",
-            periodStart: {
-              gte: startOfDay,
-              lte: endOfDay,
+          const preferences = await prisma.userPreference.findMany({
+            where: {
+              proTrialConsumedAt: null,
+              proTrialStartedAt: {
+                gte: startOfDay,
+                lte: endOfDay,
+              },
             },
-          },
-        });
+            include: {
+              user: { include: { subscription: true } },
+            },
+          });
 
-        const users = await Promise.all(
-          subscriptions.map(async (sub) =>
-            prisma.user.findFirst({ where: { id: sub.referenceId } }),
-          ),
-        );
+          const validUsers = preferences
+            .map((preference) => preference.user)
+            .filter(
+              (user) =>
+                !user.subscription ||
+                !["active", "past_due"].includes(
+                  user.subscription.status ?? "",
+                ),
+            );
 
-        const validUsers = users.filter(
-          (user): user is Exclude<typeof user, null> => user !== null,
-        );
-
-        await Promise.all(validUsers.map(async (user) => config.sendFn(user)));
-        return validUsers.length;
-      }),
-    );
+          await Promise.all(
+            validUsers.map(async (user) => config.sendFn(user)),
+          );
+          return validUsers.length;
+        }),
+      ),
+      purgeExpiredTrialIdentities(),
+    ]);
 
     const totalSent = results.reduce((sum, count) => sum + count, 0);
 
@@ -138,10 +158,14 @@ export const GET = route.handler(async (req) => {
       processedCount: totalSent,
       details: {
         byStep: results,
+        purgedTrialIdentities: purgedTrialIdentities.count,
       },
     });
 
-    return NextResponse.json({ sent: totalSent });
+    return NextResponse.json({
+      sent: totalSent,
+      purgedTrialIdentities: purgedTrialIdentities.count,
+    });
   } catch (error) {
     await finishCronJobRun(run?.id, {
       status: "FAILED",

@@ -5,9 +5,14 @@ import posthog from "posthog-js";
 const POSTHOG_KEY = process.env.NEXT_PUBLIC_POSTHOG_KEY ?? "";
 const POSTHOG_HOST =
   process.env.NEXT_PUBLIC_POSTHOG_HOST ?? "https://eu.posthog.com";
+export const ANALYTICS_CONSENT_KEY = "jobio.analytics-consent.v1";
+
+export const hasAnalyticsConsent = () =>
+  typeof window !== "undefined" &&
+  window.localStorage.getItem(ANALYTICS_CONSENT_KEY) === "granted";
 
 export const initAnalytics = () => {
-  if (typeof window !== "undefined" && POSTHOG_KEY) {
+  if (typeof window !== "undefined" && POSTHOG_KEY && hasAnalyticsConsent()) {
     posthog.init(POSTHOG_KEY, {
       api_host: POSTHOG_HOST,
       capture_pageview: false,
@@ -18,12 +23,26 @@ export const initAnalytics = () => {
         }
       },
     });
+    posthog.opt_in_capturing();
   }
+};
+
+export const setAnalyticsConsent = (consent: "granted" | "denied") => {
+  if (typeof window === "undefined") return;
+
+  window.localStorage.setItem(ANALYTICS_CONSENT_KEY, consent);
+  if (consent === "granted") {
+    initAnalytics();
+    return;
+  }
+
+  posthog.opt_out_capturing();
+  posthog.reset();
 };
 
 export const track = (event: string, properties?: Record<string, unknown>) => {
   try {
-    if (typeof window !== "undefined") {
+    if (typeof window !== "undefined" && hasAnalyticsConsent()) {
       posthog.capture(event, properties);
     }
   } catch (error) {
@@ -37,7 +56,7 @@ export const track = (event: string, properties?: Record<string, unknown>) => {
 
 export const identify = (userId: string, traits?: Record<string, unknown>) => {
   try {
-    if (typeof window !== "undefined") {
+    if (typeof window !== "undefined" && hasAnalyticsConsent()) {
       posthog.identify(userId, traits);
     }
   } catch (error) {

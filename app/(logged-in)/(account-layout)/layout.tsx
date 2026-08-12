@@ -5,8 +5,8 @@ import { Suspense } from "react";
 import { AccountNavigation } from "./account-navigation";
 
 export const metadata: Metadata = {
-  title: "Account",
-  description: "Manage your account settings.",
+  title: "Compte",
+  description: "Gère les paramètres de ton compte.",
   robots: NO_INDEX_ROBOTS,
 };
 

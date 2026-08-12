@@ -8,6 +8,7 @@ import {
   CardHeader,
 } from "@/components/ui/card";
 import { Form, useForm } from "@/features/form/tanstack-form";
+import { useHydrated } from "@/hooks/use-hydrated";
 import { authClient } from "@/lib/auth-client";
 import { unwrapSafePromise } from "@/lib/promises";
 import { useMutation } from "@tanstack/react-query";
@@ -17,12 +18,14 @@ import { toast } from "sonner";
 import { z } from "zod";
 
 const PasswordFormSchema = z.object({
-  password: z.string().min(8, "Password must be at least 8 characters"),
+  password: z
+    .string()
+    .min(8, "Le mot de passe doit contenir au moins 8 caractères"),
 });
 
 export function ResetPasswordPage({ token }: { token: string }) {
   const router = useRouter();
-
+  const isHydrated = useHydrated();
   const resetPasswordMutation = useMutation({
     mutationFn: async (values: { password: string }) => {
       return unwrapSafePromise(
@@ -36,9 +39,9 @@ export function ResetPasswordPage({ token }: { token: string }) {
       toast.error(error.message);
     },
     onSuccess: () => {
-      toast.success("Password reset successfully");
-      const newUrl = `${window.location.origin}/auth/signin`;
-      window.location.href = newUrl;
+      toast.success("Mot de passe réinitialisé avec succès");
+      router.push("/auth/signin");
+      router.refresh();
     },
   });
 
@@ -52,11 +55,6 @@ export function ResetPasswordPage({ token }: { token: string }) {
     },
   });
 
-  if (!token) {
-    router.push("/auth/forget-password");
-    return null;
-  }
-
   return (
     <Card className="mx-auto w-full max-w-md lg:max-w-lg lg:p-6">
       <CardHeader>
@@ -67,10 +65,12 @@ export function ResetPasswordPage({ token }: { token: string }) {
             </AvatarFallback>
           </Avatar>
         </div>
-        <CardHeader className="text-center">Reset Password</CardHeader>
+        <CardHeader className="text-center">
+          Réinitialiser le mot de passe
+        </CardHeader>
 
         <CardDescription className="text-center">
-          Enter your new password below
+          Saisis ton nouveau mot de passe ci-dessous.
         </CardDescription>
       </CardHeader>
       <CardFooter className="w-full border-t pt-6">
@@ -78,7 +78,7 @@ export function ResetPasswordPage({ token }: { token: string }) {
           <form.AppField name="password">
             {(field) => (
               <field.Field>
-                <field.Label>New Password</field.Label>
+                <field.Label>Nouveau mot de passe</field.Label>
                 <field.Content>
                   <field.Input type="password" placeholder="••••••••" />
                   <field.Message />
@@ -86,8 +86,12 @@ export function ResetPasswordPage({ token }: { token: string }) {
               </field.Field>
             )}
           </form.AppField>
-          <form.SubmitButton className="w-full">
-            Reset Password
+          <form.SubmitButton
+            className="w-full"
+            disabled={!isHydrated}
+            aria-busy={!isHydrated || resetPasswordMutation.isPending}
+          >
+            Réinitialiser le mot de passe
           </form.SubmitButton>
         </Form>
       </CardFooter>

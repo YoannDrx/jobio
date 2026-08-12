@@ -95,7 +95,9 @@ export function FreelanceCatalogManager() {
       setDescription("");
       await loadItems();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Création impossible");
+      toast.error(
+        error instanceof Error ? error.message : "Création impossible",
+      );
     } finally {
       setIsCreating(false);
     }
@@ -112,7 +114,9 @@ export function FreelanceCatalogManager() {
       );
       await loadItems();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Mise à jour impossible");
+      toast.error(
+        error instanceof Error ? error.message : "Mise à jour impossible",
+      );
     } finally {
       setProcessingItemId(null);
     }
@@ -125,7 +129,9 @@ export function FreelanceCatalogManager() {
       toast.success("Ligne supprimée du catalogue");
       await loadItems();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Suppression impossible");
+      toast.error(
+        error instanceof Error ? error.message : "Suppression impossible",
+      );
     } finally {
       setProcessingItemId(null);
     }
@@ -201,7 +207,9 @@ export function FreelanceCatalogManager() {
               Chargement du catalogue...
             </div>
           ) : items.length === 0 ? (
-            <p className="text-muted-foreground text-sm">Aucune ligne catalogue.</p>
+            <p className="text-muted-foreground text-sm">
+              Aucune ligne catalogue.
+            </p>
           ) : (
             <Table>
               <TableHeader>

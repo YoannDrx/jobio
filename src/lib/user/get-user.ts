@@ -1,7 +1,6 @@
 import { getSession } from "@/lib/auth/auth-user";
 import { prisma } from "@/lib/prisma";
 import { unauthorized } from "next/navigation";
-import { logger } from "../logger";
 
 export type CurrentUserPayload = {
   id: string;
@@ -33,8 +32,6 @@ export const getCurrentUser = async (): Promise<CurrentUserPayload | null> => {
     },
     // Note: Prisma will automatically include stripeCustomerId from User model
   });
-
-  logger.debug("subs", user);
 
   if (!user) {
     return null;

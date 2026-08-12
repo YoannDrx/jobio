@@ -5,7 +5,7 @@ import { z } from "zod";
 import { rateLimitedAuthAction } from "@/lib/actions/safe-actions";
 import { ApplicationError } from "@/lib/errors/application-error";
 import { AI_MODELS } from "@/features/ai/ai-config";
-import { checkAndIncrementAIQuota } from "@/features/ai/ai-quota";
+import { runTrackedAI } from "@/features/ai/ai-usage";
 import { prisma } from "@/lib/prisma";
 
 const generateFromOfferInputSchema = z.object({
@@ -58,8 +58,6 @@ export const generateCvFromOfferAction = rateLimitedAuthAction(
       );
     }
 
-    await checkAndIncrementAIQuota(user.id);
-
     const masterCvJson = JSON.stringify({
       fullName: masterCv.fullName,
       headline: masterCv.headline,
@@ -72,9 +70,17 @@ export const generateCvFromOfferAction = rateLimitedAuthAction(
       certifications: masterCv.certifications,
     });
 
-    const result = await generateObject({
-      model: AI_MODELS.smart,
-      system: `Tu es un expert en recrutement et redaction de CV. Tu analyses une offre d'emploi et un CV Master pour generer un CV optimise.
+    const result = await runTrackedAI(
+      {
+        userId: user.id,
+        feature: "CV_GENERATE_FROM_OFFER",
+        modelId: AI_MODELS.smart.modelId,
+        context: { masterCvId: masterCv.id },
+      },
+      async () =>
+        generateObject({
+          model: AI_MODELS.smart,
+          system: `Tu es un expert en recrutement et redaction de CV. Tu analyses une offre d'emploi et un CV Master pour generer un CV optimise.
 
 Regles:
 - Masque (hiddenItems) les items non pertinents pour le poste
@@ -84,19 +90,11 @@ Regles:
 - Reponds en francais
 - Pour contentOverrides, utilise les masterItemId exacts des items du CV Master
 - Pour hiddenItems, utilise les sections: experiences, skills, education, projects, languages, certifications`,
-      prompt: `## CV Master (JSON)\n${masterCvJson}\n\n## Offre d'emploi\n${jobDescription}`,
-      schema: generateFromOfferOutputSchema,
-      temperature: 0.4,
-    });
-
-    await prisma.aIUsage.create({
-      data: {
-        userId: user.id,
-        feature: "CV_GENERATE_FROM_OFFER",
-        inputTokens: result.usage.inputTokens ?? 0,
-        outputTokens: result.usage.outputTokens ?? 0,
-      },
-    });
+          prompt: `## CV Master (JSON)\n${masterCvJson}\n\n## Offre d'emploi\n${jobDescription}`,
+          schema: generateFromOfferOutputSchema,
+          temperature: 0.4,
+        }),
+    );
 
     return result.object;
   });

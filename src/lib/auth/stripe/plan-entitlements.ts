@@ -1,6 +1,7 @@
 import type { PlanEntitlement } from "@/generated/prisma";
 import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
+import { initializeProTrialForUser, markProTrialConsumed } from "./pro-trial";
 import {
   PLAN_LIMIT_KEYS,
   getPlanLimits,
@@ -17,6 +18,14 @@ export type PlanLimitsResolution = {
   limits: PlanLimit;
   source: PlanEntitlementsSource;
   version: number | null;
+};
+
+export type UserPlanAccessSource = "free" | "trial" | "stripe";
+
+export type UserPlanLimitsResolution = Omit<PlanLimitsResolution, "source"> & {
+  source: UserPlanAccessSource;
+  entitlementSource: PlanEntitlementsSource;
+  trialEndsAt: Date | null;
 };
 
 const PLAN_LIMIT_KEY_SET = new Set<string>(PLAN_LIMIT_KEYS);
@@ -158,21 +167,88 @@ export const resolvePlanLimitsForPlan = async (
 export const resolvePlanLimitsForUser = async (
   userId: string,
   overrideLimits?: OverrideLimits | null,
-): Promise<PlanLimitsResolution> => {
-  const subscription = await prisma.subscription.findUnique({
-    where: { referenceId: userId },
-    select: { plan: true, status: true },
+): Promise<UserPlanLimitsResolution> => {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      email: true,
+      preference: {
+        select: {
+          proTrialStartedAt: true,
+          proTrialEndsAt: true,
+          proTrialConsumedAt: true,
+        },
+      },
+      subscription: {
+        select: { plan: true, status: true },
+      },
+    },
   });
 
-  const hasPaidAccess =
-    subscription?.status === "active" ||
-    subscription?.status === "trialing" ||
-    subscription?.status === "past_due";
+  if (!user) {
+    const resolution = await resolvePlanLimitsForPlan("free", overrideLimits);
+    const { source: entitlementSource, ...rest } = resolution;
+    return {
+      ...rest,
+      source: "free",
+      entitlementSource,
+      trialEndsAt: null,
+    };
+  }
 
-  return resolvePlanLimitsForPlan(
-    hasPaidAccess ? subscription.plan : "free",
-    overrideLimits,
-  );
+  const subscription = user.subscription;
+  const hasPaidAccess =
+    subscription?.status === "active" || subscription?.status === "past_due";
+
+  let accessPlan = hasPaidAccess ? subscription.plan : "free";
+  let accessSource: UserPlanAccessSource = hasPaidAccess ? "stripe" : "free";
+  let trialEndsAt = user.preference?.proTrialEndsAt ?? null;
+
+  if (!hasPaidAccess) {
+    let trialPreference = user.preference;
+    if (!trialPreference) {
+      const initialized = await initializeProTrialForUser({
+        userId,
+        email: user.email,
+      });
+      trialPreference = {
+        proTrialStartedAt: initialized.startedAt,
+        proTrialEndsAt: initialized.endsAt,
+        proTrialConsumedAt: initialized.granted ? null : new Date(),
+      };
+      trialEndsAt = initialized.endsAt;
+    }
+
+    const now = new Date();
+    const trialIsActive =
+      !trialPreference.proTrialConsumedAt &&
+      Boolean(trialPreference.proTrialStartedAt) &&
+      Boolean(trialPreference.proTrialEndsAt) &&
+      (trialPreference.proTrialEndsAt?.getTime() ?? 0) > now.getTime();
+
+    if (trialIsActive) {
+      accessPlan = "pro";
+      accessSource = "trial";
+    } else if (
+      trialPreference.proTrialEndsAt &&
+      !trialPreference.proTrialConsumedAt
+    ) {
+      await markProTrialConsumed({
+        userId,
+        email: user.email,
+        consumedAt: now,
+      });
+    }
+  }
+
+  const resolution = await resolvePlanLimitsForPlan(accessPlan, overrideLimits);
+  const { source: entitlementSource, ...rest } = resolution;
+  return {
+    ...rest,
+    source: accessSource,
+    entitlementSource,
+    trialEndsAt,
+  };
 };
 
 export const getPlanLimitsForPlan = async (

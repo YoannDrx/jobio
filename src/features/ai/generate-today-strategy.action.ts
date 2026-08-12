@@ -4,7 +4,7 @@ import { authAction } from "@/lib/actions/safe-actions";
 import { ApplicationError } from "@/lib/errors/application-error";
 import { prisma } from "@/lib/prisma";
 
-import { checkAndIncrementAIQuota } from "./ai-quota";
+import { runTrackedAI } from "./ai-usage";
 import { generateObject } from "ai";
 import { AI_MODELS } from "./ai-config";
 import { z } from "zod";
@@ -26,8 +26,6 @@ export const generateTodayStrategyAction = authAction
     if (!enabled) {
       throw new ApplicationError("La stratégie IA est désactivée");
     }
-
-    await checkAndIncrementAIQuota(user.id);
 
     const now = new Date();
     const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
@@ -178,12 +176,21 @@ Objectif:
 - Être spécifique, court et orienté exécution.
 `.trim();
 
-    const result = await generateObject({
-      model: AI_MODELS.fast,
-      schema: todayStrategyOutputSchema,
-      prompt,
-      temperature: 0.3,
-    });
+    const result = await runTrackedAI(
+      {
+        userId: user.id,
+        feature: "CHAT",
+        modelId: AI_MODELS.fast.modelId,
+        context: { surface: "today-strategy" },
+      },
+      async () =>
+        generateObject({
+          model: AI_MODELS.fast,
+          schema: todayStrategyOutputSchema,
+          prompt,
+          temperature: 0.3,
+        }),
+    );
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);

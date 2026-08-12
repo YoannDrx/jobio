@@ -109,13 +109,17 @@ export function FreelanceAiForecastPanel() {
 
             <div className="grid gap-3 md:grid-cols-2">
               <div className="rounded-md border p-3">
-                <p className="text-muted-foreground text-xs">Projection CA facturé (90j)</p>
+                <p className="text-muted-foreground text-xs">
+                  Projection CA facturé (90j)
+                </p>
                 <p className="text-lg font-semibold">
                   {formatEur(result.forecast.forecastInvoicedEur)}
                 </p>
               </div>
               <div className="rounded-md border p-3">
-                <p className="text-muted-foreground text-xs">Projection encaissement (90j)</p>
+                <p className="text-muted-foreground text-xs">
+                  Projection encaissement (90j)
+                </p>
                 <p className="text-lg font-semibold">
                   {formatEur(result.forecast.forecastCollectedEur)}
                 </p>

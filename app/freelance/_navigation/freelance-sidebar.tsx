@@ -85,7 +85,7 @@ export function FreelanceSidebar() {
             variant="ghost"
             className="w-full justify-start"
           >
-            <Link href="/freelance/invoices?create=1">
+            <Link href="/job/gestion/invoices?create=1">
               <Receipt className="size-4" />
               Faire une facture
             </Link>
@@ -96,7 +96,7 @@ export function FreelanceSidebar() {
             variant="ghost"
             className="w-full justify-start"
           >
-            <Link href="/freelance/quotes?create=1">
+            <Link href="/job/gestion/quotes?create=1">
               <FileClock className="size-4" />
               Faire un devis
             </Link>
@@ -107,7 +107,7 @@ export function FreelanceSidebar() {
             variant="ghost"
             className="w-full justify-start"
           >
-            <Link href="/freelance/clients?create=1">
+            <Link href="/job/gestion/clients?create=1">
               <Users className="size-4" />
               Ajouter un client
             </Link>
@@ -118,7 +118,7 @@ export function FreelanceSidebar() {
             variant="ghost"
             className="w-full justify-start"
           >
-            <Link href="/freelance/invoices?create=1">
+            <Link href="/job/gestion/invoices?create=1">
               <Plus className="size-4" />
               Nouveau document
             </Link>

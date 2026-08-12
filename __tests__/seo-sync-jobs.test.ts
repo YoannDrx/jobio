@@ -1,4 +1,7 @@
-import { SEO_SYNC_JOB_NAMES, isSeoSyncJobName } from "@/features/admin/seo-sync-jobs";
+import {
+  SEO_SYNC_JOB_NAMES,
+  isSeoSyncJobName,
+} from "@/features/admin/seo-sync-jobs";
 import { describe, expect, it } from "vitest";
 
 describe("seo sync jobs", () => {

@@ -271,7 +271,9 @@ export function FollowUpRulesManager() {
               <div className="flex items-center gap-2">
                 <Switch
                   checked={rule.isActive}
-                  onCheckedChange={async (checked) => handleToggle(rule.id, checked)}
+                  onCheckedChange={async (checked) =>
+                    handleToggle(rule.id, checked)
+                  }
                 />
                 <Button
                   variant="ghost"

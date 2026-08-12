@@ -53,14 +53,15 @@ model Mission {
   archivedAt DateTime?
   deletedAt  DateTime?
 
-  user           User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  platform       Platform?              @relation(fields: [platformId], references: [id], onDelete: SetNull)
-  contact        Contact?               @relation(fields: [contactId], references: [id], onDelete: SetNull)
-  profile        UserProfile?           @relation(fields: [profileId], references: [id], onDelete: SetNull)
-  followUps      FollowUp[]
-  activityEvents ActivityEvent[]
-  sentEmails     SentEmail[]
-  templateUsages MessageTemplateUsage[]
+  user             User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  platform         Platform?              @relation(fields: [platformId], references: [id], onDelete: SetNull)
+  contact          Contact?               @relation(fields: [contactId], references: [id], onDelete: SetNull)
+  profile          UserProfile?           @relation(fields: [profileId], references: [id], onDelete: SetNull)
+  followUps        FollowUp[]
+  activityEvents   ActivityEvent[]
+  sentEmails       SentEmail[]
+  templateUsages   MessageTemplateUsage[]
+  opportunityMatch OpportunityMatch?
 
   @@index([userId, status])
   @@index([userId, createdAt])

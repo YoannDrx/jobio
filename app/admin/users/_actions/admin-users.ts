@@ -2,12 +2,8 @@ import { Prisma } from "@/generated/prisma";
 import { prisma } from "@/lib/prisma";
 
 export type AdminUserRoleFilter = "all" | "admin" | "user";
-export type AdminUserStatusFilter =
-  | "all"
-  | "active"
-  | "banned"
-  | "unverified";
-export type AdminUserPlanFilter = "all" | "free" | "pro" | "ultra";
+export type AdminUserStatusFilter = "all" | "active" | "banned" | "unverified";
+export type AdminUserPlanFilter = "all" | "free" | "pro";
 export type AdminUserSortBy =
   | "createdAt"
   | "name"
@@ -107,7 +103,7 @@ const buildUserFiltersSql = (options: {
     clauses.push(Prisma.sql`(sub.id IS NULL OR sub.plan = 'free')`);
   }
 
-  if (options.plan === "pro" || options.plan === "ultra") {
+  if (options.plan === "pro") {
     clauses.push(Prisma.sql`sub.plan = ${options.plan}`);
   }
 
@@ -205,7 +201,8 @@ export const getUsersWithStats = async ({
   }
 
   const orderBySql = ORDER_BY_SQL[sortBy];
-  const orderDirectionSql = order === "asc" ? Prisma.raw("ASC") : Prisma.raw("DESC");
+  const orderDirectionSql =
+    order === "asc" ? Prisma.raw("ASC") : Prisma.raw("DESC");
 
   const rows = await prisma.$queryRaw<UserMetricsRow[]>(Prisma.sql`
     ${cteSql}
@@ -267,7 +264,11 @@ export const getUsersForExport = async (
     email: user.email,
     role: user.role ?? "user",
     plan: user.plan,
-    status: user.banned ? "banned" : user.emailVerified ? "active" : "unverified",
+    status: user.banned
+      ? "banned"
+      : user.emailVerified
+        ? "active"
+        : "unverified",
     missions: user.missionsCount,
     activeSessions: user.activeSessions,
     subscriptionStatus: user.subscriptionStatus ?? "",

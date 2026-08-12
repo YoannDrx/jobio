@@ -38,7 +38,8 @@ import {
 import { ImpersonateUserButton } from "./_components/impersonate-user-button";
 import { getRecentAdminAuditLogs } from "./_actions/admin-audit";
 
-const formatInt = (value: number) => new Intl.NumberFormat("fr-FR").format(value);
+const formatInt = (value: number) =>
+  new Intl.NumberFormat("fr-FR").format(value);
 
 const formatDate = (value: Date) =>
   new Intl.DateTimeFormat("fr-FR", {
@@ -572,7 +573,9 @@ export default async function AdminPage() {
                 label="Score feedback moyen"
                 value={Math.round((feedbackAverage._avg.review ?? 0) * 10) / 10}
                 suffix="/5"
-                tone={(feedbackAverage._avg.review ?? 0) >= 4 ? "ok" : "warning"}
+                tone={
+                  (feedbackAverage._avg.review ?? 0) >= 4 ? "ok" : "warning"
+                }
               />
               <MetricBadge
                 label="Erreurs système ouvertes"
@@ -624,7 +627,9 @@ export default async function AdminPage() {
                   <Link href="/admin/users?status=active">Voir actifs</Link>
                 </Button>
                 <Button asChild size="sm" variant="outline">
-                  <Link href="/admin/users?status=unverified">Voir non vérifiés</Link>
+                  <Link href="/admin/users?status=unverified">
+                    Voir non vérifiés
+                  </Link>
                 </Button>
               </div>
             </CardContent>
@@ -651,7 +656,9 @@ export default async function AdminPage() {
                   return (
                     <div key={item.plan} className="space-y-1">
                       <div className="flex items-center justify-between text-sm">
-                        <span className="font-medium capitalize">{item.plan}</span>
+                        <span className="font-medium capitalize">
+                          {item.plan}
+                        </span>
                         <span className="text-muted-foreground">
                           {formatInt(item.count)} ({ratio}%)
                         </span>
@@ -693,8 +700,12 @@ export default async function AdminPage() {
                 return (
                   <div key={week.label} className="space-y-1">
                     <div className="flex items-center justify-between text-xs">
-                      <span className="text-muted-foreground">{week.label}</span>
-                      <span className="font-medium">{formatInt(week.count)}</span>
+                      <span className="text-muted-foreground">
+                        {week.label}
+                      </span>
+                      <span className="font-medium">
+                        {formatInt(week.count)}
+                      </span>
                     </div>
                     <div className="bg-muted h-2 overflow-hidden rounded-full">
                       <div
@@ -726,7 +737,10 @@ export default async function AdminPage() {
                     <div className="mb-2 flex items-center justify-between gap-2">
                       <div className="min-w-0">
                         <p className="truncate text-sm font-medium">
-                          {item.user?.name ?? item.user?.email ?? item.email ?? "Anonyme"}
+                          {item.user?.name ??
+                            item.user?.email ??
+                            item.email ??
+                            "Anonyme"}
                         </p>
                         <p className="text-muted-foreground text-xs">
                           {formatDateTime(item.createdAt)}

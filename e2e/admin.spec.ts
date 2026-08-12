@@ -27,7 +27,6 @@ test.describe("admin", () => {
 
     // signInAccount already navigated to /admin via callbackURL
     await page.waitForURL(/\/admin/, { timeout: 15000 });
-    await page.waitForLoadState("networkidle");
 
     await expect(
       page.getByRole("link", { name: /Gérer les utilisateurs/i }),
@@ -68,7 +67,9 @@ test.describe("admin", () => {
     });
 
     await page.waitForURL(/\/admin\/users/, { timeout: 15000 });
-    await page.waitForLoadState("networkidle");
+    await expect(
+      page.getByRole("heading", { name: /Gestion utilisateurs/i }),
+    ).toBeVisible({ timeout: 15000 });
 
     const userCellLink = page
       .getByRole("link", {

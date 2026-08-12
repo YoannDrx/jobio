@@ -6,7 +6,9 @@ import { cvCoachSnapshotSchema } from "@/features/cv-lab/cv-coach.schema";
 import { Prisma } from "@/generated/prisma";
 import { describe, expect, it } from "vitest";
 
-type ProfileLike = Parameters<typeof buildProfileUpdateFromCvCoach>[0]["currentProfile"];
+type ProfileLike = Parameters<
+  typeof buildProfileUpdateFromCvCoach
+>[0]["currentProfile"];
 
 const makeCurrentProfile = (): ProfileLike => ({
   headline: "Frontend Engineer",
@@ -107,7 +109,7 @@ const makeSnapshot = () =>
     },
   });
 
-const parseJson = <T,>(value: unknown): T[] => {
+const parseJson = <T>(value: unknown): T[] => {
   if (value === Prisma.JsonNull) {
     return [];
   }
@@ -124,7 +126,9 @@ describe("buildProfileUpdateFromCvCoach", () => {
     });
 
     const skills = parseJson<{ name: string }>(result.skills);
-    const experiences = parseJson<{ title: string; company: string }>(result.experiences);
+    const experiences = parseJson<{ title: string; company: string }>(
+      result.experiences,
+    );
 
     expect(result.headline).toBe("Senior React Native Engineer");
     expect(result.bio).toContain("Built and scaled mobile products.");

@@ -4,13 +4,9 @@ import { createTestAccount } from "./utils/auth-test";
 
 test.describe("freelance-billing", () => {
   test("quote to invoice payment flow", async ({ page }) => {
-    // Skip in CI - requires complex setup that needs investigation
-    if (process.env.CI === "true" || process.env.GITHUB_ACTIONS === "true") {
-      test.skip();
-    }
     const userData = await createTestAccount({
       page,
-      callbackURL: "/freelance/quotes",
+      callbackURL: "/job/gestion/quotes",
     });
 
     try {
@@ -52,7 +48,7 @@ test.describe("freelance-billing", () => {
         },
       });
 
-      await page.goto("/freelance/quotes");
+      await page.goto("/job/gestion/quotes");
       await page.waitForLoadState("networkidle");
 
       await expect(
@@ -69,6 +65,11 @@ test.describe("freelance-billing", () => {
         timeout: 10000,
       });
 
+      await page
+        .getByRole("button", { name: "Fermer le panneau" })
+        .first()
+        .click();
+
       await expect(
         page.getByRole("cell", { name: "Client E2E" }).first(),
       ).toBeVisible({ timeout: 10000 });
@@ -83,7 +84,7 @@ test.describe("freelance-billing", () => {
         timeout: 10000,
       });
 
-      await page.goto("/freelance/invoices");
+      await page.goto("/job/gestion/invoices");
       await page.waitForLoadState("networkidle");
 
       await expect(
@@ -92,21 +93,30 @@ test.describe("freelance-billing", () => {
         timeout: 10000,
       });
 
-      await page.getByRole("button", { name: "Émettre" }).first().click();
-      await page.waitForTimeout(500);
-
       await page
-        .getByRole("button", { name: "Enregistrer un paiement" })
+        .getByRole("button", { name: "Fermer le panneau" })
         .first()
         .click();
+
+      await page.getByRole("button", { name: "Émettre" }).first().click();
+      await expect(page.getByText("Facture émise").first()).toBeVisible({
+        timeout: 10000,
+      });
+
+      const recordPaymentButton = page
+        .getByRole("button", { name: "Enregistrer un paiement" })
+        .first();
+      await expect(recordPaymentButton).toBeEnabled({ timeout: 10000 });
+      await recordPaymentButton.click();
       await expect(
         page.getByRole("heading", { name: "Enregistrer un paiement" }).first(),
       ).toBeVisible({ timeout: 10000 });
 
-      await page
+      const savePaymentButton = page
         .getByRole("button", { name: "Enregistrer le paiement" })
-        .first()
-        .click();
+        .first();
+      await expect(savePaymentButton).toBeEnabled({ timeout: 10000 });
+      await savePaymentButton.click();
       await expect(page.getByText("Paiement enregistré").first()).toBeVisible({
         timeout: 10000,
       });

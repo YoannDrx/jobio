@@ -1,4 +1,3 @@
-import { auth } from "@/lib/auth";
 import { SiteConfig } from "@/site-config";
 import { getSessionCookie } from "better-auth/cookies";
 import type { NextRequest } from "next/server";
@@ -30,22 +29,19 @@ export const isFreelanceRoute = (pathname: string) => {
   return pathname.startsWith("/freelance");
 };
 
-export const validateSession = async (request: NextRequest) => {
-  const session = await auth.api.getSession({ headers: request.headers });
-
-  if (!session?.session.userId) return null;
-
-  return session;
-};
+// The proxy only performs a cheap presence check. Every protected page and
+// server action validates the signed session against Better Auth server-side.
+// Keeping the Prisma-backed auth instance out of the proxy prevents the whole
+// repository from being traced into the middleware bundle.
+export const hasSessionCookie = (request: NextRequest): boolean =>
+  Boolean(
+    getSessionCookie(request, {
+      cookiePrefix: SiteConfig.appId,
+    }),
+  );
 
 export const redirectToSignIn = (request: NextRequest) => {
   const url = request.nextUrl.clone();
   url.pathname = "/auth/signin";
-  return NextResponse.redirect(url);
-};
-
-export const redirectToUnauthorized = (request: NextRequest) => {
-  const url = request.nextUrl.clone();
-  url.pathname = "/unauthorized";
   return NextResponse.redirect(url);
 };

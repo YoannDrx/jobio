@@ -167,33 +167,37 @@ const getTemplatePreviewHtml = async (userId: string) => {
   });
 };
 
-export const GET = authRoute.query(querySchema).handler(async (_req, { query, ctx }) => {
-  const html = await getTemplatePreviewHtml(ctx.user.id);
+export const GET = authRoute
+  .query(querySchema)
+  .handler(async (_req, { query, ctx }) => {
+    const html = await getTemplatePreviewHtml(ctx.user.id);
 
-  if (query.mode === "pdf") {
-    try {
-      const pdf = await generateCvPdfBuffer(html);
-      const bytes = new ArrayBuffer(pdf.byteLength);
-      new Uint8Array(bytes).set(pdf);
+    if (query.mode === "pdf") {
+      try {
+        const pdf = await generateCvPdfBuffer(html);
+        const bytes = new ArrayBuffer(pdf.byteLength);
+        new Uint8Array(bytes).set(pdf);
 
-      return new Response(bytes, {
-        headers: {
-          "Content-Type": "application/pdf",
-          "Cache-Control": "private, max-age=0, must-revalidate",
-          "Content-Disposition": `${query.download ? "attachment" : "inline"}; filename="freelance-template-preview.pdf"`,
-        },
-      });
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Impossible de générer le PDF";
-      throw new ZodRouteError(message, 503);
+        return new Response(bytes, {
+          headers: {
+            "Content-Type": "application/pdf",
+            "Cache-Control": "private, max-age=0, must-revalidate",
+            "Content-Disposition": `${query.download ? "attachment" : "inline"}; filename="freelance-template-preview.pdf"`,
+          },
+        });
+      } catch (error) {
+        const message =
+          error instanceof Error
+            ? error.message
+            : "Impossible de générer le PDF";
+        throw new ZodRouteError(message, 503);
+      }
     }
-  }
 
-  return new Response(html, {
-    headers: {
-      "Content-Type": "text/html; charset=utf-8",
-      "Cache-Control": "private, max-age=0, must-revalidate",
-    },
+    return new Response(html, {
+      headers: {
+        "Content-Type": "text/html; charset=utf-8",
+        "Cache-Control": "private, max-age=0, must-revalidate",
+      },
+    });
   });
-});

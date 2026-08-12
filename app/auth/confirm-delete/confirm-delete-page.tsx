@@ -83,11 +83,13 @@ export function ConfirmDeletePage({
             </AvatarFallback>
           </Avatar>
         </div>
-        <CardTitle className="text-center">Confirm Account Deletion</CardTitle>
+        <CardTitle className="text-center">
+          Confirmer la suppression du compte
+        </CardTitle>
 
         <CardDescription className="text-center">
-          Are you sure you want to delete your account? This action is permanent
-          and cannot be undone.
+          Es-tu sûr de vouloir supprimer ton compte ? Cette action est
+          définitive et ne peut pas être annulée.
         </CardDescription>
       </CardHeader>
       <CardFooter className="border-t pt-6">
@@ -99,10 +101,10 @@ export function ConfirmDeletePage({
             onClick={handleConfirmDelete}
             className="flex-1"
           >
-            Yes, Delete My Account
+            Oui, supprimer mon compte
           </LoadingButton>
           <Button variant="outline" onClick={handleCancel} className="flex-1">
-            Cancel
+            Annuler
           </Button>
         </div>
       </CardFooter>

@@ -23,7 +23,9 @@ describe("sanitizeCallbackUrl", () => {
 
   it("rejects external protocols", () => {
     expect(sanitizeCallbackUrl("https://evil.com", "/job")).toBe("/job");
-    expect(sanitizeCallbackUrl("custom-scheme://evil.com", "/job")).toBe("/job");
+    expect(sanitizeCallbackUrl("custom-scheme://evil.com", "/job")).toBe(
+      "/job",
+    );
   });
 
   it("rejects protocol-relative and malformed paths", () => {

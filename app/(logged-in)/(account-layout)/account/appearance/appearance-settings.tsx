@@ -1,6 +1,7 @@
 "use client";
 
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -19,6 +20,7 @@ import { useTheme } from "next-themes";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { ANALYTICS_CONSENT_KEY, setAnalyticsConsent } from "@/lib/analytics";
 
 type AppearancePrefs = {
   locale: string;
@@ -30,8 +32,16 @@ export function AppearanceSettings() {
   const [isLoading, setIsLoading] = useState(true);
   const [isPending, startTransition] = useTransition();
   const { setTheme: setNextTheme } = useTheme();
+  const [analyticsConsent, setAnalyticsConsentState] = useState<
+    "granted" | "denied"
+  >("denied");
 
   useEffect(() => {
+    setAnalyticsConsentState(
+      window.localStorage.getItem(ANALYTICS_CONSENT_KEY) === "granted"
+        ? "granted"
+        : "denied",
+    );
     resolveActionResult(getPreferencesAction())
       .then((result) => {
         setPrefs({
@@ -122,6 +132,38 @@ export function AppearanceSettings() {
               <SelectItem value="en">English</SelectItem>
             </SelectContent>
           </Select>
+        </div>
+      </Card>
+
+      <Card className="flex flex-col gap-4 p-6">
+        <div>
+          <h3 className="text-lg font-semibold">Mesure d’audience</h3>
+          <p className="text-muted-foreground text-sm">
+            PostHog reste désactivé sans ton accord. Tu peux retirer ton
+            consentement à tout moment sans impact sur Jobio.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            variant={analyticsConsent === "denied" ? "default" : "outline"}
+            onClick={() => {
+              setAnalyticsConsent("denied");
+              setAnalyticsConsentState("denied");
+              toast.success("Mesure d’audience désactivée");
+            }}
+          >
+            Refuser
+          </Button>
+          <Button
+            variant={analyticsConsent === "granted" ? "default" : "outline"}
+            onClick={() => {
+              setAnalyticsConsent("granted");
+              setAnalyticsConsentState("granted");
+              toast.success("Mesure d’audience activée");
+            }}
+          >
+            Accepter
+          </Button>
         </div>
       </Card>
     </div>

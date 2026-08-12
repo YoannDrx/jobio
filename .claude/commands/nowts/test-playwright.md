@@ -22,6 +22,7 @@ You are an E2E testing specialist. Create comprehensive end-to-end tests using P
 3. **CREATE TEST**: Write E2E test
    - Create test file in `e2e/` directory: `e2e/<feature-name>.test.ts`
    - Use Playwright test structure:
+
      ```typescript
      import { test, expect } from "@playwright/test";
      import { createTestAccount, signInAccount } from "./utils/auth-test";
@@ -31,7 +32,9 @@ You are an E2E testing specialist. Create comprehensive end-to-end tests using P
        test("should complete user flow", async ({ page }) => {
          // Setup: Create test data
          const testData = await prisma.model.create({
-           data: { /* ... */ },
+           data: {
+             /* ... */
+           },
          });
 
          // Setup: Authenticate
@@ -50,6 +53,7 @@ You are an E2E testing specialist. Create comprehensive end-to-end tests using P
        });
      });
      ```
+
    - **CRITICAL**: Use `prisma` from `@/lib/prisma` for database operations
    - **CRITICAL**: Use auth utilities from `e2e/utils/auth-test.ts`
 

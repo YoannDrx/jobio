@@ -18,9 +18,9 @@ type VerificationIssue = {
   message: string;
 };
 
-type PlanName = "free" | "pro" | "ultra";
+type PlanName = "free" | "pro";
 
-const PLAN_NAMES: PlanName[] = ["free", "pro", "ultra"];
+const PLAN_NAMES: PlanName[] = ["free", "pro"];
 
 const args = new Set(process.argv.slice(2));
 const strictMode = args.has("--strict");
@@ -262,6 +262,7 @@ type PriceCheck = {
   billing: "monthly" | "yearly";
   expectedAmount: number;
   currency: string;
+  lookupKey: string;
 };
 
 const getPriceChecks = (): PriceCheck[] => {
@@ -287,6 +288,7 @@ const getPriceChecks = (): PriceCheck[] => {
         billing: "monthly",
         expectedAmount: Math.round(plan.price * 100),
         currency: plan.currency.toLowerCase(),
+        lookupKey: "jobio_pro_monthly_v1",
       });
     }
 
@@ -297,6 +299,7 @@ const getPriceChecks = (): PriceCheck[] => {
         billing: "yearly",
         expectedAmount: Math.round(plan.yearlyPrice * 100),
         currency: plan.currency.toLowerCase(),
+        lookupKey: "jobio_pro_yearly_v1",
       });
     }
   }
@@ -393,6 +396,22 @@ async function verifyStripePrices() {
           "error",
           "stripe.live",
           `${check.planName} ${check.billing}: devise inattendue (${price.currency} vs ${check.currency})`,
+        );
+      }
+
+      if (price.lookup_key !== check.lookupKey) {
+        pushIssue(
+          "error",
+          "stripe.live",
+          `${check.id}: lookup_key inattendue (${price.lookup_key ?? "absente"} vs ${check.lookupKey})`,
+        );
+      }
+
+      if (price.tax_behavior !== "exclusive") {
+        pushIssue(
+          "error",
+          "stripe.live",
+          `${check.id}: tax_behavior doit être exclusive (actuel: ${price.tax_behavior ?? "unspecified"})`,
         );
       }
 

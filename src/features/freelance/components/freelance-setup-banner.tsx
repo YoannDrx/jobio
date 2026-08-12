@@ -74,7 +74,7 @@ export function FreelanceSetupBanner({
 
             <div className="mt-4">
               <Button asChild size="sm" className="gap-2">
-                <Link href="/freelance/settings">
+                <Link href="/job/gestion/settings">
                   Configurer maintenant
                   <span className="text-xs">→</span>
                 </Link>

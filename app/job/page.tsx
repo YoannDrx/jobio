@@ -18,6 +18,10 @@ import {
   type MissionStatusValue,
 } from "@/features/missions/mission-status";
 import { TodayWeeklySummary } from "@/features/missions/components/today/today-weekly-summary";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Typography } from "@/components/nowts/typography";
+import { ArrowRight, Radar } from "lucide-react";
+import Link from "next/link";
 
 export default async function TodayPage() {
   const user = await getRequiredUser();
@@ -77,6 +81,7 @@ export default async function TodayPage() {
     tjmPrevMonth,
     weekMissionsWithResponse,
     weekTotalMissions,
+    topOpportunities,
   ] = await Promise.all([
     prisma.mission.findMany({
       where: {
@@ -269,6 +274,18 @@ export default async function TodayPage() {
         deletedAt: null,
       },
     }),
+    prisma.opportunityMatch.findMany({
+      where: {
+        userId: user.id,
+        status: { in: ["NEW", "SAVED"] },
+        listing: {
+          OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
+        },
+      },
+      include: { listing: true },
+      orderBy: [{ score: "desc" }, { createdAt: "desc" }],
+      take: 3,
+    }),
   ]);
 
   const onboardingStatus = await resolveActionResult(
@@ -428,6 +445,45 @@ export default async function TodayPage() {
                   }
             }
           />
+          {topOpportunities.length > 0 ? (
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between gap-3">
+                  <CardTitle className="flex items-center gap-2">
+                    <Radar className="size-4" aria-hidden="true" />
+                    Top opportunités du Radar
+                  </CardTitle>
+                  <Link
+                    href="/job/opportunities"
+                    className="text-primary flex items-center gap-1 text-sm hover:underline"
+                  >
+                    Ouvrir le Radar <ArrowRight className="size-3" />
+                  </Link>
+                </div>
+              </CardHeader>
+              <CardContent className="grid gap-3 md:grid-cols-3">
+                {topOpportunities.map((match) => (
+                  <Link
+                    key={match.id}
+                    href="/job/opportunities"
+                    className="hover:bg-muted flex flex-col gap-1 rounded-lg border p-3 transition-colors"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <Typography variant="large">
+                        {match.listing.title}
+                      </Typography>
+                      <span className="bg-primary text-primary-foreground rounded-full px-2 py-0.5 font-mono text-xs">
+                        {match.score}
+                      </span>
+                    </div>
+                    <Typography variant="muted">
+                      {match.listing.company ?? match.listing.source}
+                    </Typography>
+                  </Link>
+                ))}
+              </CardContent>
+            </Card>
+          ) : null}
           <TodayWeeklySummary
             weekFollowUpsCompleted={followUpsCompletedThisWeek}
             weekMissionsAdded={missionsAddedThisWeek}

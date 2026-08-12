@@ -4,8 +4,7 @@ import { generateObject } from "ai";
 import { z } from "zod";
 import { rateLimitedAuthAction } from "@/lib/actions/safe-actions";
 import { AI_MODELS } from "@/features/ai/ai-config";
-import { checkAndIncrementAIQuota } from "@/features/ai/ai-quota";
-import { prisma } from "@/lib/prisma";
+import { runTrackedAI } from "@/features/ai/ai-usage";
 
 const suggestTechStackInputSchema = z.object({
   title: z.string().min(1).max(200),
@@ -25,29 +24,27 @@ export const suggestTechStackAction = rateLimitedAuthAction(
   .inputSchema(suggestTechStackInputSchema)
   .action(
     async ({ parsedInput: { title, company, description }, ctx: { user } }) => {
-      await checkAndIncrementAIQuota(user.id);
-
       const contextParts: string[] = [`Poste: ${title}`];
       if (company) contextParts.push(`Entreprise: ${company}`);
       if (description) contextParts.push(`Description: ${description}`);
 
-      const result = await generateObject({
-        model: AI_MODELS.fast,
-        system:
-          "Tu es un expert tech. Suggere les technologies et outils les plus probables pour ce poste. Retourne uniquement des noms de technologies concis (ex: React, Node.js, PostgreSQL). Ne repete pas les technologies deja presentes.",
-        prompt: contextParts.join("\n"),
-        schema: suggestTechStackOutputSchema,
-        temperature: 0.3,
-      });
-
-      await prisma.aIUsage.create({
-        data: {
+      const result = await runTrackedAI(
+        {
           userId: user.id,
           feature: "CV_SUGGEST",
-          inputTokens: result.usage.inputTokens ?? 0,
-          outputTokens: result.usage.outputTokens ?? 0,
+          modelId: AI_MODELS.fast.modelId,
+          context: { suggestion: "tech-stack" },
         },
-      });
+        async () =>
+          generateObject({
+            model: AI_MODELS.fast,
+            system:
+              "Tu es un expert tech. Suggere les technologies et outils les plus probables pour ce poste. Retourne uniquement des noms de technologies concis (ex: React, Node.js, PostgreSQL). Ne repete pas les technologies deja presentes.",
+            prompt: contextParts.join("\n"),
+            schema: suggestTechStackOutputSchema,
+            temperature: 0.3,
+          }),
+      );
 
       return result.object;
     },
@@ -71,29 +68,27 @@ export const suggestAchievementsAction = rateLimitedAuthAction(
   .inputSchema(suggestAchievementsInputSchema)
   .action(
     async ({ parsedInput: { title, company, description }, ctx: { user } }) => {
-      await checkAndIncrementAIQuota(user.id);
-
       const contextParts: string[] = [`Poste: ${title}`];
       if (company) contextParts.push(`Entreprise: ${company}`);
       if (description) contextParts.push(`Description: ${description}`);
 
-      const result = await generateObject({
-        model: AI_MODELS.fast,
-        system:
-          "Tu es un expert en redaction de CV. Suggere des realisations percutantes et quantifiees pour ce poste. Chaque realisation doit commencer par un verbe d'action et inclure un impact mesurable si possible. Formule en francais.",
-        prompt: contextParts.join("\n"),
-        schema: suggestAchievementsOutputSchema,
-        temperature: 0.5,
-      });
-
-      await prisma.aIUsage.create({
-        data: {
+      const result = await runTrackedAI(
+        {
           userId: user.id,
           feature: "CV_SUGGEST",
-          inputTokens: result.usage.inputTokens ?? 0,
-          outputTokens: result.usage.outputTokens ?? 0,
+          modelId: AI_MODELS.fast.modelId,
+          context: { suggestion: "achievements" },
         },
-      });
+        async () =>
+          generateObject({
+            model: AI_MODELS.fast,
+            system:
+              "Tu es un expert en redaction de CV. Suggere des realisations percutantes et quantifiees pour ce poste. Chaque realisation doit commencer par un verbe d'action et inclure un impact mesurable si possible. Formule en francais.",
+            prompt: contextParts.join("\n"),
+            schema: suggestAchievementsOutputSchema,
+            temperature: 0.5,
+          }),
+      );
 
       return result.object;
     },

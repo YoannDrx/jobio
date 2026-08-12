@@ -10,7 +10,7 @@ async function globalTeardown() {
   });
 
   // eslint-disable-next-line no-console
-  console.info(`Cleanup ${count} test users`);
+  console.info(`Cleanup ${count.count} test users`);
 }
 
 export default globalTeardown;

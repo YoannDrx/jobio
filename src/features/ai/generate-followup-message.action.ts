@@ -6,7 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { generateObject } from "ai";
 import { z } from "zod";
 import { AI_MODELS } from "./ai-config";
-import { checkAndIncrementAIQuota } from "./ai-quota";
+import { runTrackedAI } from "./ai-usage";
 import {
   FOLLOWUP_WRITER_SYSTEM_PROMPT,
   followupWriterOutputSchema,
@@ -21,8 +21,6 @@ export const generateFollowupMessageAction = authAction
   .inputSchema(generateFollowupMessageInputSchema)
   .action(
     async ({ parsedInput: { missionId, followUpType }, ctx: { user } }) => {
-      await checkAndIncrementAIQuota(user.id);
-
       const [mission, profile, followUps] = await Promise.all([
         prisma.mission.findFirst({
           where: { id: missionId, userId: user.id, deletedAt: null },
@@ -44,21 +42,21 @@ export const generateFollowupMessageAction = authAction
 
       const prompt = buildPrompt(mission, profile, followUps, followUpType);
 
-      const result = await generateObject({
-        model: AI_MODELS.fast,
-        system: FOLLOWUP_WRITER_SYSTEM_PROMPT,
-        prompt,
-        schema: followupWriterOutputSchema,
-      });
-
-      await prisma.aIUsage.create({
-        data: {
+      const result = await runTrackedAI(
+        {
           userId: user.id,
           feature: "FOLLOW_UP_MESSAGE",
-          inputTokens: result.usage.inputTokens ?? 0,
-          outputTokens: result.usage.outputTokens ?? 0,
+          modelId: AI_MODELS.fast.modelId,
+          context: { missionId, followUpType: followUpType ?? "unspecified" },
         },
-      });
+        async () =>
+          generateObject({
+            model: AI_MODELS.fast,
+            system: FOLLOWUP_WRITER_SYSTEM_PROMPT,
+            prompt,
+            schema: followupWriterOutputSchema,
+          }),
+      );
 
       return result.object;
     },

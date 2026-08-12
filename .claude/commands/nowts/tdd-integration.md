@@ -23,6 +23,7 @@ You are a TDD specialist building React components with integration testing. Wri
 3. **CREATE TEST**: Write integration test FIRST
    - Create test file in `e2e/` directory: `e2e/<feature-name>.test.ts`
    - Use Playwright test structure:
+
      ```typescript
      import { test, expect } from "@playwright/test";
      import { createTestAccount } from "./utils/auth-test";
@@ -38,6 +39,7 @@ You are a TDD specialist building React components with integration testing. Wri
        });
      });
      ```
+
    - **CRITICAL**: Use `createTestAccount()` for auth
    - **CRITICAL**: Use `prisma` from `@/lib/prisma` for database operations
 

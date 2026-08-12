@@ -78,9 +78,9 @@ export function FreelanceCreditNotesManager() {
         ),
       ]);
 
-      const invoiceOptions = (invoicesResult.invoices as InvoiceOption[]).filter(
-        (invoice) => invoice.balanceCents > 0,
-      );
+      const invoiceOptions = (
+        invoicesResult.invoices as InvoiceOption[]
+      ).filter((invoice) => invoice.balanceCents > 0);
 
       setInvoices(invoiceOptions);
       setCreditNotes(creditNotesResult.creditNotes as CreditNoteRow[]);
@@ -116,7 +116,10 @@ export function FreelanceCreditNotesManager() {
     const amountCents =
       amount.trim().length > 0 ? Math.round(Number(amount) * 100) : undefined;
 
-    if (amount.trim().length > 0 && (!Number.isFinite(Number(amount)) || Number(amount) <= 0)) {
+    if (
+      amount.trim().length > 0 &&
+      (!Number.isFinite(Number(amount)) || Number(amount) <= 0)
+    ) {
       toast.error("Montant d’avoir invalide");
       return;
     }
@@ -135,7 +138,9 @@ export function FreelanceCreditNotesManager() {
       setAmount("");
       await loadData();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Création impossible");
+      toast.error(
+        error instanceof Error ? error.message : "Création impossible",
+      );
     } finally {
       setIsCreating(false);
     }
@@ -155,7 +160,8 @@ export function FreelanceCreditNotesManager() {
             <SelectContent>
               {invoices.map((invoice) => (
                 <SelectItem key={invoice.id} value={invoice.id}>
-                  {(invoice.number ?? "Sans numéro")} - {invoice.client.displayName}
+                  {invoice.number ?? "Sans numéro"} -{" "}
+                  {invoice.client.displayName}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -215,7 +221,9 @@ export function FreelanceCreditNotesManager() {
                 >
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
-                      <span className="font-medium">{creditNote.number ?? "Avoir"}</span>
+                      <span className="font-medium">
+                        {creditNote.number ?? "Avoir"}
+                      </span>
                       <Badge variant="outline">{creditNote.status}</Badge>
                     </div>
                     <p className="text-muted-foreground text-xs">
@@ -227,7 +235,9 @@ export function FreelanceCreditNotesManager() {
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="font-semibold">{formatCents(creditNote.totalCents)}</p>
+                    <p className="font-semibold">
+                      {formatCents(creditNote.totalCents)}
+                    </p>
                     <p className="text-muted-foreground text-xs">
                       {formatDate(creditNote.issueDate)}
                     </p>

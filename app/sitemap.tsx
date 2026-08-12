@@ -14,8 +14,7 @@ const parseDate = (value?: string) => {
 };
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const buildDate =
-    parseDate(process.env.VERCEL_GIT_COMMIT_DATE) ?? new Date();
+  const buildDate = parseDate(process.env.VERCEL_GIT_COMMIT_DATE) ?? new Date();
 
   const publicPages = [
     "/",
@@ -32,7 +31,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ] as const;
 
   const changeFrequencyByPage: Partial<
-    Record<(typeof publicPages)[number], MetadataRoute.Sitemap[number]["changeFrequency"]>
+    Record<
+      (typeof publicPages)[number],
+      MetadataRoute.Sitemap[number]["changeFrequency"]
+    >
   > = {
     "/": "weekly",
     "/blog": "weekly",
@@ -47,21 +49,20 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/rss.xml": "weekly",
   };
 
-  const priorityByPage: Partial<
-    Record<(typeof publicPages)[number], number>
-  > = {
-    "/": 1,
-    "/features": 0.8,
-    "/use-cases": 0.75,
-    "/blog": 0.7,
-    "/docs": 0.7,
-    "/about": 0.6,
-    "/contact": 0.6,
-    "/branding": 0.4,
-    "/legal/terms": 0.3,
-    "/legal/privacy": 0.3,
-    "/rss.xml": 0.4,
-  };
+  const priorityByPage: Partial<Record<(typeof publicPages)[number], number>> =
+    {
+      "/": 1,
+      "/features": 0.8,
+      "/use-cases": 0.75,
+      "/blog": 0.7,
+      "/docs": 0.7,
+      "/about": 0.6,
+      "/contact": 0.6,
+      "/branding": 0.4,
+      "/legal/terms": 0.3,
+      "/legal/privacy": 0.3,
+      "/rss.xml": 0.4,
+    };
 
   const blogPages = blogPosts.map((post) => ({
     url: `${SiteConfig.prodUrl}/blog/${post.slug}`,

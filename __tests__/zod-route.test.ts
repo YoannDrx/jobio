@@ -40,7 +40,7 @@ describe("zod-route", () => {
 
     expect(response.status).toBe(500);
     const data = await response.json();
-    expect(data).toEqual({ message: "Internal server error" });
+    expect(data).toEqual({ message: "Erreur interne du serveur" });
   });
 
   it("authRoute should return 401 if user is not authenticated", async () => {

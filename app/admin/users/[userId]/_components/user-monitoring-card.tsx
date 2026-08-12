@@ -129,7 +129,8 @@ type UserMonitoringCardProps = {
   auditLogs: AdminAuditLogItem[];
 };
 
-const csvEscape = (value: unknown) => `"${String(value ?? "").replace(/"/g, '""')}"`;
+const csvEscape = (value: unknown) =>
+  `"${String(value ?? "").replace(/"/g, '""')}"`;
 
 export function UserMonitoringCard({
   metrics,
@@ -147,14 +148,14 @@ export function UserMonitoringCard({
   const [billingFromDateFilter, setBillingFromDateFilter] = useState("");
   const [billingToDateFilter, setBillingToDateFilter] = useState("");
   const [auditSearchFilter, setAuditSearchFilter] = useState("");
-  const [highlightedAuditLogId, setHighlightedAuditLogId] = useState<string | null>(
-    null,
-  );
+  const [highlightedAuditLogId, setHighlightedAuditLogId] = useState<
+    string | null
+  >(null);
 
   const billingEventTypes = useMemo(
     () =>
-      Array.from(new Set(billingTimeline.map((item) => item.eventType))).sort((a, b) =>
-        a.localeCompare(b),
+      Array.from(new Set(billingTimeline.map((item) => item.eventType))).sort(
+        (a, b) => a.localeCompare(b),
       ),
     [billingTimeline],
   );
@@ -169,7 +170,10 @@ export function UserMonitoringCard({
       : null;
 
     return billingTimeline.filter((item) => {
-      if (billingSourceFilter !== "all" && item.source !== billingSourceFilter) {
+      if (
+        billingSourceFilter !== "all" &&
+        item.source !== billingSourceFilter
+      ) {
         return false;
       }
 
@@ -294,7 +298,9 @@ export function UserMonitoringCard({
       billing.localSubscription?.cancelAtPeriodEnd &&
       billing.localSubscription.periodEnd
     ) {
-      const periodEndMs = new Date(billing.localSubscription.periodEnd).getTime();
+      const periodEndMs = new Date(
+        billing.localSubscription.periodEnd,
+      ).getTime();
       const remainingMs = periodEndMs - now;
       if (remainingMs > 0 && remainingMs <= 7 * 24 * 60 * 60 * 1000) {
         alerts.push({
@@ -535,7 +541,9 @@ export function UserMonitoringCard({
         <div>
           <h3 className="mb-2 text-sm font-semibold">Timeline récente</h3>
           {timeline.length === 0 ? (
-            <p className="text-muted-foreground text-sm">Aucune activité récente.</p>
+            <p className="text-muted-foreground text-sm">
+              Aucune activité récente.
+            </p>
           ) : (
             <div className="space-y-2">
               {timeline.map((item) => (
@@ -560,7 +568,7 @@ export function UserMonitoringCard({
           <div className="grid gap-2 md:grid-cols-2">
             <div className="rounded-md border p-3 text-sm">
               <p className="text-muted-foreground text-xs">Customer ID</p>
-              <p className="mt-1 break-all font-medium">
+              <p className="mt-1 font-medium break-all">
                 {billing.stripeCustomerId ?? "Non lié"}
               </p>
             </div>
@@ -620,10 +628,13 @@ export function UserMonitoringCard({
                       </TableCell>
                       <TableCell>{invoice.status ?? "n/a"}</TableCell>
                       <TableCell>
-                        {(invoice.total / 100).toFixed(2)} {invoice.currency.toUpperCase()}
+                        {(invoice.total / 100).toFixed(2)}{" "}
+                        {invoice.currency.toUpperCase()}
                       </TableCell>
                       <TableCell>
-                        {new Date(invoice.createdAt).toLocaleDateString("fr-FR")}
+                        {new Date(invoice.createdAt).toLocaleDateString(
+                          "fr-FR",
+                        )}
                       </TableCell>
                       <TableCell>
                         {invoice.paidAt
@@ -666,15 +677,15 @@ export function UserMonitoringCard({
                       </TableCell>
                       <TableCell>
                         {subscription.currentPeriodStart
-                          ? new Date(subscription.currentPeriodStart).toLocaleDateString(
-                              "fr-FR",
-                            )
+                          ? new Date(
+                              subscription.currentPeriodStart,
+                            ).toLocaleDateString("fr-FR")
                           : "-"}{" "}
                         -{" "}
                         {subscription.currentPeriodEnd
-                          ? new Date(subscription.currentPeriodEnd).toLocaleDateString(
-                              "fr-FR",
-                            )
+                          ? new Date(
+                              subscription.currentPeriodEnd,
+                            ).toLocaleDateString("fr-FR")
                           : "-"}
                       </TableCell>
                     </TableRow>
@@ -689,7 +700,9 @@ export function UserMonitoringCard({
           <h3 className="mb-2 text-sm font-semibold">Santé facturation</h3>
           <div className="mb-3 grid gap-2 sm:grid-cols-2">
             <div className="rounded-md border p-3">
-              <p className="text-muted-foreground text-xs">Score de risque facturation</p>
+              <p className="text-muted-foreground text-xs">
+                Score de risque facturation
+              </p>
               <p className="text-lg font-semibold">{billingRiskScore}/100</p>
             </div>
             <div className="rounded-md border p-3">
@@ -733,7 +746,9 @@ export function UserMonitoringCard({
         </div>
 
         <div>
-          <h3 className="mb-2 text-sm font-semibold">Playbook support facturation</h3>
+          <h3 className="mb-2 text-sm font-semibold">
+            Playbook support facturation
+          </h3>
           <div className="space-y-2">
             {billingPlaybook.map((item) => (
               <div key={item.id} className="rounded-md border p-3">
@@ -751,10 +766,16 @@ export function UserMonitoringCard({
                   </Badge>
                   <p className="text-sm font-medium">{item.title}</p>
                 </div>
-                <p className="text-muted-foreground mt-1 text-sm">{item.details}</p>
+                <p className="text-muted-foreground mt-1 text-sm">
+                  {item.details}
+                </p>
                 {item.actionLabel && item.runAction ? (
                   <div className="mt-2">
-                    <Button size="sm" variant="outline" onClick={item.runAction}>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={item.runAction}
+                    >
                       {item.actionLabel}
                     </Button>
                   </div>
@@ -823,7 +844,9 @@ export function UserMonitoringCard({
                   id="billing-timeline-reference-filter"
                   value={billingReferenceFilter}
                   placeholder="Ex: in_123 ou sub_123"
-                  onChange={(event) => setBillingReferenceFilter(event.target.value)}
+                  onChange={(event) =>
+                    setBillingReferenceFilter(event.target.value)
+                  }
                 />
               </div>
 
@@ -833,7 +856,9 @@ export function UserMonitoringCard({
                   id="billing-timeline-from-date"
                   type="date"
                   value={billingFromDateFilter}
-                  onChange={(event) => setBillingFromDateFilter(event.target.value)}
+                  onChange={(event) =>
+                    setBillingFromDateFilter(event.target.value)
+                  }
                 />
               </div>
 
@@ -843,14 +868,16 @@ export function UserMonitoringCard({
                   id="billing-timeline-to-date"
                   type="date"
                   value={billingToDateFilter}
-                  onChange={(event) => setBillingToDateFilter(event.target.value)}
+                  onChange={(event) =>
+                    setBillingToDateFilter(event.target.value)
+                  }
                 />
               </div>
             </div>
             <div className="flex items-center justify-between gap-2">
               <p className="text-muted-foreground text-xs">
-                {filteredBillingTimeline.length}/{billingTimeline.length} événements
-                affichés
+                {filteredBillingTimeline.length}/{billingTimeline.length}{" "}
+                événements affichés
               </p>
               <div className="flex items-center gap-2">
                 <Button
@@ -899,18 +926,23 @@ export function UserMonitoringCard({
                   <div className="text-muted-foreground mt-2 flex flex-wrap gap-3 text-xs">
                     {item.amount !== null && item.currency ? (
                       <span>
-                        {(item.amount / 100).toFixed(2)} {item.currency.toUpperCase()}
+                        {(item.amount / 100).toFixed(2)}{" "}
+                        {item.currency.toUpperCase()}
                       </span>
                     ) : null}
                     {item.status ? <span>statut: {item.status}</span> : null}
-                    {item.referenceId ? <span>ref: {item.referenceId}</span> : null}
+                    {item.referenceId ? (
+                      <span>ref: {item.referenceId}</span>
+                    ) : null}
                   </div>
                   <div className="mt-3 flex flex-wrap gap-2">
                     {item.referenceId ? (
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => setBillingReferenceFilter(item.referenceId ?? "")}
+                        onClick={() =>
+                          setBillingReferenceFilter(item.referenceId ?? "")
+                        }
                       >
                         Filtrer cette référence
                       </Button>
@@ -926,20 +958,26 @@ export function UserMonitoringCard({
                     item.referenceId.startsWith("in_") &&
                     invoiceHostedUrlById.get(item.referenceId) ? (
                       <Button size="sm" variant="outline" asChild>
-                          <a
-                            href={invoiceHostedUrlById.get(item.referenceId) ?? undefined}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
+                        <a
+                          href={
+                            invoiceHostedUrlById.get(item.referenceId) ??
+                            undefined
+                          }
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
                           Ouvrir facture Stripe
                         </a>
                       </Button>
                     ) : null}
-                    {item.source === "admin_audit" && item.id.startsWith("audit:") ? (
+                    {item.source === "admin_audit" &&
+                    item.id.startsWith("audit:") ? (
                       <Button
                         size="sm"
                         variant="outline"
-                        onClick={() => jumpToAuditLog(item.id.replace("audit:", ""))}
+                        onClick={() =>
+                          jumpToAuditLog(item.id.replace("audit:", ""))
+                        }
                       >
                         Voir audit lié
                       </Button>
@@ -981,7 +1019,9 @@ export function UserMonitoringCard({
                       </TableCell>
                       <TableCell>
                         <p className="text-sm font-medium">{item.actor.name}</p>
-                        <p className="text-muted-foreground text-xs">{item.actor.email}</p>
+                        <p className="text-muted-foreground text-xs">
+                          {item.actor.email}
+                        </p>
                       </TableCell>
                       <TableCell>
                         {String(item.month).padStart(2, "0")}/{item.year}
@@ -997,7 +1037,7 @@ export function UserMonitoringCard({
                       <TableCell>
                         {item.previousRequestsUsed} → {item.nextRequestsUsed}
                       </TableCell>
-                      <TableCell className="max-w-[280px] whitespace-pre-wrap text-sm">
+                      <TableCell className="max-w-[280px] text-sm whitespace-pre-wrap">
                         {item.reason}
                       </TableCell>
                     </TableRow>
@@ -1009,7 +1049,9 @@ export function UserMonitoringCard({
         </div>
 
         <div>
-          <h3 className="mb-2 text-sm font-semibold">Audit admin ciblé utilisateur</h3>
+          <h3 className="mb-2 text-sm font-semibold">
+            Audit admin ciblé utilisateur
+          </h3>
           <div className="mb-3 space-y-2 rounded-md border p-3">
             <div className="flex flex-wrap items-end gap-2">
               <div className="min-w-[240px] flex-1 space-y-1">
@@ -1074,7 +1116,7 @@ export function UserMonitoringCard({
                     </span>
                   </div>
                   {log.metadata ? (
-                    <pre className="text-muted-foreground mt-2 overflow-x-auto whitespace-pre-wrap text-xs">
+                    <pre className="text-muted-foreground mt-2 overflow-x-auto text-xs whitespace-pre-wrap">
                       {JSON.stringify(log.metadata, null, 2)}
                     </pre>
                   ) : null}

@@ -47,7 +47,7 @@ export const route = createZodRoute({
     }
 
     return NextResponse.json(
-      { message: "Internal server error" },
+      { message: "Erreur interne du serveur" },
       { status: 500 },
     );
   },

@@ -73,14 +73,12 @@ export const sendEmail = async (
 
   // Avoid sending emails to playwright-test emails
   if (
-    Array.isArray(params.to)
+    env.CI === true &&
+    (Array.isArray(params.to)
       ? params.to.some((to) => to.startsWith("playwright-test-"))
-      : params.to.startsWith("playwright-test-")
+      : params.to.startsWith("playwright-test-"))
   ) {
-    logger.info("[sendEmail] Sending email to playwright-test", {
-      subject: params.subject,
-      to: params.to,
-    });
+    logger.info("[sendEmail] Email intercepted in CI");
 
     return {
       error: null,
@@ -109,7 +107,9 @@ export const sendEmail = async (
   );
 
   if (result.error) {
-    logger.error("[sendEmail] Error", { result, subject: params.subject });
+    logger.error("[sendEmail] Delivery failed", {
+      errorName: result.error.name,
+    });
   }
 
   return result;

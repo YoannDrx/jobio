@@ -22,7 +22,8 @@ const stripeStatusSchema = z.enum([
 ]);
 
 const isMissingTableError = (error: unknown) =>
-  error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2021";
+  error instanceof Prisma.PrismaClientKnownRequestError &&
+  error.code === "P2021";
 
 const ensureAdmin = (role: string | null | undefined) => {
   if (role !== "admin") {
@@ -60,7 +61,7 @@ const resolvePlanFromStripeSubscription = (
   fallbackPlan: string,
 ) => {
   const metadataPlan = subscription.metadata.plan;
-  if (metadataPlan && ["free", "pro", "ultra"].includes(metadataPlan)) {
+  if (metadataPlan && ["free", "pro"].includes(metadataPlan)) {
     return metadataPlan;
   }
 
@@ -68,7 +69,8 @@ const resolvePlanFromStripeSubscription = (
   if (priceId) {
     const plan = AUTH_PLANS.find(
       (candidate) =>
-        candidate.priceId === priceId || candidate.annualDiscountPriceId === priceId,
+        candidate.priceId === priceId ||
+        candidate.annualDiscountPriceId === priceId,
     );
     if (plan) {
       return plan.name;
@@ -134,7 +136,9 @@ const syncLocalSubscriptionFromStripe = async (params: {
     update: {
       plan,
       status: params.stripeSubscription.status,
-      stripeCustomerId: resolveStripeCustomerId(params.stripeSubscription.customer),
+      stripeCustomerId: resolveStripeCustomerId(
+        params.stripeSubscription.customer,
+      ),
       stripeSubscriptionId: params.stripeSubscription.id,
       cancelAtPeriodEnd: params.stripeSubscription.cancel_at_period_end,
       periodStart: toDateFromUnixSeconds(
@@ -149,7 +153,9 @@ const syncLocalSubscriptionFromStripe = async (params: {
       referenceId: params.userId,
       plan,
       status: params.stripeSubscription.status,
-      stripeCustomerId: resolveStripeCustomerId(params.stripeSubscription.customer),
+      stripeCustomerId: resolveStripeCustomerId(
+        params.stripeSubscription.customer,
+      ),
       stripeSubscriptionId: params.stripeSubscription.id,
       cancelAtPeriodEnd: params.stripeSubscription.cancel_at_period_end,
       periodStart: toDateFromUnixSeconds(
@@ -172,7 +178,7 @@ export const updateUserSubscriptionAction = authAction
   .inputSchema(
     z.object({
       userId: z.string().min(1),
-      plan: z.enum(["free", "pro", "ultra"]),
+      plan: z.enum(["free", "pro"]),
       status: stripeStatusSchema.default("active"),
       cancelAtPeriodEnd: z.boolean().default(false),
       periodEnd: z.string().datetime().optional(),
@@ -271,7 +277,9 @@ export const adjustUserAiCreditsAction = authAction
   .action(async ({ parsedInput, ctx: { user } }) => {
     ensureAdmin(user.role);
     if (parsedInput.mode === "add" && parsedInput.amount < 1) {
-      throw new ApplicationError("Le montant à ajouter doit être supérieur à 0");
+      throw new ApplicationError(
+        "Le montant à ajouter doit être supérieur à 0",
+      );
     }
 
     const targetUser = await ensureTargetUserExists(parsedInput.userId);
@@ -296,8 +304,7 @@ export const adjustUserAiCreditsAction = authAction
 
     const previousRequestsLimit = existingQuota?.requestsLimit ?? 0;
     const previousRequestsUsed = existingQuota?.requestsUsed ?? 0;
-    const nextRequestsUsed =
-      parsedInput.requestsUsed ?? previousRequestsUsed;
+    const nextRequestsUsed = parsedInput.requestsUsed ?? previousRequestsUsed;
 
     const quota = await prisma.aIMonthlyQuota.upsert({
       where: {
@@ -414,6 +421,7 @@ export const createUserStripePortalAction = authAction
 
     const session = await stripe.billingPortal.sessions.create({
       customer: targetUser.stripeCustomerId,
+      configuration: process.env.STRIPE_JOBIO_PORTAL_CONFIGURATION_ID,
       return_url: `${getServerUrl()}${
         parsedInput.returnPath ?? `/admin/users/${parsedInput.userId}`
       }`,
@@ -579,19 +587,20 @@ const BILLING_AUDIT_ACTIONS = [
 const BILLING_AUDIT_LABELS: Partial<
   Record<(typeof BILLING_AUDIT_ACTIONS)[number], string>
 > = {
-    USER_STRIPE_PORTAL_OPENED: "Portail Stripe ouvert",
-    USER_STRIPE_SYNCED: "Synchronisation Stripe",
-    USER_STRIPE_SYNCED_NO_SUBSCRIPTION: "Synchronisation Stripe (aucun abonnement)",
-    USER_STRIPE_SUBSCRIPTION_CANCELED_IMMEDIATE:
-      "Abonnement Stripe annulé immédiatement",
-    USER_STRIPE_SUBSCRIPTION_CANCELED_AT_PERIOD_END:
-      "Abonnement Stripe annulé en fin de période",
-    USER_STRIPE_SUBSCRIPTION_RESUMED: "Renouvellement Stripe réactivé",
-    USER_STRIPE_INVOICE_REFUNDED: "Remboursement Stripe effectué",
-    USER_STRIPE_INVOICE_VOIDED: "Facture Stripe void",
-    USER_STRIPE_INVOICE_RESENT: "Facture Stripe renvoyée",
-    USER_SUBSCRIPTION_UPDATED: "Abonnement local mis à jour",
-    USER_SUBSCRIPTION_SET_FREE: "Abonnement local repassé en free",
+  USER_STRIPE_PORTAL_OPENED: "Portail Stripe ouvert",
+  USER_STRIPE_SYNCED: "Synchronisation Stripe",
+  USER_STRIPE_SYNCED_NO_SUBSCRIPTION:
+    "Synchronisation Stripe (aucun abonnement)",
+  USER_STRIPE_SUBSCRIPTION_CANCELED_IMMEDIATE:
+    "Abonnement Stripe annulé immédiatement",
+  USER_STRIPE_SUBSCRIPTION_CANCELED_AT_PERIOD_END:
+    "Abonnement Stripe annulé en fin de période",
+  USER_STRIPE_SUBSCRIPTION_RESUMED: "Renouvellement Stripe réactivé",
+  USER_STRIPE_INVOICE_REFUNDED: "Remboursement Stripe effectué",
+  USER_STRIPE_INVOICE_VOIDED: "Facture Stripe void",
+  USER_STRIPE_INVOICE_RESENT: "Facture Stripe renvoyée",
+  USER_SUBSCRIPTION_UPDATED: "Abonnement local mis à jour",
+  USER_SUBSCRIPTION_SET_FREE: "Abonnement local repassé en free",
 };
 
 const fromStripeTimestamp = (value: number | null | undefined) =>
@@ -754,9 +763,12 @@ export const refundUserStripeInvoiceAction = authAction
       );
     }
 
-    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId, {
-      expand: ["latest_charge"],
-    });
+    const paymentIntent = await stripe.paymentIntents.retrieve(
+      paymentIntentId,
+      {
+        expand: ["latest_charge"],
+      },
+    );
 
     const latestCharge =
       typeof paymentIntent.latest_charge === "string"
@@ -768,7 +780,9 @@ export const refundUserStripeInvoiceAction = authAction
     const refundableAmount = Math.max(0, amountReceived - amountRefunded);
 
     if (refundableAmount <= 0) {
-      throw new ApplicationError("Aucun montant remboursable pour cette facture");
+      throw new ApplicationError(
+        "Aucun montant remboursable pour cette facture",
+      );
     }
 
     const amountToRefund =
@@ -1277,7 +1291,8 @@ export const getAdminUserBillingTimeline = async (
         const periodEnd = fromStripeTimestamp(
           subscription.items.data[0]?.current_period_end,
         );
-        const createdAt = fromStripeTimestamp(subscription.created) ?? new Date();
+        const createdAt =
+          fromStripeTimestamp(subscription.created) ?? new Date();
 
         const entries: AdminUserBillingTimelineItem[] = [
           {

@@ -26,7 +26,9 @@ const invoiceImportItemSchema = z.object({
   issueDate: z.string(),
   dueDate: z.string().nullable().optional(),
   currency: z.string().length(3).default("EUR"),
-  status: z.nativeEnum(BillingInvoiceStatus).default(BillingInvoiceStatus.ISSUED),
+  status: z
+    .nativeEnum(BillingInvoiceStatus)
+    .default(BillingInvoiceStatus.ISSUED),
   subtotalCents: z.number().int().min(0),
   taxCents: z.number().int().min(0),
   totalCents: z.number().int().min(0),
@@ -118,8 +120,12 @@ const parseAmountToCents = (value?: string | null) => {
   const decimalIndex = Math.max(lastComma, lastDot);
 
   if (decimalIndex >= 0) {
-    const integerPartRaw = keepNumeric.slice(0, decimalIndex).replace(/[.,]/g, "");
-    const decimalPartRaw = keepNumeric.slice(decimalIndex + 1).replace(/[.,]/g, "");
+    const integerPartRaw = keepNumeric
+      .slice(0, decimalIndex)
+      .replace(/[.,]/g, "");
+    const decimalPartRaw = keepNumeric
+      .slice(decimalIndex + 1)
+      .replace(/[.,]/g, "");
     const integerPart = integerPartRaw.replace(/-/g, "") || "0";
     const sign = integerPartRaw.startsWith("-") ? -1 : 1;
     const decimals = `${decimalPartRaw}00`.slice(0, 2);
@@ -147,7 +153,9 @@ const parseDateValue = (value?: string | null) => {
     return Number.isNaN(date.getTime()) ? null : date;
   }
 
-  const frenchMatch = normalized.match(/^(\d{1,2})[./-](\d{1,2})[./-](\d{2,4})$/);
+  const frenchMatch = normalized.match(
+    /^(\d{1,2})[./-](\d{1,2})[./-](\d{2,4})$/,
+  );
   if (frenchMatch) {
     const day = Number(frenchMatch[1]);
     const month = Number(frenchMatch[2]);
@@ -259,7 +267,9 @@ const parseBooleanLike = (value?: string | null) => {
   return null;
 };
 
-type ImportClientContact = z.infer<typeof clientImportItemSchema>["contacts"][number];
+type ImportClientContact = z.infer<
+  typeof clientImportItemSchema
+>["contacts"][number];
 
 const normalizeImportContacts = (
   contacts: Partial<ImportClientContact>[],
@@ -290,7 +300,9 @@ const normalizeImportContacts = (
         notes: notes ?? undefined,
       };
     })
-    .filter((contact): contact is NonNullable<typeof contact> => contact !== null);
+    .filter(
+      (contact): contact is NonNullable<typeof contact> => contact !== null,
+    );
 
   if (normalized.length === 0) {
     return [];
@@ -300,7 +312,8 @@ const normalizeImportContacts = (
   return normalized.map((contact, index) => ({
     ...contact,
     isPrimary: hasPrimary ? contact.isPrimary : index === 0,
-    includeInEmail: contact.includeInEmail || (index === 0 && Boolean(contact.email)),
+    includeInEmail:
+      contact.includeInEmail || (index === 0 && Boolean(contact.email)),
   }));
 };
 
@@ -322,7 +335,8 @@ const buildHeaderResolver = (headers: string[]) => {
     for (const alias of normalizedAliases) {
       const contains = normalized.find(
         (header) =>
-          header.normalized.includes(alias) || alias.includes(header.normalized),
+          header.normalized.includes(alias) ||
+          alias.includes(header.normalized),
       );
       if (contains) {
         return contains.raw;
@@ -516,7 +530,12 @@ const parseInvoicesFromCsv = (fileText: string) => {
     const taxParsed = parseAmountToCents(read("tax"));
     const issueDateParsed = parseDateValue(read("issueDate"));
 
-    if (!clientDisplayName && !number && totalParsed === null && subtotalParsed === null) {
+    if (
+      !clientDisplayName &&
+      !number &&
+      totalParsed === null &&
+      subtotalParsed === null
+    ) {
       continue;
     }
 
@@ -533,7 +552,10 @@ const parseInvoicesFromCsv = (fileText: string) => {
       0,
       subtotalParsed ?? Math.max(0, totalCents - (taxParsed ?? 0)),
     );
-    const taxCents = Math.max(0, taxParsed ?? Math.max(0, totalCents - subtotalCents));
+    const taxCents = Math.max(
+      0,
+      taxParsed ?? Math.max(0, totalCents - subtotalCents),
+    );
 
     if (totalCents === 0) {
       warnings.push("Montant TTC non détecté, valeur 0 utilisée");
@@ -594,8 +616,14 @@ const parseInvoiceFromPdf = async (file: File) => {
   const warnings: string[] = [];
 
   const number =
-    captureTextAfterLabels(text, ["Facture n°", "Facture numero", "Invoice #"]) ??
-    text.match(/(?:Facture|Invoice)\s*(?:n[°o]|num[eé]ro|#)?\s*([A-Z0-9/_-]{2,40})/i)?.[1] ??
+    captureTextAfterLabels(text, [
+      "Facture n°",
+      "Facture numero",
+      "Invoice #",
+    ]) ??
+    text.match(
+      /(?:Facture|Invoice)\s*(?:n[°o]|num[eé]ro|#)?\s*([A-Z0-9/_-]{2,40})/i,
+    )?.[1] ??
     undefined;
 
   const clientDisplayName =
@@ -603,9 +631,14 @@ const parseInvoiceFromPdf = async (file: File) => {
     "Client importé PDF";
 
   const issueDate =
-    captureDateAfterLabels(text, ["Date d'émission", "Date emission", "Date"]) ??
-    new Date();
-  if (!captureDateAfterLabels(text, ["Date d'émission", "Date emission", "Date"])) {
+    captureDateAfterLabels(text, [
+      "Date d'émission",
+      "Date emission",
+      "Date",
+    ]) ?? new Date();
+  if (
+    !captureDateAfterLabels(text, ["Date d'émission", "Date emission", "Date"])
+  ) {
     warnings.push("Date d'émission non détectée, date du jour appliquée");
   }
 
@@ -644,10 +677,15 @@ const parseInvoiceFromPdf = async (file: File) => {
     taxCents,
     totalCents,
     paidCents: 0,
-    notes: captureTextAfterLabels(text, ["Objet", "Notes", "Description"]) ?? undefined,
+    notes:
+      captureTextAfterLabels(text, ["Objet", "Notes", "Description"]) ??
+      undefined,
     lineDescription:
-      captureTextAfterLabels(text, ["Désignation", "Designation", "Prestation"]) ??
-      "Import PDF historique",
+      captureTextAfterLabels(text, [
+        "Désignation",
+        "Designation",
+        "Prestation",
+      ]) ?? "Import PDF historique",
     source: "PDF",
     confidence: totalCents > 0 ? "MEDIUM" : "LOW",
     warnings,
@@ -655,7 +693,9 @@ const parseInvoiceFromPdf = async (file: File) => {
 
   return {
     items: [item],
-    mappedColumns: ["Extraction PDF intelligente (heuristiques Jobio/Time/Abby)"],
+    mappedColumns: [
+      "Extraction PDF intelligente (heuristiques Jobio/Time/Abby)",
+    ],
   };
 };
 
@@ -712,7 +752,11 @@ const parseClientsFromCsv = (fileText: string) => {
       "fonction contact",
     ]),
     contactEmail: resolveHeader(["contact email", "contact mail"]),
-    contactPhone: resolveHeader(["contact telephone", "contact phone", "contact tel"]),
+    contactPhone: resolveHeader([
+      "contact telephone",
+      "contact phone",
+      "contact tel",
+    ]),
     contactNotes: resolveHeader(["contact notes", "note contact"]),
     contactIncludeInEmail: resolveHeader([
       "contact include email",
@@ -742,14 +786,12 @@ const parseClientsFromCsv = (fileText: string) => {
     const inferredType =
       typeText.includes("particulier") || typeText.includes("individual")
         ? BillingClientType.INDIVIDUAL
-      : siret
+        : siret
           ? BillingClientType.COMPANY
           : BillingClientType.INDIVIDUAL;
 
     const contactBuckets = new Map<string, Partial<ImportClientContact>>();
-    const applyContactField = <
-      K extends keyof ImportClientContact,
-    >(
+    const applyContactField = <K extends keyof ImportClientContact>(
       bucket: string,
       field: K,
       value: ImportClientContact[K] | null | undefined,
@@ -783,7 +825,9 @@ const parseClientsFromCsv = (fileText: string) => {
       }
 
       const normalizedHeader = normalizeHeader(header);
-      const match = normalizedHeader.match(/(?:contact|personne)\s*(\d+)\s*(.+)$/);
+      const match = normalizedHeader.match(
+        /(?:contact|personne)\s*(\d+)\s*(.+)$/,
+      );
       if (!match?.[1] || !match[2]) {
         continue;
       }
@@ -821,12 +865,15 @@ const parseClientsFromCsv = (fileText: string) => {
     );
     const primaryContact = contacts.find((contact) => contact.isPrimary);
 
-    const confidence: ImportConfidence =
-      [siret, read("email"), primaryContact?.email].some((value) => Boolean(value))
-        ? "HIGH"
-        : read("addressLine1")
-          ? "MEDIUM"
-          : "LOW";
+    const confidence: ImportConfidence = [
+      siret,
+      read("email"),
+      primaryContact?.email,
+    ].some((value) => Boolean(value))
+      ? "HIGH"
+      : read("addressLine1")
+        ? "MEDIUM"
+        : "LOW";
 
     if (!read("addressLine1")) {
       warnings.push("Adresse non détectée");
@@ -870,15 +917,15 @@ const parseClientFromPdf = async (file: File) => {
     captureTextAfterLabels(text, ["Nom du client", "Client"]) ??
     normalizeText(file.name.replace(/\.[^.]+$/, "")) ??
     "Client importé PDF";
-  const siretMatch = text.match(/SIREN(?: ou SIRET)?\s*[:-]?\s*([0-9\s]{9,18})/i);
+  const siretMatch = text.match(
+    /SIREN(?: ou SIRET)?\s*[:-]?\s*([0-9\s]{9,18})/i,
+  );
   const siretClean = siretMatch?.[1]?.replace(/\s+/g, "") ?? null;
   const vatMatch = text.match(
     /TVA(?: intracommunautaire)?\s*[:-]?\s*([A-Z]{2}[A-Z0-9\s]{2,24})/i,
   );
   const emailMatch = text.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i);
-  const phoneMatch = text.match(
-    /(?:\+?\d{1,3}[\s.-]?)?(?:\d[\s.-]?){8,13}/,
-  );
+  const phoneMatch = text.match(/(?:\+?\d{1,3}[\s.-]?)?(?:\d[\s.-]?){8,13}/);
   const postalCityMatch = text.match(/(\d{5})\s+([A-ZÀ-ÿ' -]{2,40})/);
 
   if (!siretClean) {
@@ -919,7 +966,9 @@ const parseClientFromPdf = async (file: File) => {
 
   return {
     items: [item],
-    mappedColumns: ["Extraction PDF intelligente (heuristiques Jobio/Time/Abby)"],
+    mappedColumns: [
+      "Extraction PDF intelligente (heuristiques Jobio/Time/Abby)",
+    ],
   };
 };
 
@@ -1002,7 +1051,9 @@ const mergeClientContactsForImport = (
 
   for (const importedContact of importedContacts) {
     const importedEmailKey = normalizeEmailKey(importedContact.email);
-    const importedFirstNameKey = normalizeHeader(importedContact.firstName ?? "");
+    const importedFirstNameKey = normalizeHeader(
+      importedContact.firstName ?? "",
+    );
     const importedLastNameKey = normalizeHeader(importedContact.lastName ?? "");
 
     const existingIndex = merged.findIndex((contact) => {
@@ -1038,7 +1089,8 @@ const mergeClientContactsForImport = (
         phone: current.phone ?? importedContact.phone ?? null,
         includeInEmail:
           current.includeInEmail ||
-          (Boolean(importedContact.includeInEmail) && Boolean(importedContact.email)),
+          (Boolean(importedContact.includeInEmail) &&
+            Boolean(importedContact.email)),
         isPrimary: current.isPrimary || Boolean(importedContact.isPrimary),
         notes: current.notes ?? importedContact.notes ?? null,
       };
@@ -1052,7 +1104,8 @@ const mergeClientContactsForImport = (
       email: importedContact.email ?? null,
       phone: importedContact.phone ?? null,
       includeInEmail:
-        Boolean(importedContact.includeInEmail) && Boolean(importedContact.email),
+        Boolean(importedContact.includeInEmail) &&
+        Boolean(importedContact.email),
       isPrimary: Boolean(importedContact.isPrimary),
       notes: importedContact.notes ?? null,
     });
@@ -1069,16 +1122,12 @@ const mergeClientContactsForImport = (
 };
 
 const areContactsEquivalent = (
-  left: (
-    ExistingClientContact & {
-      position?: number;
-    }
-  )[],
-  right: (
-    ExistingClientContact & {
-      position?: number;
-    }
-  )[],
+  left: (ExistingClientContact & {
+    position?: number;
+  })[],
+  right: (ExistingClientContact & {
+    position?: number;
+  })[],
 ) => {
   if (left.length !== right.length) {
     return false;
@@ -1123,7 +1172,9 @@ export const parseBillingInvoicesImportAction = authAction
         : await parseInvoiceFromPdf(file);
 
     if (parsed.items.length === 0) {
-      throw new ActionError("Aucune facture exploitable trouvée dans ce fichier");
+      throw new ActionError(
+        "Aucune facture exploitable trouvée dans ce fichier",
+      );
     }
 
     return {
@@ -1187,7 +1238,9 @@ export const commitBillingInvoicesImportAction = authAction
         const totalCents = Math.max(0, item.totalCents);
         const subtotalCents = Math.max(
           0,
-          item.subtotalCents > 0 ? item.subtotalCents : totalCents - item.taxCents,
+          item.subtotalCents > 0
+            ? item.subtotalCents
+            : totalCents - item.taxCents,
         );
         const taxCents = Math.max(
           0,
@@ -1206,7 +1259,9 @@ export const commitBillingInvoicesImportAction = authAction
                 : item.status;
 
         const vatRatePercent =
-          subtotalCents > 0 ? Math.round((taxCents / subtotalCents) * 10_000) / 100 : 0;
+          subtotalCents > 0
+            ? Math.round((taxCents / subtotalCents) * 10_000) / 100
+            : 0;
 
         const invoice = await tx.billingInvoice.create({
           data: {
@@ -1379,7 +1434,8 @@ export const commitBillingClientsImportAction = authAction
                   ? item.addressLine1
                   : "Adresse non renseignée",
               addressLine2: item.addressLine2 ?? null,
-              postalCode: item.postalCode.trim().length > 0 ? item.postalCode : "00000",
+              postalCode:
+                item.postalCode.trim().length > 0 ? item.postalCode : "00000",
               city: item.city.trim().length > 0 ? item.city : "Ville",
               countryCode:
                 item.countryCode.trim().length > 0 ? item.countryCode : "FR",
@@ -1401,7 +1457,8 @@ export const commitBillingClientsImportAction = authAction
                         email: contact.email ?? null,
                         phone: contact.phone ?? null,
                         includeInEmail:
-                          Boolean(contact.includeInEmail) && Boolean(contact.email),
+                          Boolean(contact.includeInEmail) &&
+                          Boolean(contact.email),
                         isPrimary: Boolean(contact.isPrimary),
                         notes: contact.notes ?? null,
                       })),
@@ -1449,8 +1506,10 @@ export const commitBillingClientsImportAction = authAction
             !existing.siret && Boolean(item.siret),
             !existing.vatNumber && Boolean(item.vatNumber),
             !existing.legalName && Boolean(item.legalName),
-            !existing.contactFirstName && Boolean(primaryImportedContact?.firstName),
-            !existing.contactLastName && Boolean(primaryImportedContact?.lastName),
+            !existing.contactFirstName &&
+              Boolean(primaryImportedContact?.firstName),
+            !existing.contactLastName &&
+              Boolean(primaryImportedContact?.lastName),
             shouldUpdateContacts,
             mergedTags.size !== existing.tags.length,
           ].some(Boolean) || existing.addressLine1 === "Adresse non renseignée";
@@ -1467,11 +1526,23 @@ export const commitBillingClientsImportAction = authAction
           data: {
             legalName: existing.legalName ?? item.legalName ?? item.displayName,
             contactFirstName:
-              existing.contactFirstName ?? primaryImportedContact?.firstName ?? null,
+              existing.contactFirstName ??
+              primaryImportedContact?.firstName ??
+              null,
             contactLastName:
-              existing.contactLastName ?? primaryImportedContact?.lastName ?? null,
-            email: existing.email ?? item.email ?? primaryImportedContact?.email ?? null,
-            phone: existing.phone ?? item.phone ?? primaryImportedContact?.phone ?? null,
+              existing.contactLastName ??
+              primaryImportedContact?.lastName ??
+              null,
+            email:
+              existing.email ??
+              item.email ??
+              primaryImportedContact?.email ??
+              null,
+            phone:
+              existing.phone ??
+              item.phone ??
+              primaryImportedContact?.phone ??
+              null,
             vatNumber: existing.vatNumber ?? item.vatNumber ?? null,
             siret: existing.siret ?? item.siret ?? null,
             addressLine1:

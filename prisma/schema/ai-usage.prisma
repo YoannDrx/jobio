@@ -19,11 +19,18 @@ enum AIFeature {
 }
 
 model AIUsage {
-  id           String    @id @default(nanoid(11))
-  userId       String
-  feature      AIFeature
-  inputTokens  Int
-  outputTokens Int
+  id                  String    @id @default(nanoid(11))
+  userId              String
+  feature             AIFeature
+  inputTokens         Int
+  outputTokens        Int
+  modelId             String?
+  estimatedCostMicros Int?
+  latencyMs           Int?
+  status              String    @default("SUCCEEDED")
+  errorCode           String?
+  requestId           String?   @unique
+  context             Json?
 
   createdAt DateTime @default(now())
 

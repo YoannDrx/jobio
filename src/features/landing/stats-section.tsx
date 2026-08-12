@@ -27,7 +27,7 @@ const stats: StatProps[] = [
     text: "Gratuit pour commencer",
   },
   {
-    number: 9.99,
+    number: 19,
     suffix: "€",
     text: "Pro par mois",
   },

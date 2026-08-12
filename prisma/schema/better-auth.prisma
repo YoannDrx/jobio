@@ -47,6 +47,13 @@ model User {
   preference                         UserPreference?
   aiRecommendations                  AIRecommendation[]
   dailyStrategies                    DailyStrategy[]
+  opportunityWatches                 OpportunityWatch[]
+  opportunityMatches                 OpportunityMatch[]
+  opportunitySourceRuns              OpportunitySourceRun[]
+  opportunityInbox                   OpportunityInbox?
+  inboundOpportunityAlerts           InboundOpportunityAlert[]
+  opportunityDigestDeliveries        OpportunityDigestDelivery[]
+  userAssets                         UserAsset[]
   cvLabDocuments                     CvLabDocument[]
   cvLabDocumentVersions              CvLabDocumentVersion[]
   cvLabCoachSessions                 CvLabCoachSession[]

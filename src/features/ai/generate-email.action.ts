@@ -7,7 +7,7 @@ import { enforcePlanFeature } from "@/lib/plan-limits";
 import { generateObject } from "ai";
 import { z } from "zod";
 import { AI_MODELS } from "./ai-config";
-import { checkAndIncrementAIQuota } from "./ai-quota";
+import { runTrackedAI } from "./ai-usage";
 import {
   EMAIL_WRITER_SYSTEM_PROMPT,
   emailWriterOutputSchema,
@@ -23,8 +23,6 @@ export const generateEmailAction = authAction
   .action(
     async ({ parsedInput: { missionId, templateType }, ctx: { user } }) => {
       await enforcePlanFeature(user.id, "aiEmailGeneration");
-
-      await checkAndIncrementAIQuota(user.id);
 
       const [mission, profile] = await Promise.all([
         prisma.mission.findFirst({
@@ -42,21 +40,21 @@ export const generateEmailAction = authAction
 
       const prompt = buildPrompt(mission, profile, templateType);
 
-      const result = await generateObject({
-        model: AI_MODELS.fast,
-        system: EMAIL_WRITER_SYSTEM_PROMPT,
-        prompt,
-        schema: emailWriterOutputSchema,
-      });
-
-      await prisma.aIUsage.create({
-        data: {
+      const result = await runTrackedAI(
+        {
           userId: user.id,
           feature: "EMAIL_WRITING",
-          inputTokens: result.usage.inputTokens ?? 0,
-          outputTokens: result.usage.outputTokens ?? 0,
+          modelId: AI_MODELS.fast.modelId,
+          context: { missionId, templateType: templateType ?? "unspecified" },
         },
-      });
+        async () =>
+          generateObject({
+            model: AI_MODELS.fast,
+            system: EMAIL_WRITER_SYSTEM_PROMPT,
+            prompt,
+            schema: emailWriterOutputSchema,
+          }),
+      );
 
       return result.object;
     },

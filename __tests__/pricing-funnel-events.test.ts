@@ -21,7 +21,7 @@ describe("pricing funnel events summary", () => {
       },
       {
         eventType: PricingFunnelEventType.PLAN_SELECTED,
-        planTarget: "ultra",
+        planTarget: "pro",
         entryPoint: "use_case_developpeur_freelance",
         experimentVariant: "value_stack",
         createdAt: new Date("2026-02-23T10:02:00.000Z"),
@@ -42,7 +42,7 @@ describe("pricing funnel events summary", () => {
       },
       {
         eventType: PricingFunnelEventType.PAYWALL_HIT,
-        planTarget: "ultra",
+        planTarget: "pro",
         entryPoint: "server_enforce_limit",
         experimentVariant: "value_stack",
         createdAt: new Date("2026-02-23T10:05:00.000Z"),
@@ -61,13 +61,11 @@ describe("pricing funnel events summary", () => {
     expect(summary.totals.subscriptionCompleted).toBe(1);
     expect(summary.totals.paywallHit).toBe(1);
 
-    expect(summary.byPlan.pro.planSelected).toBe(1);
+    expect(summary.byPlan.pro.planSelected).toBe(2);
     expect(summary.byPlan.pro.checkoutStarted).toBe(1);
     expect(summary.byPlan.pro.subscriptionCompleted).toBe(1);
 
-    expect(summary.byPlan.ultra.planSelected).toBe(1);
-    expect(summary.byPlan.ultra.paywallHit).toBe(1);
-    expect(summary.byPlan.ultra.subscriptionCompleted).toBe(0);
+    expect(summary.byPlan.pro.paywallHit).toBe(1);
 
     expect(summary.conversionRates.checkoutFromSelection).toBe(50);
     expect(summary.conversionRates.subscriptionFromCheckout).toBe(100);
@@ -77,9 +75,9 @@ describe("pricing funnel events summary", () => {
     expect(summary.byVariant.control.planSelected).toBe(1);
     expect(summary.byVariant.control.checkoutStarted).toBe(1);
     expect(summary.byVariant.control.subscriptionCompleted).toBe(1);
-    expect(summary.byVariant.control.conversionRates.checkoutFromSelection).toBe(
-      100,
-    );
+    expect(
+      summary.byVariant.control.conversionRates.checkoutFromSelection,
+    ).toBe(100);
 
     expect(summary.byVariant.value_stack.planSelected).toBe(1);
     expect(summary.byVariant.value_stack.paywallHit).toBe(1);

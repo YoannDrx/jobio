@@ -14,10 +14,10 @@ export default async function CancelSubscriptionPage() {
   return (
     <Layout size="lg">
       <LayoutHeader>
-        <LayoutTitle>Cancel Subscription</LayoutTitle>
+        <LayoutTitle>Annuler l’abonnement</LayoutTitle>
         <LayoutDescription>
-          We're sorry to see you go. Please let us know why you're cancelling so
-          we can improve our service.
+          Dis-nous ce qui motive ton départ afin de nous aider à améliorer
+          Jobio.
         </LayoutDescription>
       </LayoutHeader>
       <LayoutContent>

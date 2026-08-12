@@ -5,7 +5,7 @@ import { resolveActionResult } from "@/lib/actions/actions-utils";
 import { useSession } from "@/lib/auth-client";
 import { useEffect, useState } from "react";
 
-type PlanName = "free" | "pro" | "ultra";
+type PlanName = "free" | "pro";
 
 export const useCurrentUser = () => {
   const { data, isPending } = useSession();
@@ -26,11 +26,7 @@ export const useCurrentUser = () => {
     void resolveActionResult(getCurrentPlanAction())
       .then((result) => {
         if (!isActive) return;
-        if (
-          result.plan === "free" ||
-          result.plan === "pro" ||
-          result.plan === "ultra"
-        ) {
+        if (result.plan === "free" || result.plan === "pro") {
           setPlan(result.plan);
           return;
         }

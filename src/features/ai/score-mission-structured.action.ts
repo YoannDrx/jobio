@@ -6,7 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { generateObject } from "ai";
 import { z } from "zod";
 import { AI_MODELS } from "./ai-config";
-import { checkAndIncrementAIQuota } from "./ai-quota";
+import { runTrackedAI } from "./ai-usage";
 import {
   STRUCTURED_SCORING_SYSTEM_PROMPT,
   structuredScoringOutputSchema,
@@ -19,8 +19,6 @@ const scoreMissionStructuredInputSchema = z.object({
 export const scoreMissionStructuredAction = authAction
   .inputSchema(scoreMissionStructuredInputSchema)
   .action(async ({ parsedInput: { missionId }, ctx: { user } }) => {
-    await checkAndIncrementAIQuota(user.id);
-
     const [mission, profile] = await Promise.all([
       prisma.mission.findFirst({
         where: { id: missionId, userId: user.id, deletedAt: null },
@@ -37,21 +35,21 @@ export const scoreMissionStructuredAction = authAction
 
     const prompt = buildPrompt(mission, profile);
 
-    const result = await generateObject({
-      model: AI_MODELS.fast,
-      system: STRUCTURED_SCORING_SYSTEM_PROMPT,
-      prompt,
-      schema: structuredScoringOutputSchema,
-    });
-
-    await prisma.aIUsage.create({
-      data: {
+    const result = await runTrackedAI(
+      {
         userId: user.id,
         feature: "STRUCTURED_SCORING",
-        inputTokens: result.usage.inputTokens ?? 0,
-        outputTokens: result.usage.outputTokens ?? 0,
+        modelId: AI_MODELS.fast.modelId,
+        context: { missionId },
       },
-    });
+      async () =>
+        generateObject({
+          model: AI_MODELS.fast,
+          system: STRUCTURED_SCORING_SYSTEM_PROMPT,
+          prompt,
+          schema: structuredScoringOutputSchema,
+        }),
+    );
 
     return result.object;
   });

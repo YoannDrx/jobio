@@ -22,7 +22,8 @@ export default function ErrorPage({
         source: "app-error-boundary",
         message: error.message,
         stack: error.stack,
-        route: typeof window !== "undefined" ? window.location.pathname : undefined,
+        route:
+          typeof window !== "undefined" ? window.location.pathname : undefined,
         severity: "ERROR",
         context: {
           digest: error.digest,

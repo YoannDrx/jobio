@@ -4,8 +4,7 @@ import { generateObject } from "ai";
 import { z } from "zod";
 import { rateLimitedAuthAction } from "@/lib/actions/safe-actions";
 import { AI_MODELS } from "@/features/ai/ai-config";
-import { checkAndIncrementAIQuota } from "@/features/ai/ai-quota";
-import { prisma } from "@/lib/prisma";
+import { runTrackedAI } from "@/features/ai/ai-usage";
 
 const rewriteInputSchema = z.object({
   text: z.string().trim().min(1).max(5000),
@@ -37,8 +36,6 @@ const MODE_PROMPTS: Record<string, string> = {
 export const rewriteCvFieldAction = rateLimitedAuthAction("cv-rewrite", 15, 60)
   .inputSchema(rewriteInputSchema)
   .action(async ({ parsedInput: { text, mode, context }, ctx: { user } }) => {
-    await checkAndIncrementAIQuota(user.id);
-
     const contextParts: string[] = [];
     if (context?.jobTitle)
       contextParts.push(`Poste actuel: ${context.jobTitle}`);
@@ -46,23 +43,23 @@ export const rewriteCvFieldAction = rateLimitedAuthAction("cv-rewrite", 15, 60)
     if (context?.targetRole)
       contextParts.push(`Poste cible: ${context.targetRole}`);
 
-    const result = await generateObject({
-      model: AI_MODELS.fast,
-      system:
-        "Tu es un expert en redaction de CV. Tu reponds en francais. Tu ne changes pas la langue du texte original.",
-      prompt: `${MODE_PROMPTS[mode]}\n\n${contextParts.length > 0 ? `Contexte:\n${contextParts.join("\n")}\n\n` : ""}Texte original:\n${text}`,
-      schema: rewriteOutputSchema,
-      temperature: 0.4,
-    });
-
-    await prisma.aIUsage.create({
-      data: {
+    const result = await runTrackedAI(
+      {
         userId: user.id,
         feature: "CV_REWRITE",
-        inputTokens: result.usage.inputTokens ?? 0,
-        outputTokens: result.usage.outputTokens ?? 0,
+        modelId: AI_MODELS.fast.modelId,
+        context: { mode },
       },
-    });
+      async () =>
+        generateObject({
+          model: AI_MODELS.fast,
+          system:
+            "Tu es un expert en redaction de CV. Tu reponds en francais. Tu ne changes pas la langue du texte original.",
+          prompt: `${MODE_PROMPTS[mode]}\n\n${contextParts.length > 0 ? `Contexte:\n${contextParts.join("\n")}\n\n` : ""}Texte original:\n${text}`,
+          schema: rewriteOutputSchema,
+          temperature: 0.4,
+        }),
+    );
 
     return result.object;
   });

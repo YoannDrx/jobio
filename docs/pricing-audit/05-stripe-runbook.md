@@ -12,6 +12,7 @@ stripe prices list --live --product prod_TvpdRzPqeJQGfX --limit 20
 ```
 
 Attendu:
+
 - Pro annuel actif: `price_1T2zxnH4VwBfiTEIZu2BPZ1J` (9900)
 - Ultra annuel actif: `price_1T2zxuH4VwBfiTEI7fC4lHOg` (19900)
 - anciens annuels inactifs (9590 / 19190)
@@ -19,6 +20,7 @@ Attendu:
 ## 2) Mise à jour descriptions produits (si wording à ajuster)
 
 Exemple:
+
 ```bash
 stripe products update prod_TvpdKsfY08PCF0 --live \
   --description "Plan Pro Jobio : missions illimitées, 200 contacts, 50 requêtes IA/mois, relances automatiques, ATS scoring, export CSV, facturation freelance, support email prioritaire"
@@ -50,17 +52,20 @@ Vérifier dans `.env` après toute mutation Stripe.
 ## 6) Vérification automatique (app/DB/Stripe)
 
 Commande:
+
 ```bash
 pnpm pricing:verify
 ```
 
 Options utiles:
+
 - `--skip-stripe`: ignore les appels Stripe live
 - `--skip-db`: ignore la lecture des entitlements DB
 - `--strict`: fail aussi sur warnings
 - `--json`: sortie machine-readable
 
 Exemple CI stricte:
+
 ```bash
 pnpm pricing:verify --strict --json
 ```

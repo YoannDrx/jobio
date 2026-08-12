@@ -204,7 +204,8 @@ export function UserSessions({ userId, userEmail }: UserSessionsProps) {
               onClick={() => {
                 const reason = askReason("Révoquer toutes les sessions");
                 if (!reason) return;
-                if (!requestStrongConfirmation("Révoquer toutes les sessions")) return;
+                if (!requestStrongConfirmation("Révoquer toutes les sessions"))
+                  return;
                 revokeAllSessionsMutation.mutate({ reason });
               }}
               disabled={revokeAllSessionsMutation.isPending}

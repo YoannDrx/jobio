@@ -67,7 +67,9 @@ export function CertificationsSection({
       <DraggableItemList
         droppableId="certifications-list"
         items={items}
-        onReorder={async (newItemIds) => onReorder("certifications", newItemIds)}
+        onReorder={async (newItemIds) =>
+          onReorder("certifications", newItemIds)
+        }
         renderItem={(item) => {
           const current = getEditValue(item);
           return (

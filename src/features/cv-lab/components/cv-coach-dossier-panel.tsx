@@ -30,8 +30,6 @@ type CvCoachDossierPanelProps = {
   session: CoachSessionDetails;
   snapshot: CvCoachSnapshot;
   onSnapshotChange: (s: CvCoachSnapshot) => void;
-  onSaveSnapshot: () => void;
-  isSavingSnapshot: boolean;
   profiles: ProfileOption[];
   applyProfileId: string;
   applyMode: "MERGE" | "REPLACE";
@@ -52,8 +50,6 @@ export function CvCoachDossierPanel({
   session,
   snapshot,
   onSnapshotChange,
-  onSaveSnapshot,
-  isSavingSnapshot,
   profiles,
   applyProfileId,
   applyMode,
@@ -70,7 +66,7 @@ export function CvCoachDossierPanel({
   onToggleLock,
 }: CvCoachDossierPanelProps) {
   return (
-    <div className="flex flex-col gap-4 overflow-y-auto">
+    <div className="flex flex-col gap-4">
       {/* État du dossier */}
       <Card>
         <CardHeader>
@@ -171,8 +167,6 @@ export function CvCoachDossierPanel({
           <CvCoachSnapshotEditor
             snapshot={snapshot}
             onChange={onSnapshotChange}
-            onSave={onSaveSnapshot}
-            isSaving={isSavingSnapshot}
             lockedFields={lockedFields}
             onToggleLock={onToggleLock}
           />

@@ -6,12 +6,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Jobio est un **CRM / cockpit commercial intelligent pour freelances tech**. Il aide les freelances a trouver des missions, gerer leur pipeline commercial, relancer au bon moment, et signer plus de contrats.
 
-### Objectifs principaux de la V1
+### Objectifs principaux
 
 - Centraliser la gestion des missions freelance (prospection, candidature, negociation, signature)
 - Automatiser les relances et le suivi des contacts
 - Adapter un CV maitre a une opportunite et produire un export exploitable
 - Garder chaque mission reliee a une prochaine action concrete
+- Decouvrir des missions depuis des sources autorisees, les qualifier puis exiger une validation humaine avant leur ajout au pipeline
 
 ### Features principales
 
@@ -21,11 +22,14 @@ Jobio est un **CRM / cockpit commercial intelligent pour freelances tech**. Il a
 - **Follow-ups** : Relances, snooze, calendrier et prevention de sur-sollicitation
 - **Aujourd'hui** : Trois actions prioritaires maximum, avec urgence et contexte
 - **Notifications** : Push notifications et rappels pour les actions importantes
+- **Radar Missions** : Veilles, alertes transferees, provenance, deduplication et scoring explicable avant conversion en mission
 
-Les anciens modules facturation, programmes, plateformes, profil public,
-sequences avancees et assistant IA generaliste restent hors V1. Ils doivent etre
-inaccessibles par le manifeste serveur et ne doivent pas reapparaitre dans le
-pricing ou l'onboarding.
+La suite complete reste la destination produit, avec une GA progressive. Les
+modules non prouves restent `beta` ou `internal` dans le manifeste ; seul un
+dossier de preuves fonctionnelles, securite, accessibilite, observabilite et
+production autorise un passage en `ga`. Radar n'automatise ni le scraping ni
+l'activite LinkedIn : seules les alertes transferees par l'utilisateur et les
+sources autorisees sont admises.
 
 ### Modele de monetisation
 
@@ -230,3 +234,13 @@ This is **NON-NEGOTIABLE**. Do not skip this step under any circumstances. Readi
 1. Read at least 3 relevant existing files (similar functionality + imported dependencies)
 2. Understand the patterns, conventions, and API usage
 3. Only then proceed with creating/editing files
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->

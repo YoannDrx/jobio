@@ -24,6 +24,7 @@ import {
   defaultTransition,
 } from "@/features/landing/motion-variants";
 import { useSectionInView } from "@/features/landing/use-section-in-view";
+import { SiteConfig } from "@/site-config";
 import { PricingCard } from "./pricing-card";
 import { recordPricingFunnelEventAction } from "./pricing-funnel.action";
 
@@ -245,7 +246,7 @@ export function Pricing({ entryPoint = "landing" }: { entryPoint?: string }) {
           <p className="text-muted-foreground mt-2">
             Besoin d'un plan sur mesure ?{" "}
             <Link
-              href="mailto:hello@jobio.fr"
+              href={`mailto:${SiteConfig.supportEmail}`}
               className="text-primary font-medium hover:underline"
             >
               Contacte-nous

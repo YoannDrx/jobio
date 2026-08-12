@@ -38,10 +38,7 @@ const toJsonError = (status: number, message: string) =>
     },
   );
 
-const injectPublicShell = (params: {
-  html: string;
-  token: string;
-}) => {
+const injectPublicShell = (params: { html: string; token: string }) => {
   const pdfUrl = `/p/cv/${encodeURIComponent(params.token)}?mode=pdf&download=true`;
   const headMarkup = `
   <link rel="icon" href="/icon.png" sizes="any" />
@@ -191,9 +188,7 @@ export async function GET(request: NextRequest, context: RouteContext) {
       });
     } catch (error) {
       const message =
-        error instanceof Error
-          ? error.message
-          : "Impossible de générer le PDF";
+        error instanceof Error ? error.message : "Impossible de générer le PDF";
       return toJsonError(503, message);
     }
   }

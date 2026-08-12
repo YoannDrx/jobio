@@ -59,7 +59,7 @@ export function UseCasesSection() {
             viewport={{ once: true, margin: "-80px" }}
             transition={{ ...defaultTransition, duration: 0.5 }}
           >
-            <Badge variant="default">Use cases</Badge>
+            <Badge variant="default">Cas d’usage</Badge>
             <h2 className="text-center text-3xl font-bold tracking-tight sm:text-4xl lg:text-5xl">
               Des parcours dédiés selon ton profil freelance.
             </h2>

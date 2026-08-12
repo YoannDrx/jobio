@@ -9,7 +9,7 @@ describe("rss route", () => {
     expect(response.headers.get("content-type")).toContain(
       "application/rss+xml",
     );
-    expect(body).toContain("<rss version=\"2.0\"");
+    expect(body).toContain('<rss version="2.0"');
     expect(body).toContain("https://jobio.fr/blog");
     expect(body).toContain(
       "https://jobio.fr/blog/5-conseils-prospection-freelance",

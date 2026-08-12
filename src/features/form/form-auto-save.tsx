@@ -3,6 +3,7 @@
 
 import { useDebounceFn } from "@/hooks/use-debounce-fn";
 import { useWarnIfUnsavedChanges } from "@/hooks/use-warn-if-unsaved-changes";
+import { useStore } from "@tanstack/react-form";
 import { createContext, Fragment, use, useEffect, useRef } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 import type { useForm } from "./tanstack-form";
@@ -38,7 +39,8 @@ export const FormAutoSave = ({
     buttonRef.current?.click();
   };
   const cancel = () => form.reset();
-  const isDirty = form.state.isDirty;
+  const isDirty = useStore(form.store, (state) => state.isDirty);
+  const isLoading = useStore(form.store, (state) => state.isSubmitting);
 
   useHotkeys("mod+s", submit, {
     enabled: isDirty,
@@ -56,7 +58,7 @@ export const FormAutoSave = ({
     <FormAutoSaveContext.Provider
       value={{
         isDirty,
-        isLoading: form.state.isSubmitting,
+        isLoading,
         cancel,
         submit,
       }}

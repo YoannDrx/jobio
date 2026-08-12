@@ -43,7 +43,7 @@ export const metadata: Metadata = {
     url: SiteConfig.prodUrl,
     images: [
       {
-        url: absoluteUrl("/images/hero.png"),
+        url: absoluteUrl("/images/og-jobio.png"),
         width: 1200,
         height: 630,
         alt: SiteConfig.title,
@@ -54,7 +54,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: SiteConfig.title,
     description: SiteConfig.description,
-    images: [absoluteUrl("/images/hero.png")],
+    images: [absoluteUrl("/images/og-jobio.png")],
   },
   robots: INDEX_ROBOTS,
 };

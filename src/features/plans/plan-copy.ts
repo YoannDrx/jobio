@@ -1,7 +1,7 @@
 import { getPlanLimits } from "@/lib/auth/stripe/auth-plans";
 import type { PlanLimit } from "@/lib/auth/stripe/auth-plans";
 
-const PLAN_ORDER = ["free", "pro", "ultra"] as const;
+const PLAN_ORDER = ["free", "pro"] as const;
 const UNLIMITED_THRESHOLD = 999_999;
 
 type PlanName = (typeof PLAN_ORDER)[number];
@@ -10,13 +10,11 @@ type FeatureKey = keyof PlanLimit;
 const planLimitsByPlan = {
   free: getPlanLimits("free"),
   pro: getPlanLimits("pro"),
-  ultra: getPlanLimits("ultra"),
 } as const;
 
 const SUPPORT_LABEL_BY_PLAN: Record<PlanName, string> = {
   free: "Communautaire",
   pro: "Email prioritaire",
-  ultra: "Chat prioritaire",
 };
 
 export const getMinimumPlanForFeature = (feature: FeatureKey): PlanName => {
@@ -26,7 +24,7 @@ export const getMinimumPlanForFeature = (feature: FeatureKey): PlanName => {
     }
   }
 
-  return "ultra";
+  return "pro";
 };
 
 export const getPlanAccessLabelForFeature = (
@@ -35,8 +33,7 @@ export const getPlanAccessLabelForFeature = (
   const minimumPlan = getMinimumPlanForFeature(feature);
 
   if (minimumPlan === "free") return null;
-  if (minimumPlan === "pro") return "Pro+";
-  return "Ultra";
+  return "Pro";
 };
 
 export const withPlanBadge = (label: string, feature: FeatureKey): string => {

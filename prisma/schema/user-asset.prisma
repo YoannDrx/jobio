@@ -1,0 +1,20 @@
+enum UserAssetStorageProvider {
+  LOCAL
+  VERCEL_BLOB
+}
+
+model UserAsset {
+  id        String                   @id @default(nanoid(11))
+  userId    String
+  url       String                   @unique
+  pathname  String
+  provider  UserAssetStorageProvider
+  mimeType  String
+  sizeBytes Int
+  createdAt DateTime                 @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("user_asset")
+}

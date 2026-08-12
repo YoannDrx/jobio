@@ -7,23 +7,24 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { BILLING_URL } from "@/lib/LINKS";
+import { useHydrated } from "@/hooks/use-hydrated";
 import Link from "next/link";
 import { useCurrentUser } from "./use-current-user";
 
 export const UpgradeCard = () => {
+  const isHydrated = useHydrated();
   const { user, isLoading } = useCurrentUser();
 
+  if (!isHydrated) return null;
   if (!user) return null;
   if (isLoading) return null;
 
   const plan = user.subscription.plan;
-  if (plan === "ultra") return null;
+  if (plan === "pro") return null;
 
-  const nextPlanLabel = plan === "free" ? "Pro" : "Ultra";
+  const nextPlanLabel = "Pro";
   const subtitle =
-    plan === "free"
-      ? "Débloque l'export CSV, plus de limites et l'IA avancée."
-      : "Débloque le CV Coach IA, les séquences illimitées et le support chat.";
+    "Débloque le Coach CV, les automatisations et des limites étendues.";
 
   return (
     <Card className="">

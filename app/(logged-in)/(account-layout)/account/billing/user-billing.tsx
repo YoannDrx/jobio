@@ -14,10 +14,7 @@ import {
   LayoutTitle,
 } from "@/features/page/layout";
 import { resolveActionResult } from "@/lib/actions/actions-utils";
-import {
-  LIMITS_CONFIG,
-  type PlanLimit,
-} from "@/lib/auth/stripe/auth-plans";
+import { LIMITS_CONFIG, type PlanLimit } from "@/lib/auth/stripe/auth-plans";
 import type { UserActiveSubscription } from "@/lib/user/get-user-subscription";
 import { cn } from "@/lib/utils";
 import { useMutation } from "@tanstack/react-query";
@@ -64,7 +61,7 @@ export function UserBilling(props: {
       const stripeCustomerId = subscription.stripeCustomerId;
 
       if (!stripeCustomerId) {
-        throw new Error("No stripe customer id found");
+        throw new Error("Aucun compte de facturation Stripe n’est associé.");
       }
 
       const stripeBilling = await resolveActionResult(openStripePortalAction());

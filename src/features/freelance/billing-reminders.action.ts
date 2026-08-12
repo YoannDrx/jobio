@@ -54,7 +54,7 @@ export const sendManualReminderAction = authAction
 
     const invoiceUrl = invoice.shareToken
       ? `${process.env.NEXT_PUBLIC_URL ?? "https://jobio.fr"}/share/invoice/${invoice.shareToken}`
-      : `${process.env.NEXT_PUBLIC_URL ?? "https://jobio.fr"}/freelance/invoices`;
+      : `${process.env.NEXT_PUBLIC_URL ?? "https://jobio.fr"}/job/gestion/invoices`;
 
     await sendEmail({
       to: invoice.client.email,

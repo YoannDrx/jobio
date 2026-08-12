@@ -31,7 +31,7 @@ export function Footer({ alignWithLandingHeader = true }: FooterProps) {
               </p>
             </div>
 
-            <div className="grid grid-cols-2 gap-8">
+            <div className="grid grid-cols-2 gap-8 lg:grid-cols-3">
               <div className="flex flex-col gap-3">
                 <h4 className="font-medium">Produit</h4>
                 <nav className="flex flex-col gap-2">
@@ -47,7 +47,7 @@ export function Footer({ alignWithLandingHeader = true }: FooterProps) {
                     variant="link"
                     className="h-auto justify-start p-0 transition-colors duration-200"
                   >
-                    <Link href="/use-cases">Use cases</Link>
+                    <Link href="/use-cases">Cas d’usage</Link>
                   </Button>
                   <Button
                     asChild
@@ -61,7 +61,7 @@ export function Footer({ alignWithLandingHeader = true }: FooterProps) {
                     variant="link"
                     className="h-auto justify-start p-0 transition-colors duration-200"
                   >
-                    <Link href="/app">Dashboard</Link>
+                    <Link href="/app">Tableau de bord</Link>
                   </Button>
                   <Button
                     asChild
@@ -88,7 +88,7 @@ export function Footer({ alignWithLandingHeader = true }: FooterProps) {
                     variant="link"
                     className="h-auto justify-start p-0 transition-colors duration-200"
                   >
-                    <Link href="/about">About</Link>
+                    <Link href="/about">À propos</Link>
                   </Button>
                   <Button
                     asChild
@@ -97,20 +97,27 @@ export function Footer({ alignWithLandingHeader = true }: FooterProps) {
                   >
                     <Link href="/contact">Contact</Link>
                   </Button>
-                  <Button
-                    asChild
-                    variant="link"
-                    className="h-auto justify-start p-0 transition-colors duration-200"
-                  >
-                    <Link href="/legal/terms">CGU</Link>
-                  </Button>
-                  <Button
-                    asChild
-                    variant="link"
-                    className="h-auto justify-start p-0 transition-colors duration-200"
-                  >
-                    <Link href="/legal/privacy">Confidentialité</Link>
-                  </Button>
+                </nav>
+              </div>
+              <div className="flex flex-col gap-3">
+                <h4 className="font-medium">Légal</h4>
+                <nav className="flex flex-col gap-2">
+                  {[
+                    ["Mentions légales", "/legal/notice"],
+                    ["CGV B2B", "/legal/sales"],
+                    ["CGU", "/legal/terms"],
+                    ["Confidentialité", "/legal/privacy"],
+                    ["Cookies", "/legal/cookies"],
+                  ].map(([label, href]) => (
+                    <Button
+                      key={href}
+                      asChild
+                      variant="link"
+                      className="h-auto justify-start p-0 transition-colors duration-200"
+                    >
+                      <Link href={href}>{label}</Link>
+                    </Button>
+                  ))}
                 </nav>
               </div>
             </div>
@@ -118,9 +125,11 @@ export function Footer({ alignWithLandingHeader = true }: FooterProps) {
 
           <div className="flex flex-col gap-4 pt-8 md:flex-row md:items-center md:justify-between">
             <div className="flex flex-col gap-1">
-              <p className="text-muted-foreground text-sm">
-                {SiteConfig.company.address}
-              </p>
+              {SiteConfig.company.address ? (
+                <p className="text-muted-foreground text-sm">
+                  {SiteConfig.company.address}
+                </p>
+              ) : null}
               <p className="text-muted-foreground text-sm">
                 © 2026 {SiteConfig.company.name}. Tous droits réservés.
               </p>

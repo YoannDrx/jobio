@@ -57,7 +57,10 @@ export const AdminFilters = () => {
         { key: "createdAt", header: "Créé le" },
       ]);
 
-      downloadCsv(csv, `admin-users-${new Date().toISOString().split("T")[0]}.csv`);
+      downloadCsv(
+        csv,
+        `admin-users-${new Date().toISOString().split("T")[0]}.csv`,
+      );
       toast.success("Export utilisateurs téléchargé");
     } catch (error) {
       toast.error(
@@ -171,7 +174,7 @@ export const AdminFilters = () => {
 
       <Select
         value={filters.plan}
-        onValueChange={(value: "all" | "free" | "pro" | "ultra") => {
+        onValueChange={(value: "all" | "free" | "pro") => {
           void setFilters({
             plan: value,
             page: 1,
@@ -185,7 +188,6 @@ export const AdminFilters = () => {
           <SelectItem value="all">Tous plans</SelectItem>
           <SelectItem value="free">Free</SelectItem>
           <SelectItem value="pro">Pro</SelectItem>
-          <SelectItem value="ultra">Ultra</SelectItem>
         </SelectContent>
       </Select>
 
@@ -239,7 +241,9 @@ export const AdminFilters = () => {
 
       <Select
         value={bulkAction}
-        onValueChange={(value: "ban" | "unban" | "make_admin" | "make_user") => {
+        onValueChange={(
+          value: "ban" | "unban" | "make_admin" | "make_user",
+        ) => {
           setBulkAction(value);
         }}
       >
@@ -254,7 +258,11 @@ export const AdminFilters = () => {
         </SelectContent>
       </Select>
 
-      <Button size="sm" variant="outline" onClick={() => void handleBulkAction()}>
+      <Button
+        size="sm"
+        variant="outline"
+        onClick={() => void handleBulkAction()}
+      >
         Exécuter bulk
       </Button>
 

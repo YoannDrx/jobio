@@ -2,13 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { expect, test } from "@playwright/test";
 import { createTestAccount } from "./utils/auth-test";
 
-test.describe("cv-lab-coach", () => {
-  // Skip tests requiring external API calls in CI environment
-  const isCI =
-    process.env.CI === "true" || process.env.GITHUB_ACTIONS === "true";
-
-  test.skip(isCI, "Skipping CV coach tests in CI - requires external API");
-
+test.describe("cv-lab-coach", { tag: "@external" }, () => {
   test("cv coach creates session and sends message", async ({ page }) => {
     const userData = await createTestAccount({
       page,
@@ -63,19 +57,27 @@ test.describe("cv-lab-coach", () => {
       );
       await page.getByRole("button", { name: "Envoyer" }).first().click();
 
-      await expect(page.getByText("Le coach rédige...").first()).toBeVisible({
-        timeout: 10000,
-      });
+      await expect
+        .poll(
+          async () => {
+            const session = await prisma.cvLabCoachSession.findFirst({
+              where: { userId: user.id },
+              orderBy: { createdAt: "desc" },
+              include: {
+                messages: {
+                  where: { role: "ASSISTANT" },
+                },
+              },
+            });
 
-      await expect(
-        page.getByText("Extraction des données...").first(),
-      ).toBeVisible({
-        timeout: 30000,
-      });
-
-      await expect(page.getByText("Développeur web").first()).toBeVisible({
-        timeout: 30000,
-      });
+            return {
+              assistantMessages: session?.messages.length ?? 0,
+              extracted: Boolean(session?.lastExtractedAt),
+            };
+          },
+          { timeout: 90000 },
+        )
+        .toEqual({ assistantMessages: 2, extracted: true });
     } finally {
       const user = await prisma.user.findUnique({
         where: { email: userData.email },
@@ -176,21 +178,25 @@ test.describe("cv-lab-coach", () => {
 
       await page.getByRole("button", { name: "Importer et analyser" }).click();
 
-      await expect(
-        page.getByText("Extraction des données...").first(),
-      ).toBeVisible({
-        timeout: 30000,
-      });
-
-      const sessionAfter = await prisma.cvLabCoachSession.findUnique({
-        where: { id: session.id },
-        include: { messages: true },
-      });
-
-      expect(
-        (sessionAfter as typeof sessionAfter & { messages: unknown[] }).messages
-          .length,
-      ).toBeGreaterThan(0);
+      await expect
+        .poll(
+          async () => {
+            const sessionAfter = await prisma.cvLabCoachSession.findUnique({
+              where: { id: session.id },
+              include: {
+                messages: {
+                  where: { role: "ASSISTANT" },
+                },
+              },
+            });
+            return {
+              assistantMessages: sessionAfter?.messages.length ?? 0,
+              extracted: Boolean(sessionAfter?.lastExtractedAt),
+            };
+          },
+          { timeout: 90000 },
+        )
+        .toEqual({ assistantMessages: 1, extracted: true });
     } finally {
       const user = await prisma.user.findUnique({
         where: { email: userData.email },
@@ -274,6 +280,11 @@ test.describe("cv-lab-coach", () => {
       await expect(page.getByText("Session Editor Test").first()).toBeVisible({
         timeout: 10000,
       });
+
+      await page.getByRole("button", { name: "Dossier" }).click();
+      await expect(
+        page.getByRole("dialog", { name: "Dossier" }),
+      ).toBeInViewport();
 
       const fullNameInput = page.locator("#identity-fullName").first();
       await expect(fullNameInput).toHaveValue("Jean Dupont");

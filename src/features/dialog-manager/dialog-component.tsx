@@ -129,7 +129,7 @@ export function DialogComponent(props: { dialog: Dialog }) {
             disabled={dialog.loading}
             onClick={handleCancel}
           >
-            {dialog.cancel?.label ?? "Cancel"}
+            {dialog.cancel?.label ?? "Annuler"}
           </Button>
 
           <LoadingButton

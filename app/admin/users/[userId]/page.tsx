@@ -173,12 +173,10 @@ async function RoutePage(props: PageProps<"/admin/users/[userId]">) {
           userEmail={userData.email}
           stripeCustomerId={userData.stripeCustomerId ?? null}
           subscription={{
-            plan: (userData.subscription?.plan ?? "free") as
-              | "free"
-              | "pro"
-              | "ultra",
+            plan: (userData.subscription?.plan ?? "free") as "free" | "pro",
             status: userData.subscription?.status ?? null,
-            cancelAtPeriodEnd: userData.subscription?.cancelAtPeriodEnd ?? false,
+            cancelAtPeriodEnd:
+              userData.subscription?.cancelAtPeriodEnd ?? false,
             periodEnd: userData.subscription?.periodEnd ?? null,
           }}
           aiQuota={
@@ -191,13 +189,15 @@ async function RoutePage(props: PageProps<"/admin/users/[userId]">) {
                 }
               : null
           }
-          stripeSubscriptions={billingSnapshot.stripeSubscriptions.map((subscription) => ({
-            id: subscription.id,
-            status: subscription.status,
-            cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
-            currentPeriodStart: subscription.currentPeriodStart,
-            currentPeriodEnd: subscription.currentPeriodEnd,
-          }))}
+          stripeSubscriptions={billingSnapshot.stripeSubscriptions.map(
+            (subscription) => ({
+              id: subscription.id,
+              status: subscription.status,
+              cancelAtPeriodEnd: subscription.cancelAtPeriodEnd,
+              currentPeriodStart: subscription.currentPeriodStart,
+              currentPeriodEnd: subscription.currentPeriodEnd,
+            }),
+          )}
           invoices={billingSnapshot.invoices.map((invoice) => ({
             id: invoice.id,
             status: invoice.status,

@@ -63,7 +63,7 @@ export default function ChangeEmailPage() {
   return (
     <Layout size="lg">
       <LayoutHeader>
-        <LayoutTitle>Settings</LayoutTitle>
+        <LayoutTitle>Paramètres</LayoutTitle>
       </LayoutHeader>
       <LayoutContent>
         <Card>

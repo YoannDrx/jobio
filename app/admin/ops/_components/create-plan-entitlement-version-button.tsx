@@ -8,7 +8,7 @@ import { useTransition } from "react";
 import { toast } from "sonner";
 
 type CreatePlanEntitlementVersionButtonProps = {
-  plan: "free" | "pro" | "ultra";
+  plan: "free" | "pro";
   source: "active" | "static";
 };
 

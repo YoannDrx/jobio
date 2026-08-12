@@ -5,7 +5,11 @@ import {
   LayoutTitle,
 } from "@/features/page/layout";
 import { Pricing } from "@/features/plans/pricing-section";
-import { getPlanLimitsForPlan } from "@/lib/auth/stripe/plan-entitlements";
+import {
+  getPlanLimitsForPlan,
+  resolvePlanLimitsForUser,
+} from "@/lib/auth/stripe/plan-entitlements";
+import { dayjs } from "@/lib/dayjs";
 import { combineWithParentMetadata } from "@/lib/metadata";
 import { checkPlanLimit } from "@/lib/plan-limits";
 import { getRequiredCurrentUser } from "@/lib/user/get-user";
@@ -18,16 +22,22 @@ export const generateMetadata = combineWithParentMetadata({
 });
 
 export default async function OrgBillingPage() {
+  const user = await getRequiredCurrentUser();
   const subscription = await getUserActiveSubscription();
 
   if (!subscription) {
+    const access = await resolvePlanLimitsForUser(user.id);
     return (
       <>
         <Layout size="lg">
           <LayoutHeader>
-            <LayoutTitle>Plan gratuit</LayoutTitle>
+            <LayoutTitle>
+              {access.source === "trial" ? "Essai Pro actif" : "Plan Free"}
+            </LayoutTitle>
             <LayoutDescription>
-              Passe en Premium pour débloquer toutes les fonctionnalités.
+              {access.source === "trial" && access.trialEndsAt
+                ? `Ton essai sans carte se termine le ${dayjs(access.trialEndsAt).format("D MMMM YYYY")}. Ensuite, ton compte repassera automatiquement en Free sans suppression de données.`
+                : "Passe en Pro pour débloquer le Coach CV, les automatisations et des limites étendues."}
             </LayoutDescription>
           </LayoutHeader>
         </Layout>
@@ -36,7 +46,6 @@ export default async function OrgBillingPage() {
     );
   }
 
-  const user = await getRequiredCurrentUser();
   const plan = subscription.plan;
   const limits = await getPlanLimitsForPlan(plan);
 
@@ -87,6 +96,10 @@ export default async function OrgBillingPage() {
   };
 
   return (
-    <UserBilling subscription={subscription} usage={usage} planLimits={limits} />
+    <UserBilling
+      subscription={subscription}
+      usage={usage}
+      planLimits={limits}
+    />
   );
 }

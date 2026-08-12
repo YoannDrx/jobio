@@ -6,7 +6,7 @@ import {
 } from "ai";
 import { AI_MODELS } from "@/features/ai/ai-config";
 import { createChatTools } from "@/features/ai/chat/chat-tools";
-import { checkAndIncrementAIQuota } from "@/features/ai/ai-quota";
+import { createAIUsageTracker } from "@/features/ai/ai-usage";
 import { getRequiredUser } from "@/lib/auth/auth-user";
 import { ApplicationError } from "@/lib/errors/application-error";
 import { prisma } from "@/lib/prisma";
@@ -157,8 +157,14 @@ export async function POST(req: Request) {
     });
   }
 
+  let usageTracker;
   try {
-    await checkAndIncrementAIQuota(user.id);
+    usageTracker = await createAIUsageTracker({
+      userId: user.id,
+      feature: "CHAT",
+      modelId: AI_MODELS.fast.modelId,
+      context: { surface: "copilot", threadId: thread.id },
+    });
   } catch (err) {
     const message =
       err instanceof ApplicationError
@@ -172,43 +178,54 @@ export async function POST(req: Request) {
 
   const resolvedThreadId = thread.id;
 
-  await prisma.aIChatMessage.create({
-    data: {
-      threadId: resolvedThreadId,
-      role: "USER",
-      content: userPrompt,
-    },
-  });
+  try {
+    await prisma.aIChatMessage.create({
+      data: {
+        threadId: resolvedThreadId,
+        role: "USER",
+        content: userPrompt,
+      },
+    });
 
-  const tools = createChatTools(user.id);
+    const tools = createChatTools(user.id);
 
-  const result = streamText({
-    model: AI_MODELS.fast,
-    system: SYSTEM_PROMPT,
-    messages: await convertToModelMessages(messages),
-    tools,
-    stopWhen: stepCountIs(8),
-    onFinish: async ({ text }) => {
-      if (text) {
-        await prisma.aIChatMessage.create({
-          data: {
-            threadId: resolvedThreadId,
-            role: "ASSISTANT",
-            content: text,
-          },
-        });
+    const result = streamText({
+      model: AI_MODELS.fast,
+      system: SYSTEM_PROMPT,
+      messages: await convertToModelMessages(messages),
+      tools,
+      stopWhen: stepCountIs(8),
+      onFinish: async ({ text, totalUsage, response }) => {
+        try {
+          if (text) {
+            await prisma.aIChatMessage.create({
+              data: {
+                threadId: resolvedThreadId,
+                role: "ASSISTANT",
+                content: text,
+              },
+            });
 
-        const isDefaultTitle = thread.title === DEFAULT_THREAD_TITLE;
-        if (isDefaultTitle) {
-          const preview = buildThreadPreviewTitle(userPrompt);
-          await prisma.aIChatThread.update({
-            where: { id: resolvedThreadId },
-            data: { title: preview },
-          });
+            const isDefaultTitle = thread.title === DEFAULT_THREAD_TITLE;
+            if (isDefaultTitle) {
+              const preview = buildThreadPreviewTitle(userPrompt);
+              await prisma.aIChatThread.update({
+                where: { id: resolvedThreadId },
+                data: { title: preview },
+              });
+            }
+          }
+        } finally {
+          await usageTracker.succeed(totalUsage, response);
         }
-      }
-    },
-  });
+      },
+      onError: async ({ error }) => usageTracker.fail(error),
+      onAbort: async () => usageTracker.fail(new Error("AI_STREAM_ABORTED")),
+    });
 
-  return result.toUIMessageStreamResponse();
+    return result.toUIMessageStreamResponse();
+  } catch (error) {
+    await usageTracker.fail(error);
+    throw error;
+  }
 }

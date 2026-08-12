@@ -14,13 +14,18 @@ import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { createAdminAuditLog } from "./admin-audit";
 
-const PLAN_NAMES = ["free", "pro", "ultra"] as const;
+const PLAN_NAMES = ["free", "pro"] as const;
 type PlanName = (typeof PLAN_NAMES)[number];
 
 const isMissingPlanEntitlementsTable = (error: unknown) =>
-  error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2021";
+  error instanceof Prisma.PrismaClientKnownRequestError &&
+  error.code === "P2021";
 
-const buildRowsFromLimits = (plan: PlanName, version: number, limits: PlanLimit) =>
+const buildRowsFromLimits = (
+  plan: PlanName,
+  version: number,
+  limits: PlanLimit,
+) =>
   PLAN_LIMIT_KEYS.map((featureKey) => ({
     plan,
     version,
@@ -55,7 +60,9 @@ export const getPlanEntitlementsOverview = async () => {
       }),
     ]);
 
-    const releaseByPlan = new Map(releases.map((release) => [release.plan, release]));
+    const releaseByPlan = new Map(
+      releases.map((release) => [release.plan, release]),
+    );
 
     const plans = PLAN_NAMES.map((plan) => {
       const release = releaseByPlan.get(plan);

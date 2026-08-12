@@ -19,9 +19,9 @@ describe("isNextPrerenderInterruptedError", () => {
   });
 
   it("ignores unrelated errors", () => {
-    expect(
-      isNextPrerenderInterruptedError(new Error("network timeout")),
-    ).toBe(false);
+    expect(isNextPrerenderInterruptedError(new Error("network timeout"))).toBe(
+      false,
+    );
     expect(isNextPrerenderInterruptedError("not-an-error")).toBe(false);
   });
 });

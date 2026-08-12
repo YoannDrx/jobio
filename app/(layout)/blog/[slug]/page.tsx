@@ -33,7 +33,10 @@ type BlogSection = {
 };
 
 const stripHtmlTags = (input: string): string =>
-  input.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+  input
+    .replace(/<[^>]*>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 
 const stripFirstH2Heading = (input: string): string =>
   input.replace(/^\s*<h2[^>]*>[\s\S]*?<\/h2>/i, "").trim();
@@ -50,7 +53,9 @@ const splitBlogContentIntoSections = (content: string): BlogSection[] => {
 
   const sectionMatches = sectionSource.match(/<h2[\s\S]*?(?=<h2|$)/gi);
   const rawSections =
-    sectionMatches && sectionMatches.length > 0 ? sectionMatches : [sectionSource];
+    sectionMatches && sectionMatches.length > 0
+      ? sectionMatches
+      : [sectionSource];
 
   const sections: BlogSection[] = [];
 
@@ -236,7 +241,9 @@ export default async function BlogPostPage({ params }: PageProps) {
       />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(blogPostWebPageJsonLd) }}
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(blogPostWebPageJsonLd),
+        }}
       />
       <script
         type="application/ld+json"
@@ -276,7 +283,7 @@ export default async function BlogPostPage({ params }: PageProps) {
               </CardContent>
             </Card>
 
-            <Card className="gap-0 overflow-hidden border border-black/5 bg-white/80 py-0 shadow-sm backdrop-blur-md dark:border-white/10 dark:bg-black/20 lg:hidden">
+            <Card className="gap-0 overflow-hidden border border-black/5 bg-white/80 py-0 shadow-sm backdrop-blur-md lg:hidden dark:border-white/10 dark:bg-black/20">
               <CardContent className="p-4 sm:p-5">
                 <details>
                   <summary className="cursor-pointer text-sm font-semibold">
@@ -303,7 +310,7 @@ export default async function BlogPostPage({ params }: PageProps) {
                   "scroll-mt-24 gap-0 overflow-hidden border border-black/5 bg-white/80 py-0 shadow-sm backdrop-blur-md dark:border-white/10 dark:bg-black/20",
                 )}
               >
-                <div className="border-b border-black/5 px-6 py-4 dark:border-white/10 sm:px-8">
+                <div className="border-b border-black/5 px-6 py-4 sm:px-8 dark:border-white/10">
                   <div className="flex items-center gap-2.5">
                     <Badge variant="outline" className="text-xs font-medium">
                       {getSectionLabel(sections, index)}
@@ -315,7 +322,7 @@ export default async function BlogPostPage({ params }: PageProps) {
                 </div>
                 <CardContent className="px-6 py-6 sm:px-8 sm:py-7">
                   <article
-                    className="typography mx-auto max-w-[72ch] [&_h2]:hidden [&_h3]:mt-10 [&_h3]:text-xl [&_h3]:font-semibold [&_h3]:tracking-tight [&_h3]:text-foreground dark:[&_h3]:text-zinc-100 [&_p]:text-muted-foreground dark:[&_p]:text-zinc-300 [&_li]:text-muted-foreground dark:[&_li]:text-zinc-300 [&_ul]:space-y-1 [&_ol]:space-y-1 [&_blockquote]:rounded-r-xl [&_blockquote]:border-l-4 [&_blockquote]:border-black/20 [&_blockquote]:bg-black/3 [&_blockquote]:py-3 [&_blockquote]:pr-3 dark:[&_blockquote]:border-white/25 dark:[&_blockquote]:bg-white/5 [&_a]:font-semibold [&_a]:decoration-2 [&_strong]:font-semibold [&_strong]:text-foreground dark:[&_strong]:text-zinc-100 [&_table]:block [&_table]:overflow-x-auto"
+                    className="typography [&_h3]:text-foreground [&_p]:text-muted-foreground [&_li]:text-muted-foreground [&_strong]:text-foreground mx-auto max-w-[72ch] [&_a]:font-semibold [&_a]:decoration-2 [&_blockquote]:rounded-r-xl [&_blockquote]:border-l-4 [&_blockquote]:border-black/20 [&_blockquote]:bg-black/3 [&_blockquote]:py-3 [&_blockquote]:pr-3 dark:[&_blockquote]:border-white/25 dark:[&_blockquote]:bg-white/5 [&_h2]:hidden [&_h3]:mt-10 [&_h3]:text-xl [&_h3]:font-semibold [&_h3]:tracking-tight dark:[&_h3]:text-zinc-100 dark:[&_li]:text-zinc-300 [&_ol]:space-y-1 dark:[&_p]:text-zinc-300 [&_strong]:font-semibold dark:[&_strong]:text-zinc-100 [&_table]:block [&_table]:overflow-x-auto [&_ul]:space-y-1"
                     dangerouslySetInnerHTML={{ __html: section.bodyHtml }}
                   />
                 </CardContent>
@@ -331,7 +338,10 @@ export default async function BlogPostPage({ params }: PageProps) {
             </div>
 
             <div className="pt-2">
-              <Link href="/blog" className={buttonVariants({ variant: "outline" })}>
+              <Link
+                href="/blog"
+                className={buttonVariants({ variant: "outline" })}
+              >
                 <ArrowLeft className="mr-1 size-4" />
                 Voir tous les articles
               </Link>

@@ -19,7 +19,9 @@ const safeTokenCompare = (received: string, expected: string): boolean => {
   return timingSafeEqual(receivedBuffer, expectedBuffer);
 };
 
-const extractBearerToken = (authorizationHeader: string | null): string | null => {
+const extractBearerToken = (
+  authorizationHeader: string | null,
+): string | null => {
   if (!authorizationHeader) return null;
   if (!authorizationHeader.startsWith("Bearer ")) return null;
 

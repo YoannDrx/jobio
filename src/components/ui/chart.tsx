@@ -35,7 +35,6 @@ type ChartContextProps = {
 
 // Both generics are required by Recharts 3 even though the lint rule sees the
 // constraint aliases as their own defaults.
-// eslint-disable-next-line @typescript-eslint/no-unnecessary-type-arguments
 export type CustomTooltipProps = TooltipContentProps<ValueType, NameType> & {
   className?: string;
   hideLabel?: boolean;

@@ -1,4 +1,3 @@
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { getBillingDashboardSnapshotAction } from "@/features/freelance/billing-documents.action";
 import { FreelanceDashboardCharts } from "@/features/freelance/components/freelance-dashboard-charts";
@@ -107,10 +106,7 @@ export default async function FreelanceDashboardPage() {
   return (
     <Layout size="lg">
       <LayoutHeader>
-        <div className="flex items-center gap-2">
-          <LayoutTitle>Freelance Studio</LayoutTitle>
-          <Badge variant="secondary">Beta</Badge>
-        </div>
+        <LayoutTitle>Gestion</LayoutTitle>
         <LayoutDescription>
           Gère ta facturation de bout en bout: clients, devis, factures,
           paiements et suivi URSSAF.

@@ -18,11 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Sheet,
-  SheetDescription,
-  SheetTitle,
-} from "@/components/ui/sheet";
+import { Sheet, SheetDescription, SheetTitle } from "@/components/ui/sheet";
 import { Switch } from "@/components/ui/switch";
 import {
   Table,
@@ -33,7 +29,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
-import { BillingExpenseStatus } from "@/generated/prisma";
+import { BillingExpenseStatus } from "@/features/freelance/billing-client-enums";
 import {
   createExpenseNoteAction,
   deleteExpenseNoteAction,
@@ -48,7 +44,10 @@ import {
   FreelanceSideSheetFooter,
   FreelanceSideSheetHeader,
 } from "@/features/freelance/components/freelance-side-sheet";
-import { formatCents, formatDate } from "@/features/freelance/billing-presenter";
+import {
+  formatCents,
+  formatDate,
+} from "@/features/freelance/billing-presenter";
 import { resolveActionResult } from "@/lib/actions/actions-utils";
 import { downloadCsv } from "@/lib/csv-export";
 import {
@@ -121,7 +120,8 @@ const INITIAL_FORM: ExpenseNoteForm = {
   notes: "",
 };
 
-const toCents = (value: string) => Math.max(0, Math.round(Number(value || 0) * 100));
+const toCents = (value: string) =>
+  Math.max(0, Math.round(Number(value || 0) * 100));
 const toEur = (value: number) => (value / 100).toFixed(2);
 
 const statusLabel: Record<BillingExpenseStatus, string> = {
@@ -166,7 +166,9 @@ export function FreelanceExpenseNotesManager() {
       );
       setItems(result.items as ExpenseNoteRow[]);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Chargement impossible");
+      toast.error(
+        error instanceof Error ? error.message : "Chargement impossible",
+      );
     } finally {
       setIsLoading(false);
     }
@@ -200,7 +202,9 @@ export function FreelanceExpenseNotesManager() {
       deductibleTaxEur: toEur(item.deductibleTaxCents),
       isReimbursable: item.isReimbursable,
       isPaid: item.isPaid,
-      paidAt: item.paidAt ? new Date(item.paidAt).toISOString().slice(0, 10) : "",
+      paidAt: item.paidAt
+        ? new Date(item.paidAt).toISOString().slice(0, 10)
+        : "",
       paymentReference: item.paymentReference ?? "",
       matchedRegisterRef: item.matchedRegisterRef ?? "",
       attachmentUrl: item.attachmentUrl ?? "",
@@ -209,7 +213,10 @@ export function FreelanceExpenseNotesManager() {
     setSheetOpen(true);
   };
 
-  const setField = <K extends keyof ExpenseNoteForm>(key: K, value: ExpenseNoteForm[K]) => {
+  const setField = <K extends keyof ExpenseNoteForm>(
+    key: K,
+    value: ExpenseNoteForm[K],
+  ) => {
     setForm((previous) => ({ ...previous, [key]: value }));
   };
 
@@ -243,7 +250,9 @@ export function FreelanceExpenseNotesManager() {
       };
 
       if (isEditing && editingId) {
-        await resolveActionResult(updateExpenseNoteAction({ id: editingId, ...payload }));
+        await resolveActionResult(
+          updateExpenseNoteAction({ id: editingId, ...payload }),
+        );
         toast.success("Note de frais mise à jour");
       } else {
         await resolveActionResult(createExpenseNoteAction(payload));
@@ -254,7 +263,9 @@ export function FreelanceExpenseNotesManager() {
       resetForm();
       await loadData();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Enregistrement impossible");
+      toast.error(
+        error instanceof Error ? error.message : "Enregistrement impossible",
+      );
     } finally {
       setIsSaving(false);
     }
@@ -267,7 +278,9 @@ export function FreelanceExpenseNotesManager() {
       toast.success("Note de frais supprimée");
       await loadData();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Suppression impossible");
+      toast.error(
+        error instanceof Error ? error.message : "Suppression impossible",
+      );
     } finally {
       setDeletingId(null);
     }
@@ -282,7 +295,9 @@ export function FreelanceExpenseNotesManager() {
       downloadCsv(result.csv, result.filename);
       toast.success("Export CSV des notes de frais téléchargé");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Export CSV impossible");
+      toast.error(
+        error instanceof Error ? error.message : "Export CSV impossible",
+      );
     } finally {
       setIsExportingCsv(false);
     }
@@ -319,7 +334,9 @@ export function FreelanceExpenseNotesManager() {
         `Matching suggéré: ${recommended.registerRef} (${recommended.score} pts)`,
       );
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Suggestion impossible");
+      toast.error(
+        error instanceof Error ? error.message : "Suggestion impossible",
+      );
     } finally {
       setIsSuggestingMatch(false);
     }
@@ -344,7 +361,11 @@ export function FreelanceExpenseNotesManager() {
                 void handleExportCsv();
               }}
             >
-              {isExportingCsv ? <Loader2 className="size-4 animate-spin" /> : <Download className="size-4" />}
+              {isExportingCsv ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Download className="size-4" />
+              )}
               Export CSV
             </Button>
           </div>
@@ -364,7 +385,9 @@ export function FreelanceExpenseNotesManager() {
               Chargement des notes...
             </div>
           ) : items.length === 0 ? (
-            <p className="text-muted-foreground text-sm">Aucune note de frais.</p>
+            <p className="text-muted-foreground text-sm">
+              Aucune note de frais.
+            </p>
           ) : (
             <Table>
               <TableHeader>
@@ -384,14 +407,23 @@ export function FreelanceExpenseNotesManager() {
                     <TableCell className="font-medium">{item.label}</TableCell>
                     <TableCell>{formatDate(item.expenseDate)}</TableCell>
                     <TableCell>{item.category ?? "—"}</TableCell>
-                    <TableCell>{formatCents(item.amountInclTaxCents)}</TableCell>
                     <TableCell>
-                      <Badge variant={statusVariant[item.status]}>{statusLabel[item.status]}</Badge>
+                      {formatCents(item.amountInclTaxCents)}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={statusVariant[item.status]}>
+                        {statusLabel[item.status]}
+                      </Badge>
                     </TableCell>
                     <TableCell>{item.isPaid ? "Oui" : "Non"}</TableCell>
                     <TableCell>
                       <div className="flex justify-end gap-2">
-                        <Button type="button" variant="outline" size="icon" onClick={() => openEdit(item)}>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          onClick={() => openEdit(item)}
+                        >
                           <PencilLine className="size-4" />
                         </Button>
                         <DropdownMenu>
@@ -412,7 +444,11 @@ export function FreelanceExpenseNotesManager() {
                               }}
                               disabled={deletingId === item.id}
                             >
-                              {deletingId === item.id ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
+                              {deletingId === item.id ? (
+                                <Loader2 className="size-4 animate-spin" />
+                              ) : (
+                                <Trash2 className="size-4" />
+                              )}
                               Supprimer
                             </DropdownMenuItem>
                           </DropdownMenuContent>
@@ -438,68 +474,134 @@ export function FreelanceExpenseNotesManager() {
       >
         <FreelanceSideSheetContent>
           <FreelanceSideSheetHeader>
-            <SheetTitle>{isEditing ? "Éditer la note de frais" : "Nouvelle note de frais"}</SheetTitle>
-            <SheetDescription>Renseigne et catégorise les dépenses opérationnelles.</SheetDescription>
+            <SheetTitle>
+              {isEditing ? "Éditer la note de frais" : "Nouvelle note de frais"}
+            </SheetTitle>
+            <SheetDescription>
+              Renseigne et catégorise les dépenses opérationnelles.
+            </SheetDescription>
           </FreelanceSideSheetHeader>
           <FreelanceSideSheetBody className="grid gap-4">
             <div className="grid gap-3 md:grid-cols-2">
               <div className="space-y-1 md:col-span-2">
                 <Label>Libellé</Label>
-                <Input value={form.label} onChange={(event) => setField("label", event.target.value)} />
+                <Input
+                  value={form.label}
+                  onChange={(event) => setField("label", event.target.value)}
+                />
               </div>
               <div className="space-y-1">
                 <Label>Catégorie</Label>
-                <Input value={form.category} onChange={(event) => setField("category", event.target.value)} />
+                <Input
+                  value={form.category}
+                  onChange={(event) => setField("category", event.target.value)}
+                />
               </div>
               <div className="space-y-1">
                 <Label>Date</Label>
-                <Input type="date" value={form.expenseDate} onChange={(event) => setField("expenseDate", event.target.value)} />
+                <Input
+                  type="date"
+                  value={form.expenseDate}
+                  onChange={(event) =>
+                    setField("expenseDate", event.target.value)
+                  }
+                />
               </div>
               <div className="space-y-1">
                 <Label>Devise</Label>
-                <Input maxLength={3} value={form.currency} onChange={(event) => setField("currency", event.target.value.toUpperCase())} />
+                <Input
+                  maxLength={3}
+                  value={form.currency}
+                  onChange={(event) =>
+                    setField("currency", event.target.value.toUpperCase())
+                  }
+                />
               </div>
               <div className="space-y-1">
                 <Label>Statut</Label>
-                <Select value={form.status} onValueChange={(value) => setField("status", value as BillingExpenseStatus)}>
+                <Select
+                  value={form.status}
+                  onValueChange={(value) =>
+                    setField("status", value as BillingExpenseStatus)
+                  }
+                >
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Statut" />
                   </SelectTrigger>
                   <SelectContent>
-                    {(Object.keys(statusLabel) as BillingExpenseStatus[]).map((status) => (
-                      <SelectItem key={status} value={status}>
-                        {statusLabel[status]}
-                      </SelectItem>
-                    ))}
+                    {(Object.keys(statusLabel) as BillingExpenseStatus[]).map(
+                      (status) => (
+                        <SelectItem key={status} value={status}>
+                          {statusLabel[status]}
+                        </SelectItem>
+                      ),
+                    )}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-1">
                 <Label>Montant HT (€)</Label>
-                <Input type="number" min="0" step="0.01" value={form.amountExclTaxEur} onChange={(event) => setField("amountExclTaxEur", event.target.value)} />
+                <Input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={form.amountExclTaxEur}
+                  onChange={(event) =>
+                    setField("amountExclTaxEur", event.target.value)
+                  }
+                />
               </div>
               <div className="space-y-1">
                 <Label>TVA (€)</Label>
-                <Input type="number" min="0" step="0.01" value={form.taxEur} onChange={(event) => setField("taxEur", event.target.value)} />
+                <Input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={form.taxEur}
+                  onChange={(event) => setField("taxEur", event.target.value)}
+                />
               </div>
               <div className="space-y-1">
                 <Label>Montant TTC (€)</Label>
-                <Input type="number" min="0" step="0.01" value={form.amountInclTaxEur} onChange={(event) => setField("amountInclTaxEur", event.target.value)} />
+                <Input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={form.amountInclTaxEur}
+                  onChange={(event) =>
+                    setField("amountInclTaxEur", event.target.value)
+                  }
+                />
               </div>
               <div className="space-y-1">
                 <Label>TVA déductible (€)</Label>
-                <Input type="number" min="0" step="0.01" value={form.deductibleTaxEur} onChange={(event) => setField("deductibleTaxEur", event.target.value)} />
+                <Input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={form.deductibleTaxEur}
+                  onChange={(event) =>
+                    setField("deductibleTaxEur", event.target.value)
+                  }
+                />
               </div>
               <div className="space-y-1">
                 <Label>Réf. paiement</Label>
-                <Input value={form.paymentReference} onChange={(event) => setField("paymentReference", event.target.value)} />
+                <Input
+                  value={form.paymentReference}
+                  onChange={(event) =>
+                    setField("paymentReference", event.target.value)
+                  }
+                />
               </div>
               <div className="space-y-1">
                 <Label>Matching registre</Label>
                 <div className="flex items-center gap-2">
                   <Input
                     value={form.matchedRegisterRef}
-                    onChange={(event) => setField("matchedRegisterRef", event.target.value)}
+                    onChange={(event) =>
+                      setField("matchedRegisterRef", event.target.value)
+                    }
                   />
                   <Button
                     type="button"
@@ -521,31 +623,62 @@ export function FreelanceExpenseNotesManager() {
               </div>
               <div className="space-y-1">
                 <Label>Pièce jointe URL</Label>
-                <Input value={form.attachmentUrl} onChange={(event) => setField("attachmentUrl", event.target.value)} />
+                <Input
+                  value={form.attachmentUrl}
+                  onChange={(event) =>
+                    setField("attachmentUrl", event.target.value)
+                  }
+                />
               </div>
               <div className="space-y-1">
                 <Label>Date de paiement</Label>
-                <Input type="date" value={form.paidAt} onChange={(event) => setField("paidAt", event.target.value)} />
+                <Input
+                  type="date"
+                  value={form.paidAt}
+                  onChange={(event) => setField("paidAt", event.target.value)}
+                />
               </div>
-              <div className="md:col-span-2 flex items-center justify-between rounded-md border px-3 py-2">
+              <div className="flex items-center justify-between rounded-md border px-3 py-2 md:col-span-2">
                 <Label htmlFor="expense-note-reimbursable">Remboursable</Label>
-                <Switch id="expense-note-reimbursable" checked={form.isReimbursable} onCheckedChange={(checked) => setField("isReimbursable", checked)} />
+                <Switch
+                  id="expense-note-reimbursable"
+                  checked={form.isReimbursable}
+                  onCheckedChange={(checked) =>
+                    setField("isReimbursable", checked)
+                  }
+                />
               </div>
-              <div className="md:col-span-2 flex items-center justify-between rounded-md border px-3 py-2">
+              <div className="flex items-center justify-between rounded-md border px-3 py-2 md:col-span-2">
                 <Label htmlFor="expense-note-paid">Marquer comme payée</Label>
-                <Switch id="expense-note-paid" checked={form.isPaid} onCheckedChange={(checked) => setField("isPaid", checked)} />
+                <Switch
+                  id="expense-note-paid"
+                  checked={form.isPaid}
+                  onCheckedChange={(checked) => setField("isPaid", checked)}
+                />
               </div>
               <div className="space-y-1 md:col-span-2">
                 <Label>Notes</Label>
-                <Textarea rows={4} value={form.notes} onChange={(event) => setField("notes", event.target.value)} />
+                <Textarea
+                  rows={4}
+                  value={form.notes}
+                  onChange={(event) => setField("notes", event.target.value)}
+                />
               </div>
             </div>
           </FreelanceSideSheetBody>
           <FreelanceSideSheetFooter>
-            <Button type="button" variant="outline" onClick={() => setSheetOpen(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setSheetOpen(false)}
+            >
               Annuler
             </Button>
-            <Button type="button" disabled={isSaving || !canSave} onClick={() => void handleSave()}>
+            <Button
+              type="button"
+              disabled={isSaving || !canSave}
+              onClick={() => void handleSave()}
+            >
               {isSaving ? <Loader2 className="size-4 animate-spin" /> : null}
               {isEditing ? "Enregistrer" : "Créer"}
             </Button>

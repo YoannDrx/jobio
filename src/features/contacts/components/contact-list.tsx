@@ -200,7 +200,9 @@ export function ContactList({
       onContactClick(contactId);
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Impossible de lancer l'action",
+        error instanceof Error
+          ? error.message
+          : "Impossible de lancer l'action",
       );
     } finally {
       setNextActionContactId(null);

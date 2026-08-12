@@ -3,11 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Sheet,
-  SheetDescription,
-  SheetTitle,
-} from "@/components/ui/sheet";
+import { Sheet, SheetDescription, SheetTitle } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
 import {
   commitBillingInvoicesImportAction,
@@ -19,7 +15,11 @@ import {
   FreelanceSideSheetFooter,
   FreelanceSideSheetHeader,
 } from "@/features/freelance/components/freelance-side-sheet";
-import { formatCents, formatDate, invoiceStatusLabel } from "@/features/freelance/billing-presenter";
+import {
+  formatCents,
+  formatDate,
+  invoiceStatusLabel,
+} from "@/features/freelance/billing-presenter";
 import { resolveActionResult } from "@/lib/actions/actions-utils";
 import { BadgeCheck, Loader2, Upload } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -99,7 +99,9 @@ export function FreelanceInvoicesImportSheet({
       toast.success(`${result.items.length} facture(s) détectée(s)`);
     } catch (error) {
       setItems([]);
-      toast.error(error instanceof Error ? error.message : "Analyse impossible");
+      toast.error(
+        error instanceof Error ? error.message : "Analyse impossible",
+      );
     } finally {
       setIsParsing(false);
     }
@@ -168,8 +170,8 @@ export function FreelanceInvoicesImportSheet({
           <FreelanceSideSheetHeader>
             <SheetTitle>Importer des factures historiques</SheetTitle>
             <SheetDescription>
-              CSV ou PDF. Analyse intelligente puis application en base avec logs
-              d’audit.
+              CSV ou PDF. Analyse intelligente puis application en base avec
+              logs d’audit.
             </SheetDescription>
           </FreelanceSideSheetHeader>
           <FreelanceSideSheetBody>
@@ -193,10 +195,14 @@ export function FreelanceInvoicesImportSheet({
                     void handleAnalyze();
                   }}
                 >
-                  {isParsing ? <Loader2 className="size-4 animate-spin" /> : null}
+                  {isParsing ? (
+                    <Loader2 className="size-4 animate-spin" />
+                  ) : null}
                   Analyser le fichier
                 </Button>
-                {fileType ? <Badge variant="secondary">Type: {fileType}</Badge> : null}
+                {fileType ? (
+                  <Badge variant="secondary">Type: {fileType}</Badge>
+                ) : null}
               </div>
               {mappedColumns.length > 0 ? (
                 <div className="space-y-1">
@@ -205,7 +211,11 @@ export function FreelanceInvoicesImportSheet({
                   </p>
                   <div className="flex flex-wrap gap-1">
                     {mappedColumns.map((entry) => (
-                      <Badge key={entry} variant="outline" className="font-normal">
+                      <Badge
+                        key={entry}
+                        variant="outline"
+                        className="font-normal"
+                      >
                         {entry}
                       </Badge>
                     ))}
@@ -218,20 +228,31 @@ export function FreelanceInvoicesImportSheet({
               <div className="space-y-3">
                 <div className="grid gap-2 sm:grid-cols-2">
                   <div className="rounded-lg border p-3">
-                    <p className="text-muted-foreground text-xs">Factures détectées</p>
+                    <p className="text-muted-foreground text-xs">
+                      Factures détectées
+                    </p>
                     <p className="text-base font-semibold">{items.length}</p>
                   </div>
                   <div className="rounded-lg border p-3">
-                    <p className="text-muted-foreground text-xs">Montant total</p>
-                    <p className="text-base font-semibold">{formatCents(summary.total)}</p>
+                    <p className="text-muted-foreground text-xs">
+                      Montant total
+                    </p>
+                    <p className="text-base font-semibold">
+                      {formatCents(summary.total)}
+                    </p>
                   </div>
                 </div>
                 <div className="max-h-[52vh] space-y-2 overflow-y-auto pr-1">
                   {items.map((item, index) => (
-                    <div key={`${item.number ?? "draft"}-${index}`} className="rounded-lg border p-3">
+                    <div
+                      key={`${item.number ?? "draft"}-${index}`}
+                      className="rounded-lg border p-3"
+                    >
                       <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
                         <p className="font-medium">
-                          {item.number ? `Facture ${item.number}` : `Facture importée #${index + 1}`}
+                          {item.number
+                            ? `Facture ${item.number}`
+                            : `Facture importée #${index + 1}`}
                         </p>
                         <div className="flex items-center gap-1.5">
                           <Badge variant="outline">
@@ -243,7 +264,8 @@ export function FreelanceInvoicesImportSheet({
                       <p className="text-sm">{item.clientDisplayName}</p>
                       <p className="text-muted-foreground text-xs">
                         Émission: {formatDate(item.issueDate)} · Échéance:{" "}
-                        {item.dueDate ? formatDate(item.dueDate) : "—"} · {item.currency}
+                        {item.dueDate ? formatDate(item.dueDate) : "—"} ·{" "}
+                        {item.currency}
                       </p>
                       <div className="mt-2 grid gap-1 text-xs sm:grid-cols-3">
                         <p>Total HT: {formatCents(item.subtotalCents)}</p>
@@ -255,7 +277,7 @@ export function FreelanceInvoicesImportSheet({
                           {item.warnings.join(" · ")}
                         </div>
                       ) : (
-                        <div className="text-emerald-700 mt-2 inline-flex items-center gap-1 text-xs">
+                        <div className="mt-2 inline-flex items-center gap-1 text-xs text-emerald-700">
                           <BadgeCheck className="size-3.5" />
                           Prêt à importer
                         </div>
@@ -293,4 +315,3 @@ export function FreelanceInvoicesImportSheet({
     </>
   );
 }
-

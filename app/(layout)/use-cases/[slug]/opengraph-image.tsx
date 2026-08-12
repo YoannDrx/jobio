@@ -43,12 +43,7 @@ export default async function OgImage({
   const fonts = await getOgImageFont();
 
   const planLabel = useCase.recommendedPlan.toUpperCase();
-  const planColor =
-    useCase.recommendedPlan === "ultra"
-      ? "#8b5cf6"
-      : useCase.recommendedPlan === "pro"
-        ? "#22D3EE"
-        : "#10b981";
+  const planColor = useCase.recommendedPlan === "pro" ? "#22D3EE" : "#10b981";
 
   return new ImageResponse(
     (

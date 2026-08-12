@@ -6,7 +6,7 @@ import { authAction } from "@/lib/actions/safe-actions";
 import { ActionError } from "@/lib/errors/action-error";
 import { ApplicationError } from "@/lib/errors/application-error";
 import { prisma } from "@/lib/prisma";
-import { checkAndIncrementAIQuota } from "@/features/ai/ai-quota";
+import { runTrackedAI } from "@/features/ai/ai-usage";
 import { AI_MODELS } from "@/features/ai/ai-config";
 import { extractTextFromPDF } from "@/features/profiles/pdf-parser";
 import { nanoid } from "nanoid";
@@ -185,21 +185,28 @@ export const importMasterCvFromFileAction = authAction
       throw new ActionError("Le fichier est trop volumineux (max 5 Mo)");
     }
 
-    await checkAndIncrementAIQuota(user.id);
-
     const buffer = await file.arrayBuffer();
 
     const extractedText = isPdf
       ? await extractTextFromPDF(buffer)
       : await extractTextFromDocx(buffer);
 
-    const response = await generateObject({
-      model: AI_MODELS.smart,
-      system: IMPORT_SYSTEM_PROMPT,
-      prompt: extractedText,
-      schema: masterCvExtractSchema,
-      temperature: 0.1,
-    });
+    const response = await runTrackedAI(
+      {
+        userId: user.id,
+        feature: "PROFILE_IMPORT",
+        modelId: AI_MODELS.smart.modelId,
+        context: { source: isPdf ? "master-cv-pdf" : "master-cv-docx" },
+      },
+      async () =>
+        generateObject({
+          model: AI_MODELS.smart,
+          system: IMPORT_SYSTEM_PROMPT,
+          prompt: extractedText,
+          schema: masterCvExtractSchema,
+          temperature: 0.1,
+        }),
+    );
 
     const extracted = response.object;
 

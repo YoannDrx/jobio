@@ -5,7 +5,7 @@ import { z } from "zod";
 import { rateLimitedAuthAction } from "@/lib/actions/safe-actions";
 import { ApplicationError } from "@/lib/errors/application-error";
 import { AI_MODELS } from "@/features/ai/ai-config";
-import { checkAndIncrementAIQuota } from "@/features/ai/ai-quota";
+import { runTrackedAI } from "@/features/ai/ai-usage";
 import { prisma } from "@/lib/prisma";
 
 const translateCvInputSchema = z.object({
@@ -76,8 +76,6 @@ export const translateCvAction = rateLimitedAuthAction("cv-translate", 5, 60)
         );
       }
 
-      await checkAndIncrementAIQuota(user.id);
-
       const masterCvJson = JSON.stringify({
         fullName: masterCv.fullName,
         headline: masterCv.headline,
@@ -90,9 +88,17 @@ export const translateCvAction = rateLimitedAuthAction("cv-translate", 5, 60)
         certifications: masterCv.certifications,
       });
 
-      const result = await generateObject({
-        model: AI_MODELS.smart,
-        system: `Tu es un expert en traduction professionnelle et en rédaction de CV. Tu traduis un CV du français vers ${LANGUAGE_LABELS[targetLanguage]}.
+      const result = await runTrackedAI(
+        {
+          userId: user.id,
+          feature: "CV_TRANSLATE",
+          modelId: AI_MODELS.smart.modelId,
+          context: { masterCvId: masterCv.id, targetLanguage },
+        },
+        async () =>
+          generateObject({
+            model: AI_MODELS.smart,
+            system: `Tu es un expert en traduction professionnelle et en rédaction de CV. Tu traduis un CV du français vers ${LANGUAGE_LABELS[targetLanguage]}.
 
 Règles:
 - Traduis tous les textes vers ${LANGUAGE_LABELS[targetLanguage]}
@@ -101,19 +107,11 @@ Règles:
 - Maintiens le ton professionnel
 - Pour contentOverrides, utilise les masterItemId exacts des items du CV Master
 - Pour les sections: experiences, skills, education, projects, languages, certifications`,
-        prompt: `## CV Master (JSON)\n${masterCvJson}\n\nTraduis ce CV en ${LANGUAGE_LABELS[targetLanguage]} et retourne la structure avec les traductions.`,
-        schema: translateCvOutputSchema,
-        temperature: 0.3,
-      });
-
-      await prisma.aIUsage.create({
-        data: {
-          userId: user.id,
-          feature: "CV_TRANSLATE",
-          inputTokens: result.usage.inputTokens ?? 0,
-          outputTokens: result.usage.outputTokens ?? 0,
-        },
-      });
+            prompt: `## CV Master (JSON)\n${masterCvJson}\n\nTraduis ce CV en ${LANGUAGE_LABELS[targetLanguage]} et retourne la structure avec les traductions.`,
+            schema: translateCvOutputSchema,
+            temperature: 0.3,
+          }),
+      );
 
       return {
         ...result.object,

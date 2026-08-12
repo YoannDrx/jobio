@@ -5,7 +5,7 @@ import type { Prisma } from "@/generated/prisma";
 import { authAction } from "@/lib/actions/safe-actions";
 import { ApplicationError } from "@/lib/errors/application-error";
 import { prisma } from "@/lib/prisma";
-import { checkAndIncrementAIQuota } from "@/features/ai/ai-quota";
+import { runTrackedAI } from "@/features/ai/ai-usage";
 import { AI_MODELS } from "@/features/ai/ai-config";
 import {
   applyCvCoachToProfileSchema,
@@ -410,8 +410,6 @@ export const sendCvCoachMessageAction = authAction
       },
     });
 
-    await checkAndIncrementAIQuota(user.id);
-
     const prompt = buildConversationPrompt({
       userMessage: parsedInput.message,
       goalRole: session.goalRole,
@@ -424,13 +422,22 @@ export const sendCvCoachMessageAction = authAction
       })),
     });
 
-    const response = await generateObject({
-      model: AI_MODELS.smart,
-      system: CV_COACH_SYSTEM_PROMPT,
-      prompt,
-      schema: cvCoachAssistantOutputSchema,
-      temperature: 0.3,
-    });
+    const response = await runTrackedAI(
+      {
+        userId: user.id,
+        feature: "CV_COACH",
+        modelId: AI_MODELS.smart.modelId,
+        context: { sessionId: session.id, surface: "coach-action" },
+      },
+      async () =>
+        generateObject({
+          model: AI_MODELS.smart,
+          system: CV_COACH_SYSTEM_PROMPT,
+          prompt,
+          schema: cvCoachAssistantOutputSchema,
+          temperature: 0.3,
+        }),
+    );
 
     const assistantMessage = await prisma.cvLabCoachMessage.create({
       data: {
@@ -478,15 +485,6 @@ export const sendCvCoachMessageAction = authAction
             headline: true,
           },
         },
-      },
-    });
-
-    await prisma.aIUsage.create({
-      data: {
-        userId: user.id,
-        feature: "CV_COACH",
-        inputTokens: response.usage.inputTokens ?? 0,
-        outputTokens: response.usage.outputTokens ?? 0,
       },
     });
 

@@ -17,9 +17,11 @@ export const checkAllLimitsAction = authAction.action(
   },
 );
 
-export const getCurrentPlanAction = authAction.action(async ({ ctx: { user } }) => {
-  const { plan } = await resolvePlanLimitsForUser(user.id);
-  return {
-    plan,
-  };
-});
+export const getCurrentPlanAction = authAction.action(
+  async ({ ctx: { user } }) => {
+    const { plan } = await resolvePlanLimitsForUser(user.id);
+    return {
+      plan,
+    };
+  },
+);

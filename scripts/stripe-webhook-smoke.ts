@@ -2,7 +2,13 @@
 import "dotenv/config";
 import { PrismaClient } from "@/generated/prisma";
 import { resolvePlanLimitsForUser } from "@/lib/auth/stripe/plan-entitlements";
+import {
+  getProgramCatalogEntry,
+  PROGRAM_PRICE,
+} from "@/lib/stripe/billing-catalog";
+import { upfetch } from "@/lib/up-fetch";
 import Stripe from "stripe";
+import { z } from "zod";
 
 const prisma = new PrismaClient();
 const baseUrl = process.env.STRIPE_SMOKE_BASE_URL ?? "http://localhost:3000";
@@ -52,11 +58,8 @@ const buildSubscription = (
 const sendEvent = async (params: {
   id: string;
   created: number;
-  type:
-    | "customer.subscription.created"
-    | "customer.subscription.updated"
-    | "customer.subscription.deleted";
-  subscription: Stripe.Subscription;
+  type: Stripe.Event.Type;
+  object: unknown;
 }) => {
   eventIds.push(params.id);
   const payload = JSON.stringify({
@@ -64,7 +67,7 @@ const sendEvent = async (params: {
     object: "event",
     api_version: "2025-09-30.clover",
     created: params.created,
-    data: { object: params.subscription },
+    data: { object: params.object },
     livemode: false,
     pending_webhooks: 1,
     request: { id: null, idempotency_key: null },
@@ -74,19 +77,15 @@ const sendEvent = async (params: {
     payload,
     secret: webhookSecret,
   });
-  const response = await fetch(`${baseUrl}/api/webhooks/stripe`, {
+  await upfetch(`${baseUrl}/api/webhooks/stripe`, {
     method: "POST",
     headers: {
       "content-type": "application/json",
       "stripe-signature": signature,
     },
     body: payload,
+    schema: z.object({ ok: z.boolean() }).passthrough(),
   });
-  if (!response.ok) {
-    throw new Error(
-      `Webhook returned ${response.status}: ${await response.text()}`,
-    );
-  }
 };
 
 const assertSubscriptionStatus = async (expectedStatus: string) => {
@@ -109,6 +108,7 @@ async function run() {
       emailVerified: true,
       createdAt: new Date(),
       updatedAt: new Date(),
+      preference: { create: { proTrialConsumedAt: new Date() } },
     },
   });
 
@@ -116,7 +116,7 @@ async function run() {
     id: `evt_smoke_created_${suffix}`,
     created: now,
     type: "customer.subscription.created" as const,
-    subscription: buildSubscription("trialing"),
+    object: buildSubscription("trialing"),
   };
   await sendEvent(createdEvent);
   await assertSubscriptionStatus("trialing");
@@ -133,7 +133,7 @@ async function run() {
     id: `evt_smoke_stale_${suffix}`,
     created: now - 60,
     type: "customer.subscription.deleted",
-    subscription: buildSubscription("canceled"),
+    object: buildSubscription("canceled"),
   });
   await assertSubscriptionStatus("trialing");
 
@@ -141,7 +141,7 @@ async function run() {
     id: `evt_smoke_active_${suffix}`,
     created: now + 60,
     type: "customer.subscription.updated",
-    subscription: buildSubscription("active"),
+    object: buildSubscription("active"),
   });
   await assertSubscriptionStatus("active");
 
@@ -149,7 +149,7 @@ async function run() {
     id: `evt_smoke_deleted_${suffix}`,
     created: now + 120,
     type: "customer.subscription.deleted",
-    subscription: buildSubscription("canceled"),
+    object: buildSubscription("canceled"),
   });
   await assertSubscriptionStatus("canceled");
 
@@ -160,8 +160,67 @@ async function run() {
     );
   }
 
+  const program = await prisma.linkedInProgram.findFirst({
+    where: { isFree: false },
+    select: { id: true, slug: true },
+  });
+  const catalogEntry = program ? getProgramCatalogEntry(program.slug) : null;
+  if (!program || !catalogEntry) {
+    throw new Error("Paid program catalog is not seeded");
+  }
+  const programPaymentIntentId = `pi_smoke_program_${suffix}`;
+  const programSession = {
+    id: `cs_smoke_program_${suffix}`,
+    object: "checkout.session",
+    mode: "payment",
+    payment_status: "paid",
+    payment_intent: programPaymentIntentId,
+    amount_subtotal: PROGRAM_PRICE.unitAmount,
+    amount_total: PROGRAM_PRICE.unitAmount,
+    currency: PROGRAM_PRICE.currency,
+    metadata: {
+      type: "linkedin_program",
+      userId,
+      programId: program.id,
+      slug: program.slug,
+      sku: catalogEntry.sku,
+    },
+  };
+  await sendEvent({
+    id: `evt_smoke_program_checkout_${suffix}`,
+    created: now + 180,
+    type: "checkout.session.completed",
+    object: programSession,
+  });
+  const completedPurchase = await prisma.programPurchase.findUnique({
+    where: { userId_programId: { userId, programId: program.id } },
+  });
+  if (completedPurchase?.status !== "completed") {
+    throw new Error("Program checkout was not completed");
+  }
+
+  await sendEvent({
+    id: `evt_smoke_program_refund_${suffix}`,
+    created: now + 240,
+    type: "charge.refunded",
+    object: {
+      id: `ch_smoke_program_${suffix}`,
+      object: "charge",
+      amount: PROGRAM_PRICE.unitAmount,
+      amount_refunded: PROGRAM_PRICE.unitAmount,
+      refunded: true,
+      payment_intent: programPaymentIntentId,
+    },
+  });
+  const refundedPurchase = await prisma.programPurchase.findUnique({
+    where: { userId_programId: { userId, programId: program.id } },
+  });
+  if (refundedPurchase?.status !== "refunded") {
+    throw new Error("Program refund did not revoke access");
+  }
+
   console.log(
-    "Stripe webhook smoke passed: signature, idempotency, ordering and cancellation",
+    "Stripe webhook smoke passed: signature, idempotency, ordering, cancellation, program checkout and refund",
   );
 }
 

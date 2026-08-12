@@ -16,15 +16,17 @@ import { env } from "./env";
 import { logger } from "./logger";
 import { prisma } from "./prisma";
 import { getServerUrl } from "./server-url";
+import { initializeProTrialForUser } from "./auth/stripe/pro-trial";
+import {
+  deleteExternalAccountData,
+  finalizeDeletedAccountRetention,
+} from "@/features/account/account-deletion";
 type SocialProvidersType = Parameters<typeof betterAuth>[0]["socialProviders"];
 const shouldSkipAuthSideEffects = env.CI === true;
 
 const sendAuthEmail = async (payload: Parameters<typeof sendEmail>[0]) => {
   if (shouldSkipAuthSideEffects) {
-    logger.debug("Skipping auth email in CI mode", {
-      to: payload.to,
-      subject: payload.subject,
-    });
+    logger.debug("Skipping auth email in CI mode");
     return;
   }
 
@@ -72,6 +74,11 @@ export const auth = betterAuth({
     user: {
       create: {
         after: async (user, _req) => {
+          await initializeProTrialForUser({
+            userId: user.id,
+            email: user.email,
+          });
+
           if (shouldSkipAuthSideEffects) {
             return;
           }
@@ -82,6 +89,25 @@ export const auth = betterAuth({
             subject: `Bienvenue sur ${SiteConfig.title} !`,
             html: WelcomeEmail({ name: user.name || "Freelance" }),
           });
+        },
+      },
+      delete: {
+        before: async (user) => {
+          if (shouldSkipAuthSideEffects) return;
+          await deleteExternalAccountData({
+            id: user.id,
+            resendContactId:
+              typeof user.resendContactId === "string"
+                ? user.resendContactId
+                : null,
+            stripeCustomerId:
+              typeof user.stripeCustomerId === "string"
+                ? user.stripeCustomerId
+                : null,
+          });
+        },
+        after: async (user) => {
+          await finalizeDeletedAccountRetention(user.id);
         },
       },
     },
@@ -141,7 +167,6 @@ export const auth = betterAuth({
   plugins: [
     emailOTP({
       sendVerificationOTP: async ({ email, otp }) => {
-        logger.debug("Sending OTP", { email, otp });
         await sendAuthEmail({
           to: email,
           subject: `Ton code de connexion à ${SiteConfig.title} ${otp}`,

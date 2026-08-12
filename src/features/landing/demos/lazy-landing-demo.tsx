@@ -67,7 +67,7 @@ export function LazyLandingDemo({
           observer.disconnect();
         }
       },
-      { rootMargin: "250px 0px" },
+      { rootMargin: "50px 0px" },
     );
 
     observer.observe(element);

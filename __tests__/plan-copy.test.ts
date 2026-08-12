@@ -10,18 +10,16 @@ import { describe, expect, it } from "vitest";
 describe("plan copy helpers", () => {
   it("resolves minimum access plan by feature", () => {
     expect(getMinimumPlanForFeature("missions")).toBe("free");
-    expect(getMinimumPlanForFeature("csvExport")).toBe("pro");
+    expect(getMinimumPlanForFeature("csvExport")).toBe("free");
     expect(getMinimumPlanForFeature("atsScoring")).toBe("pro");
-    expect(getMinimumPlanForFeature("cvCoachAI")).toBe("ultra");
+    expect(getMinimumPlanForFeature("cvCoachAI")).toBe("pro");
   });
 
   it("exposes stable access labels for marketing copy", () => {
     expect(getPlanAccessLabelForFeature("missions")).toBeNull();
-    expect(getPlanAccessLabelForFeature("sequences")).toBe("Pro+");
-    expect(getPlanAccessLabelForFeature("cvCoachAI")).toBe("Ultra");
-    expect(withPlanBadge("Coach CV IA", "cvCoachAI")).toBe(
-      "Coach CV IA (Ultra)",
-    );
+    expect(getPlanAccessLabelForFeature("sequences")).toBe("Pro");
+    expect(getPlanAccessLabelForFeature("cvCoachAI")).toBe("Pro");
+    expect(withPlanBadge("Coach CV IA", "cvCoachAI")).toBe("Coach CV IA (Pro)");
     expect(withPlanBadge("Pipeline", "missions")).toBe("Pipeline");
   });
 
@@ -30,6 +28,5 @@ describe("plan copy helpers", () => {
     expect(formatPlanCount(50)).toBe("50");
     expect(getPlanSupportLabel("free")).toBe("Communautaire");
     expect(getPlanSupportLabel("pro")).toBe("Email prioritaire");
-    expect(getPlanSupportLabel("ultra")).toBe("Chat prioritaire");
   });
 });

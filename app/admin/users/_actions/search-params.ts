@@ -7,7 +7,7 @@ import {
 
 const roleOptions = ["all", "admin", "user"] as const;
 const statusOptions = ["all", "active", "banned", "unverified"] as const;
-const planOptions = ["all", "free", "pro", "ultra"] as const;
+const planOptions = ["all", "free", "pro"] as const;
 const sortOptions = [
   "createdAt",
   "name",

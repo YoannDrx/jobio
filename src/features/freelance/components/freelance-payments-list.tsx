@@ -11,7 +11,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { getBillingPaymentsAction } from "@/features/freelance/billing-documents.action";
-import { formatCents, formatDate } from "@/features/freelance/billing-presenter";
+import {
+  formatCents,
+  formatDate,
+} from "@/features/freelance/billing-presenter";
 import { resolveActionResult } from "@/lib/actions/actions-utils";
 import { Loader2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
@@ -75,7 +78,9 @@ export function FreelancePaymentsList() {
             Chargement des paiements...
           </div>
         ) : payments.length === 0 ? (
-          <p className="text-muted-foreground text-sm">Aucun paiement enregistré.</p>
+          <p className="text-muted-foreground text-sm">
+            Aucun paiement enregistré.
+          </p>
         ) : (
           <Table>
             <TableHeader>
@@ -94,7 +99,8 @@ export function FreelancePaymentsList() {
                   <TableCell>{formatDate(payment.paidAt)}</TableCell>
                   <TableCell>{payment.client.displayName}</TableCell>
                   <TableCell>
-                    {payment.allocations.at(0)?.invoice.number ?? "Sans facture"}
+                    {payment.allocations.at(0)?.invoice.number ??
+                      "Sans facture"}
                   </TableCell>
                   <TableCell>{payment.method}</TableCell>
                   <TableCell>

@@ -13,7 +13,9 @@ export const GET = route.handler(async (req) => {
     route: new URL(req.url).pathname,
   });
 
-  const authFailure = validateCronAuthorization(req.headers.get("authorization"));
+  const authFailure = validateCronAuthorization(
+    req.headers.get("authorization"),
+  );
   if (authFailure) {
     await finishCronJobRun(run?.id, {
       status: authFailure.status === 401 ? "UNAUTHORIZED" : "FAILED",
@@ -25,21 +27,18 @@ export const GET = route.handler(async (req) => {
     );
   }
 
-  // Trouver les subscriptions dont le trial expire dans ~24h
-  // periodStart + 14 jours (trial) = expiration
-  // On cherche les subs dont periodStart date d'il y a 13 jours
-  const thirteenDaysAgo = new Date();
-  thirteenDaysAgo.setDate(thirteenDaysAgo.getDate() - 13);
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
 
   const startOfDay = new Date(
-    thirteenDaysAgo.getFullYear(),
-    thirteenDaysAgo.getMonth(),
-    thirteenDaysAgo.getDate(),
+    tomorrow.getFullYear(),
+    tomorrow.getMonth(),
+    tomorrow.getDate(),
   );
   const endOfDay = new Date(
-    thirteenDaysAgo.getFullYear(),
-    thirteenDaysAgo.getMonth(),
-    thirteenDaysAgo.getDate(),
+    tomorrow.getFullYear(),
+    tomorrow.getMonth(),
+    tomorrow.getDate(),
     23,
     59,
     59,
@@ -47,36 +46,40 @@ export const GET = route.handler(async (req) => {
   );
 
   try {
-    const subscriptions = await prisma.subscription.findMany({
+    const preferences = await prisma.userPreference.findMany({
       where: {
-        status: "trialing",
-        periodStart: {
+        proTrialConsumedAt: null,
+        proTrialEndsAt: {
           gte: startOfDay,
           lte: endOfDay,
         },
       },
+      include: {
+        user: { include: { subscription: true } },
+      },
     });
 
-    const users = await Promise.all(
-      subscriptions.map(async (sub) =>
-        prisma.user.findFirst({ where: { id: sub.referenceId } }),
-      ),
-    );
-
-    const validUsers = users.filter(
-      (user): user is Exclude<typeof user, null> => user !== null,
-    );
+    const validUsers = preferences
+      .map((preference) => preference.user)
+      .filter(
+        (user) =>
+          !user.subscription ||
+          !["active", "past_due"].includes(user.subscription.status ?? ""),
+      );
 
     const results = await Promise.all(
       validUsers.map(async (user) =>
-        sendEmail({
-          to: user.email,
-          subject: `Ton essai ${SiteConfig.title} se termine demain`,
-          html: TrialEndingEmail({
-            name: user.name || "Freelance",
-            daysLeft: 1,
-          }),
-        }),
+        sendEmail(
+          {
+            to: user.email,
+            subject: `Ton essai ${SiteConfig.title} se termine demain`,
+            html: TrialEndingEmail({
+              name: user.name || "Freelance",
+              daysLeft: 1,
+            }),
+          },
+          { idempotencyKey: `trial-ending-${user.id}` },
+        ),
       ),
     );
 
@@ -84,7 +87,7 @@ export const GET = route.handler(async (req) => {
       status: "SUCCESS",
       processedCount: results.length,
       details: {
-        trialCandidates: subscriptions.length,
+        trialCandidates: preferences.length,
       },
     });
 

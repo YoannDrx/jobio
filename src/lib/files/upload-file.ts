@@ -3,13 +3,17 @@ type UploadFileParams = {
   path: string;
 };
 
+export type StoredFileData = {
+  url: string;
+  pathname: string;
+  provider: "LOCAL" | "VERCEL_BLOB";
+};
+
 export type UploadFileAdapter = {
   uploadFile: (params: UploadFileParams) => Promise<
     | {
         error: null;
-        data: {
-          url: string;
-        };
+        data: StoredFileData;
       }
     | {
         error: Error;
@@ -19,9 +23,7 @@ export type UploadFileAdapter = {
   uploadFiles: (params: UploadFileParams[]) => Promise<
     {
       error: Error | null;
-      data: {
-        url: string;
-      } | null;
+      data: StoredFileData | null;
     }[]
   >;
 };

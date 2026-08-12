@@ -59,7 +59,9 @@ type ProfileUpdatePayload = {
 const asNonEmptyString = (value: unknown) =>
   typeof value === "string" ? value.trim() : "";
 
-const toJson = (value: unknown[]): Prisma.InputJsonValue | Prisma.NullTypes.JsonNull =>
+const toJson = (
+  value: unknown[],
+): Prisma.InputJsonValue | Prisma.NullTypes.JsonNull =>
   value.length > 0 ? (value as Prisma.InputJsonValue) : Prisma.JsonNull;
 
 const dedupeByKey = <T>(items: T[], keyFn: (item: T) => string): T[] => {
@@ -78,7 +80,8 @@ const dedupeByKey = <T>(items: T[], keyFn: (item: T) => string): T[] => {
   return output;
 };
 
-const parseArray = <T>(value: unknown): T[] => (Array.isArray(value) ? (value as T[]) : []);
+const parseArray = <T>(value: unknown): T[] =>
+  Array.isArray(value) ? (value as T[]) : [];
 
 const mapLanguageLevel = (level: string): LanguageLevel => {
   const normalized = level.toLowerCase();
@@ -252,16 +255,21 @@ const mergeSkills = (current: Skill[], incoming: Skill[]) =>
 const mergeExperiences = (current: Experience[], incoming: Experience[]) =>
   dedupeByKey(
     [...incoming, ...current],
-    (item) => `${item.title.toLowerCase()}::${item.company.toLowerCase()}::${(item.startDate ?? "").toLowerCase()}`,
+    (item) =>
+      `${item.title.toLowerCase()}::${item.company.toLowerCase()}::${(item.startDate ?? "").toLowerCase()}`,
   );
 
 const mergeEducation = (current: Education[], incoming: Education[]) =>
   dedupeByKey(
     [...incoming, ...current],
-    (item) => `${item.degree.toLowerCase()}::${item.school.toLowerCase()}::${(item.startDate ?? "").toLowerCase()}`,
+    (item) =>
+      `${item.degree.toLowerCase()}::${item.school.toLowerCase()}::${(item.startDate ?? "").toLowerCase()}`,
   );
 
-const mergeCertifications = (current: Certification[], incoming: Certification[]) =>
+const mergeCertifications = (
+  current: Certification[],
+  incoming: Certification[],
+) =>
   dedupeByKey(
     [...incoming, ...current],
     (item) => `${item.name.toLowerCase()}::${item.issuer.toLowerCase()}`,
@@ -301,7 +309,9 @@ export function buildProfileUpdateFromCvCoach(params: {
   const currentSkills = parseArray<Skill>(currentProfile.skills);
   const currentExperiences = parseArray<Experience>(currentProfile.experiences);
   const currentEducation = parseArray<Education>(currentProfile.education);
-  const currentCertifications = parseArray<Certification>(currentProfile.certifications);
+  const currentCertifications = parseArray<Certification>(
+    currentProfile.certifications,
+  );
   const currentLanguages = parseArray<Language>(currentProfile.languages);
   const currentProjects = parseArray<Project>(currentProfile.projects);
 
@@ -333,11 +343,17 @@ export function buildProfileUpdateFromCvCoach(params: {
   const incomingHeadline =
     asNonEmptyString(snapshot.identity.headline) ||
     asNonEmptyString(snapshot.identity.targetRole);
-  const headline = incomingHeadline || asNonEmptyString(currentProfile.headline) || "Freelance";
+  const headline =
+    incomingHeadline ||
+    asNonEmptyString(currentProfile.headline) ||
+    "Freelance";
 
   const currentSummary = asNonEmptyString(currentProfile.bio);
   const incomingSummary = asNonEmptyString(snapshot.summary);
-  const bio = mode === "REPLACE" ? incomingSummary || null : combineSummary(currentSummary, incomingSummary);
+  const bio =
+    mode === "REPLACE"
+      ? incomingSummary || null
+      : combineSummary(currentSummary, incomingSummary);
 
   const incomingZone = asNonEmptyString(snapshot.identity.location);
   const zone = incomingZone || currentProfile.zone;

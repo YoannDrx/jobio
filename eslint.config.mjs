@@ -1,6 +1,5 @@
-import { fixupConfigRules } from "@eslint/compat";
-import { FlatCompat } from "@eslint/eslintrc";
 import pluginJs from "@eslint/js";
+import nextPlugin from "@next/eslint-plugin-next";
 import hooksPlugin from "eslint-plugin-react-hooks";
 import pluginReact from "eslint-plugin-react";
 // Plugin doesn't support TailwindV4
@@ -8,8 +7,6 @@ import pluginReact from "eslint-plugin-react";
 // import tailwind from "eslint-plugin-tailwindcss";
 import globals from "globals";
 import tseslint from "typescript-eslint";
-
-const compat = new FlatCompat();
 
 export default [
   { files: ["**/*.{js,mjs,cjs,ts,jsx,tsx}"] },
@@ -60,7 +57,7 @@ export default [
   {
     ignores: [".next/"],
   },
-  ...fixupConfigRules(compat.extends("plugin:@next/next/core-web-vitals")),
+  nextPlugin.configs["core-web-vitals"],
   // Rules config
   {
     rules: {

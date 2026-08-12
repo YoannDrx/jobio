@@ -1,4 +1,4 @@
-import { BillingDeclarationPeriodType } from "@/generated/prisma";
+import type { BillingDeclarationPeriodType } from "@/generated/prisma";
 
 export const FREELANCE_STATUS_VALUES = [
   "MICRO_ENTREPRISE",
@@ -13,7 +13,11 @@ export const FREELANCE_STATUS_VALUES = [
 
 export type FreelanceStatus = (typeof FREELANCE_STATUS_VALUES)[number];
 
-export const ACTIVITY_CATEGORY_VALUES = ["SERVICES", "LIBERAL", "VENTE"] as const;
+export const ACTIVITY_CATEGORY_VALUES = [
+  "SERVICES",
+  "LIBERAL",
+  "VENTE",
+] as const;
 
 export type ActivityCategory = (typeof ACTIVITY_CATEGORY_VALUES)[number];
 
@@ -56,7 +60,7 @@ export type BillingComplianceChecklistItem = {
 const PRESET_BY_STATUS: Record<FreelanceStatus, BillingCompliancePreset> = {
   MICRO_ENTREPRISE: {
     statusLabel: "Micro-entreprise",
-    defaultDeclarationType: BillingDeclarationPeriodType.QUARTERLY,
+    defaultDeclarationType: "QUARTERLY",
     defaultContributionRatePercent: 23.1,
     vatExemptionSuggestedText: "TVA non applicable, art. 293 B du CGI",
     notes: [
@@ -66,7 +70,7 @@ const PRESET_BY_STATUS: Record<FreelanceStatus, BillingCompliancePreset> = {
   },
   EI: {
     statusLabel: "Entreprise individuelle",
-    defaultDeclarationType: BillingDeclarationPeriodType.MONTHLY,
+    defaultDeclarationType: "MONTHLY",
     defaultContributionRatePercent: 45,
     vatExemptionSuggestedText: null,
     notes: [
@@ -76,7 +80,7 @@ const PRESET_BY_STATUS: Record<FreelanceStatus, BillingCompliancePreset> = {
   },
   EURL: {
     statusLabel: "EURL",
-    defaultDeclarationType: BillingDeclarationPeriodType.MONTHLY,
+    defaultDeclarationType: "MONTHLY",
     defaultContributionRatePercent: 45,
     vatExemptionSuggestedText: null,
     notes: [
@@ -85,7 +89,7 @@ const PRESET_BY_STATUS: Record<FreelanceStatus, BillingCompliancePreset> = {
   },
   SASU: {
     statusLabel: "SASU",
-    defaultDeclarationType: BillingDeclarationPeriodType.MONTHLY,
+    defaultDeclarationType: "MONTHLY",
     defaultContributionRatePercent: 70,
     vatExemptionSuggestedText: null,
     notes: [
@@ -95,7 +99,7 @@ const PRESET_BY_STATUS: Record<FreelanceStatus, BillingCompliancePreset> = {
   },
   SAS: {
     statusLabel: "SAS",
-    defaultDeclarationType: BillingDeclarationPeriodType.MONTHLY,
+    defaultDeclarationType: "MONTHLY",
     defaultContributionRatePercent: 70,
     vatExemptionSuggestedText: null,
     notes: [
@@ -104,14 +108,14 @@ const PRESET_BY_STATUS: Record<FreelanceStatus, BillingCompliancePreset> = {
   },
   SA: {
     statusLabel: "SA",
-    defaultDeclarationType: BillingDeclarationPeriodType.MONTHLY,
+    defaultDeclarationType: "MONTHLY",
     defaultContributionRatePercent: 70,
     vatExemptionSuggestedText: null,
     notes: ["Affiner selon politique de rémunération et charges patronales."],
   },
   PORTAGE: {
     statusLabel: "Portage salarial",
-    defaultDeclarationType: BillingDeclarationPeriodType.MONTHLY,
+    defaultDeclarationType: "MONTHLY",
     defaultContributionRatePercent: 50,
     vatExemptionSuggestedText: null,
     notes: [
@@ -120,10 +124,12 @@ const PRESET_BY_STATUS: Record<FreelanceStatus, BillingCompliancePreset> = {
   },
   AUTRE: {
     statusLabel: "Autre statut",
-    defaultDeclarationType: BillingDeclarationPeriodType.QUARTERLY,
+    defaultDeclarationType: "QUARTERLY",
     defaultContributionRatePercent: 25,
     vatExemptionSuggestedText: null,
-    notes: ["Renseigne manuellement ton taux réel pour des projections fiables."],
+    notes: [
+      "Renseigne manuellement ton taux réel pour des projections fiables.",
+    ],
   },
 };
 
@@ -171,7 +177,8 @@ export const parseActivityCategory = (value: string | null | undefined) => {
 export const resolveBillingCompliancePreset = (
   input: ComplianceInput,
 ): BillingCompliancePreset => {
-  const status = parseFreelanceStatus(input.freelanceStatus) ?? "MICRO_ENTREPRISE";
+  const status =
+    parseFreelanceStatus(input.freelanceStatus) ?? "MICRO_ENTREPRISE";
   const activity = parseActivityCategory(input.activityCategory);
   const base = PRESET_BY_STATUS[status];
 
@@ -193,7 +200,10 @@ export const buildBillingComplianceChecklist = (
 ): BillingComplianceChecklistItem[] => {
   const status = parseFreelanceStatus(input.freelanceStatus);
   const requiresCompanyShape =
-    status === "SASU" || status === "SAS" || status === "SA" || status === "EURL";
+    status === "SASU" ||
+    status === "SAS" ||
+    status === "SA" ||
+    status === "EURL";
   const requiresVatIdentity = status !== "MICRO_ENTREPRISE";
   const shouldShowBank = input.documentShowBankDetails ?? true;
 

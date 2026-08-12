@@ -14,7 +14,7 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { InlineTooltip } from "@/components/ui/tooltip";
-import { BillingDeclarationPeriodType } from "@/generated/prisma";
+import { BillingDeclarationPeriodType } from "@/features/freelance/billing-client-enums";
 import { searchBillingCompaniesAction } from "@/features/freelance/billing-company-search.action";
 import {
   getBillingProfileAction,
@@ -198,7 +198,8 @@ const parsePhoneValue = (value: string) => {
   const dialCode = matched[1];
   const localNumber = matched[2];
   const country =
-    COUNTRY_OPTIONS.find((option) => option.dialCode === dialCode)?.code ?? "FR";
+    COUNTRY_OPTIONS.find((option) => option.dialCode === dialCode)?.code ??
+    "FR";
 
   return {
     countryCode: country,
@@ -243,9 +244,9 @@ export function FreelanceBillingProfileForm() {
   const [profile, setProfile] = useState<BillingProfileState>(INITIAL_PROFILE);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [addressSuggestions, setAddressSuggestions] = useState<AddressSuggestion[]>(
-    [],
-  );
+  const [addressSuggestions, setAddressSuggestions] = useState<
+    AddressSuggestion[]
+  >([]);
   const [isSearchingAddress, setIsSearchingAddress] = useState(false);
   const [phoneCountryCode, setPhoneCountryCode] = useState("FR");
   const [phoneLocalNumber, setPhoneLocalNumber] = useState("");
@@ -301,7 +302,8 @@ export function FreelanceBillingProfileForm() {
   }, [profile, resolvedLegalForm]);
 
   const missingRequiredCount = useMemo(() => {
-    return complianceChecklist.filter((item) => item.required && !item.ok).length;
+    return complianceChecklist.filter((item) => item.required && !item.ok)
+      .length;
   }, [complianceChecklist]);
 
   const selectedTemplate = useMemo(() => {
@@ -321,39 +323,42 @@ export function FreelanceBillingProfileForm() {
     ];
   }, [profile.documentShowLineVat]);
 
-  const computeSettingsPreviewLineTotals = useCallback((line: BillingStudioLine) => {
-    const quantity = Number(line.quantity);
-    const unitPrice = Number(line.unitPrice);
-    const vatRate = Number(line.vatRate);
-    const discountPercent = Number(line.discountPercent);
+  const computeSettingsPreviewLineTotals = useCallback(
+    (line: BillingStudioLine) => {
+      const quantity = Number(line.quantity);
+      const unitPrice = Number(line.unitPrice);
+      const vatRate = Number(line.vatRate);
+      const discountPercent = Number(line.discountPercent);
 
-    if (
-      !Number.isFinite(quantity) ||
-      quantity <= 0 ||
-      !Number.isFinite(unitPrice) ||
-      unitPrice < 0 ||
-      !Number.isFinite(vatRate) ||
-      vatRate < 0 ||
-      !Number.isFinite(discountPercent) ||
-      discountPercent < 0
-    ) {
+      if (
+        !Number.isFinite(quantity) ||
+        quantity <= 0 ||
+        !Number.isFinite(unitPrice) ||
+        unitPrice < 0 ||
+        !Number.isFinite(vatRate) ||
+        vatRate < 0 ||
+        !Number.isFinite(discountPercent) ||
+        discountPercent < 0
+      ) {
+        return {
+          subtotalCents: 0,
+          taxCents: 0,
+          totalCents: 0,
+        };
+      }
+
+      const baseCents = Math.round(quantity * unitPrice * 100);
+      const discountCents = Math.round(baseCents * (discountPercent / 100));
+      const subtotalCents = Math.max(0, baseCents - discountCents);
+      const taxCents = Math.round(subtotalCents * (vatRate / 100));
       return {
-        subtotalCents: 0,
-        taxCents: 0,
-        totalCents: 0,
+        subtotalCents,
+        taxCents,
+        totalCents: subtotalCents + taxCents,
       };
-    }
-
-    const baseCents = Math.round(quantity * unitPrice * 100);
-    const discountCents = Math.round(baseCents * (discountPercent / 100));
-    const subtotalCents = Math.max(0, baseCents - discountCents);
-    const taxCents = Math.round(subtotalCents * (vatRate / 100));
-    return {
-      subtotalCents,
-      taxCents,
-      totalCents: subtotalCents + taxCents,
-    };
-  }, []);
+    },
+    [],
+  );
 
   const settingsPreviewTotals = useMemo(() => {
     return settingsPreviewLines.reduce(
@@ -452,12 +457,14 @@ export function FreelanceBillingProfileForm() {
       });
 
       const fallbackStatus =
-        (result.freelanceStatus as BillingProfileState["freelanceStatus"] | null) ??
-        INITIAL_PROFILE.freelanceStatus;
+        (result.freelanceStatus as
+          | BillingProfileState["freelanceStatus"]
+          | null) ?? INITIAL_PROFILE.freelanceStatus;
 
       const fallbackActivity =
-        (result.activityCategory as BillingProfileState["activityCategory"] | null) ??
-        (fallbackStatus === "MICRO_ENTREPRISE" ? "LIBERAL" : "");
+        (result.activityCategory as
+          | BillingProfileState["activityCategory"]
+          | null) ?? (fallbackStatus === "MICRO_ENTREPRISE" ? "LIBERAL" : "");
 
       const nextProfile: BillingProfileState = {
         legalName: result.legalName,
@@ -487,10 +494,13 @@ export function FreelanceBillingProfileForm() {
         urssafDeclarationType:
           result.urssafDeclarationType ?? computedPreset.defaultDeclarationType,
         urssafContributionRate: formatRate(
-          result.urssafContributionRate ?? computedPreset.defaultContributionRatePercent,
+          result.urssafContributionRate ??
+            computedPreset.defaultContributionRatePercent,
         ),
         vatExemptionMention:
-          result.vatExemptionMention ?? computedPreset.vatExemptionSuggestedText ?? "",
+          result.vatExemptionMention ??
+          computedPreset.vatExemptionSuggestedText ??
+          "",
         documentTemplate:
           (result.documentTemplate as BillingDocumentTemplateId | null) ??
           DEFAULT_BILLING_DOCUMENT_TEMPLATE_ID,
@@ -591,9 +601,7 @@ export function FreelanceBillingProfileForm() {
               countryCode: "FR",
             } as AddressSuggestion;
           })
-          .filter(
-            (entry): entry is AddressSuggestion => entry !== null,
-          );
+          .filter((entry): entry is AddressSuggestion => entry !== null);
 
         setAddressSuggestions(suggestions);
       } catch {
@@ -611,13 +619,22 @@ export function FreelanceBillingProfileForm() {
   }, [profile.addressLine1, profile.countryCode]);
 
   const handleSave = async () => {
-    if (!profile.legalName || !profile.addressLine1 || !profile.postalCode || !profile.city) {
+    if (
+      !profile.legalName ||
+      !profile.addressLine1 ||
+      !profile.postalCode ||
+      !profile.city
+    ) {
       toast.error("Les champs légaux principaux sont requis");
       return;
     }
 
     const urssafRateNumber = Number(profile.urssafContributionRate);
-    if (!Number.isFinite(urssafRateNumber) || urssafRateNumber < 0 || urssafRateNumber > 100) {
+    if (
+      !Number.isFinite(urssafRateNumber) ||
+      urssafRateNumber < 0 ||
+      urssafRateNumber > 100
+    ) {
       toast.error("Taux URSSAF invalide");
       return;
     }
@@ -668,7 +685,9 @@ export function FreelanceBillingProfileForm() {
       toast.success("Profil de facturation enregistré");
       await loadProfile();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Enregistrement impossible");
+      toast.error(
+        error instanceof Error ? error.message : "Enregistrement impossible",
+      );
     } finally {
       setIsSaving(false);
     }
@@ -808,7 +827,8 @@ export function FreelanceBillingProfileForm() {
           </div>
           <div className="text-muted-foreground text-xs">
             Recommandation actuelle: {preset.defaultContributionRatePercent}% en{" "}
-            {preset.defaultDeclarationType === BillingDeclarationPeriodType.MONTHLY
+            {preset.defaultDeclarationType ===
+            BillingDeclarationPeriodType.MONTHLY
               ? "mensuel"
               : "trimestriel"}
             . {preset.notes.at(0)}
@@ -862,7 +882,9 @@ export function FreelanceBillingProfileForm() {
                   void handleSearchCompany();
                 }}
               >
-                {isSearchingCompany ? <Loader2 className="size-4 animate-spin" /> : null}
+                {isSearchingCompany ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : null}
                 Rechercher
               </Button>
             </div>
@@ -1050,7 +1072,10 @@ export function FreelanceBillingProfileForm() {
                   </SelectTrigger>
                   <SelectContent>
                     {COUNTRY_OPTIONS.map((country) => (
-                      <SelectItem key={`phone-${country.code}`} value={country.code}>
+                      <SelectItem
+                        key={`phone-${country.code}`}
+                        value={country.code}
+                      >
                         {country.flag} {country.dialCode}
                       </SelectItem>
                     ))}
@@ -1202,7 +1227,9 @@ export function FreelanceBillingProfileForm() {
                         }`}
                       >
                         <div className="mb-2 flex items-center justify-between gap-2">
-                          <span className="text-xs font-semibold">{template.label}</span>
+                          <span className="text-xs font-semibold">
+                            {template.label}
+                          </span>
                           <div className="flex items-center gap-1">
                             <span
                               className="inline-block h-2.5 w-2.5 rounded-full"
@@ -1214,7 +1241,9 @@ export function FreelanceBillingProfileForm() {
                             />
                           </div>
                         </div>
-                        <p className="text-muted-foreground text-[11px]">{template.mood}</p>
+                        <p className="text-muted-foreground text-[11px]">
+                          {template.mood}
+                        </p>
                       </button>
                     );
                   })}
@@ -1416,7 +1445,9 @@ export function FreelanceBillingProfileForm() {
                   addressLine2: profile.addressLine2,
                   postalCode: profile.postalCode,
                   city: profile.city,
-                  email: profile.documentShowIssuerContact ? profile.email : null,
+                  email: profile.documentShowIssuerContact
+                    ? profile.email
+                    : null,
                   iban: profile.iban,
                   bic: profile.bic,
                   vatExemptionMention: profile.vatExemptionMention,
@@ -1427,16 +1458,24 @@ export function FreelanceBillingProfileForm() {
                   {
                     id: "preview-client",
                     displayName: "Client exemple",
-                    siret: profile.documentShowClientContact ? "123 456 789" : null,
-                    vatNumber: profile.documentShowClientContact ? "FR00123456789" : null,
+                    siret: profile.documentShowClientContact
+                      ? "123 456 789"
+                      : null,
+                    vatNumber: profile.documentShowClientContact
+                      ? "FR00123456789"
+                      : null,
                   },
                 ]}
                 selectedClientId="preview-client"
                 selectedClient={{
                   id: "preview-client",
                   displayName: "Client exemple",
-                  siret: profile.documentShowClientContact ? "123 456 789" : null,
-                  vatNumber: profile.documentShowClientContact ? "FR00123456789" : null,
+                  siret: profile.documentShowClientContact
+                    ? "123 456 789"
+                    : null,
+                  vatNumber: profile.documentShowClientContact
+                    ? "FR00123456789"
+                    : null,
                 }}
                 issueDate="2026-02-16"
                 secondaryDate="2026-03-18"
@@ -1444,7 +1483,8 @@ export function FreelanceBillingProfileForm() {
                 lines={settingsPreviewLines}
                 notes={
                   profile.documentShowNotes
-                    ? profile.vatExemptionMention || "TVA non applicable, art. 293 B du CGI"
+                    ? profile.vatExemptionMention ||
+                      "TVA non applicable, art. 293 B du CGI"
                     : ""
                 }
                 terms={

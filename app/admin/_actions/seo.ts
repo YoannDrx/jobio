@@ -20,11 +20,12 @@ import robots from "../../robots";
 import sitemap from "../../sitemap";
 
 export const getSeoKpiSummary = async () => {
-  const [sitemapEntries, robotsMetadata, searchMetricsState] = await Promise.all([
-    sitemap(),
-    Promise.resolve(robots()),
-    loadSeoSearchMetricsState(),
-  ]);
+  const [sitemapEntries, robotsMetadata, searchMetricsState] =
+    await Promise.all([
+      sitemap(),
+      Promise.resolve(robots()),
+      loadSeoSearchMetricsState(),
+    ]);
 
   return computeSeoKpiSummary({
     sitemapEntries,

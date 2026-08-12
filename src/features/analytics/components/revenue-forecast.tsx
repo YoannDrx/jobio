@@ -46,7 +46,7 @@ export function RevenueForecast({
           <p className="text-muted-foreground text-xs tracking-wide uppercase">
             Pipeline pondéré
           </p>
-          <p className="mt-1 text-2xl font-bold text-brand-cyan">
+          <p className="text-brand-cyan mt-1 text-2xl font-bold">
             {formatCurrency(weightedPipeline)}
           </p>
         </Card>
@@ -96,7 +96,7 @@ export function RevenueForecast({
                   <td className="px-4 py-3 text-right text-sm">
                     {row.probability}%
                   </td>
-                  <td className="px-4 py-3 text-right text-sm font-semibold text-brand-cyan">
+                  <td className="text-brand-cyan px-4 py-3 text-right text-sm font-semibold">
                     {formatCurrency(row.weightedValue)}
                   </td>
                 </tr>

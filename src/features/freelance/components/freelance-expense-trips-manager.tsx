@@ -18,11 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Sheet,
-  SheetDescription,
-  SheetTitle,
-} from "@/components/ui/sheet";
+import { Sheet, SheetDescription, SheetTitle } from "@/components/ui/sheet";
 import { Switch } from "@/components/ui/switch";
 import {
   Table,
@@ -33,7 +29,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
-import { BillingExpenseStatus } from "@/generated/prisma";
+import { BillingExpenseStatus } from "@/features/freelance/billing-client-enums";
 import {
   createExpenseTripAction,
   deleteExpenseTripAction,
@@ -48,7 +44,10 @@ import {
   FreelanceSideSheetFooter,
   FreelanceSideSheetHeader,
 } from "@/features/freelance/components/freelance-side-sheet";
-import { formatCents, formatDate } from "@/features/freelance/billing-presenter";
+import {
+  formatCents,
+  formatDate,
+} from "@/features/freelance/billing-presenter";
 import { resolveActionResult } from "@/lib/actions/actions-utils";
 import { downloadCsv } from "@/lib/csv-export";
 import {
@@ -121,7 +120,8 @@ const INITIAL_FORM: ExpenseTripForm = {
   notes: "",
 };
 
-const toCents = (value: string) => Math.max(0, Math.round(Number(value || 0) * 100));
+const toCents = (value: string) =>
+  Math.max(0, Math.round(Number(value || 0) * 100));
 const toEur = (value: number) => (value / 100).toFixed(2);
 
 const statusLabel: Record<BillingExpenseStatus, string> = {
@@ -166,7 +166,9 @@ export function FreelanceExpenseTripsManager() {
       );
       setItems(result.items as ExpenseTripRow[]);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Chargement impossible");
+      toast.error(
+        error instanceof Error ? error.message : "Chargement impossible",
+      );
     } finally {
       setIsLoading(false);
     }
@@ -177,7 +179,10 @@ export function FreelanceExpenseTripsManager() {
   }, [loadData]);
 
   const totalAmount = useMemo(() => {
-    return items.reduce((accumulator, item) => accumulator + item.totalCents, 0);
+    return items.reduce(
+      (accumulator, item) => accumulator + item.totalCents,
+      0,
+    );
   }, [items]);
 
   const resetForm = () => {
@@ -205,7 +210,9 @@ export function FreelanceExpenseTripsManager() {
       totalEur: toEur(item.totalCents),
       status: item.status,
       isPaid: item.isPaid,
-      paidAt: item.paidAt ? new Date(item.paidAt).toISOString().slice(0, 10) : "",
+      paidAt: item.paidAt
+        ? new Date(item.paidAt).toISOString().slice(0, 10)
+        : "",
       paymentReference: item.paymentReference ?? "",
       matchedRegisterRef: item.matchedRegisterRef ?? "",
       notes: item.notes ?? "",
@@ -213,11 +220,15 @@ export function FreelanceExpenseTripsManager() {
     setSheetOpen(true);
   };
 
-  const setField = <K extends keyof ExpenseTripForm>(key: K, value: ExpenseTripForm[K]) => {
+  const setField = <K extends keyof ExpenseTripForm>(
+    key: K,
+    value: ExpenseTripForm[K],
+  ) => {
     setForm((previous) => ({ ...previous, [key]: value }));
   };
 
-  const canSave = form.fromAddress.trim().length > 0 && form.toAddress.trim().length > 0;
+  const canSave =
+    form.fromAddress.trim().length > 0 && form.toAddress.trim().length > 0;
 
   const handleSave = async () => {
     if (!canSave) {
@@ -247,7 +258,9 @@ export function FreelanceExpenseTripsManager() {
       };
 
       if (isEditing && editingId) {
-        await resolveActionResult(updateExpenseTripAction({ id: editingId, ...payload }));
+        await resolveActionResult(
+          updateExpenseTripAction({ id: editingId, ...payload }),
+        );
         toast.success("Trajet mis à jour");
       } else {
         await resolveActionResult(createExpenseTripAction(payload));
@@ -258,7 +271,9 @@ export function FreelanceExpenseTripsManager() {
       resetForm();
       await loadData();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Enregistrement impossible");
+      toast.error(
+        error instanceof Error ? error.message : "Enregistrement impossible",
+      );
     } finally {
       setIsSaving(false);
     }
@@ -271,7 +286,9 @@ export function FreelanceExpenseTripsManager() {
       toast.success("Trajet supprimé");
       await loadData();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Suppression impossible");
+      toast.error(
+        error instanceof Error ? error.message : "Suppression impossible",
+      );
     } finally {
       setDeletingId(null);
     }
@@ -286,7 +303,9 @@ export function FreelanceExpenseTripsManager() {
       downloadCsv(result.csv, result.filename);
       toast.success("Export CSV des trajets téléchargé");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Export CSV impossible");
+      toast.error(
+        error instanceof Error ? error.message : "Export CSV impossible",
+      );
     } finally {
       setIsExportingCsv(false);
     }
@@ -323,7 +342,9 @@ export function FreelanceExpenseTripsManager() {
         `Matching suggéré: ${recommended.registerRef} (${recommended.score} pts)`,
       );
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Suggestion impossible");
+      toast.error(
+        error instanceof Error ? error.message : "Suggestion impossible",
+      );
     } finally {
       setIsSuggestingMatch(false);
     }
@@ -348,7 +369,11 @@ export function FreelanceExpenseTripsManager() {
                 void handleExportCsv();
               }}
             >
-              {isExportingCsv ? <Loader2 className="size-4 animate-spin" /> : <Download className="size-4" />}
+              {isExportingCsv ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Download className="size-4" />
+              )}
               Export CSV
             </Button>
           </div>
@@ -373,7 +398,9 @@ export function FreelanceExpenseTripsManager() {
               Chargement des trajets...
             </div>
           ) : items.length === 0 ? (
-            <p className="text-muted-foreground text-sm">Aucun trajet enregistré.</p>
+            <p className="text-muted-foreground text-sm">
+              Aucun trajet enregistré.
+            </p>
           ) : (
             <Table>
               <TableHeader>
@@ -399,12 +426,19 @@ export function FreelanceExpenseTripsManager() {
                       {item.distanceKm} km{item.roundTrip ? " (AR)" : ""}
                     </TableCell>
                     <TableCell>
-                      <Badge variant={statusVariant[item.status]}>{statusLabel[item.status]}</Badge>
+                      <Badge variant={statusVariant[item.status]}>
+                        {statusLabel[item.status]}
+                      </Badge>
                     </TableCell>
                     <TableCell>{formatCents(item.totalCents)}</TableCell>
                     <TableCell>
                       <div className="flex justify-end gap-2">
-                        <Button type="button" variant="outline" size="icon" onClick={() => openEdit(item)}>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          onClick={() => openEdit(item)}
+                        >
                           <PencilLine className="size-4" />
                         </Button>
                         <DropdownMenu>
@@ -425,7 +459,11 @@ export function FreelanceExpenseTripsManager() {
                               }}
                               disabled={deletingId === item.id}
                             >
-                              {deletingId === item.id ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
+                              {deletingId === item.id ? (
+                                <Loader2 className="size-4 animate-spin" />
+                              ) : (
+                                <Trash2 className="size-4" />
+                              )}
                               Supprimer
                             </DropdownMenuItem>
                           </DropdownMenuContent>
@@ -451,72 +489,145 @@ export function FreelanceExpenseTripsManager() {
       >
         <FreelanceSideSheetContent>
           <FreelanceSideSheetHeader>
-            <SheetTitle>{isEditing ? "Éditer le trajet" : "Nouveau trajet"}</SheetTitle>
-            <SheetDescription>Saisie kilométrique, barèmes, frais et suivi de remboursement.</SheetDescription>
+            <SheetTitle>
+              {isEditing ? "Éditer le trajet" : "Nouveau trajet"}
+            </SheetTitle>
+            <SheetDescription>
+              Saisie kilométrique, barèmes, frais et suivi de remboursement.
+            </SheetDescription>
           </FreelanceSideSheetHeader>
           <FreelanceSideSheetBody className="grid gap-4">
             <div className="grid gap-3 md:grid-cols-2">
               <div className="space-y-1">
                 <Label>Date</Label>
-                <Input type="date" value={form.tripDate} onChange={(event) => setField("tripDate", event.target.value)} />
+                <Input
+                  type="date"
+                  value={form.tripDate}
+                  onChange={(event) => setField("tripDate", event.target.value)}
+                />
               </div>
               <div className="space-y-1">
                 <Label>Statut</Label>
-                <Select value={form.status} onValueChange={(value) => setField("status", value as BillingExpenseStatus)}>
+                <Select
+                  value={form.status}
+                  onValueChange={(value) =>
+                    setField("status", value as BillingExpenseStatus)
+                  }
+                >
                   <SelectTrigger className="w-full">
                     <SelectValue placeholder="Statut" />
                   </SelectTrigger>
                   <SelectContent>
-                    {(Object.keys(statusLabel) as BillingExpenseStatus[]).map((status) => (
-                      <SelectItem key={status} value={status}>
-                        {statusLabel[status]}
-                      </SelectItem>
-                    ))}
+                    {(Object.keys(statusLabel) as BillingExpenseStatus[]).map(
+                      (status) => (
+                        <SelectItem key={status} value={status}>
+                          {statusLabel[status]}
+                        </SelectItem>
+                      ),
+                    )}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-1 md:col-span-2">
                 <Label>Adresse de départ</Label>
-                <Input value={form.fromAddress} onChange={(event) => setField("fromAddress", event.target.value)} />
+                <Input
+                  value={form.fromAddress}
+                  onChange={(event) =>
+                    setField("fromAddress", event.target.value)
+                  }
+                />
               </div>
               <div className="space-y-1 md:col-span-2">
                 <Label>Adresse d'arrivée</Label>
-                <Input value={form.toAddress} onChange={(event) => setField("toAddress", event.target.value)} />
+                <Input
+                  value={form.toAddress}
+                  onChange={(event) =>
+                    setField("toAddress", event.target.value)
+                  }
+                />
               </div>
               <div className="space-y-1">
                 <Label>Distance (km)</Label>
-                <Input type="number" min="0" step="0.1" value={form.distanceKm} onChange={(event) => setField("distanceKm", event.target.value)} />
+                <Input
+                  type="number"
+                  min="0"
+                  step="0.1"
+                  value={form.distanceKm}
+                  onChange={(event) =>
+                    setField("distanceKm", event.target.value)
+                  }
+                />
               </div>
               <div className="space-y-1">
                 <Label>Puissance véhicule</Label>
-                <Input value={form.vehiclePower} onChange={(event) => setField("vehiclePower", event.target.value)} />
+                <Input
+                  value={form.vehiclePower}
+                  onChange={(event) =>
+                    setField("vehiclePower", event.target.value)
+                  }
+                />
               </div>
               <div className="space-y-1">
                 <Label>Barème (€/km)</Label>
-                <Input type="number" min="0" step="0.01" value={form.allowanceRateEurPerKm} onChange={(event) => setField("allowanceRateEurPerKm", event.target.value)} />
+                <Input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={form.allowanceRateEurPerKm}
+                  onChange={(event) =>
+                    setField("allowanceRateEurPerKm", event.target.value)
+                  }
+                />
               </div>
               <div className="space-y-1">
                 <Label>Péages (€)</Label>
-                <Input type="number" min="0" step="0.01" value={form.tollEur} onChange={(event) => setField("tollEur", event.target.value)} />
+                <Input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={form.tollEur}
+                  onChange={(event) => setField("tollEur", event.target.value)}
+                />
               </div>
               <div className="space-y-1">
                 <Label>Parking (€)</Label>
-                <Input type="number" min="0" step="0.01" value={form.parkingEur} onChange={(event) => setField("parkingEur", event.target.value)} />
+                <Input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={form.parkingEur}
+                  onChange={(event) =>
+                    setField("parkingEur", event.target.value)
+                  }
+                />
               </div>
               <div className="space-y-1">
                 <Label>Total (€)</Label>
-                <Input type="number" min="0" step="0.01" value={form.totalEur} onChange={(event) => setField("totalEur", event.target.value)} />
+                <Input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={form.totalEur}
+                  onChange={(event) => setField("totalEur", event.target.value)}
+                />
               </div>
               <div className="space-y-1">
                 <Label>Réf. paiement</Label>
-                <Input value={form.paymentReference} onChange={(event) => setField("paymentReference", event.target.value)} />
+                <Input
+                  value={form.paymentReference}
+                  onChange={(event) =>
+                    setField("paymentReference", event.target.value)
+                  }
+                />
               </div>
               <div className="space-y-1">
                 <Label>Matching registre</Label>
                 <div className="flex items-center gap-2">
                   <Input
                     value={form.matchedRegisterRef}
-                    onChange={(event) => setField("matchedRegisterRef", event.target.value)}
+                    onChange={(event) =>
+                      setField("matchedRegisterRef", event.target.value)
+                    }
                   />
                   <Button
                     type="button"
@@ -538,27 +649,51 @@ export function FreelanceExpenseTripsManager() {
               </div>
               <div className="space-y-1">
                 <Label>Date de paiement</Label>
-                <Input type="date" value={form.paidAt} onChange={(event) => setField("paidAt", event.target.value)} />
+                <Input
+                  type="date"
+                  value={form.paidAt}
+                  onChange={(event) => setField("paidAt", event.target.value)}
+                />
               </div>
-              <div className="md:col-span-2 flex items-center justify-between rounded-md border px-3 py-2">
+              <div className="flex items-center justify-between rounded-md border px-3 py-2 md:col-span-2">
                 <Label htmlFor="trip-round-trip">Aller-retour</Label>
-                <Switch id="trip-round-trip" checked={form.roundTrip} onCheckedChange={(checked) => setField("roundTrip", checked)} />
+                <Switch
+                  id="trip-round-trip"
+                  checked={form.roundTrip}
+                  onCheckedChange={(checked) => setField("roundTrip", checked)}
+                />
               </div>
-              <div className="md:col-span-2 flex items-center justify-between rounded-md border px-3 py-2">
+              <div className="flex items-center justify-between rounded-md border px-3 py-2 md:col-span-2">
                 <Label htmlFor="trip-paid">Marquer comme payé</Label>
-                <Switch id="trip-paid" checked={form.isPaid} onCheckedChange={(checked) => setField("isPaid", checked)} />
+                <Switch
+                  id="trip-paid"
+                  checked={form.isPaid}
+                  onCheckedChange={(checked) => setField("isPaid", checked)}
+                />
               </div>
               <div className="space-y-1 md:col-span-2">
                 <Label>Notes</Label>
-                <Textarea rows={4} value={form.notes} onChange={(event) => setField("notes", event.target.value)} />
+                <Textarea
+                  rows={4}
+                  value={form.notes}
+                  onChange={(event) => setField("notes", event.target.value)}
+                />
               </div>
             </div>
           </FreelanceSideSheetBody>
           <FreelanceSideSheetFooter>
-            <Button type="button" variant="outline" onClick={() => setSheetOpen(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setSheetOpen(false)}
+            >
               Annuler
             </Button>
-            <Button type="button" disabled={isSaving || !canSave} onClick={() => void handleSave()}>
+            <Button
+              type="button"
+              disabled={isSaving || !canSave}
+              onClick={() => void handleSave()}
+            >
               {isSaving ? <Loader2 className="size-4 animate-spin" /> : null}
               {isEditing ? "Enregistrer" : "Créer"}
             </Button>

@@ -1,7 +1,7 @@
 import { getPlanLimits } from "@/lib/auth/stripe/auth-plans";
 import type { PlanLimit } from "@/lib/auth/stripe/auth-plans";
 
-type PlanName = "free" | "pro" | "ultra";
+type PlanName = "free" | "pro";
 
 export type PricingMatrixValue = string | boolean;
 
@@ -9,7 +9,6 @@ export type PricingMatrixFeature = {
   name: string;
   free: PricingMatrixValue;
   pro: PricingMatrixValue;
-  ultra: PricingMatrixValue;
 };
 
 export type PricingMatrixCategory = {
@@ -17,19 +16,17 @@ export type PricingMatrixCategory = {
   features: PricingMatrixFeature[];
 };
 
-const PLAN_NAMES: PlanName[] = ["free", "pro", "ultra"];
+const PLAN_NAMES: PlanName[] = ["free", "pro"];
 const UNLIMITED_THRESHOLD = 999_999;
 
 const SUPPORT_LABEL_BY_PLAN: Record<PlanName, string> = {
   free: "Communautaire",
   pro: "Email prioritaire",
-  ultra: "Chat prioritaire",
 };
 
 const planLimitsByPlan = {
   free: getPlanLimits("free"),
   pro: getPlanLimits("pro"),
-  ultra: getPlanLimits("ultra"),
 };
 
 const isUnlimited = (value: number) => value >= UNLIMITED_THRESHOLD;
@@ -56,7 +53,6 @@ const buildLimitFeature = (
   name,
   free: format(planLimitsByPlan.free[key]),
   pro: format(planLimitsByPlan.pro[key]),
-  ultra: format(planLimitsByPlan.ultra[key]),
 });
 
 const buildPlanFeature = (
@@ -80,6 +76,11 @@ export const PRICING_COMPARISON_CATEGORIES: PricingMatrixCategory[] = [
       buildLimitFeature("Contacts", "contacts"),
       buildLimitFeature("Plateformes", "platforms"),
       buildLimitFeature("Entreprises", "companies"),
+      buildLimitFeature(
+        "Radar Missions automatisé",
+        "opportunityDiscovery",
+        asBoolean,
+      ),
     ],
   },
   {

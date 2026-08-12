@@ -56,29 +56,33 @@ export const searchBillingCompaniesAction = authAction
       results?: Record<string, unknown>[];
     };
 
-    const companies: CompanySearchResult[] = (payload.results ?? []).map((item) => {
-      const siege =
-        typeof item.siege === "object" && item.siege !== null
-          ? (item.siege as Record<string, unknown>)
-          : {};
+    const companies: CompanySearchResult[] = (payload.results ?? []).map(
+      (item) => {
+        const siege =
+          typeof item.siege === "object" && item.siege !== null
+            ? (item.siege as Record<string, unknown>)
+            : {};
 
-      const displayName = cleanText(item.nom_complet) || cleanText(item.nom_raison_sociale);
-      const legalName = cleanText(item.nom_raison_sociale);
-      const city = cleanText(siege.libelle_commune) || cleanText(siege.commune);
+        const displayName =
+          cleanText(item.nom_complet) || cleanText(item.nom_raison_sociale);
+        const legalName = cleanText(item.nom_raison_sociale);
+        const city =
+          cleanText(siege.libelle_commune) || cleanText(siege.commune);
 
-      return {
-        siren: cleanText(item.siren),
-        siret: cleanText(siege.siret) || null,
-        displayName,
-        legalName: legalName || null,
-        vatNumber: null,
-        addressLine1: toAddressLine1(siege),
-        addressLine2: cleanText(siege.complement_adresse) || null,
-        postalCode: cleanText(siege.code_postal),
-        city,
-        countryCode: "FR",
-      };
-    });
+        return {
+          siren: cleanText(item.siren),
+          siret: cleanText(siege.siret) || null,
+          displayName,
+          legalName: legalName || null,
+          vatNumber: null,
+          addressLine1: toAddressLine1(siege),
+          addressLine2: cleanText(siege.complement_adresse) || null,
+          postalCode: cleanText(siege.code_postal),
+          city,
+          countryCode: "FR",
+        };
+      },
+    );
 
     return {
       companies: companies.filter((company) => company.displayName.length > 0),

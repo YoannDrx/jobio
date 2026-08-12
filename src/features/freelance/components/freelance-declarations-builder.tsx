@@ -9,7 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { BillingDeclarationPeriodType } from "@/generated/prisma";
+import type { BillingDeclarationPeriodType } from "@/generated/prisma";
 import { getBillingProfileAction } from "@/features/freelance/billing-clients.action";
 import { rebuildBillingDeclarationPeriodsAction } from "@/features/freelance/billing-documents.action";
 import {
@@ -26,6 +26,11 @@ const formatRate = (value: number) => {
   return Number.isInteger(value) ? String(value) : value.toFixed(1);
 };
 
+const DECLARATION_PERIOD = {
+  monthly: "MONTHLY",
+  quarterly: "QUARTERLY",
+} as const satisfies Record<string, BillingDeclarationPeriodType>;
+
 export function FreelanceDeclarationsBuilder() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
@@ -33,7 +38,7 @@ export function FreelanceDeclarationsBuilder() {
   const [year, setYear] = useState(String(new Date().getFullYear()));
   const [rate, setRate] = useState("23.1");
   const [type, setType] = useState<BillingDeclarationPeriodType>(
-    BillingDeclarationPeriodType.QUARTERLY,
+    DECLARATION_PERIOD.quarterly,
   );
   const [preset, setPreset] = useState<BillingCompliancePreset | null>(null);
 
@@ -47,10 +52,13 @@ export function FreelanceDeclarationsBuilder() {
         });
 
         setPreset(nextPreset);
-        setType(profile?.urssafDeclarationType ?? nextPreset.defaultDeclarationType);
+        setType(
+          profile?.urssafDeclarationType ?? nextPreset.defaultDeclarationType,
+        );
         setRate(
           formatRate(
-            profile?.urssafContributionRate ?? nextPreset.defaultContributionRatePercent,
+            profile?.urssafContributionRate ??
+              nextPreset.defaultContributionRatePercent,
           ),
         );
       } catch {
@@ -101,7 +109,9 @@ export function FreelanceDeclarationsBuilder() {
       toast.success(`${result.periods.length} période(s) recalculée(s)`);
       router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Recalcul impossible");
+      toast.error(
+        error instanceof Error ? error.message : "Recalcul impossible",
+      );
     } finally {
       setIsLoading(false);
     }
@@ -122,8 +132,10 @@ export function FreelanceDeclarationsBuilder() {
               <SelectValue placeholder="Type" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value={BillingDeclarationPeriodType.MONTHLY}>Mensuel</SelectItem>
-              <SelectItem value={BillingDeclarationPeriodType.QUARTERLY}>
+              <SelectItem value={DECLARATION_PERIOD.monthly}>
+                Mensuel
+              </SelectItem>
+              <SelectItem value={DECLARATION_PERIOD.quarterly}>
                 Trimestriel
               </SelectItem>
             </SelectContent>

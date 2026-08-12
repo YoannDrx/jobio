@@ -233,7 +233,10 @@ const buildIssuerBlock = (
     `;
   }
 
-  const legalMeta = [issuer.legalForm, issuer.siret ? `SIRET ${issuer.siret}` : null]
+  const legalMeta = [
+    issuer.legalForm,
+    issuer.siret ? `SIRET ${issuer.siret}` : null,
+  ]
     .filter((part): part is string => part !== null)
     .join(" · ");
 
@@ -422,15 +425,21 @@ const buildMetadata = (params: {
   ];
 
   if (params.kind === "quote") {
-    pieces.push(`<p>Valide jusqu'au: ${formatDate(params.document.validUntil ?? null)}</p>`);
+    pieces.push(
+      `<p>Valide jusqu'au: ${formatDate(params.document.validUntil ?? null)}</p>`,
+    );
   }
 
   if (params.kind === "invoice") {
-    pieces.push(`<p>Date d'échéance: ${formatDate(params.document.dueDate ?? null)}</p>`);
+    pieces.push(
+      `<p>Date d'échéance: ${formatDate(params.document.dueDate ?? null)}</p>`,
+    );
   }
 
   if (params.kind === "creditNote") {
-    pieces.push(`<p>Facture d'origine: ${toText(params.document.sourceNumber)}</p>`);
+    pieces.push(
+      `<p>Facture d'origine: ${toText(params.document.sourceNumber)}</p>`,
+    );
     pieces.push(`<p>Motif: ${toText(params.document.reason)}</p>`);
   }
 
@@ -464,7 +473,10 @@ const buildOptionalBlocks = (params: {
   return blocks.join("\n");
 };
 
-const buildFooter = (issuer: BillingIssuer | null, preferences: RenderPreferences) => {
+const buildFooter = (
+  issuer: BillingIssuer | null,
+  preferences: RenderPreferences,
+) => {
   if (!issuer) {
     return `<p class="muted">Mentions légales indisponibles (profil de facturation incomplet).</p>`;
   }
@@ -496,11 +508,15 @@ const buildFooter = (issuer: BillingIssuer | null, preferences: RenderPreference
   if (pieces.length === 0) {
     footerRows.push(`<p class="muted">Aucune mention complémentaire</p>`);
   } else {
-    footerRows.push(`<p class="muted">${pieces.map((piece) => escapeHtml(piece)).join(" · ")}</p>`);
+    footerRows.push(
+      `<p class="muted">${pieces.map((piece) => escapeHtml(piece)).join(" · ")}</p>`,
+    );
   }
 
   if (preferences.footerText) {
-    footerRows.push(`<p class="muted">${escapeHtml(preferences.footerText)}</p>`);
+    footerRows.push(
+      `<p class="muted">${escapeHtml(preferences.footerText)}</p>`,
+    );
   }
 
   return footerRows.join("\n");

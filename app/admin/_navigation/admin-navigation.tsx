@@ -24,7 +24,7 @@ export async function AdminNavigation({ children }: PropsWithChildren) {
             </div>
           </Layout>
         </header>
-        <div className="flex flex-1 flex-col gap-4 px-1.5 pb-4 pt-0 sm:px-2.5 lg:px-3.5">
+        <div className="flex flex-1 flex-col gap-4 px-1.5 pt-0 pb-4 sm:px-2.5 lg:px-3.5">
           {children}
         </div>
       </SidebarInset>

@@ -11,7 +11,14 @@ export const extractOnboardingSkillNames = (value: unknown): string[] => {
 };
 
 export const parseOnboardingSkillInput = (value: string) =>
-  [...new Set(value.split(",").map((skill) => skill.trim()).filter(Boolean))]
+  [
+    ...new Set(
+      value
+        .split(",")
+        .map((skill) => skill.trim())
+        .filter(Boolean),
+    ),
+  ]
     .slice(0, 8)
     .map((name) => ({ name, level: "INTERMEDIATE" as const }));
 

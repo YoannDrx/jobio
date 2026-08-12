@@ -36,7 +36,12 @@ export function DocumentStudioLayout({
   const isMobile = useIsMobile();
 
   if (emptyState) {
-    return <div>{emptyState}</div>;
+    return (
+      <div className="flex flex-col gap-3">
+        {toolbar}
+        {emptyState}
+      </div>
+    );
   }
 
   return (

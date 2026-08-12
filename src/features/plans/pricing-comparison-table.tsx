@@ -42,16 +42,13 @@ export function PricingComparisonTable() {
     <div className="space-y-3">
       {/* Sticky plan header */}
       <div className="bg-background/80 sticky top-0 z-10 backdrop-blur-sm">
-        <div className="grid grid-cols-[1fr_repeat(3,80px)] gap-1 px-4 py-3 sm:grid-cols-[1fr_repeat(3,minmax(100px,1fr))]">
+        <div className="grid grid-cols-[1fr_repeat(2,96px)] gap-1 px-4 py-3 sm:grid-cols-[1fr_repeat(2,minmax(140px,1fr))]">
           <div />
           <div className="text-muted-foreground text-center text-xs font-semibold tracking-wider uppercase">
             Free
           </div>
           <div className="text-primary text-center text-xs font-semibold tracking-wider uppercase">
             Pro
-          </div>
-          <div className="text-muted-foreground text-center text-xs font-semibold tracking-wider uppercase">
-            Ultra
           </div>
         </div>
       </div>
@@ -104,7 +101,7 @@ export function PricingComparisonTable() {
                       <div
                         key={`${category.name}-${idx}`}
                         className={cn(
-                          "grid grid-cols-[1fr_repeat(3,80px)] gap-1 px-4 py-3 sm:grid-cols-[1fr_repeat(3,minmax(100px,1fr))]",
+                          "grid grid-cols-[1fr_repeat(2,96px)] gap-1 px-4 py-3 sm:grid-cols-[1fr_repeat(2,minmax(140px,1fr))]",
                           idx !== category.features.length - 1 &&
                             "border-border/30 border-b",
                         )}
@@ -117,9 +114,6 @@ export function PricingComparisonTable() {
                         </div>
                         <div className="bg-primary/5 -my-3 flex items-center justify-center rounded-sm py-3">
                           <FeatureValue value={feature.pro} />
-                        </div>
-                        <div className="text-center">
-                          <FeatureValue value={feature.ultra} />
                         </div>
                       </div>
                     ))}
