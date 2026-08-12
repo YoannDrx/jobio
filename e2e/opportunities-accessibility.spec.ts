@@ -20,6 +20,19 @@ test.describe("Radar Missions accessibility", () => {
     // It can legitimately exceed the shared E2E timeout on slower browsers/CI.
     test.slow();
 
+    const waitForVisualStateToSettle = async () => {
+      await page.evaluate(async () => {
+        const animations = document
+          .getAnimations()
+          .filter((animation) => animation.playState !== "idle");
+        await Promise.all(
+          animations.map(async (animation) => {
+            await animation.finished.catch(() => undefined);
+          }),
+        );
+      });
+    };
+
     const userData = await createTestAccount({
       page,
       callbackURL: "/job/opportunities",
@@ -36,6 +49,7 @@ test.describe("Radar Missions accessibility", () => {
         await expect(
           page.getByRole("heading", { name: "Radar Missions" }),
         ).toBeVisible();
+        await waitForVisualStateToSettle();
 
         const documentWidth = await page.evaluate(() => ({
           viewport: window.innerWidth,
@@ -67,6 +81,10 @@ test.describe("Radar Missions accessibility", () => {
           name: "Développeur TypeScript accessible",
         }),
       ).toBeVisible();
+      await expect(
+        page.getByRole("button", { name: "Analyser l’annonce" }),
+      ).toBeEnabled();
+      await waitForVisualStateToSettle();
 
       const populatedResults = await new AxeBuilder({ page })
         .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
