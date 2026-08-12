@@ -57,6 +57,23 @@ reste dans `functional-technical-audit.md`, les critères bloquants dans
 - Restauration PITR Neon exécutée avec succès.
 - Webhook Resend de production étendu à `email.received`.
 
+### Authentification externe
+
+- URL Better Auth de production et domaine canonique alignés sur
+  `https://jobio.fr`.
+- Google OAuth : callback exact `https://jobio.fr/api/auth/callback/google`
+  ajouté au client, application externe passée de `Test` à `En production` et
+  sélecteur de compte atteint sans `redirect_uri_mismatch`.
+- GitHub OAuth : homepage et callback de l'application dédiée `jobio` corrigés
+  sans `www` ; retours à la ligne terminaux retirés du client ID et du secret
+  Vercel, puis production redéployée.
+- Écrans fournisseurs vérifiés en production : Google affiche le sélecteur de
+  compte, GitHub affiche `Authorize jobio`, tous deux annoncent un retour vers
+  `https://jobio.fr`.
+- Callbacks Better Auth vérifiés avec un code volontairement invalide : état
+  accepté et retour contrôlé vers `/auth/signin?error=invalid_code` pour Google
+  comme pour GitHub, sans création d'utilisateur.
+
 ## Preuves de la release candidate
 
 | Contrôle                     | Résultat                                                                        |
@@ -81,22 +98,22 @@ Firefox isolément en 26,6 secondes sans retry.
 
 ## Reste à faire avant activation publique
 
-| Priorité | Gate                 | Prochaine action                                                                                                | Preuve attendue                                   |
-| -------- | -------------------- | --------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
-| P0       | Statuts GA cœur      | Recetter Auth, Aujourd’hui, Pipeline, Contacts, Relances, CV/Profils et Notifications puis joindre les rapports | Modules cœur `ga`, Radar maintenu `beta`          |
-| P0       | Juridique/vie privée | Faire valider CGU, confidentialité, cookies, prospection B2B, sous-traitants, export et rétention               | Avis daté et signé, valable 365 jours             |
-| P0       | Comptabilité         | Faire auditer TVA, arrondis, numérotation, avoirs, FEC, Factur-X et inaltérabilité                              | Avis daté et signé, aucune promesse non certifiée |
-| P0       | Sécurité             | Faire réaliser une revue indépendante incluant SSRF, isolation, secrets et prompt injection                     | Rapport sans critique/élevée non acceptée         |
-| P0       | PITR                 | Porter la rétention Neon de 6 h à au moins 168 h puis refaire une restauration                                  | Rapport daté avec RPO/RTO                         |
-| P0       | Stripe live          | Exécuter un abonnement et un programme réellement payés puis remboursés                                         | IDs Stripe, ledger et droits réconciliés          |
-| P0       | Crons                | Obtenir sept journées UTC consécutives avec chaque tâche en succès                                              | `pnpm production:verify-crons` vert               |
-| P0       | Webhooks             | Observer Stripe et Resend pendant sept jours avec backlog nul                                                   | Rapport daté et volumes                           |
-| P0       | Mobile               | Porter Lighthouse mobile de 79 à au moins 85                                                                    | Rapport production valable 30 jours               |
-| P1       | Radar France Travail | Obtenir les credentials et confirmer les règles d’attribution/conservation                                      | Run API réel et source visible dans l’UI          |
-| P1       | Radar inbound        | Libérer/acheter un domaine Resend, configurer le sous-domaine et les MX                                         | Domaine vérifié, email inbound réel purgé         |
-| P1       | Providers            | Valider licences, quotas, attribution et rétention Adzuna/Jooble avant activation                               | Fiche fournisseur datée par provider              |
-| P1       | IA live              | Observer modèle, coût et latence sur 100 % des appels pendant le dogfood                                        | Dashboard/rapport sans ligne incomplète           |
-| P1       | Auth externe         | Rejouer OAuth, OTP, Resend et push réels en staging                                                             | E2E fournisseurs et révocation verts              |
+| Priorité | Gate                 | Prochaine action                                                                                                    | Preuve attendue                                   |
+| -------- | -------------------- | ------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
+| P0       | Statuts GA cœur      | Recetter Auth, Aujourd’hui, Pipeline, Contacts, Relances, CV/Profils et Notifications puis joindre les rapports     | Modules cœur `ga`, Radar maintenu `beta`          |
+| P0       | Juridique/vie privée | Faire valider CGU, confidentialité, cookies, prospection B2B, sous-traitants, export et rétention                   | Avis daté et signé, valable 365 jours             |
+| P0       | Comptabilité         | Faire auditer TVA, arrondis, numérotation, avoirs, FEC, Factur-X et inaltérabilité                                  | Avis daté et signé, aucune promesse non certifiée |
+| P0       | Sécurité             | Faire réaliser une revue indépendante incluant SSRF, isolation, secrets et prompt injection                         | Rapport sans critique/élevée non acceptée         |
+| P0       | PITR                 | Porter la rétention Neon de 6 h à au moins 168 h puis refaire une restauration                                      | Rapport daté avec RPO/RTO                         |
+| P0       | Stripe live          | Exécuter un abonnement et un programme réellement payés puis remboursés                                             | IDs Stripe, ledger et droits réconciliés          |
+| P0       | Crons                | Obtenir sept journées UTC consécutives avec chaque tâche en succès                                                  | `pnpm production:verify-crons` vert               |
+| P0       | Webhooks             | Observer Stripe et Resend pendant sept jours avec backlog nul                                                       | Rapport daté et volumes                           |
+| P0       | Mobile               | Porter Lighthouse mobile de 79 à au moins 85                                                                        | Rapport production valable 30 jours               |
+| P1       | Radar France Travail | Obtenir les credentials et confirmer les règles d’attribution/conservation                                          | Run API réel et source visible dans l’UI          |
+| P1       | Radar inbound        | Libérer/acheter un domaine Resend, configurer le sous-domaine et les MX                                             | Domaine vérifié, email inbound réel purgé         |
+| P1       | Providers            | Valider licences, quotas, attribution et rétention Adzuna/Jooble avant activation                                   | Fiche fournisseur datée par provider              |
+| P1       | IA live              | Observer modèle, coût et latence sur 100 % des appels pendant le dogfood                                            | Dashboard/rapport sans ligne incomplète           |
+| P1       | Auth externe         | Finaliser un login puis une révocation réels Google/GitHub avec le compte test choisi ; rejouer OTP, Resend et push | E2E fournisseurs et révocation verts              |
 
 ## Séquence recommandée
 
