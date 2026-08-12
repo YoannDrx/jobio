@@ -1,23 +1,22 @@
 import { prisma } from "@/lib/prisma";
-import { test } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 import { createTestAccount } from "./utils/auth-test";
 
 test.describe("sequences", () => {
-  test("redirects hidden sequence deep links to the V1 today page", async ({
-    page,
-  }) => {
+  test("opens the public sequences module", async ({ page }) => {
     const userData = await createTestAccount({
       page,
       callbackURL: "/job",
     });
 
     await page.goto("/job/sequences");
-    await page.waitForURL(
-      (url) =>
-        url.pathname === "/job" &&
-        url.searchParams.get("notice") === "feature-unavailable",
-      { timeout: 15000 },
-    );
+    await expect(page).toHaveURL(/\/job\/sequences/);
+    await expect(
+      page.getByRole("heading", { name: /^Séquences/ }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Nouvelle séquence" }),
+    ).toBeVisible();
 
     // Clean up
     const user = await prisma.user.findUnique({

@@ -26,7 +26,7 @@ export const SignInProviders = ({
   return (
     <div className="flex flex-col gap-4 lg:gap-6">
       <SignInCredentialsAndMagicLinkForm callbackUrl={safeCallbackUrl} />
-      {providers.length > 0 && <Divider>or</Divider>}
+      {providers.length > 0 && <Divider>ou</Divider>}
 
       <div
         className={cn(
@@ -44,13 +44,13 @@ export const SignInProviders = ({
       </div>
 
       <Typography variant="muted" className="text-xs">
-        You don't have an account?{" "}
+        Tu n&apos;as pas encore de compte ?{" "}
         <Typography
           variant="link"
           as={Link}
           href={`/auth/signup?callbackUrl=${encodeURIComponent(safeCallbackUrl)}`}
         >
-          Sign up
+          Créer un compte
         </Typography>
       </Typography>
     </div>

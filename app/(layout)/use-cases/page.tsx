@@ -12,7 +12,7 @@ import { SiteConfig } from "@/site-config";
 import Link from "next/link";
 
 export const metadata = buildMarketingMetadata({
-  title: `Use Cases Freelance | ${SiteConfig.title}`,
+  title: `Cas d’usage freelance | ${SiteConfig.title}`,
   description:
     "Découvre comment Jobio s'adapte aux différents profils freelance tech: développeur, data/IA, product et no-code.",
   path: "/use-cases",
@@ -44,7 +44,7 @@ const relatedResources = [
     href: "/#pricing" as const,
     title: "Comparer les plans",
     description:
-      "Choisis le plan Free, Pro ou Ultra selon ton volume et tes objectifs.",
+      "Choisis le plan Free ou Pro selon ton volume et tes objectifs.",
     ctaLabel: "Voir les tarifs",
   },
 ];
@@ -52,7 +52,7 @@ const relatedResources = [
 const webPageJsonLd = {
   "@context": "https://schema.org",
   "@type": "CollectionPage",
-  name: `Use Cases Freelance | ${SiteConfig.title}`,
+  name: `Cas d’usage freelance | ${SiteConfig.title}`,
   url: absoluteUrl("/use-cases"),
   inLanguage: "fr-FR",
   description:
@@ -89,11 +89,11 @@ export default function UseCasesPage() {
       <BreadcrumbStructuredData
         items={[
           { name: "Accueil", path: "/" },
-          { name: "Use cases", path: "/use-cases" },
+          { name: "Cas d’usage", path: "/use-cases" },
         ]}
       />
       <PublicPageShell
-        badge="Use cases"
+        badge="Cas d’usage"
         title="Des parcours adaptés à chaque profil freelance tech."
         description="Chaque cas d'usage relie acquisition, relance, CV et facturation pour t'aider à exécuter un workflow commercial complet."
         lastUpdated="23 février 2026"
@@ -155,4 +155,3 @@ export default function UseCasesPage() {
     </>
   );
 }
-

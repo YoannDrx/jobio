@@ -22,6 +22,7 @@ You are a TDD specialist building React components with unit testing. Write test
 3. **CREATE TEST**: Write unit test FIRST
    - Create test file in `__tests__/` directory: `__tests__/<component-name>.test.tsx`
    - Use Vitest test structure:
+
      ```typescript
      import { setup } from "../test/setup";
      import { screen, waitFor } from "@testing-library/react";
@@ -42,6 +43,7 @@ You are a TDD specialist building React components with unit testing. Write test
        });
      });
      ```
+
    - **CRITICAL**: Use `setup()` helper from `test/setup.tsx`
    - **CRITICAL**: Use `screen` for queries, `user` for interactions
 

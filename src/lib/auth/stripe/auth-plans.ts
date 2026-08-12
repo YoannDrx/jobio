@@ -1,5 +1,3 @@
-import type { Subscription } from "@/generated/prisma";
-import { logger } from "@/lib/logger";
 import {
   BookText,
   Bot,
@@ -23,7 +21,6 @@ import {
   Target,
   UserCircle,
   Wand2,
-  Zap,
 } from "lucide-react";
 
 export const DEFAULT_LIMIT = {
@@ -32,13 +29,13 @@ export const DEFAULT_LIMIT = {
   contacts: 30,
   platforms: 3,
   companies: 10,
-  billingClients: 0,
-  billingQuotes: 0,
-  billingInvoices: 0,
-  billingCatalogItems: 0,
+  billingClients: 3,
+  billingQuotes: 5,
+  billingInvoices: 5,
+  billingCatalogItems: 5,
   billingRecurringInvoices: 0,
   aiRequestsPerMonth: 5,
-  analyticsHistoryDays: 7,
+  analyticsHistoryDays: 30,
   cvDocuments: 1,
   cvTemplatesAll: 0,
   cvCoachAI: 0,
@@ -46,9 +43,10 @@ export const DEFAULT_LIMIT = {
   autoFollowUps: 0,
   sequences: 0,
   messageTemplates: 3,
-  csvExport: 0,
+  csvExport: 1,
   aiEmailGeneration: 0,
   aiLinkedinAudit: 0,
+  opportunityDiscovery: 0,
 };
 
 export type PlanLimit = typeof DEFAULT_LIMIT;
@@ -58,13 +56,6 @@ export const PLAN_LIMIT_KEYS = Object.keys(
 
 export type OverrideLimits = Partial<PlanLimit>;
 
-type HookCtx = {
-  req: Request;
-  userId: string;
-  stripeCustomerId: string;
-  subscriptionId: string;
-};
-
 export type AppAuthPlan = {
   priceId?: string | undefined;
   lookupKey?: string | undefined;
@@ -73,24 +64,7 @@ export type AppAuthPlan = {
   name: string;
   limits?: Record<string, number> | undefined;
   group?: string;
-  freeTrial?: {
-    days: number;
-    onTrialStart?: (subscription: Subscription, ctx: HookCtx) => Promise<void>;
-    onTrialEnd?: (
-      data: {
-        subscription: Subscription;
-      },
-      ctx: HookCtx,
-    ) => Promise<void>;
-    onTrialExpired?: (
-      subscription: Subscription,
-      ctx: HookCtx,
-    ) => Promise<void>;
-  };
-  onSubscriptionCanceled?: (
-    subscription: Subscription,
-    ctx: HookCtx,
-  ) => Promise<void>;
+  freeTrial?: { days: number };
 } & {
   description: string;
   isPopular?: boolean;
@@ -115,127 +89,39 @@ export const AUTH_PLANS: AppAuthPlan[] = [
     name: "pro",
     isPopular: true,
     description:
-      "Pour les freelances actifs qui veulent maximiser leur prospection",
+      "Le cockpit complet pour prospecter, candidater et piloter son activité",
     priceId: process.env.STRIPE_PRO_PLAN_ID ?? "",
+    lookupKey: "jobio_pro_monthly_v1",
     annualDiscountPriceId: process.env.STRIPE_PRO_YEARLY_PLAN_ID ?? "",
+    annualDiscountLookupKey: "jobio_pro_yearly_v1",
+    freeTrial: { days: 14 },
     limits: {
       missions: 999999,
-      profiles: 5,
-      contacts: 200,
-      platforms: 10,
-      companies: 50,
-      billingClients: 10,
-      billingQuotes: 50,
-      billingInvoices: 50,
-      billingCatalogItems: 25,
-      billingRecurringInvoices: 5,
-      aiRequestsPerMonth: 50,
-      analyticsHistoryDays: 90,
-      cvDocuments: 10,
-      cvTemplatesAll: 1,
-      cvCoachAI: 0,
-      atsScoring: 1,
-      autoFollowUps: 1,
-      sequences: 3,
-      messageTemplates: 20,
-      csvExport: 1,
-      aiEmailGeneration: 1,
-      aiLinkedinAudit: 1,
-    },
-    freeTrial: {
-      days: 14,
-      onTrialStart: async (subscription) => {
-        logger.debug(`Trial started for ${subscription.referenceId}`);
-      },
-      onTrialEnd: async ({ subscription }) => {
-        const { prisma } = await import("@/lib/prisma");
-        const { sendEmail } = await import("@/lib/mail/send-email");
-        const { SiteConfig } = await import("@/site-config");
-        const { default: TrialEndingEmail } = await import(
-          "@email/trial-ending.email"
-        );
-        const user = await prisma.user.findFirst({
-          where: { id: subscription.referenceId },
-        });
-        if (!user) return;
-        await sendEmail({
-          to: user.email,
-          subject: `Ton essai ${SiteConfig.title} se termine bientôt`,
-          html: TrialEndingEmail({
-            name: user.name,
-            daysLeft: 2,
-          }),
-        });
-      },
-      onTrialExpired: async (subscription) => {
-        const { prisma } = await import("@/lib/prisma");
-        const { sendEmail } = await import("@/lib/mail/send-email");
-        const { SiteConfig } = await import("@/site-config");
-        const { default: TrialReminderEmail } = await import(
-          "@email/trial-reminder.email"
-        );
-        const user = await prisma.user.findFirst({
-          where: { id: subscription.referenceId },
-        });
-        if (!user) return;
-        const [missionsCount, followUpsCount] = await Promise.all([
-          prisma.mission.count({ where: { userId: user.id, deletedAt: null } }),
-          prisma.followUp.count({
-            where: { userId: user.id, completedAt: { not: null } },
-          }),
-        ]);
-        await sendEmail({
-          to: user.email,
-          subject: `Ton essai ${SiteConfig.title} est terminé`,
-          html: TrialReminderEmail({
-            name: user.name,
-            missionsCount,
-            followUpsCount,
-          }),
-        });
-      },
-    },
-    price: 9.99,
-    yearlyPrice: 99,
-    currency: "EUR",
-  },
-  {
-    name: "ultra",
-    isHidden: true,
-    isPopular: false,
-    description:
-      "Pour les freelances exigeants avec accès illimité et IA avancée",
-    priceId: process.env.STRIPE_ULTRA_PLAN_ID ?? "",
-    annualDiscountPriceId: process.env.STRIPE_ULTRA_YEARLY_PLAN_ID ?? "",
-    limits: {
-      missions: 999999,
-      profiles: 999999,
-      contacts: 999999,
+      profiles: 10,
+      contacts: 1000,
       platforms: 999999,
-      companies: 999999,
+      companies: 500,
       billingClients: 999999,
       billingQuotes: 999999,
       billingInvoices: 999999,
       billingCatalogItems: 999999,
-      billingRecurringInvoices: 999999,
-      aiRequestsPerMonth: 999,
+      billingRecurringInvoices: 50,
+      aiRequestsPerMonth: 100,
       analyticsHistoryDays: 999999,
-      cvDocuments: 999999,
+      cvDocuments: 20,
       cvTemplatesAll: 1,
       cvCoachAI: 1,
       atsScoring: 1,
       autoFollowUps: 1,
-      sequences: 999999,
-      messageTemplates: 999999,
+      sequences: 20,
+      messageTemplates: 100,
       csvExport: 1,
       aiEmailGeneration: 1,
       aiLinkedinAudit: 1,
+      opportunityDiscovery: 1,
     },
-    freeTrial: {
-      days: 14,
-    },
-    price: 19.99,
-    yearlyPrice: 199,
+    price: 19,
+    yearlyPrice: 190,
     currency: "EUR",
   },
 ];
@@ -395,6 +281,12 @@ export const LIMITS_CONFIG: Record<
       value >= 1 ? "LinkedIn Audit IA" : "LinkedIn Audit IA non inclus",
     description: "Auditer et optimiser votre profil LinkedIn",
   },
+  opportunityDiscovery: {
+    icon: Search,
+    getLabel: (value: number) =>
+      value >= 1 ? "Radar Missions IA" : "Radar Missions non inclus",
+    description: "Découvrir et qualifier des missions avant candidature",
+  },
 };
 
 // Additional features by plan (features not covered by numeric limits)
@@ -416,13 +308,6 @@ export const ADDITIONAL_FEATURES = {
       icon: HeadphonesIcon,
       label: "Support email prioritaire",
       description: "Assistance rapide par email",
-    },
-  ],
-  ultra: [
-    {
-      icon: Zap,
-      label: "Support chat prioritaire",
-      description: "Assistance en temps réel",
     },
   ],
 };

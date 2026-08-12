@@ -1,4 +1,4 @@
-const DEFAULT_API_URL = "https://jobio.app";
+const DEFAULT_API_URL = "https://jobio.fr";
 
 let apiUrl = DEFAULT_API_URL;
 let parsedMission = null;
@@ -54,22 +54,30 @@ function showConnected(user) {
 }
 
 // Capture URL
-document.getElementById("btn-capture-url").addEventListener("click", async () => {
-  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  if (!tab?.url) return;
-  await captureFromSource("url", tab.url);
-});
+document
+  .getElementById("btn-capture-url")
+  .addEventListener("click", async () => {
+    const [tab] = await chrome.tabs.query({
+      active: true,
+      currentWindow: true,
+    });
+    if (!tab?.url) return;
+    await captureFromSource("url", tab.url);
+  });
 
 // Capture text
 pasteContent.addEventListener("input", () => {
-  document.getElementById("btn-capture-text").disabled = !pasteContent.value.trim();
+  document.getElementById("btn-capture-text").disabled =
+    !pasteContent.value.trim();
 });
 
-document.getElementById("btn-capture-text").addEventListener("click", async () => {
-  const text = pasteContent.value.trim();
-  if (!text) return;
-  await captureFromSource("text", text);
-});
+document
+  .getElementById("btn-capture-text")
+  .addEventListener("click", async () => {
+    const text = pasteContent.value.trim();
+    if (!text) return;
+    await captureFromSource("text", text);
+  });
 
 async function captureFromSource(source, content) {
   showLoading();
@@ -136,7 +144,7 @@ function showPreview(data) {
     html += `<div class="field"><div class="label">Lieu</div><div class="value">${escapeHtml(data.location)}</div></div>`;
   }
   if (data.stack && data.stack.length > 0) {
-    html += `<div class="field"><div class="label">Stack</div><div class="stack-tags">${data.stack.map(t => `<span class="tag">${escapeHtml(t)}</span>`).join("")}</div></div>`;
+    html += `<div class="field"><div class="label">Stack</div><div class="stack-tags">${data.stack.map((t) => `<span class="tag">${escapeHtml(t)}</span>`).join("")}</div></div>`;
   }
   if (data.description) {
     html += `<div class="field"><div class="label">Description</div><div class="value">${escapeHtml(data.description)}</div></div>`;
@@ -210,5 +218,5 @@ document.getElementById("btn-check-auth").addEventListener("click", () => {
 
 // Open pipeline
 document.getElementById("btn-open-pipeline").addEventListener("click", () => {
-  chrome.tabs.create({ url: `${apiUrl}/app/pipeline` });
+  chrome.tabs.create({ url: `${apiUrl}/job/pipeline` });
 });

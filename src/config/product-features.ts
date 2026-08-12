@@ -1,8 +1,9 @@
-export type ProductFeatureStatus = "active" | "beta" | "hidden";
+export type ProductFeatureStatus = "internal" | "beta" | "ga";
 
 export type ProductFeatureKey =
   | "today"
   | "pipeline"
+  | "opportunityDiscovery"
   | "followUps"
   | "cv"
   | "contacts"
@@ -25,68 +26,73 @@ type ProductFeature = {
 
 export const PRODUCT_FEATURES = {
   today: {
-    status: "active",
+    status: "beta",
     description: "Priorités quotidiennes et prochaine action.",
   },
   pipeline: {
-    status: "active",
+    status: "beta",
     description: "Suivi des missions en Kanban et en liste.",
   },
+  opportunityDiscovery: {
+    status: "beta",
+    description:
+      "Radar de missions sourcées, qualifiées et validées avant ajout au pipeline.",
+  },
   followUps: {
-    status: "active",
+    status: "beta",
     description: "Relances, snooze et prévention de sur-sollicitation.",
   },
   cv: {
-    status: "active",
+    status: "beta",
     description: "Profil maître, variantes, aperçu A4 et export.",
   },
   contacts: {
-    status: "active",
+    status: "beta",
     description: "CRM léger relié aux missions et relances.",
   },
   notifications: {
-    status: "active",
+    status: "beta",
     description: "Notifications contextuelles sans destination principale.",
   },
   analytics: {
-    status: "hidden",
-    description: "Les indicateurs seront réintégrés dans les écrans métier.",
+    status: "beta",
+    description: "Indicateurs et historique de performance commerciale.",
   },
   calendar: {
-    status: "hidden",
-    description: "Le calendrier sera fusionné dans Relances.",
+    status: "beta",
+    description: "Vue calendrier des actions et relances.",
   },
   sequences: {
-    status: "hidden",
-    description: "Les séquences seront fusionnées dans Relances.",
+    status: "beta",
+    description: "Séquences de relances structurées.",
   },
   emails: {
-    status: "hidden",
-    description: "Module hors du périmètre Jobio V1.",
+    status: "beta",
+    description: "Emails de prospection reliés aux missions et contacts.",
   },
   profiles: {
-    status: "hidden",
-    description: "Les profils seront absorbés par CV.",
+    status: "beta",
+    description: "Positionnements commerciaux reliés aux CV.",
   },
   platforms: {
-    status: "hidden",
-    description: "Module hors du périmètre Jobio V1.",
+    status: "beta",
+    description: "Suivi des plateformes de missions freelance.",
   },
   programmes: {
-    status: "hidden",
-    description: "Module hors du périmètre Jobio V1.",
+    status: "beta",
+    description: "Programmes LinkedIn gratuits et achats à vie.",
   },
   generalAssistant: {
-    status: "hidden",
-    description: "Assistant IA généraliste hors du périmètre Jobio V1.",
+    status: "beta",
+    description: "Copilote contextualisé par les données Jobio.",
   },
   templates: {
-    status: "hidden",
-    description: "Les modèles seront exposés depuis leur contexte métier.",
+    status: "beta",
+    description: "Modèles réutilisables depuis les parcours métier.",
   },
   freelanceAdmin: {
-    status: "hidden",
-    description: "Administration freelance est archivé avant migration ciblée.",
+    status: "beta",
+    description: "Gestion des devis, factures, paiements et activité.",
   },
 } as const satisfies Record<ProductFeatureKey, ProductFeature>;
 
@@ -94,6 +100,7 @@ export const NEW_SUBSCRIPTION_PLANS = ["pro"] as const;
 
 const ROUTE_FEATURES = [
   ["/job/cv-lab/coach", "generalAssistant"],
+  ["/job/opportunities", "opportunityDiscovery"],
   ["/job/notifications", "notifications"],
   ["/job/follow-ups", "followUps"],
   ["/job/cv-studio", "cv"],
@@ -109,12 +116,14 @@ const ROUTE_FEATURES = [
   ["/job/programmes", "programmes"],
   ["/job/ai", "generalAssistant"],
   ["/job/templates", "templates"],
+  ["/job/gestion", "freelanceAdmin"],
   ["/freelance", "freelanceAdmin"],
   ["/job", "today"],
 ] as const satisfies readonly (readonly [string, ProductFeatureKey])[];
 
 export function isProductFeatureVisible(feature: ProductFeatureKey) {
-  return PRODUCT_FEATURES[feature].status !== "hidden";
+  const status = PRODUCT_FEATURES[feature].status as ProductFeatureStatus;
+  return status !== "internal";
 }
 
 export function getProductFeatureForPath(pathname: string) {

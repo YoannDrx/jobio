@@ -302,9 +302,11 @@ describe("computeSeoKpiSummary", () => {
     expect(summary.searchPerformance.contentRefreshCandidates[0]?.path).toBe(
       "/blog/facturation-freelance-devis-factures-conformite",
     );
-    expect(summary.recommendedActions.some((action) => action.includes("faible CTR"))).toBe(
-      true,
-    );
+    expect(
+      summary.recommendedActions.some((action) =>
+        action.includes("faible CTR"),
+      ),
+    ).toBe(true);
   });
 
   it("tracks refresh follow-up checkpoints after content updates", () => {
@@ -365,7 +367,9 @@ describe("computeSeoKpiSummary", () => {
       (item) => item.path === "/blog/structurer-prospection-freelance-2026",
     );
 
-    expect(summary.searchPerformance.refreshFollowUps.length).toBeGreaterThanOrEqual(4);
+    expect(
+      summary.searchPerformance.refreshFollowUps.length,
+    ).toBeGreaterThanOrEqual(4);
     expect(followUp?.milestone).toBe("J+14");
     expect(followUp?.status).toBe("due");
     expect(followUp?.ctr).toBe(2.2);
@@ -401,8 +405,8 @@ describe("computeSeoKpiSummary", () => {
     );
 
     expect(metricsChecklist?.status).toBe("warning");
-    expect(summary.recommendedActions.some((action) => action.includes("JSON"))).toBe(
-      true,
-    );
+    expect(
+      summary.recommendedActions.some((action) => action.includes("JSON")),
+    ).toBe(true);
   });
 });

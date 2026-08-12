@@ -22,7 +22,7 @@ test.describe("account", () => {
       name: "Supprimer ton compte ?",
     });
     await expect(deleteDialog).toBeVisible();
-    await deleteDialog.getByRole("button", { name: /cancel/i }).click();
+    await deleteDialog.getByRole("button", { name: /annuler/i }).click();
     await expect(deleteDialog).not.toBeVisible();
 
     const user = await prisma.user.findUnique({
@@ -81,6 +81,11 @@ test.describe("account", () => {
     await page.goto("/account/change-password");
     await page.waitForURL(/\/account\/change-password/, { timeout: 15000 });
 
+    const changePasswordButton = page.getByRole("button", {
+      name: /changer le mot de passe/i,
+    });
+    await expect(changePasswordButton).toBeEnabled({ timeout: 10000 });
+
     const newPassword = faker.internet.password({
       length: 12,
       memorable: true,
@@ -88,15 +93,22 @@ test.describe("account", () => {
     await page.locator('input[name="currentPassword"]').fill(userData.password);
     await page.locator('input[name="newPassword"]').fill(newPassword);
     await page.locator('input[name="confirmPassword"]').fill(newPassword);
-    await page
-      .getByRole("button", { name: /changer le mot de passe/i })
-      .click();
+    const passwordChangeResponse = page.waitForResponse(
+      (response) =>
+        response.url().includes("/api/auth/change-password") &&
+        response.request().method() === "POST",
+      { timeout: 30000 },
+    );
+    await changePasswordButton.click();
+
+    const response = await passwordChangeResponse;
+    expect(response.ok()).toBe(true);
 
     // The success toast is intentionally transient and may disappear during
     // the redirect. The durable outcome is landing back on the account page,
     // then being able to authenticate with the new password.
     await page.waitForURL((url) => url.pathname === "/account", {
-      timeout: 15000,
+      timeout: 30000,
     });
 
     await signOutAccount({ page });

@@ -10,6 +10,7 @@ Date: 2026-02-22
 - [x] `pnpm build` (OK)
 
 Remarque build:
+
 - Le bruit `Unknown Error / NEXT_PRERENDER_INTERRUPTED` a ete retire via un filtre cible:
   - `src/lib/errors/next-prerender-interrupted.ts`
   - `src/lib/zod-route.ts`
@@ -39,6 +40,7 @@ Remarque build:
 - [x] descriptions alignees avec limites reelles
 
 Snapshot Stripe verifie (live):
+
 - Jobio Pro mensuel actif: `price_1SxxydH4VwBfiTEI0f4jurPk` (999)
 - Jobio Pro annuel actif: `price_1T2zxnH4VwBfiTEIZu2BPZ1J` (9900)
 - Jobio Pro annuel legacy inactif: `price_1SxxygH4VwBfiTEI9a7e8RrQ` (9590)
@@ -47,6 +49,7 @@ Snapshot Stripe verifie (live):
 - Jobio Ultra annuel legacy inactif: `price_1SxxyjH4VwBfiTEIq4YIk4e3` (19190)
 
 Descriptions produits live:
+
 - Jobio Pro: "missions illimitees, 200 contacts, 50 requetes IA/mois, relances automatiques, ATS scoring, export CSV, facturation freelance, support email prioritaire"
 - Jobio Ultra: "limites maximales (prospection + facturation), 999 requetes IA/mois, CV Coach IA, ATS scoring, sequences illimitees, export CSV, support chat prioritaire"
 
@@ -55,6 +58,7 @@ Descriptions produits live:
 Etat final: valide.
 
 Le scope livre couvre:
+
 - alignement pricing UI/billing/code/Stripe
 - durcissement du gating sur features critiques
 - correction de regressions UX de pricing

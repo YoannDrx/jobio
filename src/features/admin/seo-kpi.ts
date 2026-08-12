@@ -171,8 +171,7 @@ const getLatestPostDate = (posts: BlogPost[]): Date | null => {
   return new Date(Math.max(...timestamps));
 };
 
-const roundOneDecimal = (value: number): number =>
-  Math.round(value * 10) / 10;
+const roundOneDecimal = (value: number): number => Math.round(value * 10) / 10;
 
 const percentDelta = (current: number, previous: number): number | null => {
   if (previous <= 0) {
@@ -211,7 +210,10 @@ const buildContentRefreshCandidates = (
 
       return null;
     })
-    .filter((candidate): candidate is SeoContentRefreshCandidate => candidate !== null)
+    .filter(
+      (candidate): candidate is SeoContentRefreshCandidate =>
+        candidate !== null,
+    )
     .sort((a, b) => b.impressions - a.impressions)
     .slice(0, 5);
 
@@ -240,7 +242,10 @@ const buildRefreshFollowUps = (
   return CONTENT_REFRESH_TRACKER.map((trackedPage) => {
     const refreshedAt = new Date(`${trackedPage.refreshedAt}T00:00:00.000Z`);
     const ageDays = Number.isFinite(refreshedAt.getTime())
-      ? Math.max(0, Math.floor((now.getTime() - refreshedAt.getTime()) / DAY_IN_MS))
+      ? Math.max(
+          0,
+          Math.floor((now.getTime() - refreshedAt.getTime()) / DAY_IN_MS),
+        )
       : 0;
     const { milestone, targetDays } = resolveRefreshMilestone(ageDays);
     const pageMetrics = topPagesByPath.get(trackedPage.path);
@@ -284,7 +289,10 @@ const buildSearchPerformanceSummary = (
   searchMetricsState: SeoSearchMetricsState,
   now: Date,
 ): SeoSearchPerformanceSummary => {
-  if (searchMetricsState.status !== "configured" || !searchMetricsState.payload) {
+  if (
+    searchMetricsState.status !== "configured" ||
+    !searchMetricsState.payload
+  ) {
     return {
       status: searchMetricsState.status,
       source: searchMetricsState.source,
@@ -318,7 +326,8 @@ const buildSearchPerformanceSummary = (
       )
     : null;
   const isSnapshotStale =
-    snapshotAgeDays !== null && snapshotAgeDays >= SEARCH_METRICS_STALE_AFTER_DAYS;
+    snapshotAgeDays !== null &&
+    snapshotAgeDays >= SEARCH_METRICS_STALE_AFTER_DAYS;
 
   return {
     status: "configured",
@@ -400,7 +409,9 @@ export const computeSeoKpiSummary = ({
   const thirtyDaysAgo = new Date(now.getTime() - 30 * DAY_IN_MS);
   const blogPostsLast30Days = posts.filter((post) => {
     const publishedAt = new Date(post.date);
-    return Number.isFinite(publishedAt.getTime()) && publishedAt >= thirtyDaysAgo;
+    return (
+      Number.isFinite(publishedAt.getTime()) && publishedAt >= thirtyDaysAgo
+    );
   }).length;
 
   const latestPostDate = getLatestPostDate(posts);
@@ -410,7 +421,10 @@ export const computeSeoKpiSummary = ({
 
   const hasRssInSitemap = sitemapUrls.has(toAbsoluteUrl("/rss.xml"));
 
-  const searchPerformance = buildSearchPerformanceSummary(searchMetricsState, now);
+  const searchPerformance = buildSearchPerformanceSummary(
+    searchMetricsState,
+    now,
+  );
 
   const searchMetricsChecklistStatus: SeoChecklistStatus =
     searchPerformance.status !== "configured"
@@ -423,7 +437,7 @@ export const computeSeoKpiSummary = ({
           ? "warning"
           : searchPerformance.isSnapshotStale
             ? "warning"
-          : "ok";
+            : "ok";
 
   const searchMetricsChecklistDetail =
     searchPerformance.status === "not_configured"
@@ -436,9 +450,10 @@ export const computeSeoKpiSummary = ({
           : searchPerformance.isSnapshotStale &&
               searchPerformance.snapshotAgeDays !== null
             ? `Snapshot SEO obsolète (${searchPerformance.snapshotAgeDays} jours). Rafraîchir la collecte.`
-          : searchPerformance.clicks === null || searchPerformance.impressions === null
-            ? "Source SEO configurée, mais aucune métrique exploitable n'a été trouvée."
-            : `${searchPerformance.clicks} clics / ${searchPerformance.impressions} impressions (${searchPerformance.periodLabel ?? "période non précisée"}).`;
+            : searchPerformance.clicks === null ||
+                searchPerformance.impressions === null
+              ? "Source SEO configurée, mais aucune métrique exploitable n'a été trouvée."
+              : `${searchPerformance.clicks} clics / ${searchPerformance.impressions} impressions (${searchPerformance.periodLabel ?? "période non précisée"}).`;
 
   const checklist: SeoChecklistItem[] = [
     {

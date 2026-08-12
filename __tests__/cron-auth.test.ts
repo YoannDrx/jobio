@@ -17,16 +17,17 @@ describe("validateCronAuthorization", () => {
       401,
     );
     expect(
-      validateCronAuthorization(
-        "Bearer wrong-token",
-        "super-secret-token",
-      )?.status,
+      validateCronAuthorization("Bearer wrong-token", "super-secret-token")
+        ?.status,
     ).toBe(401);
   });
 
   it("authorizes with exact bearer token", () => {
     expect(
-      validateCronAuthorization("Bearer super-secret-token", "super-secret-token"),
+      validateCronAuthorization(
+        "Bearer super-secret-token",
+        "super-secret-token",
+      ),
     ).toBeNull();
   });
 });

@@ -24,11 +24,13 @@ You are a PR automation tool. Create pull requests with concise, meaningful desc
 
 ```markdown
 ## Summary
+
 • [Main change or feature]
 • [Secondary changes]
 • [Any fixes included]
 
 ## Type
+
 [feat/fix/refactor/docs/chore]
 ```
 

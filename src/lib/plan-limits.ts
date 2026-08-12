@@ -5,6 +5,7 @@ import {
   resolvePlanLimitsForUser,
 } from "@/lib/auth/stripe/plan-entitlements";
 import { ApplicationError } from "@/lib/errors/application-error";
+import { getPlanUpgradeLabel, getUpgradeMessage } from "@/lib/plan-limit-copy";
 import { STALE_ELIGIBLE_STATUS_VALUES } from "@/features/missions/mission-status";
 import { capturePricingFunnelEvent } from "@/lib/pricing/pricing-funnel-events";
 import { prisma } from "@/lib/prisma";
@@ -32,28 +33,8 @@ type BooleanFeature =
   | "autoFollowUps"
   | "csvExport"
   | "aiEmailGeneration"
-  | "aiLinkedinAudit";
-
-export function getPlanUpgradeLabel(plan: string): string {
-  if (plan === "free") return "Pro";
-  if (plan === "pro") return "Ultra";
-  return "";
-}
-
-export function getPlanUpgradeButtonText(plan: string): string {
-  if (plan === "free") return "Passer en Pro";
-  if (plan === "pro") return "Passer en Ultra";
-  return "Gérer l'abonnement";
-}
-
-export function getPlanLimitMessage(
-  plan: string,
-  isExhausted: boolean,
-): string {
-  if (plan === "ultra") return "Limite maximale atteinte";
-  const action = isExhausted ? "continuer" : "en avoir plus";
-  return `Passe en ${getPlanUpgradeLabel(plan)} pour ${action}.`;
-}
+  | "aiLinkedinAudit"
+  | "opportunityDiscovery";
 
 const LIMIT_FEATURE_LABELS: Record<LimitFeature, string> = {
   missions: "missions actives",
@@ -80,6 +61,7 @@ const BOOLEAN_FEATURE_LABELS: Record<BooleanFeature, string> = {
   csvExport: "export CSV",
   aiEmailGeneration: "génération emails IA",
   aiLinkedinAudit: "LinkedIn Audit IA",
+  opportunityDiscovery: "Radar Missions IA",
 };
 
 async function getUserPlanInfo(userId: string) {
@@ -109,12 +91,6 @@ const resolvePlanInfo = async (
 
   return getUserPlanInfo(userId);
 };
-
-export function getUpgradeMessage(plan: string): string {
-  if (plan === "free") return "Passe en Pro pour débloquer";
-  if (plan === "pro") return "Passe en Ultra pour débloquer";
-  return "Limite maximale atteinte";
-}
 
 export async function checkPlanLimit(
   userId: string,

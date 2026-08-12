@@ -65,7 +65,9 @@ export const POST = route.handler(async (req) => {
     route: new URL(req.url).pathname,
   });
 
-  const authFailure = validateCronAuthorization(req.headers.get("authorization"));
+  const authFailure = validateCronAuthorization(
+    req.headers.get("authorization"),
+  );
   if (authFailure) {
     await finishCronJobRun(run?.id, {
       status: authFailure.status === 401 ? "UNAUTHORIZED" : "FAILED",

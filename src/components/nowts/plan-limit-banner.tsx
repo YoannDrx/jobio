@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import {
   getPlanLimitMessage,
   getPlanUpgradeButtonText,
-} from "@/lib/plan-limits";
+} from "@/lib/plan-limit-copy";
 import { AlertTriangle, XCircle } from "lucide-react";
 import Link from "next/link";
 

@@ -7,7 +7,7 @@ import { enforcePlanFeature } from "@/lib/plan-limits";
 import { generateObject } from "ai";
 import { z } from "zod";
 import { AI_MODELS } from "./ai-config";
-import { checkAndIncrementAIQuota } from "./ai-quota";
+import { runTrackedAI } from "./ai-usage";
 import {
   LINKEDIN_AUDIT_SYSTEM_PROMPT,
   linkedinAuditOutputSchema,
@@ -22,8 +22,6 @@ export const linkedinAuditAction = authAction
   .action(async ({ parsedInput: { profileId }, ctx: { user } }) => {
     await enforcePlanFeature(user.id, "aiLinkedinAudit");
 
-    await checkAndIncrementAIQuota(user.id);
-
     const profile = await prisma.userProfile.findFirst({
       where: profileId
         ? { id: profileId, userId: user.id }
@@ -36,12 +34,21 @@ export const linkedinAuditAction = authAction
 
     const prompt = buildPrompt(profile);
 
-    const result = await generateObject({
-      model: AI_MODELS.fast,
-      system: LINKEDIN_AUDIT_SYSTEM_PROMPT,
-      prompt,
-      schema: linkedinAuditOutputSchema,
-    });
+    const result = await runTrackedAI(
+      {
+        userId: user.id,
+        feature: "LINKEDIN_AUDIT",
+        modelId: AI_MODELS.fast.modelId,
+        context: { profileId: profile.id },
+      },
+      async () =>
+        generateObject({
+          model: AI_MODELS.fast,
+          system: LINKEDIN_AUDIT_SYSTEM_PROMPT,
+          prompt,
+          schema: linkedinAuditOutputSchema,
+        }),
+    );
 
     await prisma.linkedInAudit.create({
       data: {
@@ -53,15 +60,6 @@ export const linkedinAuditAction = authAction
         gaps: result.object.gaps,
         quickWins: result.object.quickWins,
         actionPlan: result.object.actionPlan,
-      },
-    });
-
-    await prisma.aIUsage.create({
-      data: {
-        userId: user.id,
-        feature: "LINKEDIN_AUDIT",
-        inputTokens: result.usage.inputTokens ?? 0,
-        outputTokens: result.usage.outputTokens ?? 0,
       },
     });
 

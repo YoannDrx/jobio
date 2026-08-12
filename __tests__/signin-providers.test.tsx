@@ -51,36 +51,36 @@ describe("SignInCredentialsAndMagicLinkForm", () => {
     expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
 
     // Password field should be visible in credentials mode
-    expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/mot de passe/i)).toBeInTheDocument();
 
-    // Submit button should say "Sign in"
+    // Submit button should be localized
     expect(
-      screen.getByRole("button", { name: /sign in$/i }),
+      screen.getByRole("button", { name: /se connecter$/i }),
     ).toBeInTheDocument();
 
     // Should have a link to switch to magic link
-    expect(screen.getByText(/login with magic link/i)).toBeInTheDocument();
+    expect(screen.getByText(/utiliser un lien magique/i)).toBeInTheDocument();
   });
 
   it("should switch to magic link mode when clicking the link", async () => {
     const { user } = setup(<SignInCredentialsAndMagicLinkForm />);
 
     // Initially in credentials mode
-    expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/mot de passe/i)).toBeInTheDocument();
 
     // Click to switch to magic link mode
-    await user.click(screen.getByText(/login with magic link/i));
+    await user.click(screen.getByText(/utiliser un lien magique/i));
 
     // Password field should not be visible anymore
-    expect(screen.queryByLabelText(/password/i)).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(/mot de passe/i)).not.toBeInTheDocument();
 
     // Submit button text should change
     expect(
-      screen.getByRole("button", { name: /sign in with magic link/i }),
+      screen.getByRole("button", { name: /recevoir un lien de connexion/i }),
     ).toBeInTheDocument();
 
     // Should have a link to switch back to credentials mode
-    expect(screen.getByText(/use password/i)).toBeInTheDocument();
+    expect(screen.getByText(/utiliser le mot de passe/i)).toBeInTheDocument();
   });
 
   it("should submit with credentials and redirect on success", async () => {
@@ -90,10 +90,10 @@ describe("SignInCredentialsAndMagicLinkForm", () => {
 
     // Fill in the form
     await user.type(screen.getByLabelText(/email/i), "test@example.com");
-    await user.type(screen.getByLabelText(/password/i), "password123");
+    await user.type(screen.getByLabelText(/mot de passe/i), "password123");
 
     // Submit the form
-    await user.click(screen.getByRole("button", { name: /sign in$/i }));
+    await user.click(screen.getByRole("button", { name: /se connecter$/i }));
 
     // Check if auth client was called with correct params
     await waitFor(() => {
@@ -114,8 +114,8 @@ describe("SignInCredentialsAndMagicLinkForm", () => {
     );
 
     await user.type(screen.getByLabelText(/email/i), "test@example.com");
-    await user.type(screen.getByLabelText(/password/i), "password123");
-    await user.click(screen.getByRole("button", { name: /sign in$/i }));
+    await user.type(screen.getByLabelText(/mot de passe/i), "password123");
+    await user.click(screen.getByRole("button", { name: /se connecter$/i }));
 
     await waitFor(() => {
       expect(authClient.signIn.email).toHaveBeenCalledWith({
@@ -132,14 +132,14 @@ describe("SignInCredentialsAndMagicLinkForm", () => {
     const { user } = setup(<SignInCredentialsAndMagicLinkForm />);
 
     // Switch to magic link mode
-    await user.click(screen.getByText(/login with magic link/i));
+    await user.click(screen.getByText(/utiliser un lien magique/i));
 
     // Fill in the form
     await user.type(screen.getByLabelText(/email/i), "test@example.com");
 
     // Submit the form
     await user.click(
-      screen.getByRole("button", { name: /sign in with magic link/i }),
+      screen.getByRole("button", { name: /recevoir un lien de connexion/i }),
     );
 
     // Check if auth client was called with correct params
@@ -165,10 +165,10 @@ describe("SignInCredentialsAndMagicLinkForm", () => {
 
     // Fill in the form
     await user.type(screen.getByLabelText(/email/i), "test@example.com");
-    await user.type(screen.getByLabelText(/password/i), "wrong-password");
+    await user.type(screen.getByLabelText(/mot de passe/i), "wrong-password");
 
     // Submit the form
-    await user.click(screen.getByRole("button", { name: /sign in$/i }));
+    await user.click(screen.getByRole("button", { name: /se connecter$/i }));
 
     // Should call the auth client
     await waitFor(() => {

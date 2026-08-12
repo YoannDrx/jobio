@@ -11,7 +11,9 @@ const escapeXml = (value: string) =>
 
 const toRfc822Date = (value: string) => {
   const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? new Date().toUTCString() : date.toUTCString();
+  return Number.isNaN(date.getTime())
+    ? new Date().toUTCString()
+    : date.toUTCString();
 };
 
 export async function GET() {

@@ -8,6 +8,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Form, useForm } from "@/features/form/tanstack-form";
+import { useHydrated } from "@/hooks/use-hydrated";
 import { authClient } from "@/lib/auth-client";
 import { unwrapSafePromise } from "@/lib/promises";
 import { useMutation } from "@tanstack/react-query";
@@ -41,6 +42,7 @@ type ChangePasswordFormType = z.infer<typeof ChangePasswordFormSchema>;
 
 export default function ChangePasswordPage() {
   const router = useRouter();
+  const isHydrated = useHydrated();
 
   const changePasswordMutation = useMutation({
     mutationFn: async (values: ChangePasswordFormType) => {
@@ -77,7 +79,7 @@ export default function ChangePasswordPage() {
   return (
     <Layout size="lg">
       <LayoutHeader>
-        <LayoutTitle>Settings</LayoutTitle>
+        <LayoutTitle>Paramètres</LayoutTitle>
       </LayoutHeader>
       <LayoutContent>
         <Card>
@@ -138,7 +140,11 @@ export default function ChangePasswordPage() {
                   </div>
                 )}
               </form.AppField>
-              <form.SubmitButton className="w-full">
+              <form.SubmitButton
+                className="w-full"
+                disabled={!isHydrated}
+                aria-busy={!isHydrated || changePasswordMutation.isPending}
+              >
                 Changer le mot de passe
               </form.SubmitButton>
             </CardContent>

@@ -1,10 +1,6 @@
 "use client";
 
-import {
-  SheetContent,
-  SheetFooter,
-  SheetHeader,
-} from "@/components/ui/sheet";
+import { SheetContent, SheetFooter, SheetHeader } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 
 type SheetContentProps = React.ComponentProps<typeof SheetContent>;
@@ -32,7 +28,9 @@ export function FreelanceSideSheetHeader({
   className,
   ...props
 }: SheetHeaderProps) {
-  return <SheetHeader className={cn("border-b px-7 py-6", className)} {...props} />;
+  return (
+    <SheetHeader className={cn("border-b px-7 py-6", className)} {...props} />
+  );
 }
 
 export function FreelanceSideSheetFooter({

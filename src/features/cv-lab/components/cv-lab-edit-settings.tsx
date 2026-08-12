@@ -79,7 +79,7 @@ export function CvLabEditSettings({
   const [isChangingSource, setIsChangingSource] = useState(false);
   const templateOptions = canUseAllCvTemplates
     ? [...CV_LAB_TEMPLATES]
-    : Array.from(new Set(["CLASSIC", draft.template])) as CvLabTemplate[];
+    : (Array.from(new Set(["CLASSIC", draft.template])) as CvLabTemplate[]);
 
   const sourceValue = hasMasterCvSource ? "master" : "profile";
 
@@ -127,7 +127,9 @@ export function CvLabEditSettings({
           <SelectContent>
             <SelectItem value="profile">Profil</SelectItem>
             {masterCv ? (
-              <SelectItem value="master">CV Master ({masterCv.fullName})</SelectItem>
+              <SelectItem value="master">
+                CV Master ({masterCv.fullName})
+              </SelectItem>
             ) : (
               <SelectItem value="master" disabled>
                 CV Master indisponible
@@ -162,7 +164,8 @@ export function CvLabEditSettings({
         </Select>
         {hasMasterCvSource ? (
           <p className="text-muted-foreground text-xs">
-            Le profil n&apos;est pas utilise tant que la source est le CV Master.
+            Le profil n&apos;est pas utilise tant que la source est le CV
+            Master.
           </p>
         ) : null}
       </div>

@@ -12,7 +12,7 @@ import { Home } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { Fragment } from "react";
 
-const BASE_PATH = "/freelance";
+const BASE_PATH = "/job/gestion";
 
 const LABEL_OVERRIDES: Record<string, string> = {
   expenses: "Dépenses",
@@ -51,7 +51,9 @@ export function FreelanceBreadcrumb() {
             <Fragment key={`${path}-${index}`}>
               <BreadcrumbItem>
                 {isLast ? (
-                  <BreadcrumbPage className="capitalize">{displayName}</BreadcrumbPage>
+                  <BreadcrumbPage className="capitalize">
+                    {displayName}
+                  </BreadcrumbPage>
                 ) : (
                   <BreadcrumbLink href={currentPath} className="capitalize">
                     {displayName}

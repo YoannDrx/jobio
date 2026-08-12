@@ -1,4 +1,6 @@
 import { createSafeActionClient } from "next-safe-action";
+import { createHash } from "node:crypto";
+import { headers } from "next/headers";
 import { getRequiredUser } from "../auth/auth-user";
 import { ApplicationError } from "../errors/application-error";
 import { isNextPrerenderInterruptedError } from "../errors/next-prerender-interrupted";
@@ -34,6 +36,38 @@ import { enforceRateLimit } from "../security/rate-limit";
 export const action = createSafeActionClient({
   handleServerError,
 });
+
+export const rateLimitedPublicAction = (
+  key: string,
+  limit = 5,
+  windowSeconds = 60,
+) =>
+  createSafeActionClient({
+    handleServerError,
+  }).use(async ({ next }) => {
+    const requestHeaders = await headers();
+    const clientAddress =
+      requestHeaders.get("x-forwarded-for")?.split(",").at(0)?.trim() ??
+      requestHeaders.get("x-real-ip") ??
+      "unknown";
+    const fingerprint = createHash("sha256")
+      .update(clientAddress)
+      .digest("hex")
+      .slice(0, 24);
+    const result = await enforceRateLimit({
+      key: `${key}:${fingerprint}`,
+      limit,
+      windowSeconds,
+    });
+
+    if (!result.allowed) {
+      throw new ApplicationError(
+        `Trop de requêtes. Réessaie dans ${result.retryAfterSeconds}s.`,
+      );
+    }
+
+    return next();
+  });
 
 /**
  * Authenticated safe action client

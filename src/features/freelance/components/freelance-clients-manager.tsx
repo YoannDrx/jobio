@@ -35,7 +35,7 @@ import {
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
-import { BillingClientType } from "@/generated/prisma";
+import { BillingClientType } from "@/features/freelance/billing-client-enums";
 import { searchBillingCompaniesAction } from "@/features/freelance/billing-company-search.action";
 import {
   createBillingClientAction,
@@ -724,7 +724,7 @@ export function FreelanceClientsManager() {
                           title="Faire une facture"
                         >
                           <Link
-                            href={`/freelance/invoices?create=1&clientId=${client.id}`}
+                            href={`/job/gestion/invoices?create=1&clientId=${client.id}`}
                           >
                             <Receipt className="size-4" />
                           </Link>
@@ -736,7 +736,7 @@ export function FreelanceClientsManager() {
                           title="Faire un devis"
                         >
                           <Link
-                            href={`/freelance/quotes?create=1&clientId=${client.id}`}
+                            href={`/job/gestion/quotes?create=1&clientId=${client.id}`}
                           >
                             <FileClock className="size-4" />
                           </Link>
@@ -765,14 +765,14 @@ export function FreelanceClientsManager() {
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem asChild>
                               <Link
-                                href={`/freelance/invoices?create=1&clientId=${client.id}`}
+                                href={`/job/gestion/invoices?create=1&clientId=${client.id}`}
                               >
                                 Créer une facture
                               </Link>
                             </DropdownMenuItem>
                             <DropdownMenuItem asChild>
                               <Link
-                                href={`/freelance/quotes?create=1&clientId=${client.id}`}
+                                href={`/job/gestion/quotes?create=1&clientId=${client.id}`}
                               >
                                 Créer un devis
                               </Link>
@@ -878,7 +878,7 @@ export function FreelanceClientsManager() {
                         className="flex-1"
                       >
                         <Link
-                          href={`/freelance/invoices?create=1&clientId=${client.id}`}
+                          href={`/job/gestion/invoices?create=1&clientId=${client.id}`}
                         >
                           <Receipt className="size-4" />
                           Facture
@@ -891,7 +891,7 @@ export function FreelanceClientsManager() {
                         className="flex-1"
                       >
                         <Link
-                          href={`/freelance/quotes?create=1&clientId=${client.id}`}
+                          href={`/job/gestion/quotes?create=1&clientId=${client.id}`}
                         >
                           <FileClock className="size-4" />
                           Devis

@@ -52,7 +52,9 @@ export const buildBeforeAfterMetadata = (input: {
   const after = toJsonSafe(input.after) as Record<string, unknown> | null;
 
   const beforeRecord =
-    before && typeof before === "object" && !Array.isArray(before) ? before : null;
+    before && typeof before === "object" && !Array.isArray(before)
+      ? before
+      : null;
   const afterRecord =
     after && typeof after === "object" && !Array.isArray(after) ? after : null;
 

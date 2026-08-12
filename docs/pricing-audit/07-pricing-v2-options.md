@@ -88,6 +88,7 @@ Objectif: maximiser la conversion Free -> Pro tout en augmentant l'ARPU Ultra.
 Choix recommande: Option A (Conversion-first).
 
 Pourquoi:
+
 - C'est l'equilibre le plus robuste entre accessibilite et monetisation.
 - C'est deja aligne avec l'implementation actuelle et les plans Stripe Live verifies.
 - Le cout de migration est minimal (pas de refonte lourde de gating).

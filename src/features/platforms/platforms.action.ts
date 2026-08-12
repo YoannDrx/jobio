@@ -1,19 +1,20 @@
 "use server";
 
-import { authAction } from "@/lib/actions/safe-actions";
+import { authAction, rateLimitedAuthAction } from "@/lib/actions/safe-actions";
 import { ApplicationError } from "@/lib/errors/application-error";
 import { enforcePlanLimit } from "@/lib/plan-limits";
 import { prisma } from "@/lib/prisma";
+import { safePublicHttpsUrlSchema } from "@/lib/security/public-url";
 import { z } from "zod";
 
 const addUserPlatformSchema = z.object({
   platformId: z.string(),
-  profileUrl: z.string().url().optional(),
+  profileUrl: safePublicHttpsUrlSchema.optional(),
 });
 
 const updateUserPlatformSchema = z.object({
   id: z.string(),
-  profileUrl: z.string().url().optional(),
+  profileUrl: safePublicHttpsUrlSchema.optional(),
   status: z.enum(["NOT_REGISTERED", "REGISTERED", "ACTIVE"]).optional(),
 });
 
@@ -23,8 +24,8 @@ const removeUserPlatformSchema = z.object({
 
 const createCustomPlatformSchema = z.object({
   name: z.string().min(1, "Le nom est requis"),
-  website: z.string().url().optional().or(z.literal("")),
-  logoUrl: z.string().url().optional().or(z.literal("")),
+  website: safePublicHttpsUrlSchema.optional().or(z.literal("")),
+  logoUrl: safePublicHttpsUrlSchema.optional().or(z.literal("")),
 });
 
 const deleteCustomPlatformSchema = z.object({
@@ -152,7 +153,11 @@ export const removeUserPlatformAction = authAction
     return { success: true };
   });
 
-export const createCustomPlatformAction = authAction
+export const createCustomPlatformAction = rateLimitedAuthAction(
+  "custom-platform-create",
+  10,
+  3600,
+)
   .inputSchema(createCustomPlatformSchema)
   .action(async ({ parsedInput, ctx: { user } }) => {
     await enforcePlanLimit(user.id, "platforms");

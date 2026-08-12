@@ -1,0 +1,13 @@
+.env
+.env.*
+.env.local
+.env.*.local
+.git
+.next
+.vercel
+coverage
+node_modules
+playwright-report
+test-results
+public/uploads
+src/generated

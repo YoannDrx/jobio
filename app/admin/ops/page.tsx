@@ -19,7 +19,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import Link from "next/link";
-import { getAdminFeatureFlags, getCronJobRuns, getOpsIncidentSummary } from "../_actions/ops";
+import {
+  getAdminFeatureFlags,
+  getCronJobRuns,
+  getOpsIncidentSummary,
+} from "../_actions/ops";
 import {
   getPlanEntitlementsOverview,
   getPricingFunnelOverview,
@@ -121,13 +125,13 @@ export default async function AdminOpsPage() {
     entitlementsOverview,
     pricingFunnel,
   ] = await Promise.all([
-      getAdminFeatureFlags(),
-      getCronJobRuns(30),
-      getOpsIncidentSummary(),
-      getSeoKpiSummary(),
-      getPlanEntitlementsOverview(),
-      getPricingFunnelOverview(30),
-    ]);
+    getAdminFeatureFlags(),
+    getCronJobRuns(30),
+    getOpsIncidentSummary(),
+    getSeoKpiSummary(),
+    getPlanEntitlementsOverview(),
+    getPricingFunnelOverview(30),
+  ]);
 
   const runningJobs = cronRuns.filter((run) => run.status === "RUNNING").length;
   const failedJobs = cronRuns.filter((run) => run.status === "FAILED").length;
@@ -146,8 +150,8 @@ export default async function AdminOpsPage() {
       <LayoutHeader>
         <LayoutTitle>Ops & feature flags</LayoutTitle>
         <LayoutDescription>
-          Monitoring opérationnel du produit: incidents ouverts, santé des cron jobs
-          et pilotage progressif des fonctionnalités.
+          Monitoring opérationnel du produit: incidents ouverts, santé des cron
+          jobs et pilotage progressif des fonctionnalités.
         </LayoutDescription>
       </LayoutHeader>
       <LayoutActions className="gap-2">
@@ -161,15 +165,21 @@ export default async function AdminOpsPage() {
         <div className="grid gap-4 md:grid-cols-4">
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Incidents ouverts</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Incidents ouverts
+              </CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-2xl font-semibold">{incidentSummary.openErrors}</p>
+              <p className="text-2xl font-semibold">
+                {incidentSummary.openErrors}
+              </p>
             </CardContent>
           </Card>
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Incidents critiques</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Incidents critiques
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-2xl font-semibold">
@@ -179,7 +189,9 @@ export default async function AdminOpsPage() {
           </Card>
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Cron en cours</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Cron en cours
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-2xl font-semibold">{runningJobs}</p>
@@ -187,7 +199,9 @@ export default async function AdminOpsPage() {
           </Card>
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium">Cron en échec (historique)</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Cron en échec (historique)
+              </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-2xl font-semibold">{failedJobs}</p>
@@ -227,8 +241,8 @@ export default async function AdminOpsPage() {
                   <p className="text-muted-foreground text-xs">
                     {seoSummary.blockedPrivateRoutesCount}/
                     {seoSummary.blockedPrivateRoutesCount +
-                      seoSummary.missingPrivateDisallows.length} préfixes
-                    bloqués
+                      seoSummary.missingPrivateDisallows.length}{" "}
+                    préfixes bloqués
                   </p>
                 </CardContent>
               </Card>
@@ -294,7 +308,9 @@ export default async function AdminOpsPage() {
                   Acquisition Search Console / Bing
                 </p>
                 <Badge
-                  variant={searchMetricsVariant(seoSummary.searchPerformance.status)}
+                  variant={searchMetricsVariant(
+                    seoSummary.searchPerformance.status,
+                  )}
                 >
                   {seoSummary.searchPerformance.status === "configured"
                     ? "Configuré"
@@ -325,17 +341,23 @@ export default async function AdminOpsPage() {
                 {seoSummary.searchPerformance.capturedAt ? (
                   <p className="text-muted-foreground text-xs">
                     Snapshot:{" "}
-                    {formatDateTime(new Date(seoSummary.searchPerformance.capturedAt))}
+                    {formatDateTime(
+                      new Date(seoSummary.searchPerformance.capturedAt),
+                    )}
                   </p>
                 ) : null}
                 {requiresSeoSyncCron ? (
                   <>
-                    <Badge variant={hasCronSecret ? "secondary" : "destructive"}>
+                    <Badge
+                      variant={hasCronSecret ? "secondary" : "destructive"}
+                    >
                       {hasCronSecret
                         ? "CRON_SECRET configuré"
                         : "CRON_SECRET manquant"}
                     </Badge>
-                    <Badge variant={seoSyncFreshnessVariant(seoSyncFreshness.status)}>
+                    <Badge
+                      variant={seoSyncFreshnessVariant(seoSyncFreshness.status)}
+                    >
                       {seoSyncFreshnessLabel(seoSyncFreshness.status)}
                     </Badge>
                     <p className="text-muted-foreground text-xs">
@@ -360,7 +382,7 @@ export default async function AdminOpsPage() {
                 <div className="rounded-md border border-amber-500/40 bg-amber-500/10 p-3 text-xs">
                   La collecte SEO automatique semble en retard. Lance
                   "Synchroniser SEO" puis vérifie le cron
-                  <code className="mx-1 rounded bg-muted px-1 py-0.5">
+                  <code className="bg-muted mx-1 rounded px-1 py-0.5">
                     /api/cron/seo-search-metrics-sync
                   </code>
                   .
@@ -368,9 +390,9 @@ export default async function AdminOpsPage() {
               ) : null}
 
               {!hasCronSecret ? (
-                <div className="rounded-md border border-destructive/40 bg-destructive/10 p-3 text-xs">
+                <div className="border-destructive/40 bg-destructive/10 rounded-md border p-3 text-xs">
                   Les routes cron sont inaccessibles tant que
-                  <code className="mx-1 rounded bg-muted px-1 py-0.5">
+                  <code className="bg-muted mx-1 rounded px-1 py-0.5">
                     CRON_SECRET
                   </code>
                   n'est pas configuré côté serveur.
@@ -382,7 +404,9 @@ export default async function AdminOpsPage() {
                   <div className="grid gap-4 md:grid-cols-4">
                     <Card>
                       <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium">Clics</CardTitle>
+                        <CardTitle className="text-sm font-medium">
+                          Clics
+                        </CardTitle>
                       </CardHeader>
                       <CardContent>
                         <p className="text-2xl font-semibold">
@@ -409,14 +433,17 @@ export default async function AdminOpsPage() {
                         <p className="text-muted-foreground text-xs">
                           delta:{" "}
                           {formatDeltaPercent(
-                            seoSummary.searchPerformance.impressionsDeltaPercent,
+                            seoSummary.searchPerformance
+                              .impressionsDeltaPercent,
                           )}
                         </p>
                       </CardContent>
                     </Card>
                     <Card>
                       <CardHeader className="pb-2">
-                        <CardTitle className="text-sm font-medium">CTR moyen</CardTitle>
+                        <CardTitle className="text-sm font-medium">
+                          CTR moyen
+                        </CardTitle>
                       </CardHeader>
                       <CardContent>
                         <p className="text-2xl font-semibold">
@@ -459,17 +486,19 @@ export default async function AdminOpsPage() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {seoSummary.searchPerformance.topQueries.map((query) => (
-                          <TableRow key={query.query}>
-                            <TableCell className="max-w-[260px] truncate font-medium">
-                              {query.query}
-                            </TableCell>
-                            <TableCell>{query.clicks}</TableCell>
-                            <TableCell>{query.impressions}</TableCell>
-                            <TableCell>{query.ctr}%</TableCell>
-                            <TableCell>{query.position ?? "-"}</TableCell>
-                          </TableRow>
-                        ))}
+                        {seoSummary.searchPerformance.topQueries.map(
+                          (query) => (
+                            <TableRow key={query.query}>
+                              <TableCell className="max-w-[260px] truncate font-medium">
+                                {query.query}
+                              </TableCell>
+                              <TableCell>{query.clicks}</TableCell>
+                              <TableCell>{query.impressions}</TableCell>
+                              <TableCell>{query.ctr}%</TableCell>
+                              <TableCell>{query.position ?? "-"}</TableCell>
+                            </TableRow>
+                          ),
+                        )}
                       </TableBody>
                     </Table>
                   ) : (
@@ -478,7 +507,8 @@ export default async function AdminOpsPage() {
                     </p>
                   )}
 
-                  {seoSummary.searchPerformance.contentRefreshCandidates.length > 0 ? (
+                  {seoSummary.searchPerformance.contentRefreshCandidates
+                    .length > 0 ? (
                     <div className="space-y-2">
                       <p className="text-sm font-medium">
                         Candidats refresh contenu SEO
@@ -550,10 +580,16 @@ export default async function AdminOpsPage() {
                                   </Badge>
                                 </TableCell>
                                 <TableCell>
-                                  {followUp.ctr === null ? "-" : `${followUp.ctr}%`}
+                                  {followUp.ctr === null
+                                    ? "-"
+                                    : `${followUp.ctr}%`}
                                 </TableCell>
-                                <TableCell>{followUp.impressions ?? "-"}</TableCell>
-                                <TableCell className="text-xs">{followUp.detail}</TableCell>
+                                <TableCell>
+                                  {followUp.impressions ?? "-"}
+                                </TableCell>
+                                <TableCell className="text-xs">
+                                  {followUp.detail}
+                                </TableCell>
                               </TableRow>
                             ),
                           )}
@@ -565,15 +601,15 @@ export default async function AdminOpsPage() {
               ) : (
                 <p className="text-muted-foreground text-sm">
                   Configure{" "}
-                  <code className="rounded bg-muted px-1 py-0.5">
+                  <code className="bg-muted rounded px-1 py-0.5">
                     SEO_SEARCH_METRICS_JSON
                   </code>{" "}
                   ou{" "}
-                  <code className="rounded bg-muted px-1 py-0.5">
+                  <code className="bg-muted rounded px-1 py-0.5">
                     SEO_SEARCH_METRICS_ENDPOINT
                   </code>{" "}
                   ou{" "}
-                  <code className="rounded bg-muted px-1 py-0.5">
+                  <code className="bg-muted rounded px-1 py-0.5">
                     SEO_SEARCH_METRICS_FILE
                   </code>{" "}
                   pour injecter les snapshots GSC/Bing.
@@ -624,7 +660,10 @@ export default async function AdminOpsPage() {
                         {flag.key}
                       </p>
                     </div>
-                    <FeatureFlagToggleButton flagKey={flag.key} enabled={flag.enabled} />
+                    <FeatureFlagToggleButton
+                      flagKey={flag.key}
+                      enabled={flag.enabled}
+                    />
                   </div>
                 ))}
               </div>
@@ -765,7 +804,8 @@ export default async function AdminOpsPage() {
                       </p>
                       <p className="text-muted-foreground text-xs">
                         {formatRatePercent(
-                          pricingFunnel.conversionRates.subscriptionFromCheckout,
+                          pricingFunnel.conversionRates
+                            .subscriptionFromCheckout,
                         )}{" "}
                         depuis checkout
                       </p>
@@ -797,13 +837,17 @@ export default async function AdminOpsPage() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {(["pro", "ultra"] as const).map((plan) => (
+                    {(["pro"] as const).map((plan) => (
                       <TableRow key={plan}>
                         <TableCell className="font-medium capitalize">
                           {plan}
                         </TableCell>
-                        <TableCell>{pricingFunnel.byPlan[plan].paywallHit}</TableCell>
-                        <TableCell>{pricingFunnel.byPlan[plan].planSelected}</TableCell>
+                        <TableCell>
+                          {pricingFunnel.byPlan[plan].paywallHit}
+                        </TableCell>
+                        <TableCell>
+                          {pricingFunnel.byPlan[plan].planSelected}
+                        </TableCell>
                         <TableCell>
                           {pricingFunnel.byPlan[plan].checkoutStarted}
                         </TableCell>
@@ -873,7 +917,10 @@ export default async function AdminOpsPage() {
                   <TableBody>
                     {pricingFunnel.byEntryPoint.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={7} className="text-muted-foreground">
+                        <TableCell
+                          colSpan={7}
+                          className="text-muted-foreground"
+                        >
                           Aucun event sur la période.
                         </TableCell>
                       </TableRow>
@@ -927,17 +974,26 @@ export default async function AdminOpsPage() {
               <TableBody>
                 {cronRuns.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} className="text-muted-foreground text-center">
+                    <TableCell
+                      colSpan={7}
+                      className="text-muted-foreground text-center"
+                    >
                       Aucun run cron enregistré.
                     </TableCell>
                   </TableRow>
                 ) : (
                   cronRuns.map((run) => (
                     <TableRow key={run.id}>
-                      <TableCell className="text-sm">{formatDateTime(run.startedAt)}</TableCell>
-                      <TableCell className="font-medium">{run.jobName}</TableCell>
+                      <TableCell className="text-sm">
+                        {formatDateTime(run.startedAt)}
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        {run.jobName}
+                      </TableCell>
                       <TableCell>
-                        <Badge variant={statusVariant(run.status)}>{run.status}</Badge>
+                        <Badge variant={statusVariant(run.status)}>
+                          {run.status}
+                        </Badge>
                       </TableCell>
                       <TableCell className="text-sm">
                         {run.durationMs !== null ? `${run.durationMs} ms` : "-"}
@@ -945,7 +1001,9 @@ export default async function AdminOpsPage() {
                       <TableCell className="text-sm">
                         {run.processedCount ?? "-"}
                       </TableCell>
-                      <TableCell className="text-muted-foreground text-xs">{run.route}</TableCell>
+                      <TableCell className="text-muted-foreground text-xs">
+                        {run.route}
+                      </TableCell>
                       <TableCell className="text-xs">
                         {run.errorMessage ? (
                           <span className="text-destructive line-clamp-2">

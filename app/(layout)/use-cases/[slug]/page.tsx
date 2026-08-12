@@ -34,7 +34,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const useCase = getUseCaseBySlug(slug);
   if (!useCase) {
     return buildMarketingMetadata({
-      title: `Use Cases | ${SiteConfig.title}`,
+      title: `Cas d’usage | ${SiteConfig.title}`,
       description:
         "Cas d'usage Jobio pour freelances tech: prospection, CV et facturation.",
       path: "/use-cases",
@@ -113,11 +113,10 @@ export default async function UseCaseDetailPage({ params }: Props) {
       ctaLabel: "Lire la docs",
     },
     {
-      href:
-        `/?pv=${useCase.experimentVariant}&pe=use_case_${useCase.slug}#pricing` as const,
+      href: `/?pv=${useCase.experimentVariant}&pe=use_case_${useCase.slug}#pricing` as const,
       title: "Plans et pricing",
       description:
-        "Compare Free, Pro et Ultra sur la base des limites réellement implémentées.",
+        "Compare Free et Pro sur la base des limites réellement implémentées.",
       ctaLabel: "Comparer les plans",
     },
   ];
@@ -139,12 +138,12 @@ export default async function UseCaseDetailPage({ params }: Props) {
       <BreadcrumbStructuredData
         items={[
           { name: "Accueil", path: "/" },
-          { name: "Use cases", path: "/use-cases" },
+          { name: "Cas d’usage", path: "/use-cases" },
           { name: useCase.persona, path: `/use-cases/${useCase.slug}` },
         ]}
       />
       <PublicPageShell
-        badge="Use case"
+        badge="Cas d’usage"
         title={useCase.title}
         description={useCase.summary}
         lastUpdated="23 février 2026"
@@ -217,7 +216,11 @@ export default async function UseCaseDetailPage({ params }: Props) {
           </div>
         </PublicSection>
 
-        <PublicSection title="FAQ" description="Réponses rapides pour ce profil." className="mt-4">
+        <PublicSection
+          title="FAQ"
+          description="Réponses rapides pour ce profil."
+          className="mt-4"
+        >
           <div className="space-y-3">
             {useCase.faq.map((item) => (
               <article key={item.question} className="rounded-xl border p-4">
@@ -242,7 +245,7 @@ export default async function UseCaseDetailPage({ params }: Props) {
             <div>
               <p className="font-medium">Tester ce workflow sur ton activité</p>
               <p className="text-muted-foreground text-sm">
-                Commence gratuitement et active Pro/Ultra quand ton volume augmente.
+                Commence gratuitement et active Pro quand ton volume augmente.
               </p>
             </div>
             <div className="flex gap-2">

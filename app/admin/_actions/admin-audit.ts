@@ -26,7 +26,8 @@ type CreateAdminAuditLogInput = {
 };
 
 const isMissingAuditTableError = (error: unknown) =>
-  error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2021";
+  error instanceof Prisma.PrismaClientKnownRequestError &&
+  error.code === "P2021";
 
 export async function createAdminAuditLog(input: CreateAdminAuditLogInput) {
   try {
@@ -167,10 +168,7 @@ export const getRecentAdminAuditLogs = async (limit = 8) => {
   }
 };
 
-export const getAdminAuditLogsForUser = async (
-  userId: string,
-  limit = 20,
-) => {
+export const getAdminAuditLogsForUser = async (userId: string, limit = 20) => {
   try {
     return await prisma.adminAuditLog.findMany({
       where: {

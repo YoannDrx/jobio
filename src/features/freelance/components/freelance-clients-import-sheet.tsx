@@ -4,11 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Sheet,
-  SheetDescription,
-  SheetTitle,
-} from "@/components/ui/sheet";
+import { Sheet, SheetDescription, SheetTitle } from "@/components/ui/sheet";
 import {
   commitBillingClientsImportAction,
   parseBillingClientsImportAction,
@@ -91,7 +87,9 @@ export function FreelanceClientsImportSheet({
       toast.success(`${result.items.length} client(s) détecté(s)`);
     } catch (error) {
       setItems([]);
-      toast.error(error instanceof Error ? error.message : "Analyse impossible");
+      toast.error(
+        error instanceof Error ? error.message : "Analyse impossible",
+      );
     } finally {
       setIsParsing(false);
     }
@@ -181,10 +179,14 @@ export function FreelanceClientsImportSheet({
                     void handleAnalyze();
                   }}
                 >
-                  {isParsing ? <Loader2 className="size-4 animate-spin" /> : null}
+                  {isParsing ? (
+                    <Loader2 className="size-4 animate-spin" />
+                  ) : null}
                   Analyser le fichier
                 </Button>
-                {fileType ? <Badge variant="secondary">Type: {fileType}</Badge> : null}
+                {fileType ? (
+                  <Badge variant="secondary">Type: {fileType}</Badge>
+                ) : null}
               </div>
               {mappedColumns.length > 0 ? (
                 <div className="space-y-1">
@@ -193,7 +195,11 @@ export function FreelanceClientsImportSheet({
                   </p>
                   <div className="flex flex-wrap gap-1">
                     {mappedColumns.map((entry) => (
-                      <Badge key={entry} variant="outline" className="font-normal">
+                      <Badge
+                        key={entry}
+                        variant="outline"
+                        className="font-normal"
+                      >
                         {entry}
                       </Badge>
                     ))}
@@ -205,18 +211,25 @@ export function FreelanceClientsImportSheet({
             {items.length > 0 ? (
               <div className="space-y-3">
                 <div className="rounded-lg border p-3">
-                  <p className="text-muted-foreground text-xs">Clients détectés</p>
+                  <p className="text-muted-foreground text-xs">
+                    Clients détectés
+                  </p>
                   <p className="text-base font-semibold">{items.length}</p>
                 </div>
 
                 <div className="max-h-[52vh] space-y-2 overflow-y-auto pr-1">
                   {items.map((item, index) => (
-                    <div key={`${item.displayName}-${index}`} className="rounded-lg border p-3">
+                    <div
+                      key={`${item.displayName}-${index}`}
+                      className="rounded-lg border p-3"
+                    >
                       <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
                         <p className="font-medium">{item.displayName}</p>
                         <div className="flex items-center gap-1.5">
                           <Badge variant="outline">
-                            {item.type === "COMPANY" ? "Professionnel" : "Particulier"}
+                            {item.type === "COMPANY"
+                              ? "Professionnel"
+                              : "Particulier"}
                           </Badge>
                           <Badge variant="secondary">{item.confidence}</Badge>
                         </div>
@@ -234,18 +247,22 @@ export function FreelanceClientsImportSheet({
                       </div>
                       {item.contacts.length > 0 ? (
                         <div className="bg-muted mt-2 rounded-md border p-2 text-xs">
-                          <p className="font-medium">Contact principal détecté</p>
+                          <p className="font-medium">
+                            Contact principal détecté
+                          </p>
                           <p>
-                            {item.contacts.find((contact) => contact.isPrimary)?.firstName ??
+                            {item.contacts.find((contact) => contact.isPrimary)
+                              ?.firstName ??
                               item.contacts[0]?.firstName ??
-                              ""}
-                            {" "}
-                            {item.contacts.find((contact) => contact.isPrimary)?.lastName ??
+                              ""}{" "}
+                            {item.contacts.find((contact) => contact.isPrimary)
+                              ?.lastName ??
                               item.contacts[0]?.lastName ??
                               ""}
                           </p>
                           <p>
-                            {item.contacts.find((contact) => contact.isPrimary)?.email ??
+                            {item.contacts.find((contact) => contact.isPrimary)
+                              ?.email ??
                               item.contacts[0]?.email ??
                               "Email non détecté"}
                           </p>
@@ -256,7 +273,7 @@ export function FreelanceClientsImportSheet({
                           {item.warnings.join(" · ")}
                         </div>
                       ) : (
-                        <div className="text-emerald-700 mt-2 inline-flex items-center gap-1 text-xs">
+                        <div className="mt-2 inline-flex items-center gap-1 text-xs text-emerald-700">
                           <BadgeCheck className="size-3.5" />
                           Prêt à importer
                         </div>

@@ -41,7 +41,7 @@ const relatedResources = [
   },
   {
     href: "/#pricing" as const,
-    title: "Plans Free, Pro, Ultra",
+    title: "Plans Free et Pro",
     description:
       "Vérifie les limites de plan avant de déployer ton process de prospection.",
     ctaLabel: "Comparer les plans",
@@ -89,7 +89,9 @@ export default function BlogPage() {
       />
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(blogCollectionJsonLd) }}
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(blogCollectionJsonLd),
+        }}
       />
       <script
         type="application/ld+json"

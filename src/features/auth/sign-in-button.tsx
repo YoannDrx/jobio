@@ -27,7 +27,7 @@ export const SignInButton = (props: VariantProps<typeof buttonVariants>) => {
       className={buttonVariants({ size: "sm", variant: "outline", ...props })}
       href={`/auth/signin?callbackUrl=${href}`}
     >
-      Sign in
+      Se connecter
     </Link>
   );
 };

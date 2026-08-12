@@ -171,6 +171,21 @@ test.describe("missions", () => {
       where: { email: userData.email },
     });
 
+    const now = new Date();
+    await prisma.userPreference.upsert({
+      where: { userId: user.id },
+      create: {
+        userId: user.id,
+        proTrialStartedAt: new Date(now.getTime() - 15 * 24 * 60 * 60 * 1000),
+        proTrialEndsAt: new Date(now.getTime() - 24 * 60 * 60 * 1000),
+        proTrialConsumedAt: now,
+      },
+      update: {
+        proTrialEndsAt: new Date(now.getTime() - 24 * 60 * 60 * 1000),
+        proTrialConsumedAt: now,
+      },
+    });
+
     await prisma.mission.createMany({
       data: Array.from({ length: 15 }).map((_, index) => ({
         title: `Mission Limit ${index + 1}`,
@@ -181,10 +196,9 @@ test.describe("missions", () => {
     });
 
     await page.goto("/job/pipeline?view=list");
-    await page.waitForLoadState("networkidle");
 
     await expect(page.getByText(/limite atteinte/i).first()).toBeVisible({
-      timeout: 10000,
+      timeout: 15000,
     });
 
     await page

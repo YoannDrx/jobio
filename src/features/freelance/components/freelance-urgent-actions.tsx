@@ -65,7 +65,7 @@ export function FreelanceUrgentActions({
     actions.push({
       label: `${overdueCount} facture${overdueCount > 1 ? "s" : ""} en retard de paiement`,
       description: "Relancer vos clients pour les paiements non reçus",
-      href: "/freelance/invoices",
+      href: "/job/gestion/invoices",
       variant: "destructive",
       count: overdueCount,
     });
@@ -75,7 +75,7 @@ export function FreelanceUrgentActions({
     actions.push({
       label: `${quoteToValidateCount} devis en attente d'acceptation`,
       description: "Vérifiez et acceptez vos devis en attente",
-      href: "/freelance/quotes",
+      href: "/job/gestion/quotes",
       variant: "warning",
       count: quoteToValidateCount,
     });
@@ -85,7 +85,7 @@ export function FreelanceUrgentActions({
     actions.push({
       label: `Déclaration URSSAF ${nextDeclaration.periodKey} dans ${daysRemaining} jour${daysRemaining !== 1 ? "s" : ""}`,
       description: "Complétez votre déclaration avant la date limite",
-      href: "/freelance/insights",
+      href: "/job/gestion/insights",
       variant: "info",
     });
   }

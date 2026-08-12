@@ -9,9 +9,11 @@ import {
   EditSideSheetHeader,
 } from "@/components/nowts/edit-side-sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useHydrated } from "@/hooks/use-hydrated";
 import { cn } from "@/lib/utils";
 import { X } from "lucide-react";
 import { useCallback, useEffect, useRef, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 
 type StudioSidePanelProps = {
   isOpen: boolean;
@@ -40,6 +42,7 @@ export function StudioSidePanel({
   minWidth = DEFAULT_MIN_WIDTH,
   maxWidth = DEFAULT_MAX_WIDTH,
 }: StudioSidePanelProps) {
+  const isHydrated = useHydrated();
   const isMobile = useIsMobile();
   const isDraggingRef = useRef(false);
   const startXRef = useRef(0);
@@ -91,6 +94,8 @@ export function StudioSidePanel({
     [maxWidth, minWidth, onWidthChange, width],
   );
 
+  if (!isHydrated) return null;
+
   if (isMobile) {
     return (
       <EditSideSheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
@@ -103,12 +108,13 @@ export function StudioSidePanel({
     );
   }
 
-  return (
+  return createPortal(
     <div
       role="dialog"
       aria-modal="false"
+      aria-label={title}
       className={cn(
-        "bg-background fixed top-0 right-0 z-40 flex h-full flex-col border-l shadow-2xl",
+        "bg-background fixed inset-y-0 right-0 z-40 flex h-dvh flex-col border-l shadow-2xl",
         "transform transition-transform duration-300 ease-out",
         isOpen ? "translate-x-0" : "translate-x-full",
       )}
@@ -122,12 +128,18 @@ export function StudioSidePanel({
       ) : null}
       <div className="flex items-center justify-between border-b px-4 py-3">
         <p className="text-sm font-semibold">{title}</p>
-        <Button variant="ghost" size="icon-sm" onClick={onClose}>
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          aria-label="Fermer le panneau"
+          onClick={onClose}
+        >
           <X className="size-4" />
         </Button>
       </div>
-      <div className="flex-1 overflow-y-auto p-4">{children}</div>
+      <div className="min-h-0 flex-1 overflow-y-auto p-4">{children}</div>
       {footer ? <div className="border-t px-4 py-3">{footer}</div> : null}
-    </div>
+    </div>,
+    document.body,
   );
 }

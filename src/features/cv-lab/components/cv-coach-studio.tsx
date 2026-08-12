@@ -2,7 +2,15 @@
 
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent } from "@/components/ui/card";
-import { BotIcon, FileText, FileUp, Loader2, Upload, X } from "lucide-react";
+import {
+  BotIcon,
+  FileText,
+  FileUp,
+  Loader2,
+  Save,
+  Upload,
+  X,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
@@ -135,8 +143,6 @@ export function CvCoachStudio() {
               session={activeSession}
               snapshot={editedSnapshot}
               onSnapshotChange={setEditedSnapshot}
-              onSaveSnapshot={handleSaveSnapshot}
-              isSavingSnapshot={isSavingSnapshot}
               profiles={profiles}
               applyProfileId={applyProfileId}
               applyMode={applyMode}
@@ -159,6 +165,22 @@ export function CvCoachStudio() {
             />
           ) : null
         }
+        editPanelFooter={
+          activeSession && editedSnapshot ? (
+            <Button
+              className="w-full"
+              onClick={handleSaveSnapshot}
+              disabled={isSavingSnapshot}
+            >
+              {isSavingSnapshot ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Save className="size-4" />
+              )}
+              {isSavingSnapshot ? "Sauvegarde en cours..." : "Sauvegarder"}
+            </Button>
+          ) : undefined
+        }
         emptyState={
           !activeSession ? (
             <Card className="flex min-h-[400px] items-center justify-center">
@@ -170,6 +192,18 @@ export function CvCoachStudio() {
                 <p className="text-muted-foreground mt-1 text-sm">
                   Crée une session pour commencer l&apos;entretien CV guidé.
                 </p>
+                <Button
+                  className="mt-4"
+                  onClick={handleCreateSession}
+                  disabled={isCreating}
+                >
+                  {isCreating ? (
+                    <Loader2 className="size-4 animate-spin" />
+                  ) : (
+                    <BotIcon className="size-4" />
+                  )}
+                  {isCreating ? "Création..." : "Nouvelle session"}
+                </Button>
               </CardContent>
             </Card>
           ) : undefined

@@ -295,12 +295,14 @@ const renderResponse = async (params: {
   });
 };
 
-export const GET = authRoute.query(querySchema).handler(async (_req, { query, ctx }) => {
-  return renderResponse({
-    userId: ctx.user.id,
-    type: query.type,
-    id: query.id,
-    mode: query.mode,
-    download: query.download,
+export const GET = authRoute
+  .query(querySchema)
+  .handler(async (_req, { query, ctx }) => {
+    return renderResponse({
+      userId: ctx.user.id,
+      type: query.type,
+      id: query.id,
+      mode: query.mode,
+      download: query.download,
+    });
   });
-});

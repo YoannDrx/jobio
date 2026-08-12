@@ -20,6 +20,7 @@ import Link from "next/link";
 import { useLocalStorage } from "react-use";
 import { toast } from "sonner";
 import { z } from "zod";
+import { useHydrated } from "@/hooks/use-hydrated";
 
 const LoginCredentialsFormScheme = z.object({
   email: z.string().email(),
@@ -31,6 +32,7 @@ type LoginCredentialsFormType = z.infer<typeof LoginCredentialsFormScheme>;
 export const SignInCredentialsAndMagicLinkForm = (props: {
   callbackUrl?: string;
 }) => {
+  const isHydrated = useHydrated();
   const safeDefaultCallbackUrl = sanitizeCallbackUrl(props.callbackUrl, "/job");
   const form = useZodForm({
     schema: LoginCredentialsFormScheme,
@@ -101,12 +103,12 @@ export const SignInCredentialsAndMagicLinkForm = (props: {
           render={({ field }) => (
             <FormItem className="flex-1">
               <div className="flex items-center justify-between">
-                <FormLabel>Password</FormLabel>
+                <FormLabel>Mot de passe</FormLabel>
                 <Link
                   href="/auth/forget-password"
                   className="text-sm underline"
                 >
-                  Forgot password ?
+                  Mot de passe oublié ?
                 </Link>
               </div>
               <FormControl>
@@ -120,15 +122,17 @@ export const SignInCredentialsAndMagicLinkForm = (props: {
 
       <LoadingButton
         loading={signInMutation.isPending}
+        disabled={!isHydrated}
+        aria-busy={!isHydrated || signInMutation.isPending}
         type="submit"
         className="ring-offset-card w-full ring-offset-2"
       >
-        {isUsingCredentials ? "Sign in" : "Sign in with magic link"}
+        {isUsingCredentials ? "Se connecter" : "Recevoir un lien de connexion"}
       </LoadingButton>
 
       {isUsingCredentials ? (
         <Typography variant="muted" className="text-xs">
-          Want faster sign in?{" "}
+          Tu préfères te connecter sans mot de passe ?{" "}
           <Typography
             variant="link"
             as="button"
@@ -137,12 +141,12 @@ export const SignInCredentialsAndMagicLinkForm = (props: {
               setIsUsingCredentials(false);
             }}
           >
-            Login with magic link
+            Utiliser un lien magique
           </Typography>
         </Typography>
       ) : (
         <Typography variant="muted" className="text-xs">
-          Prefer password sign in?{" "}
+          Tu préfères utiliser ton mot de passe ?{" "}
           <Typography
             variant="link"
             as="button"
@@ -151,7 +155,7 @@ export const SignInCredentialsAndMagicLinkForm = (props: {
               setIsUsingCredentials(true);
             }}
           >
-            Use password
+            Utiliser le mot de passe
           </Typography>
         </Typography>
       )}

@@ -41,5 +41,8 @@ export const getCallbackUrl = (
 ): string => {
   const searchParams = new URLSearchParams(window.location.search);
   const callbackUrlParams = searchParams.get("callbackUrl");
-  return sanitizeCallbackUrl(callbackUrlParams ?? callbackFromProps, fallbackUrl);
+  return sanitizeCallbackUrl(
+    callbackUrlParams ?? callbackFromProps,
+    fallbackUrl,
+  );
 };

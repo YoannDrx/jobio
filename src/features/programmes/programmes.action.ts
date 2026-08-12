@@ -1,10 +1,15 @@
 "use server";
 
-import { authAction } from "@/lib/actions/safe-actions";
+import { authAction, rateLimitedAuthAction } from "@/lib/actions/safe-actions";
 import { ActionError } from "@/lib/errors/action-error";
 import { prisma } from "@/lib/prisma";
 import { stripe } from "@/lib/stripe";
 import { getServerUrl } from "@/lib/server-url";
+import {
+  getProgramCatalogEntry,
+  getProgramStripePriceId,
+  PROGRAM_PRICE,
+} from "@/lib/stripe/billing-catalog";
 import {
   getProgramDetailSchema,
   unlockFreeProgramSchema,
@@ -126,7 +131,11 @@ export const unlockFreeProgramAction = authAction
     return { success: true };
   });
 
-export const createProgramCheckoutAction = authAction
+export const createProgramCheckoutAction = rateLimitedAuthAction(
+  "program-checkout",
+  5,
+  300,
+)
   .inputSchema(createProgramCheckoutSchema)
   .action(
     async ({
@@ -139,8 +148,28 @@ export const createProgramCheckoutAction = authAction
 
       if (!program) throw new ActionError("Programme introuvable");
       if (program.isFree) throw new ActionError("Ce programme est gratuit");
-      if (!program.stripePriceId)
-        throw new ActionError("Prix Stripe non configuré");
+      const stripePriceId = getProgramStripePriceId(program.slug);
+      if (!stripePriceId) throw new ActionError("Prix Stripe non configuré");
+
+      const catalogEntry = getProgramCatalogEntry(program.slug);
+      if (!catalogEntry) {
+        throw new ActionError("Programme payant absent du catalogue Jobio");
+      }
+
+      const stripePrice = await stripe.prices.retrieve(stripePriceId);
+      if (
+        !stripePrice.active ||
+        stripePrice.type !== "one_time" ||
+        stripePrice.lookup_key !== catalogEntry.sku ||
+        stripePrice.unit_amount !== PROGRAM_PRICE.unitAmount ||
+        stripePrice.currency !== PROGRAM_PRICE.currency ||
+        stripePrice.tax_behavior !== PROGRAM_PRICE.taxBehavior ||
+        stripePrice.metadata.slug !== program.slug
+      ) {
+        throw new ActionError(
+          "Ce programme est temporairement indisponible. Réessaie plus tard.",
+        );
+      }
 
       // Check if already purchased
       const existing = await prisma.programPurchase.findUnique({
@@ -160,14 +189,29 @@ export const createProgramCheckoutAction = authAction
         customer_email: !dbUser?.stripeCustomerId
           ? (dbUser?.email ?? undefined)
           : undefined,
-        line_items: [{ price: program.stripePriceId, quantity: 1 }],
+        line_items: [{ price: stripePriceId, quantity: 1 }],
         mode: "payment",
+        automatic_tax: { enabled: true },
+        billing_address_collection: "required",
+        tax_id_collection: { enabled: true },
+        customer_update: dbUser?.stripeCustomerId
+          ? { address: "auto", name: "auto" }
+          : undefined,
+        custom_text: {
+          submit: {
+            message:
+              "Paiement sécurisé pour Jobio, service édité par Yodev — Yoann Andrieux. Prix hors taxes ; le total est confirmé avant paiement.",
+          },
+        },
         success_url: getCheckoutSuccessUrl(successUrl),
         cancel_url: `${getServerUrl()}${cancelUrl}`,
         metadata: {
           type: "linkedin_program",
           programId: program.id,
           userId: user.id,
+          slug: program.slug,
+          sku: catalogEntry.sku,
+          catalogVersion: "1",
         },
       });
 
@@ -216,8 +260,8 @@ export const getLinkedInTemplateAction = authAction
 export const verifyProgramPurchaseAction = authAction
   .inputSchema(verifyProgramPurchaseSchema)
   .action(async ({ parsedInput: { sessionId }, ctx: { user } }) => {
-    const purchase = await prisma.programPurchase.findUnique({
-      where: { stripeSessionId: sessionId },
+    const purchase = await prisma.programPurchase.findFirst({
+      where: { stripeSessionId: sessionId, userId: user.id },
       include: { program: { select: { slug: true, title: true } } },
     });
 
@@ -225,25 +269,46 @@ export const verifyProgramPurchaseAction = authAction
       // Webhook may not have processed yet, check Stripe
       const session = await stripe.checkout.sessions.retrieve(sessionId);
 
-      if (session.payment_status === "paid" && session.metadata?.programId) {
+      const metadata = session.metadata;
+      const programId = metadata?.programId;
+      if (
+        metadata &&
+        session.mode === "payment" &&
+        metadata.type === "linkedin_program" &&
+        metadata.userId === user.id &&
+        session.payment_status === "paid" &&
+        session.amount_subtotal === PROGRAM_PRICE.unitAmount &&
+        session.currency === PROGRAM_PRICE.currency &&
+        programId
+      ) {
         const completed = await prisma.programPurchase.upsert({
           where: {
             userId_programId: {
               userId: user.id,
-              programId: session.metadata.programId,
+              programId,
             },
           },
           update: {
             status: "completed",
             stripeSessionId: session.id,
+            stripePaymentIntentId:
+              typeof session.payment_intent === "string"
+                ? session.payment_intent
+                : (session.payment_intent?.id ?? null),
+            amount: session.amount_subtotal,
+            currency: session.currency,
           },
           create: {
             userId: user.id,
-            programId: session.metadata.programId,
+            programId,
             status: "completed",
             stripeSessionId: session.id,
-            amount: session.amount_total ?? 0,
-            currency: session.currency ?? "eur",
+            stripePaymentIntentId:
+              typeof session.payment_intent === "string"
+                ? session.payment_intent
+                : (session.payment_intent?.id ?? null),
+            amount: session.amount_subtotal,
+            currency: session.currency,
           },
           include: { program: { select: { slug: true, title: true } } },
         });

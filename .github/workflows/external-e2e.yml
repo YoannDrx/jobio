@@ -1,0 +1,108 @@
+name: E2E fournisseurs externes
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: external-e2e-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  stripe-openai:
+    name: Stripe test et OpenAI
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    environment: staging
+    env:
+      CI: "true"
+      HEADLESS: "true"
+      NODE_ENV: "production"
+      PORT: 3000
+      PLAYWRIGHT_TEST_BASE_URL: "http://localhost:3000"
+      DATABASE_URL: "postgresql://postgres@localhost:5432/jobio_external"
+      DATABASE_URL_UNPOOLED: "postgresql://postgres@localhost:5432/jobio_external"
+      REDIS_URL: "redis://localhost:6379"
+      BETTER_AUTH_URL: "http://localhost:3000"
+      BETTER_AUTH_SECRET: ${{ secrets.E2E_BETTER_AUTH_SECRET }}
+      RESEND_API_KEY: ${{ secrets.RESEND_TEST_API_KEY }}
+      EMAIL_FROM: "Jobio staging <hello@jobio.fr>"
+      NEXT_PUBLIC_EMAIL_CONTACT: "hello@jobio.fr"
+      STRIPE_SECRET_KEY: ${{ secrets.STRIPE_TEST_SECRET_KEY }}
+      NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ secrets.STRIPE_TEST_PUBLISHABLE_KEY }}
+      STRIPE_PRO_PLAN_ID: ${{ secrets.STRIPE_TEST_PRO_MONTHLY_PRICE_ID }}
+      STRIPE_PRO_YEARLY_PLAN_ID: ${{ secrets.STRIPE_TEST_PRO_YEARLY_PRICE_ID }}
+      STRIPE_PROGRAM_ATTIRER_PRICE_ID: ${{ secrets.STRIPE_TEST_PROGRAM_ATTIRER_PRICE_ID }}
+      STRIPE_PROGRAM_BRANDING_PRICE_ID: ${{ secrets.STRIPE_TEST_PROGRAM_BRANDING_PRICE_ID }}
+      STRIPE_PROGRAM_CROISSANCE_PRICE_ID: ${{ secrets.STRIPE_TEST_PROGRAM_CROISSANCE_PRICE_ID }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_STAGING_API_KEY }}
+      CRON_SECRET: ${{ secrets.E2E_CRON_SECRET }}
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_HOST_AUTH_METHOD: trust
+          POSTGRES_USER: postgres
+          POSTGRES_DB: jobio_external
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.14.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.x
+          cache: pnpm
+      - name: Installation figée
+        run: pnpm install --frozen-lockfile
+      - name: Prisma et migrations
+        run: |
+          pnpm prisma:generate
+          pnpm prisma migrate deploy
+      - name: Installer Stripe CLI
+        run: |
+          curl --fail --location --silent --show-error https://github.com/stripe/stripe-cli/releases/download/v1.35.0/stripe_1.35.0_linux_x86_64.tar.gz --output /tmp/stripe.tar.gz
+          tar -xzf /tmp/stripe.tar.gz -C /tmp
+          sudo install /tmp/stripe /usr/local/bin/stripe
+      - name: Préparer la signature webhook Stripe test
+        run: echo "STRIPE_WEBHOOK_SECRET=$(stripe listen --api-key "$STRIPE_SECRET_KEY" --print-secret)" >> "$GITHUB_ENV"
+      - name: Build et navigateurs
+        run: |
+          pnpm build
+          pnpm exec playwright install chromium --with-deps
+      - name: Démarrer Jobio et le forwarder Stripe
+        run: |
+          pnpm start > /tmp/jobio.log 2>&1 &
+          stripe listen --api-key "$STRIPE_SECRET_KEY" --forward-to http://localhost:3000/api/webhooks/stripe > /tmp/stripe.log 2>&1 &
+          pnpm dlx wait-on@latest http://localhost:3000/api/health --timeout 60000
+      - name: Exécuter les scénarios externes
+        run: pnpm test:e2e:external:ci
+      - name: Journaux externes
+        if: ${{ failure() }}
+        run: |
+          tail -n 200 /tmp/jobio.log || true
+          tail -n 200 /tmp/stripe.log || true
+      - name: Rapport Playwright
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-external-report
+          path: playwright-report/
+          retention-days: 30

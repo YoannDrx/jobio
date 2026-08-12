@@ -1,28 +1,37 @@
 "use client";
 
-import { Toaster } from "@/components/ui/sonner";
-import { DialogManagerRenderer } from "@/features/dialog-manager/dialog-manager-renderer";
-import { ChatbotLazy } from "@/features/ai/chatbot/chatbot-lazy";
-import { GlobalDialogLazy } from "@/features/global-dialog/global-dialog-lazy";
+import { AnalyticsProvider } from "@/components/providers/analytics-provider";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { ThemeProvider } from "next-themes";
-import type { PropsWithChildren } from "react";
+import dynamic from "next/dynamic";
+import { usePathname } from "next/navigation";
+import { Suspense, type PropsWithChildren, type ReactElement } from "react";
+
+const ProductProviders = dynamic(async () =>
+  import("./product-providers").then((module) => module.ProductProviders),
+);
 
 const queryClient = new QueryClient();
+
+function RoutedProviders({ children }: PropsWithChildren): ReactElement {
+  const pathname = usePathname();
+
+  return pathname === "/" ? (
+    <>{children}</>
+  ) : (
+    <ProductProviders>{children}</ProductProviders>
+  );
+}
 
 export const Providers = ({ children }: PropsWithChildren) => {
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
       <QueryClientProvider client={queryClient}>
-        <Toaster />
-        <DialogManagerRenderer />
-        <GlobalDialogLazy />
-        <ChatbotLazy />
-        {children}
-        {process.env.NODE_ENV === "development" && (
-          <ReactQueryDevtools initialIsOpen={false} />
-        )}
+        <Suspense fallback={children}>
+          <AnalyticsProvider>
+            <RoutedProviders>{children}</RoutedProviders>
+          </AnalyticsProvider>
+        </Suspense>
       </QueryClientProvider>
     </ThemeProvider>
   );

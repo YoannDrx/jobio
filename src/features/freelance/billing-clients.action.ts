@@ -18,7 +18,10 @@ import {
   updateBillingClientSchema,
   upsertBillingProfileSchema,
 } from "./billing.schema";
-import { buildBeforeAfterMetadata, createBillingAuditEvent } from "./billing-audit";
+import {
+  buildBeforeAfterMetadata,
+  createBillingAuditEvent,
+} from "./billing-audit";
 import { DEFAULT_BILLING_DOCUMENT_TEMPLATE_ID } from "./billing-document-templates";
 
 const normalizeNullable = (value?: string | null) => {
@@ -69,7 +72,9 @@ const normalizeClientContacts = (contacts: BillingClientContactInput[]) => {
         notes,
       };
     })
-    .filter((contact): contact is NonNullable<typeof contact> => contact !== null);
+    .filter(
+      (contact): contact is NonNullable<typeof contact> => contact !== null,
+    );
 
   if (normalized.length === 0) {
     return [];
@@ -183,11 +188,18 @@ export const upsertBillingProfileAction = authAction
           activityCategory: normalizeNullable(parsedInput.activityCategory),
           urssafDeclarationType: parsedInput.urssafDeclarationType ?? null,
           urssafContributionRate: parsedInput.urssafContributionRate ?? null,
-          vatExemptionMention: normalizeNullable(parsedInput.vatExemptionMention),
+          vatExemptionMention: normalizeNullable(
+            parsedInput.vatExemptionMention,
+          ),
           documentTemplate:
-            parsedInput.documentTemplate ?? DEFAULT_BILLING_DOCUMENT_TEMPLATE_ID,
-          documentPrimaryColor: normalizeNullable(parsedInput.documentPrimaryColor),
-          documentAccentColor: normalizeNullable(parsedInput.documentAccentColor),
+            parsedInput.documentTemplate ??
+            DEFAULT_BILLING_DOCUMENT_TEMPLATE_ID,
+          documentPrimaryColor: normalizeNullable(
+            parsedInput.documentPrimaryColor,
+          ),
+          documentAccentColor: normalizeNullable(
+            parsedInput.documentAccentColor,
+          ),
           documentLogoUrl: normalizeNullable(parsedInput.documentLogoUrl),
           documentFooterText: normalizeNullable(parsedInput.documentFooterText),
           documentShowNotes: parsedInput.documentShowNotes,
@@ -225,11 +237,18 @@ export const upsertBillingProfileAction = authAction
           activityCategory: normalizeNullable(parsedInput.activityCategory),
           urssafDeclarationType: parsedInput.urssafDeclarationType ?? null,
           urssafContributionRate: parsedInput.urssafContributionRate ?? null,
-          vatExemptionMention: normalizeNullable(parsedInput.vatExemptionMention),
+          vatExemptionMention: normalizeNullable(
+            parsedInput.vatExemptionMention,
+          ),
           documentTemplate:
-            parsedInput.documentTemplate ?? DEFAULT_BILLING_DOCUMENT_TEMPLATE_ID,
-          documentPrimaryColor: normalizeNullable(parsedInput.documentPrimaryColor),
-          documentAccentColor: normalizeNullable(parsedInput.documentAccentColor),
+            parsedInput.documentTemplate ??
+            DEFAULT_BILLING_DOCUMENT_TEMPLATE_ID,
+          documentPrimaryColor: normalizeNullable(
+            parsedInput.documentPrimaryColor,
+          ),
+          documentAccentColor: normalizeNullable(
+            parsedInput.documentAccentColor,
+          ),
           documentLogoUrl: normalizeNullable(parsedInput.documentLogoUrl),
           documentFooterText: normalizeNullable(parsedInput.documentFooterText),
           documentShowNotes: parsedInput.documentShowNotes,
@@ -278,7 +297,9 @@ export const createBillingClientAction = authAction
 
     return prisma.$transaction(async (tx) => {
       const normalizedContacts = normalizeClientContacts(parsedInput.contacts);
-      const primaryContact = normalizedContacts.find((contact) => contact.isPrimary);
+      const primaryContact = normalizedContacts.find(
+        (contact) => contact.isPrimary,
+      );
 
       const client = await tx.billingClient.create({
         data: {
@@ -294,8 +315,14 @@ export const createBillingClientAction = authAction
             parsedInput.contactLastName,
             primaryContact?.lastName,
           ),
-          email: pickPrimaryContactField(parsedInput.email, primaryContact?.email),
-          phone: pickPrimaryContactField(parsedInput.phone, primaryContact?.phone),
+          email: pickPrimaryContactField(
+            parsedInput.email,
+            primaryContact?.email,
+          ),
+          phone: pickPrimaryContactField(
+            parsedInput.phone,
+            primaryContact?.phone,
+          ),
           vatNumber: normalizeNullable(parsedInput.vatNumber),
           siret: normalizeNullable(parsedInput.siret),
           addressLine1: parsedInput.addressLine1,
@@ -339,7 +366,9 @@ export const updateBillingClientAction = authAction
       parsedInput.contacts !== undefined
         ? normalizeClientContacts(parsedInput.contacts)
         : null;
-    const primaryContact = normalizedContacts?.find((contact) => contact.isPrimary);
+    const primaryContact = normalizedContacts?.find(
+      (contact) => contact.isPrimary,
+    );
 
     const existing = await prisma.billingClient.findFirst({
       where: {
@@ -407,12 +436,9 @@ export const updateBillingClientAction = authAction
           postalCode: parsedInput.postalCode,
           city: parsedInput.city,
           countryCode: parsedInput.countryCode,
-          paymentTermsInDays:
-            parsedInput.paymentTermsInDays ?? undefined,
-          defaultLateRate:
-            parsedInput.defaultLateRate ?? undefined,
-          defaultFlatFeeEur:
-            parsedInput.defaultFlatFeeEur ?? undefined,
+          paymentTermsInDays: parsedInput.paymentTermsInDays ?? undefined,
+          defaultLateRate: parsedInput.defaultLateRate ?? undefined,
+          defaultFlatFeeEur: parsedInput.defaultFlatFeeEur ?? undefined,
           notes:
             parsedInput.notes === undefined
               ? undefined

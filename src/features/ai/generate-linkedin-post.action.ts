@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { generateObject } from "ai";
 import { z } from "zod";
 import { AI_MODELS } from "./ai-config";
-import { checkAndIncrementAIQuota } from "./ai-quota";
+import { runTrackedAI } from "./ai-usage";
 import {
   LINKEDIN_POST_SYSTEM_PROMPT,
   linkedinPostOutputSchema,
@@ -19,29 +19,27 @@ const generateLinkedinPostInputSchema = z.object({
 export const generateLinkedinPostAction = authAction
   .inputSchema(generateLinkedinPostInputSchema)
   .action(async ({ parsedInput: { topic, tone }, ctx: { user } }) => {
-    await checkAndIncrementAIQuota(user.id);
-
     const profile = await prisma.userProfile.findFirst({
       where: { userId: user.id, isDefault: true },
     });
 
     const prompt = buildPrompt(topic, tone, profile);
 
-    const result = await generateObject({
-      model: AI_MODELS.fast,
-      system: LINKEDIN_POST_SYSTEM_PROMPT,
-      prompt,
-      schema: linkedinPostOutputSchema,
-    });
-
-    await prisma.aIUsage.create({
-      data: {
+    const result = await runTrackedAI(
+      {
         userId: user.id,
         feature: "LINKEDIN_POST",
-        inputTokens: result.usage.inputTokens ?? 0,
-        outputTokens: result.usage.outputTokens ?? 0,
+        modelId: AI_MODELS.fast.modelId,
+        context: { tone },
       },
-    });
+      async () =>
+        generateObject({
+          model: AI_MODELS.fast,
+          system: LINKEDIN_POST_SYSTEM_PROMPT,
+          prompt,
+          schema: linkedinPostOutputSchema,
+        }),
+    );
 
     return result.object;
   });

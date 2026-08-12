@@ -61,7 +61,7 @@ export const buildMarketingMetadata = ({
   description,
   path,
   type = "website",
-  imagePath = "/images/hero.png",
+  imagePath = "/images/og-jobio.png",
   keywords,
   noIndex = false,
   publishedTime,

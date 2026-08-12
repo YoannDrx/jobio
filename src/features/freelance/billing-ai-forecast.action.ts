@@ -1,7 +1,7 @@
 "use server";
 
 import { AI_MODELS } from "@/features/ai/ai-config";
-import { checkAndIncrementAIQuota } from "@/features/ai/ai-quota";
+import { runTrackedAI } from "@/features/ai/ai-usage";
 import { BillingInvoiceStatus, BillingPaymentStatus } from "@/generated/prisma";
 import { authAction } from "@/lib/actions/safe-actions";
 import {
@@ -64,8 +64,6 @@ export const generateFreelanceBillingForecastAction = authAction
         "Projection IA disponible à partir du plan Pro.",
       );
     }
-
-    await checkAndIncrementAIQuota(user.id);
 
     const now = new Date();
     const ninetyDaysAgo = new Date(now.getTime() - 90 * 24 * 60 * 60 * 1000);
@@ -232,21 +230,21 @@ Contraintes:
 `.trim();
 
     try {
-      const result = await generateObject({
-        model: AI_MODELS.fast,
-        schema: billingForecastOutputSchema,
-        prompt,
-        temperature: 0.2,
-      });
-
-      await prisma.aIUsage.create({
-        data: {
+      const result = await runTrackedAI(
+        {
           userId: user.id,
           feature: "BILLING_FORECAST",
-          inputTokens: result.usage.inputTokens ?? 0,
-          outputTokens: result.usage.outputTokens ?? 0,
+          modelId: AI_MODELS.fast.modelId,
+          context: { horizonDays: 90 },
         },
-      });
+        async () =>
+          generateObject({
+            model: AI_MODELS.fast,
+            schema: billingForecastOutputSchema,
+            prompt,
+            temperature: 0.2,
+          }),
+      );
 
       return {
         generatedAt: new Date().toISOString(),

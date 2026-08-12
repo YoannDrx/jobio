@@ -12,9 +12,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: `Account Deleted | ${SiteConfig.title}`,
-  description:
-    "Your account has been successfully deleted. Thank you for using our service.",
+  title: `Compte supprimé | ${SiteConfig.title}`,
+  description: "Ton compte Jobio et les données associées ont été supprimés.",
 };
 
 export default function GoodbyePage() {
@@ -28,24 +27,24 @@ export default function GoodbyePage() {
             </AvatarFallback>
           </Avatar>
         </div>
-        <CardHeader className="text-center">Account Deleted</CardHeader>
+        <CardHeader className="text-center">Compte supprimé</CardHeader>
 
         <CardDescription className="text-center">
-          Your account has been successfully deleted. We're sorry to see you go.
+          Ton compte a bien été supprimé. Nous sommes désolés de te voir partir.
         </CardDescription>
       </CardHeader>
       <CardFooter className="border-t pt-6">
         <div className="w-full space-y-4 text-center">
           <p className="text-muted-foreground text-sm">
-            Your account and all associated data have been permanently removed
-            from our system.
+            Ton compte et toutes les données associées ont été définitivement
+            supprimés de notre système.
           </p>
           <p className="text-muted-foreground text-sm">
-            If you change your mind, you're welcome to create a new account
-            anytime.
+            Si tu changes d&apos;avis, tu pourras recréer un compte à tout
+            moment.
           </p>
           <Button asChild className="w-full">
-            <Link href="/auth/signup">Create New Account</Link>
+            <Link href="/auth/signup">Créer un nouveau compte</Link>
           </Button>
         </div>
       </CardFooter>

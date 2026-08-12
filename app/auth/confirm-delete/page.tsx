@@ -5,9 +5,9 @@ import { sanitizeCallbackUrl } from "@/lib/auth/auth-utils";
 import { ConfirmDeletePage } from "./confirm-delete-page";
 
 export const metadata: Metadata = {
-  title: `Confirm Account Deletion | ${SiteConfig.title}`,
+  title: `Confirmer la suppression du compte | ${SiteConfig.title}`,
   description:
-    "Confirm that you want to permanently delete your account and all associated data.",
+    "Confirme la suppression définitive de ton compte et des données associées.",
 };
 
 export default function Page(props: PageProps<"/auth/confirm-delete">) {

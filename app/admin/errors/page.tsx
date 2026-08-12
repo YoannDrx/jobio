@@ -48,14 +48,18 @@ const formatDateTime = (value: Date) =>
     minute: "2-digit",
   }).format(value);
 
-const severityVariant = (severity: "INFO" | "WARNING" | "ERROR" | "CRITICAL") => {
+const severityVariant = (
+  severity: "INFO" | "WARNING" | "ERROR" | "CRITICAL",
+) => {
   if (severity === "INFO") return "secondary";
   if (severity === "WARNING") return "outline";
   if (severity === "CRITICAL") return "destructive";
   return "default";
 };
 
-export default async function AdminErrorsPage({ searchParams }: ErrorPageProps) {
+export default async function AdminErrorsPage({
+  searchParams,
+}: ErrorPageProps) {
   await getRequiredAdmin();
 
   const params = await searchParams;
@@ -97,7 +101,11 @@ export default async function AdminErrorsPage({ searchParams }: ErrorPageProps) 
 
       <LayoutContent className="space-y-4">
         <form className="grid gap-3 rounded-lg border p-3 md:grid-cols-[1fr_220px_220px_auto]">
-          <Input name="search" defaultValue={search} placeholder="Source, message, route, email..." />
+          <Input
+            name="search"
+            defaultValue={search}
+            placeholder="Source, message, route, email..."
+          />
           <Input
             name="severity"
             defaultValue={severity}
@@ -128,7 +136,10 @@ export default async function AdminErrorsPage({ searchParams }: ErrorPageProps) 
             <TableBody>
               {result.errors.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-muted-foreground text-center">
+                  <TableCell
+                    colSpan={8}
+                    className="text-muted-foreground text-center"
+                  >
                     Aucun log d&apos;erreur trouvé.
                   </TableCell>
                 </TableRow>
@@ -148,10 +159,14 @@ export default async function AdminErrorsPage({ searchParams }: ErrorPageProps) 
                       <p className="line-clamp-2 text-sm">{error.message}</p>
                     </TableCell>
                     <TableCell className="text-xs">
-                      {error.route ?? <span className="text-muted-foreground">-</span>}
+                      {error.route ?? (
+                        <span className="text-muted-foreground">-</span>
+                      )}
                     </TableCell>
                     <TableCell className="text-xs">
-                      {error.userEmail ?? <span className="text-muted-foreground">-</span>}
+                      {error.userEmail ?? (
+                        <span className="text-muted-foreground">-</span>
+                      )}
                     </TableCell>
                     <TableCell>
                       {error.resolvedAt ? (

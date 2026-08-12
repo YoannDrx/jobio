@@ -6,11 +6,14 @@ import {
   startCronJobRun,
 } from "@/lib/ops/cron-job-runs";
 import { validateCronAuthorization } from "@/lib/security/cron-auth";
+import { env } from "@/lib/env";
 import { NextResponse } from "next/server";
 import { route } from "@/lib/zod-route";
 
 export const POST = route.handler(async (req) => {
-  const authFailure = validateCronAuthorization(req.headers.get("authorization"));
+  const authFailure = validateCronAuthorization(
+    req.headers.get("authorization"),
+  );
   if (authFailure) {
     return NextResponse.json(
       { error: authFailure.publicError },
@@ -39,6 +42,23 @@ export const POST = route.handler(async (req) => {
     jobName: "seo-search-metrics-sync",
     route: new URL(req.url).pathname,
   });
+
+  if (!env.SEO_SEARCH_METRICS_ENDPOINT?.trim()) {
+    await finishCronJobRun(run?.id, {
+      status: "SUCCESS",
+      processedCount: 0,
+      details: {
+        skipped: true,
+        reason: "SEO_SEARCH_METRICS_ENDPOINT is not configured",
+      },
+    });
+
+    return NextResponse.json({
+      synced: false,
+      skipped: true,
+      reason: "not_configured",
+    });
+  }
 
   try {
     const syncResult = await syncSeoSearchMetricsCacheFromEndpoint();

@@ -13,7 +13,6 @@ import {
   HelpCircle,
   Lock,
   Plus,
-  Save,
   Settings,
   Trash2,
   Unlock,
@@ -35,8 +34,6 @@ import type { CvCoachSnapshot } from "../cv-coach.schema";
 type CvCoachSnapshotEditorProps = {
   snapshot: CvCoachSnapshot;
   onChange: (snapshot: CvCoachSnapshot) => void;
-  onSave: () => void;
-  isSaving: boolean;
   lockedFields?: string[];
   onToggleLock?: (fieldPath: string) => void;
 };
@@ -159,8 +156,6 @@ function LockToggle({
 export function CvCoachSnapshotEditor({
   snapshot,
   onChange,
-  onSave,
-  isSaving,
   lockedFields,
   onToggleLock,
 }: CvCoachSnapshotEditorProps) {
@@ -1032,11 +1027,6 @@ export function CvCoachSnapshotEditor({
           </AccordionContent>
         </AccordionItem>
       </Accordion>
-
-      <Button onClick={onSave} disabled={isSaving} className="w-full">
-        <Save className="size-4" />
-        {isSaving ? "Sauvegarde en cours..." : "Sauvegarder"}
-      </Button>
     </div>
   );
 }

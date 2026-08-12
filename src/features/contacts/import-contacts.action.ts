@@ -101,7 +101,9 @@ export const importContactsAction = authAction
       }
 
       const settledResults = await Promise.allSettled(
-        toCreate.map(async (item) => prisma.contact.create({ data: item.data })),
+        toCreate.map(async (item) =>
+          prisma.contact.create({ data: item.data }),
+        ),
       );
 
       settledResults.forEach((result, idx) => {

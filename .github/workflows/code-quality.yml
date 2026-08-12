@@ -1,77 +1,54 @@
-name: Frontend CI
+name: Qualité et sécurité
 
-on: [pull_request]
+on:
+  pull_request:
+  push:
+    branches: [main]
 
 concurrency:
-  group: ${{ github.ref }}
+  group: quality-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  unit-test:
+  verify:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node-version: [22.x]
-
+    timeout-minutes: 30
+    env:
+      CI: "true"
+      NODE_ENV: "test"
+      DATABASE_URL: "postgresql://jobio:jobio@localhost:5432/jobio_ci"
+      DATABASE_URL_UNPOOLED: "postgresql://jobio:jobio@localhost:5432/jobio_ci"
+      REDIS_URL: "redis://localhost:6379"
+      BETTER_AUTH_SECRET: "ci-better-auth-secret-at-least-thirty-two-characters"
+      RESEND_API_KEY: "re_ci_placeholder"
+      EMAIL_FROM: "Jobio <hello@jobio.fr>"
+      NEXT_PUBLIC_EMAIL_CONTACT: "hello@jobio.fr"
+      STRIPE_SECRET_KEY: "sk_test_ci_placeholder"
+      NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: "pk_test_ci_placeholder"
+      OPENAI_API_KEY: "sk-ci-placeholder"
+      CRON_SECRET: "ci-cron-secret-for-jobio-tests-only"
     steps:
-      - uses: pnpm/action-setup@v2
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
         with:
-          version: 8
-      - uses: actions/checkout@v3
-      - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v3
+          version: 10.14.0
+      - uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node-version }}
-      - name: Install
-        run: pnpm install
-        env:
-          CI: true
-      - name: Test
-        run: |
-          pnpm test:ci
-        env:
-          CI: true
-  eslint:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node-version: [22.x]
-    steps:
-      - uses: pnpm/action-setup@v2
-        with:
-          version: 8
-      - uses: actions/checkout@v3
-      - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v3
-        with:
-          node-version: ${{ matrix.node-version }}
-      - name: Install
-        run: pnpm install
-        env:
-          CI: true
-      - name: Run linter
-        run: pnpm lint:ci
-        env:
-          CI: true
-  typescript:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        node-version: [22.x]
-    steps:
-      - uses: pnpm/action-setup@v2
-        with:
-          version: 8
-      - uses: actions/checkout@v3
-      - name: Use Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v3
-        with:
-          node-version: ${{ matrix.node-version }}
-      - name: Install
-        run: pnpm install
-        env:
-          CI: true
-      - name: Run TypeScript check
+          node-version: 24.x
+          cache: pnpm
+      - name: Installation figée
+        run: pnpm install --frozen-lockfile
+      - name: Audit des dépendances de production
+        run: pnpm security:audit
+      - name: Preflight statique de production
+        run: pnpm production:preflight:static
+      - name: TypeScript
         run: pnpm ts
-        env:
-          CI: true
+      - name: ESLint
+        run: pnpm lint:ci
+      - name: Format
+        run: pnpm format:check
+      - name: Tests unitaires et intégration
+        run: pnpm test:ci
+      - name: Build production
+        run: pnpm build

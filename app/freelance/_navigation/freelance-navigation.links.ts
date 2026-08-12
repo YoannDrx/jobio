@@ -15,7 +15,7 @@ import {
   Users,
 } from "lucide-react";
 
-const FREELANCE_PATH = "/freelance";
+const FREELANCE_PATH = "/job/gestion";
 
 const FREELANCE_LINKS: NavigationGroup[] = [
   {

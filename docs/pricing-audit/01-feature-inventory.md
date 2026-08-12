@@ -6,6 +6,7 @@ Source: codebase locale (`app/`, `src/features/`, `src/lib/plan-limits.ts`)
 ## 1) Prospection (Job workspace)
 
 ### Pipeline missions
+
 - Pages: `app/job/pipeline/page.tsx`
 - Actions clés: `src/features/missions/missions.action.ts`, `src/features/missions/export-missions.action.ts`
 - Capacités:
@@ -15,6 +16,7 @@ Source: codebase locale (`app/`, `src/features/`, `src/lib/plan-limits.ts`)
   - batch (update statut, archivage)
 
 ### Contacts CRM
+
 - Pages: `app/job/contacts/page.tsx`
 - Actions clés: `src/features/contacts/contacts.action.ts`, `src/features/contacts/import-contacts.action.ts`, `src/features/contacts/export-contacts.action.ts`
 - Capacités:
@@ -24,6 +26,7 @@ Source: codebase locale (`app/`, `src/features/`, `src/lib/plan-limits.ts`)
   - interactions, tags, tri relationnel
 
 ### Profils freelance
+
 - Pages: `app/job/profiles/page.tsx`
 - Actions clés: `src/features/profiles/profiles.action.ts`
 - Capacités:
@@ -32,6 +35,7 @@ Source: codebase locale (`app/`, `src/features/`, `src/lib/plan-limits.ts`)
   - import LinkedIn (actions dédiées)
 
 ### Plateformes
+
 - Pages: `app/job/platforms/page.tsx`
 - Actions clés: `src/features/platforms/platforms.action.ts`
 - Capacités:
@@ -39,6 +43,7 @@ Source: codebase locale (`app/`, `src/features/`, `src/lib/plan-limits.ts`)
   - statuts plateforme + URL profil
 
 ### Entreprises cibles
+
 - UI: accès depuis pipeline
 - Actions clés: `src/features/companies/companies.action.ts`
 - Capacités:
@@ -47,6 +52,7 @@ Source: codebase locale (`app/`, `src/features/`, `src/lib/plan-limits.ts`)
 ## 2) Exécution commerciale
 
 ### Relances
+
 - Pages: `app/job/follow-ups/page.tsx`, `app/job/calendar/page.tsx`
 - Actions clés: `src/features/follow-ups/follow-ups.action.ts`
 - Capacités:
@@ -55,6 +61,7 @@ Source: codebase locale (`app/`, `src/features/`, `src/lib/plan-limits.ts`)
   - batch et notifications
 
 ### Séquences
+
 - Pages: `app/job/sequences/page.tsx`
 - Actions clés: `src/features/sequences/sequences.action.ts`
 - Capacités:
@@ -62,6 +69,7 @@ Source: codebase locale (`app/`, `src/features/`, `src/lib/plan-limits.ts`)
   - application sur missions
 
 ### Templates messages
+
 - Pages: `app/job/templates/page.tsx`
 - Actions clés: `src/features/templates/templates.action.ts`
 - Capacités:
@@ -71,10 +79,12 @@ Source: codebase locale (`app/`, `src/features/`, `src/lib/plan-limits.ts`)
 ## 3) IA & automatisation
 
 ### Quota IA transverse
+
 - Fichier central: `src/features/ai/ai-quota.ts`
 - Utilisé par: parsing mission, génération emails, LinkedIn audit, CV coach, stratégie du jour, forecast billing, etc.
 
 ### IA premium explicite
+
 - Génération email: `src/features/ai/generate-email.action.ts`
 - LinkedIn audit: `src/features/ai/linkedin-audit.action.ts`
 - Coach CV chat: `app/api/cv-lab/coach/chat/route.ts`
@@ -82,6 +92,7 @@ Source: codebase locale (`app/`, `src/features/`, `src/lib/plan-limits.ts`)
 ## 4) CV Lab / CV Studio
 
 ### CV Master + CV Lab
+
 - Pages: `app/job/cv-studio/page.tsx`, `app/job/cv-lab/page.tsx`
 - Actions clés: `src/features/cv-lab/cv-lab.action.ts`, `src/features/cv-lab/master-cv.action.ts`
 - Capacités:
@@ -91,9 +102,11 @@ Source: codebase locale (`app/`, `src/features/`, `src/lib/plan-limits.ts`)
   - export PDF
 
 ### ATS scoring
+
 - Action: `analyzeCvLabAtsAction` dans `src/features/cv-lab/cv-lab.action.ts`
 
 ### CV Coach IA
+
 - Route API: `app/api/cv-lab/coach/chat/route.ts`
 - Studio: `src/features/cv-lab/components/cv-coach-studio.tsx`
 
@@ -111,6 +124,7 @@ Source: codebase locale (`app/`, `src/features/`, `src/lib/plan-limits.ts`)
 ## 6) Freelance Billing Studio
 
 ### Dashboard et pages
+
 - Dashboard: `app/freelance/page.tsx`
 - Clients: `app/freelance/clients/page.tsx`
 - Devis: `app/freelance/quotes/page.tsx`
@@ -122,6 +136,7 @@ Source: codebase locale (`app/`, `src/features/`, `src/lib/plan-limits.ts`)
 - Dépenses: `app/freelance/expenses/*`
 
 ### Actions clés
+
 - `src/features/freelance/billing-clients.action.ts`
 - `src/features/freelance/billing-documents.action.ts`
 - `src/features/freelance/billing-catalog.action.ts`

@@ -94,33 +94,33 @@ export const getOnboardingStatusAction = authAction.action(
       userData,
       extendedChecklistEnabled,
     ] = await Promise.all([
-        prisma.userProfile.count({
-          where: { userId: user.id },
-        }),
-        prisma.userPlatform.count({
-          where: { userId: user.id },
-        }),
-        prisma.mission.count({
-          where: { userId: user.id, deletedAt: null },
-        }),
-        prisma.sequence.count({
-          where: { userId: user.id },
-        }),
-        prisma.contact.count({
-          where: { userId: user.id, deletedAt: null },
-        }),
-        prisma.followUp.count({
-          where: { userId: user.id },
-        }),
-        prisma.sentEmail.count({
-          where: { userId: user.id, isDraft: false },
-        }),
-        prisma.user.findUnique({
-          where: { id: user.id },
-          select: { onboardingDismissed: true },
-        }),
-        isFeatureEnabled("onboarding.extended_checklist"),
-      ]);
+      prisma.userProfile.count({
+        where: { userId: user.id },
+      }),
+      prisma.userPlatform.count({
+        where: { userId: user.id },
+      }),
+      prisma.mission.count({
+        where: { userId: user.id, deletedAt: null },
+      }),
+      prisma.sequence.count({
+        where: { userId: user.id },
+      }),
+      prisma.contact.count({
+        where: { userId: user.id, deletedAt: null },
+      }),
+      prisma.followUp.count({
+        where: { userId: user.id },
+      }),
+      prisma.sentEmail.count({
+        where: { userId: user.id, isDraft: false },
+      }),
+      prisma.user.findUnique({
+        where: { id: user.id },
+        select: { onboardingDismissed: true },
+      }),
+      isFeatureEnabled("onboarding.extended_checklist"),
+    ]);
 
     const hasProfile = profileCount > 0;
     const hasPlatforms = platformCount > 0;

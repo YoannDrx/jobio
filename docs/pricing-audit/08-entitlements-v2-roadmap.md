@@ -27,6 +27,7 @@ Créer un système d'entitlements piloté par données, connecté à Stripe et i
 4. Prévoir fallback robuste si lecture DB indisponible.
 
 Livrables:
+
 - schéma DB + migration
 - couche `entitlements` serveur
 - tests unitaires et tests d'intégration gating
@@ -41,6 +42,7 @@ Livrables:
 4. Normaliser metadata Stripe (`plan`, `billing`, `version`).
 
 Livrables:
+
 - script `pricing:verify`
 - rapport diff machine-readable
 - doc runbook mise à jour
@@ -60,6 +62,7 @@ Livrables:
 3. Mesurer impact par plan et par segment utilisateur.
 
 Livrables:
+
 - dashboard conversion Free -> Pro -> Ultra
 - plan d'expérimentation 4 semaines
 - framework d'arrêt/rollback d'expérience
@@ -72,6 +75,7 @@ Livrables:
 4. Optimiser le parcours post-upgrade (activation immédiate de la feature).
 
 Livrables:
+
 - composants paywall/nudge unifiés
 - parcours upgrade contextualisé
 - tests E2E critiques upgrade

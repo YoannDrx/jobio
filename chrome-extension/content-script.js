@@ -1,6 +1,6 @@
 // Content script that adds a floating "Capture" button on supported job platforms
 
-(function() {
+(function () {
   // Don't inject if already present
   if (document.getElementById("jobio-capture-btn")) return;
 

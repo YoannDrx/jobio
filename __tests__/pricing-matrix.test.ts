@@ -19,7 +19,8 @@ const asCount = (value: number): string =>
 
 const asBoolean = (value: number): boolean => value >= 1;
 
-const asCvTemplate = (value: number): string => (value >= 1 ? "Tous" : "Classic");
+const asCvTemplate = (value: number): string =>
+  value >= 1 ? "Tous" : "Classic";
 
 const asAnalyticsHistory = (value: number): string =>
   value >= UNLIMITED_THRESHOLD ? "Illimité" : `${value} jours`;
@@ -28,7 +29,6 @@ describe("pricing matrix", () => {
   it("maps plan limits to comparison rows", () => {
     const free = getPlanLimits("free");
     const pro = getPlanLimits("pro");
-    const ultra = getPlanLimits("ultra");
 
     const checks: {
       name: string;
@@ -53,7 +53,11 @@ describe("pricing matrix", () => {
       { name: "Factures", key: "billingInvoices", format: asCount },
       { name: "Catalogue", key: "billingCatalogItems", format: asCount },
       { name: "Requêtes/mois", key: "aiRequestsPerMonth", format: asCount },
-      { name: "Génération emails", key: "aiEmailGeneration", format: asBoolean },
+      {
+        name: "Génération emails",
+        key: "aiEmailGeneration",
+        format: asBoolean,
+      },
       { name: "LinkedIn Audit", key: "aiLinkedinAudit", format: asBoolean },
       {
         name: "Historique",
@@ -66,7 +70,6 @@ describe("pricing matrix", () => {
       const feature = findFeatureByName(check.name);
       expect(feature.free).toBe(check.format(free[check.key]));
       expect(feature.pro).toBe(check.format(pro[check.key]));
-      expect(feature.ultra).toBe(check.format(ultra[check.key]));
     }
   });
 
@@ -75,6 +78,5 @@ describe("pricing matrix", () => {
 
     expect(feature.free).toBe("Communautaire");
     expect(feature.pro).toBe("Email prioritaire");
-    expect(feature.ultra).toBe("Chat prioritaire");
   });
 });

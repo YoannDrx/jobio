@@ -82,8 +82,16 @@ export default async function AdminAuditPage({ searchParams }: AuditPageProps) {
 
       <LayoutContent className="space-y-4">
         <form className="grid gap-3 rounded-lg border p-3 md:grid-cols-[1fr_1fr_auto]">
-          <Input name="search" placeholder="Recherche acteur, cible ou action..." defaultValue={search} />
-          <Input name="action" placeholder="Filtre action (ex: USER_BANNED)" defaultValue={action} />
+          <Input
+            name="search"
+            placeholder="Recherche acteur, cible ou action..."
+            defaultValue={search}
+          />
+          <Input
+            name="action"
+            placeholder="Filtre action (ex: USER_BANNED)"
+            defaultValue={action}
+          />
           <Button type="submit">Filtrer</Button>
         </form>
 
@@ -101,7 +109,10 @@ export default async function AdminAuditPage({ searchParams }: AuditPageProps) {
             <TableBody>
               {result.logs.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-muted-foreground text-center">
+                  <TableCell
+                    colSpan={5}
+                    className="text-muted-foreground text-center"
+                  >
                     Aucun événement d&apos;audit trouvé.
                   </TableCell>
                 </TableRow>
@@ -145,7 +156,8 @@ export default async function AdminAuditPage({ searchParams }: AuditPageProps) {
 
         <div className="flex items-center justify-between">
           <p className="text-muted-foreground text-sm">
-            Page {page} / {Math.max(1, result.totalPages)} · {result.total} événements
+            Page {page} / {Math.max(1, result.totalPages)} · {result.total}{" "}
+            événements
           </p>
           <div className="flex items-center gap-2">
             <Button asChild variant="outline" size="sm" disabled={!hasPrevious}>

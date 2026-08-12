@@ -20,11 +20,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import {
-  Sheet,
-  SheetDescription,
-  SheetTitle,
-} from "@/components/ui/sheet";
+import { Sheet, SheetDescription, SheetTitle } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -42,7 +38,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
-import { BillingQuoteStatus } from "@/generated/prisma";
+import { BillingQuoteStatus } from "@/features/freelance/billing-client-enums";
 import { getCatalogItemsAction } from "@/features/freelance/billing-catalog.action";
 import {
   getBillingClientsAction,
@@ -190,7 +186,8 @@ const toDateInputValue = (value: Date | string | null) => {
   return parsed.toISOString().slice(0, 10);
 };
 
-const createLineKey = () => `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+const createLineKey = () =>
+  `${Date.now()}-${Math.random().toString(16).slice(2)}`;
 
 const createDefaultLine = (): QuoteLineForm => ({
   key: createLineKey(),
@@ -242,7 +239,9 @@ const parseLine = (line: QuoteLineForm) => {
 
   return {
     description:
-      line.unit === "unite" ? baseDescription : `${baseDescription} (${unitLabel})`,
+      line.unit === "unite"
+        ? baseDescription
+        : `${baseDescription} (${unitLabel})`,
     quantity,
     unitPriceCents: Math.round(unitPrice * 100),
     discountPercent,
@@ -279,13 +278,16 @@ export function FreelanceQuotesManager() {
   const [catalogItems, setCatalogItems] = useState<CatalogOption[]>([]);
   const [quotes, setQuotes] = useState<QuoteRow[]>([]);
   const [viewMode, setViewMode] = useState<"table" | "cards">("table");
-  const [billingProfile, setBillingProfile] = useState<BillingProfilePreview | null>(
-    null,
-  );
+  const [billingProfile, setBillingProfile] =
+    useState<BillingProfilePreview | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isCreating, setIsCreating] = useState(false);
-  const [processingQuoteId, setProcessingQuoteId] = useState<string | null>(null);
-  const [actionMenuQuoteId, setActionMenuQuoteId] = useState<string | null>(null);
+  const [processingQuoteId, setProcessingQuoteId] = useState<string | null>(
+    null,
+  );
+  const [actionMenuQuoteId, setActionMenuQuoteId] = useState<string | null>(
+    null,
+  );
   const [pendingQuoteConfirmation, setPendingQuoteConfirmation] = useState<{
     type: "cancel" | "delete";
     quoteId: string;
@@ -294,7 +296,9 @@ export function FreelanceQuotesManager() {
 
   const [clientId, setClientId] = useState("");
   const [catalogItemId, setCatalogItemId] = useState<string>("custom");
-  const [createIssueDate, setCreateIssueDate] = useState(toDateInputValue(new Date()));
+  const [createIssueDate, setCreateIssueDate] = useState(
+    toDateInputValue(new Date()),
+  );
   const [createValidUntil, setCreateValidUntil] = useState("");
   const [createCurrency, setCreateCurrency] = useState("EUR");
   const [createDocumentTemplate, setCreateDocumentTemplate] =
@@ -336,7 +340,9 @@ export function FreelanceQuotesManager() {
   const [editCurrency, setEditCurrency] = useState("EUR");
   const [editNotes, setEditNotes] = useState("");
   const [editTerms, setEditTerms] = useState("");
-  const [editLines, setEditLines] = useState<QuoteLineForm[]>([createDefaultLine()]);
+  const [editLines, setEditLines] = useState<QuoteLineForm[]>([
+    createDefaultLine(),
+  ]);
 
   const loadData = useCallback(async () => {
     try {
@@ -376,7 +382,8 @@ export function FreelanceQuotesManager() {
       setClients(nextClients);
       setQuotes(quotesResult.quotes as QuoteRow[]);
       setCatalogItems(catalogResult.items as CatalogOption[]);
-      const nextProfile = (profileResult as BillingProfilePreview | null) ?? null;
+      const nextProfile =
+        (profileResult as BillingProfilePreview | null) ?? null;
       setBillingProfile(nextProfile);
       setCreateDocumentTemplate(
         resolveBillingDocumentTemplate(nextProfile?.documentTemplate).id,
@@ -387,7 +394,9 @@ export function FreelanceQuotesManager() {
       }
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Impossible de charger les devis",
+        error instanceof Error
+          ? error.message
+          : "Impossible de charger les devis",
       );
     } finally {
       setIsLoading(false);
@@ -429,7 +438,9 @@ export function FreelanceQuotesManager() {
       return;
     }
 
-    issueDate.setDate(issueDate.getDate() + (billingProfile?.paymentTermsInDays ?? 30));
+    issueDate.setDate(
+      issueDate.getDate() + (billingProfile?.paymentTermsInDays ?? 30),
+    );
     setCreateValidUntil(toDateInputValue(issueDate));
   }, [createIssueDate, createValidUntil, billingProfile?.paymentTermsInDays]);
 
@@ -466,15 +477,31 @@ export function FreelanceQuotesManager() {
       return false;
     }
 
-    return createLines.length > 0 && parsedCreateLines.every((line) => line !== null);
-  }, [clientId, createIssueDate, createCurrency, createLines.length, parsedCreateLines]);
+    return (
+      createLines.length > 0 && parsedCreateLines.every((line) => line !== null)
+    );
+  }, [
+    clientId,
+    createIssueDate,
+    createCurrency,
+    createLines.length,
+    parsedCreateLines,
+  ]);
 
   const canSaveEdit = useMemo(() => {
-    if (!editingQuoteId || !editClientId || !editIssueDate || editCurrency.trim().length !== 3) {
+    if (
+      !editingQuoteId ||
+      !editClientId ||
+      !editIssueDate ||
+      editCurrency.trim().length !== 3
+    ) {
       return false;
     }
 
-    return editLines.length > 0 && editLines.every((line) => parseLine(line) !== null);
+    return (
+      editLines.length > 0 &&
+      editLines.every((line) => parseLine(line) !== null)
+    );
   }, [editingQuoteId, editClientId, editIssueDate, editCurrency, editLines]);
 
   const handleCatalogSelection = (value: string) => {
@@ -524,7 +551,9 @@ export function FreelanceQuotesManager() {
     value: string,
   ) => {
     setCreateLines((previous) =>
-      previous.map((line) => (line.key === key ? { ...line, [field]: value } : line)),
+      previous.map((line) =>
+        line.key === key ? { ...line, [field]: value } : line,
+      ),
     );
   };
 
@@ -589,20 +618,27 @@ export function FreelanceQuotesManager() {
       ]);
       await loadData();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Création impossible");
+      toast.error(
+        error instanceof Error ? error.message : "Création impossible",
+      );
     } finally {
       setIsCreating(false);
     }
   };
 
-  const handleSetStatus = async (quoteId: string, status: BillingQuoteStatus) => {
+  const handleSetStatus = async (
+    quoteId: string,
+    status: BillingQuoteStatus,
+  ) => {
     setProcessingQuoteId(quoteId);
     try {
       await resolveActionResult(setQuoteStatusAction({ quoteId, status }));
       toast.success("Statut du devis mis à jour");
       await loadData();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Mise à jour impossible");
+      toast.error(
+        error instanceof Error ? error.message : "Mise à jour impossible",
+      );
     } finally {
       setProcessingQuoteId(null);
     }
@@ -615,7 +651,9 @@ export function FreelanceQuotesManager() {
       toast.success("Devis converti en facture");
       await loadData();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Conversion impossible");
+      toast.error(
+        error instanceof Error ? error.message : "Conversion impossible",
+      );
     } finally {
       setProcessingQuoteId(null);
     }
@@ -628,7 +666,9 @@ export function FreelanceQuotesManager() {
       toast.success("Devis dupliqué en brouillon");
       await loadData();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Duplication impossible");
+      toast.error(
+        error instanceof Error ? error.message : "Duplication impossible",
+      );
     } finally {
       setActionMenuQuoteId(null);
     }
@@ -641,7 +681,9 @@ export function FreelanceQuotesManager() {
       toast.success("Devis supprimé");
       await loadData();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Suppression impossible");
+      toast.error(
+        error instanceof Error ? error.message : "Suppression impossible",
+      );
     } finally {
       setActionMenuQuoteId(null);
     }
@@ -665,7 +707,9 @@ export function FreelanceQuotesManager() {
         setPendingQuoteConfirmation(null);
         await loadData();
       } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Annulation impossible");
+        toast.error(
+          error instanceof Error ? error.message : "Annulation impossible",
+        );
       } finally {
         setActionMenuQuoteId(null);
       }
@@ -698,7 +742,9 @@ export function FreelanceQuotesManager() {
     value: string,
   ) => {
     setEditLines((previous) =>
-      previous.map((line) => (line.key === key ? { ...line, [field]: value } : line)),
+      previous.map((line) =>
+        line.key === key ? { ...line, [field]: value } : line,
+      ),
     );
   };
 
@@ -739,7 +785,9 @@ export function FreelanceQuotesManager() {
           currency: editCurrency.toUpperCase(),
           notes: editNotes,
           terms: editTerms,
-          lines: lines.filter((line): line is NonNullable<typeof line> => line !== null),
+          lines: lines.filter(
+            (line): line is NonNullable<typeof line> => line !== null,
+          ),
         }),
       );
 
@@ -747,7 +795,9 @@ export function FreelanceQuotesManager() {
       setIsEditOpen(false);
       await loadData();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Mise à jour impossible");
+      toast.error(
+        error instanceof Error ? error.message : "Mise à jour impossible",
+      );
     } finally {
       setIsSavingEdit(false);
     }
@@ -1055,7 +1105,9 @@ export function FreelanceQuotesManager() {
               Chargement des devis...
             </div>
           ) : quotes.length === 0 ? (
-            <p className="text-muted-foreground text-sm">Aucun devis pour le moment.</p>
+            <p className="text-muted-foreground text-sm">
+              Aucun devis pour le moment.
+            </p>
           ) : viewMode === "table" ? (
             <Table>
               <TableHeader>
@@ -1114,14 +1166,20 @@ export function FreelanceQuotesManager() {
                       <span>{formatDate(quote.issueDate)}</span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-muted-foreground">Valide jusqu'au</span>
+                      <span className="text-muted-foreground">
+                        Valide jusqu'au
+                      </span>
                       <span>{formatDate(quote.validUntil)}</span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-muted-foreground">Total</span>
-                      <span className="font-medium">{formatCents(quote.totalCents)}</span>
+                      <span className="font-medium">
+                        {formatCents(quote.totalCents)}
+                      </span>
                     </div>
-                    <div className="pt-2">{renderQuoteActions(quote, true)}</div>
+                    <div className="pt-2">
+                      {renderQuoteActions(quote, true)}
+                    </div>
                   </CardContent>
                 </Card>
               ))}
@@ -1190,7 +1248,11 @@ export function FreelanceQuotesManager() {
                       placeholder={`Description ligne ${index + 1}`}
                       value={line.description}
                       onChange={(event) => {
-                        handleUpdateLine(line.key, "description", event.target.value);
+                        handleUpdateLine(
+                          line.key,
+                          "description",
+                          event.target.value,
+                        );
                       }}
                     />
                     <Input
@@ -1200,7 +1262,11 @@ export function FreelanceQuotesManager() {
                       placeholder="Qté"
                       value={line.quantity}
                       onChange={(event) => {
-                        handleUpdateLine(line.key, "quantity", event.target.value);
+                        handleUpdateLine(
+                          line.key,
+                          "quantity",
+                          event.target.value,
+                        );
                       }}
                     />
                     <Select
@@ -1214,7 +1280,10 @@ export function FreelanceQuotesManager() {
                       </SelectTrigger>
                       <SelectContent>
                         {billingStudioUnitOptions.map((unit) => (
-                          <SelectItem key={`edit-quote-${unit.value}`} value={unit.value}>
+                          <SelectItem
+                            key={`edit-quote-${unit.value}`}
+                            value={unit.value}
+                          >
                             {unit.label}
                           </SelectItem>
                         ))}
@@ -1227,7 +1296,11 @@ export function FreelanceQuotesManager() {
                       placeholder="PU (€)"
                       value={line.unitPrice}
                       onChange={(event) => {
-                        handleUpdateLine(line.key, "unitPrice", event.target.value);
+                        handleUpdateLine(
+                          line.key,
+                          "unitPrice",
+                          event.target.value,
+                        );
                       }}
                     />
                     <Input
@@ -1237,7 +1310,11 @@ export function FreelanceQuotesManager() {
                       placeholder="TVA %"
                       value={line.vatRate}
                       onChange={(event) => {
-                        handleUpdateLine(line.key, "vatRate", event.target.value);
+                        handleUpdateLine(
+                          line.key,
+                          "vatRate",
+                          event.target.value,
+                        );
                       }}
                     />
                     <Input
@@ -1247,7 +1324,11 @@ export function FreelanceQuotesManager() {
                       placeholder="Remise %"
                       value={line.discountPercent}
                       onChange={(event) => {
-                        handleUpdateLine(line.key, "discountPercent", event.target.value);
+                        handleUpdateLine(
+                          line.key,
+                          "discountPercent",
+                          event.target.value,
+                        );
                       }}
                     />
                     <Button
@@ -1299,8 +1380,14 @@ export function FreelanceQuotesManager() {
             >
               Annuler
             </Button>
-            <Button type="button" onClick={handleSaveEdit} disabled={!canSaveEdit || isSavingEdit}>
-              {isSavingEdit ? <Loader2 className="size-4 animate-spin" /> : null}
+            <Button
+              type="button"
+              onClick={handleSaveEdit}
+              disabled={!canSaveEdit || isSavingEdit}
+            >
+              {isSavingEdit ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : null}
               Enregistrer
             </Button>
           </FreelanceSideSheetFooter>

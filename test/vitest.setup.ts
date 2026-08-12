@@ -136,6 +136,14 @@ vi.mock("@/lib/organizations/get-org", () => ({
   getCurrentOrg: vi.fn(),
   getRequiredCurrentOrg: vi.fn(),
 }));
+vi.mock("sonner", () => ({
+  toast: {
+    error: vi.fn(),
+    success: vi.fn(),
+    info: vi.fn(),
+    warning: vi.fn(),
+  },
+}));
 
 // Define the type for our global helper
 
@@ -156,16 +164,6 @@ beforeEach(() => {
   vi.mocked(window.localStorage.setItem).mockClear();
   vi.mocked(window.localStorage.removeItem).mockClear();
   vi.mocked(window.localStorage.clear).mockClear();
-
-  // Mock toast
-  vi.mock("sonner", () => ({
-    toast: {
-      error: vi.fn(),
-      success: vi.fn(),
-      info: vi.fn(),
-      warning: vi.fn(),
-    },
-  }));
 
   // Clear localStorage without using delete
   Object.keys(mockLocalStorage).forEach((key) => {

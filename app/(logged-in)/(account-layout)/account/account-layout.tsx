@@ -19,7 +19,7 @@ export async function AccountLayout({ children }: AccountLayoutProps) {
   return (
     <Layout size="lg">
       <LayoutHeader>
-        <LayoutTitle>Settings</LayoutTitle>
+        <LayoutTitle>Paramètres</LayoutTitle>
       </LayoutHeader>
       <LayoutActions>
         <form>
@@ -32,7 +32,7 @@ export async function AccountLayout({ children }: AccountLayoutProps) {
               redirect("/auth/signin");
             }}
           >
-            Sign out
+            Se déconnecter
           </SubmitButton>
         </form>
       </LayoutActions>

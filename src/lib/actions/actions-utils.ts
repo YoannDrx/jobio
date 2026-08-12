@@ -57,7 +57,7 @@ export const resolveActionResult = async <T extends z.ZodType, Data>(
           if (result.serverError) {
             return reject(new Error(result.serverError));
           }
-          reject(new Error(result.serverError ?? "Something went wrong"));
+          reject(new Error(result.serverError ?? "Une erreur est survenue"));
         }
       })
       .catch((error) => {

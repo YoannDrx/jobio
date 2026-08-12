@@ -1,53 +1,76 @@
 import { enforcePlanLimit } from "@/lib/plan-limits";
 import { prisma } from "@/lib/prisma";
 import { createNotification } from "@/features/notifications/create-notification";
+import { resolvePlanLimitsForUser } from "@/lib/auth/stripe/plan-entitlements";
 
-export async function checkAndIncrementAIQuota(userId: string): Promise<void> {
-  const quotaLimit = await enforcePlanLimit(userId, "aiRequestsPerMonth");
+export type AIQuotaReservation = {
+  release: () => Promise<void>;
+};
 
+export async function checkAndIncrementAIQuota(
+  userId: string,
+): Promise<AIQuotaReservation> {
+  const { limits } = await resolvePlanLimitsForUser(userId);
   const now = new Date();
   const month = now.getMonth() + 1;
   const year = now.getFullYear();
-  const requestsLimit = quotaLimit.limit;
+  const requestsLimit = limits.aiRequestsPerMonth;
 
-  await prisma.aIMonthlyQuota.upsert({
-    where: {
-      userId_month_year: { userId, month, year },
-    },
-    update: {
-      requestsUsed: { increment: 1 },
-    },
-    create: {
-      userId,
-      month,
-      year,
-      requestsUsed: 1,
-      requestsLimit,
-    },
-  });
-
-  const quota = await prisma.aIMonthlyQuota.findUnique({
-    where: {
-      userId_month_year: { userId, month, year },
-    },
-  });
-
-  if (quota) {
-    const limit = requestsLimit;
-
-    if (
-      quota.requestsUsed >= Math.floor(limit * 0.8) &&
-      quota.requestsUsed < limit
-    ) {
-      await createNotification({
+  const quota = await prisma.$transaction(async (tx) => {
+    const row = await tx.aIMonthlyQuota.upsert({
+      where: { userId_month_year: { userId, month, year } },
+      create: {
         userId,
-        type: "AI_QUOTA_HIGH",
-        title: "Quota IA bientôt atteint",
-        message: `Tu as utilisé ${quota.requestsUsed}/${limit} requêtes IA ce mois-ci`,
-        link: `/app/profiles`,
-      });
-    }
+        month,
+        year,
+        requestsUsed: 0,
+        requestsLimit,
+      },
+      update: { requestsLimit },
+    });
+    const reservation = await tx.aIMonthlyQuota.updateMany({
+      where: { id: row.id, requestsUsed: { lt: requestsLimit } },
+      data: { requestsUsed: { increment: 1 } },
+    });
+    if (reservation.count === 0) return null;
+    return tx.aIMonthlyQuota.findUnique({ where: { id: row.id } });
+  });
+
+  if (!quota) {
+    await enforcePlanLimit(userId, "aiRequestsPerMonth");
+    throw new Error("AI quota reservation failed");
   }
+
+  const limit = requestsLimit;
+  if (
+    quota.requestsUsed >= Math.floor(limit * 0.8) &&
+    quota.requestsUsed < limit
+  ) {
+    await createNotification({
+      userId,
+      type: "AI_QUOTA_HIGH",
+      title: "Quota IA bientôt atteint",
+      message: `Tu as utilisé ${quota.requestsUsed}/${limit} requêtes IA ce mois-ci`,
+      link: `/job/profiles`,
+    });
+  }
+
+  let released = false;
+  return {
+    release: async () => {
+      if (released) return;
+      released = true;
+      await prisma.aIMonthlyQuota.updateMany({
+        where: {
+          userId,
+          month,
+          year,
+          requestsUsed: { gt: 0 },
+        },
+        data: { requestsUsed: { decrement: 1 } },
+      });
+    },
+  };
 }
 
 export async function getAIQuotaStatus(userId: string) {

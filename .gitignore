@@ -34,6 +34,7 @@ yarn-error.log*
 .env
 
 /test-results
+/playwright-report
 .vercel
 
 src/generated
@@ -47,3 +48,4 @@ src/generated
 .conductor
 /tmp/pdfs/*.pdf
 /tmp/pdfs/*.png
+.env*

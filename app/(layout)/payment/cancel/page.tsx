@@ -14,21 +14,16 @@ export default function CancelPaymentPage() {
   return (
     <Layout className="mx-auto mt-0 max-w-7xl px-4 py-14 lg:px-8">
       <LayoutHeader>
-        <Badge variant="outline">Payment failed</Badge>
-        <LayoutTitle>
-          We're sorry, but we couldn't process your payment
-        </LayoutTitle>
+        <Badge variant="outline">Paiement interrompu</Badge>
+        <LayoutTitle>Le paiement n’a pas pu être finalisé</LayoutTitle>
         <LayoutDescription>
-          We encountered an issue processing your payment.
-          <br /> Please check your payment details and try again. <br />
-          If the problem persists, don't hesitate to contact us for assistance.
-          <br />
-          We're here to help you resolve this smoothly.
+          Aucun débit n’est confirmé sur cette page. Vérifie tes informations de
+          paiement puis réessaie. Si le problème persiste, contacte le support.
         </LayoutDescription>
       </LayoutHeader>
       <LayoutContent className="flex items-center gap-2">
         <Link href="/" className={buttonVariants({ variant: "invert" })}>
-          Home
+          Retour à l’accueil
         </Link>
         <ContactSupportDialog />
       </LayoutContent>

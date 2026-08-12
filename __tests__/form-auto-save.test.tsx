@@ -28,9 +28,13 @@ vi.mock("motion/react", () => {
   return {
     motion: {
       div: "div",
+      span: "span",
     },
-    AnimatePresence: async ({ children }: { children: React.ReactNode }) =>
+    AnimatePresence: ({
       children,
+    }: {
+      children: React.ReactElement | null;
+    }): React.ReactElement | null => children,
   };
 });
 
@@ -85,7 +89,7 @@ const AutoSaveTestForm = ({ onSubmit = vi.fn() }) => {
 
 // Test suite for FormAutoSave components
 describe("FormAutoSave", () => {
-  it.skip("should save the form when clicking the save button", async () => {
+  it("should save the form when clicking the save button", async () => {
     const handleSubmit = vi.fn();
     const { user } = setup(<AutoSaveTestForm onSubmit={handleSubmit} />);
 
@@ -106,16 +110,16 @@ describe("FormAutoSave", () => {
     // Verify form was submitted
     await waitFor(
       () => {
-        expect(handleSubmit).toHaveBeenCalledWith(
-          { name: "John Doe", email: "john@example.com" },
-          expect.anything(),
-        );
+        expect(handleSubmit).toHaveBeenCalledWith({
+          name: "John Doe",
+          email: "john@example.com",
+        });
       },
       { timeout: 200 },
     );
   });
 
-  it.skip("should reset form when clicking the cancel button", async () => {
+  it("should reset form when clicking the cancel button", async () => {
     const { user } = setup(<AutoSaveTestForm />);
 
     // Type data in the form to make it dirty
@@ -142,7 +146,7 @@ describe("FormAutoSave", () => {
     );
   });
 
-  it.skip("should save the form when pressing CMD+S", async () => {
+  it("should save the form when pressing CMD+S", async () => {
     const handleSubmit = vi.fn();
     const { user } = setup(<AutoSaveTestForm onSubmit={handleSubmit} />);
 
@@ -172,10 +176,10 @@ describe("FormAutoSave", () => {
     // Verify form was submitted
     await waitFor(
       () => {
-        expect(handleSubmit).toHaveBeenCalledWith(
-          { name: "John Doe", email: "john@example.com" },
-          expect.anything(),
-        );
+        expect(handleSubmit).toHaveBeenCalledWith({
+          name: "John Doe",
+          email: "john@example.com",
+        });
       },
       { timeout: 500 },
     );

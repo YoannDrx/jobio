@@ -4,7 +4,7 @@ import { generateObject } from "ai";
 import { authAction } from "@/lib/actions/safe-actions";
 import { ApplicationError } from "@/lib/errors/application-error";
 import { prisma } from "@/lib/prisma";
-import { checkAndIncrementAIQuota } from "@/features/ai/ai-quota";
+import { runTrackedAI } from "@/features/ai/ai-usage";
 import { AI_MODELS } from "@/features/ai/ai-config";
 import { parseSnapshot } from "./cv-coach.utils";
 import { z } from "zod";
@@ -52,25 +52,23 @@ export const analyzeCvCoachAtsKeywordsAction = authAction
 
     const snapshot = parseSnapshot(session.structuredSnapshot);
 
-    await checkAndIncrementAIQuota(user.id);
-
-    const result = await generateObject({
-      model: AI_MODELS.fast,
-      system:
-        "Tu es un expert ATS (Applicant Tracking System). Analyse la correspondance entre le CV et la fiche de poste. Identifie les mots-clés présents (matched) et manquants (missing) avec des suggestions d'ajout concrètes. Calcule un score ATS de 0 à 100.",
-      prompt: `## CV (format JSON)\n${JSON.stringify(snapshot)}\n\n## Fiche de poste\n${parsedInput.jobDescription}`,
-      schema: atsKeywordsOutputSchema,
-      temperature: 0.3,
-    });
-
-    await prisma.aIUsage.create({
-      data: {
+    const result = await runTrackedAI(
+      {
         userId: user.id,
         feature: "CV_COACH",
-        inputTokens: result.usage.inputTokens ?? 0,
-        outputTokens: result.usage.outputTokens ?? 0,
+        modelId: AI_MODELS.fast.modelId,
+        context: { sessionId: session.id, surface: "ats-keywords" },
       },
-    });
+      async () =>
+        generateObject({
+          model: AI_MODELS.fast,
+          system:
+            "Tu es un expert ATS (Applicant Tracking System). Analyse la correspondance entre le CV et la fiche de poste. Identifie les mots-clés présents (matched) et manquants (missing) avec des suggestions d'ajout concrètes. Calcule un score ATS de 0 à 100.",
+          prompt: `## CV (format JSON)\n${JSON.stringify(snapshot)}\n\n## Fiche de poste\n${parsedInput.jobDescription}`,
+          schema: atsKeywordsOutputSchema,
+          temperature: 0.3,
+        }),
+    );
 
     return result.object;
   });

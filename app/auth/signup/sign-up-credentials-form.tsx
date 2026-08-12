@@ -9,6 +9,7 @@ import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import type { LoginCredentialsFormType } from "./signup.schema";
 import { LoginCredentialsFormScheme } from "./signup.schema";
+import { useHydrated } from "@/hooks/use-hydrated";
 
 type PasswordStrength = {
   level: 0 | 1 | 2 | 3 | 4;
@@ -38,6 +39,7 @@ function getPasswordStrength(password: string): PasswordStrength {
 }
 
 export const SignUpCredentialsForm = () => {
+  const isHydrated = useHydrated();
   const submitMutation = useMutation({
     mutationFn: async (values: LoginCredentialsFormType) => {
       return unwrapSafePromise(
@@ -69,7 +71,7 @@ export const SignUpCredentialsForm = () => {
     },
     onSubmit: async (values) => {
       if (values.password !== values.verifyPassword) {
-        toast.error("Password does not match");
+        toast.error("Les mots de passe ne correspondent pas");
         return;
       }
 
@@ -82,7 +84,7 @@ export const SignUpCredentialsForm = () => {
       <form.AppField name="name">
         {(field) => (
           <field.Field>
-            <field.Label>Name</field.Label>
+            <field.Label>Nom</field.Label>
             <field.Content>
               <field.Input placeholder="John Doe" />
               <field.Message />
@@ -108,7 +110,7 @@ export const SignUpCredentialsForm = () => {
           const strength = getPasswordStrength(field.state.value);
           return (
             <field.Field>
-              <field.Label>Password</field.Label>
+              <field.Label>Mot de passe</field.Label>
               <field.Content>
                 <field.Input type="password" />
                 <field.Message />
@@ -141,7 +143,7 @@ export const SignUpCredentialsForm = () => {
       <form.AppField name="verifyPassword">
         {(field) => (
           <field.Field>
-            <field.Label>Verify Password</field.Label>
+            <field.Label>Confirmer le mot de passe</field.Label>
             <field.Content>
               <field.Input type="password" />
               <field.Message />
@@ -150,7 +152,13 @@ export const SignUpCredentialsForm = () => {
         )}
       </form.AppField>
 
-      <form.SubmitButton className="w-full">Sign up</form.SubmitButton>
+      <form.SubmitButton
+        className="w-full"
+        disabled={!isHydrated}
+        aria-busy={!isHydrated || submitMutation.isPending}
+      >
+        Créer mon compte
+      </form.SubmitButton>
     </Form>
   );
 };

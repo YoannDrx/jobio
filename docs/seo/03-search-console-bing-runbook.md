@@ -95,6 +95,7 @@ Owner recommandé: Growth + Engineering
   - `docs/seo/05-search-metrics-snapshot.example.json`
 
 Checklist d'activation:
+
 1. Générer un snapshot hebdo (current + previous) depuis vos exports GSC/Bing.
 2. Alimenter `SEO_SEARCH_METRICS_JSON`, ou déposer le fichier (`SEO_SEARCH_METRICS_FILE`), ou brancher `SEO_SEARCH_METRICS_ENDPOINT`.
 3. Vérifier `/admin/ops`:
@@ -118,6 +119,7 @@ Checklist d'activation:
 - Dans `/admin/ops`, la source affichée devient `Redis cache` quand ce flux est utilisé.
 
 Opérations manuelles:
+
 - Bouton `Synchroniser SEO` disponible dans `/admin/ops` (admin only).
 - Permet de déclencher une sync immédiate sans attendre le cron planifié.
 - Le run est historisé dans la table cron jobs (`seo-search-metrics-sync-manual`).

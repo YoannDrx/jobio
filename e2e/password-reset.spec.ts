@@ -25,8 +25,12 @@ test("password reset flow", async ({ page }) => {
   await page.goto(`${getServerUrl()}/auth/forget-password`);
 
   // 4. Submit the email for password reset
+  const sendResetButton = page.getByRole("button", {
+    name: /envoyer le lien/i,
+  });
+  await expect(sendResetButton).toBeEnabled({ timeout: 10000 });
   await page.getByLabel("Email").fill(userData.email);
-  await page.getByRole("button", { name: /send reset link/i }).click();
+  await sendResetButton.click();
 
   // 5. Should be redirected to verify page
   await page.waitForURL((url) => url.pathname === "/auth/verify", {
@@ -46,16 +50,20 @@ test("password reset flow", async ({ page }) => {
 
   const token = verification?.identifier.replace("reset-password:", "");
 
-  expect(token).not.toBeNull();
+  expect(token).toBeTruthy();
 
   // 7. Navigate to the reset password page with the token
   const resetToken = token;
   await page.goto(`${getServerUrl()}/auth/reset-password?token=${resetToken}`);
 
   // 8. Set a new password
+  const resetPasswordButton = page.getByRole("button", {
+    name: /réinitialiser le mot de passe/i,
+  });
+  await expect(resetPasswordButton).toBeEnabled({ timeout: 10000 });
   const newPassword = faker.internet.password({ length: 12, memorable: true });
   await page.locator('input[name="password"]').fill(newPassword);
-  await page.getByRole("button", { name: /reset password/i }).click();
+  await resetPasswordButton.click();
 
   // 9. Should be redirected to sign in page
   await page.waitForURL((url) => url.pathname === "/auth/signin", {
@@ -63,12 +71,16 @@ test("password reset flow", async ({ page }) => {
   });
 
   // 10. Try to sign in with the new password
-  await page.getByLabel("Email").fill(userData.email);
-  await page.locator('input[name="password"]').fill(newPassword);
-  await page
-    .getByRole("button", { name: /sign in/i })
-    .first()
-    .click();
+  const signInForm = page.locator("form").filter({
+    has: page.getByRole("button", { name: /se connecter/i }),
+  });
+  const signInButton = signInForm.getByRole("button", {
+    name: /se connecter/i,
+  });
+  await expect(signInButton).toBeEnabled({ timeout: 10000 });
+  await signInForm.getByLabel("Email").fill(userData.email);
+  await signInForm.locator('input[name="password"]').fill(newPassword);
+  await signInButton.click();
 
   // 11. Should be redirected to the app page
   await expect

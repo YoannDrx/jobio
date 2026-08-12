@@ -302,7 +302,7 @@ describe("Dialog Manager Store", () => {
 
       // Check if default cancel label is used
       expect(
-        screen.getByRole("button", { name: "Cancel" }),
+        screen.getByRole("button", { name: "Annuler" }),
       ).toBeInTheDocument();
     });
   });

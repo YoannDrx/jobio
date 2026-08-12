@@ -18,7 +18,12 @@ export const setSeoSearchMetricsCacheRaw = async (
   ttlSeconds = SEO_SEARCH_METRICS_CACHE_TTL_SECONDS,
 ): Promise<void> => {
   try {
-    await redisClient.set(SEO_SEARCH_METRICS_CACHE_KEY, payload, "EX", ttlSeconds);
+    await redisClient.set(
+      SEO_SEARCH_METRICS_CACHE_KEY,
+      payload,
+      "EX",
+      ttlSeconds,
+    );
   } catch (error) {
     logger.warn("Unable to write SEO search metrics cache", error);
   }

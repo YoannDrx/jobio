@@ -82,6 +82,7 @@ export function PlanUsageSidebar() {
             {!isUnlimited && (
               <Progress
                 value={percent}
+                aria-label={`${label} : ${item.used} sur ${item.limit}`}
                 className={`h-1.5 ${isNearLimit ? "[&>[data-slot=progress-indicator]]:bg-status-warning" : ""}`}
               />
             )}

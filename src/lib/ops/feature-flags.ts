@@ -45,7 +45,8 @@ export const DEFAULT_FEATURE_FLAGS: DefaultFeatureFlag[] = [
 ];
 
 const isMissingFeatureFlagsTable = (error: unknown) =>
-  error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2021";
+  error instanceof Prisma.PrismaClientKnownRequestError &&
+  error.code === "P2021";
 
 const byKey = new Map(DEFAULT_FEATURE_FLAGS.map((flag) => [flag.key, flag]));
 
@@ -105,4 +106,3 @@ export async function isFeatureEnabled(key: string) {
     throw error;
   }
 }
-

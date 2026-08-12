@@ -7,9 +7,17 @@
  * This adapter converts files to base64 data URLs for client-side preview/testing.
  * For production file uploads in server actions, use vercel-blob-adapter.ts instead.
  */
-import type { UploadFileAdapter } from "./upload-file";
+type PreviewFileResult = {
+  error: Error | null;
+  data: { url: string } | null;
+};
 
-export const fileAdapter: UploadFileAdapter = {
+type PreviewFileAdapter = {
+  uploadFile: (params: { file: File }) => Promise<PreviewFileResult>;
+  uploadFiles: (params: { file: File }[]) => Promise<PreviewFileResult[]>;
+};
+
+export const fileAdapter: PreviewFileAdapter = {
   uploadFile: async (params) => {
     const file = params.file;
     const reader = new FileReader();

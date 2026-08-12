@@ -10,6 +10,10 @@ export const getServerUrl = () => {
     return process.env.PLAYWRIGHT_TEST_BASE_URL;
   }
 
+  if (process.env.PLAYWRIGHT_LOCAL_BASE_URL) {
+    return process.env.PLAYWRIGHT_LOCAL_BASE_URL;
+  }
+
   // If we are in production, we return the production URL.
   if (process.env.VERCEL_ENV === "production") {
     return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;

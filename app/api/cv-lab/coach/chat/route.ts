@@ -1,6 +1,6 @@
 import { generateObject, streamText } from "ai";
 import { AI_MODELS } from "@/features/ai/ai-config";
-import { checkAndIncrementAIQuota } from "@/features/ai/ai-quota";
+import { createAIUsageTracker, runTrackedAI } from "@/features/ai/ai-usage";
 import { prisma } from "@/lib/prisma";
 import { authRoute } from "@/lib/zod-route";
 import { z } from "zod";
@@ -53,7 +53,7 @@ export const POST = authRoute
     const hasCvCoach = await checkPlanFeature(user.id, "cvCoachAI");
     if (!hasCvCoach) {
       return new Response(
-        "CV Coach IA non disponible avec ton plan actuel. Passe en Ultra pour y accéder.",
+        "CV Coach IA non disponible avec ton plan actuel. Passe en Pro pour y accéder.",
         { status: 403 },
       );
     }
@@ -78,7 +78,15 @@ export const POST = authRoute
       return new Response("Session archivée", { status: 400 });
     }
 
-    // Save user message
+    const usageTracker = await createAIUsageTracker({
+      userId: user.id,
+      feature: "CV_COACH",
+      modelId: AI_MODELS.smart.modelId,
+      context: { sessionId: session.id, surface: "coach-stream" },
+    });
+
+    // Save user message only once a provider call has a quota reservation and
+    // a RUNNING ledger row that operations can reconcile.
     await prisma.cvLabCoachMessage.create({
       data: {
         sessionId: session.id,
@@ -87,8 +95,6 @@ export const POST = authRoute
         content: body.message,
       },
     });
-
-    await checkAndIncrementAIQuota(user.id);
 
     const prompt = buildConversationPrompt({
       userMessage: body.message,
@@ -102,91 +108,108 @@ export const POST = authRoute
       })),
     });
 
-    // Stream the conversational message
-    const result = streamText({
-      model: AI_MODELS.smart,
-      system: `${
-        CV_COACH_SYSTEM_PROMPT
-      }\n\nIMPORTANT: Réponds UNIQUEMENT avec le message conversationnel pour l'utilisateur. Utilise le markdown (gras, listes, titres) pour structurer ta réponse. Ne produis PAS de JSON dans cette réponse.`,
-      prompt,
-      temperature: 0.3,
-      onFinish: async ({ text }) => {
-        if (!text) return;
+    try {
+      // Stream the conversational message
+      const result = streamText({
+        model: AI_MODELS.smart,
+        system: `${
+          CV_COACH_SYSTEM_PROMPT
+        }\n\nIMPORTANT: Réponds UNIQUEMENT avec le message conversationnel pour l'utilisateur. Utilise le markdown (gras, listes, titres) pour structurer ta réponse. Ne produis PAS de JSON dans cette réponse.`,
+        prompt,
+        temperature: 0.3,
+        onFinish: async ({ text, totalUsage, response }) => {
+          try {
+            if (!text) return;
 
-        // Save assistant message
-        await prisma.cvLabCoachMessage.create({
-          data: {
-            sessionId: session.id,
-            userId: user.id,
-            role: "ASSISTANT",
-            content: text,
-          },
-        });
+            // Save assistant message
+            await prisma.cvLabCoachMessage.create({
+              data: {
+                sessionId: session.id,
+                userId: user.id,
+                role: "ASSISTANT",
+                content: text,
+              },
+            });
 
-        // Background: generate structured extraction
-        try {
-          const structuredResponse = await generateObject({
-            model: AI_MODELS.smart,
-            system: CV_COACH_SYSTEM_PROMPT,
-            prompt: `${prompt}\n\n## Réponse assistant déjà envoyée\n${text}`,
-            schema: cvCoachAssistantOutputSchema,
-            temperature: 0.3,
-          });
+            // Background: generate structured extraction. This is a second
+            // provider call and therefore receives its own quota reservation
+            // and usage row instead of being hidden in the stream usage.
+            try {
+              const structuredResponse = await runTrackedAI(
+                {
+                  userId: user.id,
+                  feature: "CV_COACH",
+                  modelId: AI_MODELS.smart.modelId,
+                  context: {
+                    sessionId: session.id,
+                    surface: "coach-extraction",
+                  },
+                },
+                async () =>
+                  generateObject({
+                    model: AI_MODELS.smart,
+                    system: CV_COACH_SYSTEM_PROMPT,
+                    prompt: `${prompt}\n\n## Réponse assistant déjà envoyée\n${text}`,
+                    schema: cvCoachAssistantOutputSchema,
+                    temperature: 0.3,
+                  }),
+              );
 
-          const obj = structuredResponse.object;
-          const targetRole = obj.snapshot.identity.targetRole.trim();
-          const generatedName = obj.sessionName?.trim();
+              const obj = structuredResponse.object;
+              const targetRole = obj.snapshot.identity.targetRole.trim();
+              const generatedName = obj.sessionName?.trim();
 
-          // Parse locked fields and current snapshot for preservation
-          const lockedFields = Array.isArray(session.lockedFields)
-            ? (session.lockedFields as string[])
-            : [];
-          const currentSnapshot = parseSnapshot(session.structuredSnapshot);
+              // Parse locked fields and current snapshot for preservation
+              const lockedFields = Array.isArray(session.lockedFields)
+                ? (session.lockedFields as string[])
+                : [];
+              const currentSnapshot = parseSnapshot(session.structuredSnapshot);
 
-          // Preserve locked fields from current snapshot
-          const mergedSnapshot =
-            lockedFields.length > 0
-              ? preserveLockedFields(
-                  currentSnapshot,
-                  obj.snapshot as CvCoachSnapshot,
-                  lockedFields,
-                )
-              : obj.snapshot;
+              // Preserve locked fields from current snapshot
+              const mergedSnapshot =
+                lockedFields.length > 0
+                  ? preserveLockedFields(
+                      currentSnapshot,
+                      obj.snapshot as CvCoachSnapshot,
+                      lockedFields,
+                    )
+                  : obj.snapshot;
 
-          await prisma.cvLabCoachSession.update({
-            where: { id: session.id },
-            data: {
-              name:
-                generatedName && generatedName.length > 0
-                  ? generatedName
-                  : session.name,
-              goalRole:
-                session.goalRole ?? (targetRole.length > 0 ? targetRole : null),
-              structuredSnapshot: toJson(mergedSnapshot),
-              missingItems: toJson(obj.missingItems),
-              inconsistencies: toJson(obj.inconsistencies),
-              nextQuestions: toJson(obj.nextQuestions),
-              completenessScore: obj.completenessScore,
-              sourceEvidence: toJson(obj.sourceEvidence),
-              lastExtractedAt: new Date(),
-              status:
-                obj.completenessScore >= 90 ? "COMPLETED" : session.status,
-            },
-          });
+              await prisma.cvLabCoachSession.update({
+                where: { id: session.id },
+                data: {
+                  name:
+                    generatedName && generatedName.length > 0
+                      ? generatedName
+                      : session.name,
+                  goalRole:
+                    session.goalRole ??
+                    (targetRole.length > 0 ? targetRole : null),
+                  structuredSnapshot: toJson(mergedSnapshot),
+                  missingItems: toJson(obj.missingItems),
+                  inconsistencies: toJson(obj.inconsistencies),
+                  nextQuestions: toJson(obj.nextQuestions),
+                  completenessScore: obj.completenessScore,
+                  sourceEvidence: toJson(obj.sourceEvidence),
+                  lastExtractedAt: new Date(),
+                  status:
+                    obj.completenessScore >= 90 ? "COMPLETED" : session.status,
+                },
+              });
+            } catch (err) {
+              logger.error("[cv-coach] structured extraction failed:", err);
+            }
+          } finally {
+            await usageTracker.succeed(totalUsage, response);
+          }
+        },
+        onError: async ({ error }) => usageTracker.fail(error),
+        onAbort: async () => usageTracker.fail(new Error("AI_STREAM_ABORTED")),
+      });
 
-          await prisma.aIUsage.create({
-            data: {
-              userId: user.id,
-              feature: "CV_COACH",
-              inputTokens: structuredResponse.usage.inputTokens ?? 0,
-              outputTokens: structuredResponse.usage.outputTokens ?? 0,
-            },
-          });
-        } catch (err) {
-          logger.error("[cv-coach] structured extraction failed:", err);
-        }
-      },
-    });
-
-    return result.toTextStreamResponse();
+      return result.toTextStreamResponse();
+    } catch (error) {
+      await usageTracker.fail(error);
+      throw error;
+    }
   });

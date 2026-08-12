@@ -12,7 +12,7 @@ import {
 import {
   getPlanUpgradeButtonText,
   getPlanUpgradeLabel,
-} from "@/lib/plan-limits";
+} from "@/lib/plan-limit-copy";
 import { AlertCircle } from "lucide-react";
 
 type UpgradeNudgeProps = {
@@ -35,8 +35,8 @@ export function UpgradeNudge({
   const buttonText = getPlanUpgradeButtonText(currentPlan);
   const planLabel = getPlanUpgradeLabel(currentPlan);
   const upgradeText =
-    currentPlan === "ultra"
-      ? "Limite maximale atteinte"
+    currentPlan === "pro"
+      ? "Limite du plan Pro atteinte. Contacte le support si ton usage légitime nécessite un ajustement."
       : `Passe en ${planLabel} pour débloquer des limites augmentées et accéder à des fonctionnalités avancées.`;
 
   return (

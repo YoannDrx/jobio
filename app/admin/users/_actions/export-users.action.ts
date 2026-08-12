@@ -10,9 +10,16 @@ const exportUsersInputSchema = z.object({
   search: z.string().optional(),
   role: z.enum(["all", "admin", "user"]).default("all"),
   status: z.enum(["all", "active", "banned", "unverified"]).default("all"),
-  plan: z.enum(["all", "free", "pro", "ultra"]).default("all"),
+  plan: z.enum(["all", "free", "pro"]).default("all"),
   sortBy: z
-    .enum(["createdAt", "name", "email", "missions", "sessions", "lastActivity"])
+    .enum([
+      "createdAt",
+      "name",
+      "email",
+      "missions",
+      "sessions",
+      "lastActivity",
+    ])
     .default("createdAt"),
   order: z.enum(["asc", "desc"]).default("desc"),
 });

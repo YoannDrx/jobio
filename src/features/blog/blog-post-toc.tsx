@@ -108,7 +108,9 @@ export function BlogPostToc({
             aria-current={isActive ? "true" : undefined}
             className={cn(itemClassName, isActive && activeItemClassName)}
           >
-            <span className={cn(labelClassName, isActive && activeLabelClassName)}>
+            <span
+              className={cn(labelClassName, isActive && activeLabelClassName)}
+            >
               {section.label}
             </span>
             <span className={titleClassName}>{section.title}</span>

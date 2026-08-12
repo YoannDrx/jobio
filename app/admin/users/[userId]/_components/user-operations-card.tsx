@@ -47,7 +47,7 @@ type UserOperationsCardProps = {
   userEmail: string;
   stripeCustomerId: string | null;
   subscription: {
-    plan: "free" | "pro" | "ultra";
+    plan: "free" | "pro";
     status: string | null;
     cancelAtPeriodEnd: boolean;
     periodEnd: Date | null;
@@ -110,7 +110,8 @@ const toDateInputValue = (value: Date | null) => {
   return `${year}-${month}-${day}`;
 };
 
-const csvEscape = (value: unknown) => `"${String(value ?? "").replace(/"/g, '""')}"`;
+const csvEscape = (value: unknown) =>
+  `"${String(value ?? "").replace(/"/g, '""')}"`;
 
 export function UserOperationsCard({
   userId,
@@ -123,7 +124,7 @@ export function UserOperationsCard({
   billingTimeline,
   notes,
 }: UserOperationsCardProps) {
-  const [plan, setPlan] = useState<"free" | "pro" | "ultra">(subscription.plan);
+  const [plan, setPlan] = useState<"free" | "pro">(subscription.plan);
   const [status, setStatus] = useState<
     | "trialing"
     | "active"
@@ -146,20 +147,27 @@ export function UserOperationsCard({
   const [cancelAtPeriodEnd, setCancelAtPeriodEnd] = useState(
     subscription.cancelAtPeriodEnd,
   );
-  const [periodEnd, setPeriodEnd] = useState(toDateInputValue(subscription.periodEnd));
+  const [periodEnd, setPeriodEnd] = useState(
+    toDateInputValue(subscription.periodEnd),
+  );
 
   const now = new Date();
   const [creditMode, setCreditMode] = useState<"add" | "set">("add");
   const [creditAmount, setCreditAmount] = useState("20");
-  const [creditMonth, setCreditMonth] = useState(aiQuota?.month ?? now.getMonth() + 1);
-  const [creditYear, setCreditYear] = useState(aiQuota?.year ?? now.getFullYear());
+  const [creditMonth, setCreditMonth] = useState(
+    aiQuota?.month ?? now.getMonth() + 1,
+  );
+  const [creditYear, setCreditYear] = useState(
+    aiQuota?.year ?? now.getFullYear(),
+  );
   const [requestsUsed, setRequestsUsed] = useState("");
   const [creditReason, setCreditReason] = useState("");
-  const [selectedStripeSubscriptionId, setSelectedStripeSubscriptionId] = useState(
-    stripeSubscriptions[0]?.id ?? "",
-  );
+  const [selectedStripeSubscriptionId, setSelectedStripeSubscriptionId] =
+    useState(stripeSubscriptions[0]?.id ?? "");
   const [stripeActionReason, setStripeActionReason] = useState("");
-  const [selectedInvoiceId, setSelectedInvoiceId] = useState(invoices[0]?.id ?? "");
+  const [selectedInvoiceId, setSelectedInvoiceId] = useState(
+    invoices[0]?.id ?? "",
+  );
   const [invoiceActionReason, setInvoiceActionReason] = useState("");
   const [refundType, setRefundType] = useState<"full" | "partial">("full");
   const [partialRefundAmount, setPartialRefundAmount] = useState("");
@@ -177,7 +185,8 @@ export function UserOperationsCard({
   const selectedStripeSubscription = useMemo(
     () =>
       stripeSubscriptions.find(
-        (subscriptionItem) => subscriptionItem.id === selectedStripeSubscriptionId,
+        (subscriptionItem) =>
+          subscriptionItem.id === selectedStripeSubscriptionId,
       ) ?? null,
     [selectedStripeSubscriptionId, stripeSubscriptions],
   );
@@ -295,7 +304,10 @@ export function UserOperationsCard({
       if (reason.length < 6) {
         throw new Error("Renseigne une raison (6 caractères minimum)");
       }
-      if (mode === "immediate" && !requestStrongConfirmation("Annulation immédiate")) {
+      if (
+        mode === "immediate" &&
+        !requestStrongConfirmation("Annulation immédiate")
+      ) {
         throw new Error("Confirmation annulée");
       }
 
@@ -351,7 +363,9 @@ export function UserOperationsCard({
   const adjustCreditsMutation = useMutation({
     mutationFn: async () => {
       const amount = Number(creditAmount);
-      const parsedRequestsUsed = requestsUsed ? Number(requestsUsed) : undefined;
+      const parsedRequestsUsed = requestsUsed
+        ? Number(requestsUsed)
+        : undefined;
       const reason = creditReason.trim();
 
       if (!Number.isInteger(amount) || amount < 0) {
@@ -360,10 +374,18 @@ export function UserOperationsCard({
       if (creditMode === "add" && amount <= 0) {
         throw new Error("Le montant à ajouter doit être supérieur à 0");
       }
-      if (!Number.isInteger(creditMonth) || creditMonth < 1 || creditMonth > 12) {
+      if (
+        !Number.isInteger(creditMonth) ||
+        creditMonth < 1 ||
+        creditMonth > 12
+      ) {
         throw new Error("Mois invalide");
       }
-      if (!Number.isInteger(creditYear) || creditYear < 2020 || creditYear > 2100) {
+      if (
+        !Number.isInteger(creditYear) ||
+        creditYear < 2020 ||
+        creditYear > 2100
+      ) {
         throw new Error("Année invalide");
       }
       if (
@@ -537,9 +559,7 @@ export function UserOperationsCard({
               <Label>Plan</Label>
               <Select
                 value={plan}
-                onValueChange={(value) =>
-                  setPlan(value as "free" | "pro" | "ultra")
-                }
+                onValueChange={(value) => setPlan(value as "free" | "pro")}
               >
                 <SelectTrigger className="w-full">
                   <SelectValue />
@@ -547,7 +567,6 @@ export function UserOperationsCard({
                 <SelectContent>
                   <SelectItem value="free">free</SelectItem>
                   <SelectItem value="pro">pro</SelectItem>
-                  <SelectItem value="ultra">ultra</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -645,7 +664,10 @@ export function UserOperationsCard({
                   </SelectTrigger>
                   <SelectContent>
                     {stripeSubscriptions.map((stripeSubscription) => (
-                      <SelectItem key={stripeSubscription.id} value={stripeSubscription.id}>
+                      <SelectItem
+                        key={stripeSubscription.id}
+                        value={stripeSubscription.id}
+                      >
                         {stripeSubscription.id} · {stripeSubscription.status}
                       </SelectItem>
                     ))}
@@ -653,8 +675,11 @@ export function UserOperationsCard({
                 </Select>
                 {selectedStripeSubscription ? (
                   <p className="text-muted-foreground text-xs">
-                    Statut: {selectedStripeSubscription.status} · Annulation en fin
-                    de période: {selectedStripeSubscription.cancelAtPeriodEnd ? "oui" : "non"}
+                    Statut: {selectedStripeSubscription.status} · Annulation en
+                    fin de période:{" "}
+                    {selectedStripeSubscription.cancelAtPeriodEnd
+                      ? "oui"
+                      : "non"}
                   </p>
                 ) : null}
                 <div className="flex flex-wrap gap-2">
@@ -703,7 +728,9 @@ export function UserOperationsCard({
                     rows={2}
                     value={stripeActionReason}
                     placeholder="Ex: demande client validée, incident de facturation, geste commercial..."
-                    onChange={(event) => setStripeActionReason(event.target.value)}
+                    onChange={(event) =>
+                      setStripeActionReason(event.target.value)
+                    }
                   />
                 </div>
               </>
@@ -801,7 +828,11 @@ export function UserOperationsCard({
         <div className="space-y-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <h3 className="text-sm font-semibold">Support facturation</h3>
-            <Button variant="outline" size="sm" onClick={exportBillingTimelineCsv}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={exportBillingTimelineCsv}
+            >
               <Download className="mr-2 size-4" />
               Export timeline CSV
             </Button>
@@ -814,7 +845,10 @@ export function UserOperationsCard({
             <>
               <div className="space-y-1">
                 <Label>Facture</Label>
-                <Select value={selectedInvoiceId} onValueChange={setSelectedInvoiceId}>
+                <Select
+                  value={selectedInvoiceId}
+                  onValueChange={setSelectedInvoiceId}
+                >
                   <SelectTrigger className="w-full">
                     <SelectValue />
                   </SelectTrigger>
@@ -822,7 +856,8 @@ export function UserOperationsCard({
                     {invoices.map((invoice) => (
                       <SelectItem key={invoice.id} value={invoice.id}>
                         {invoice.id} · {invoice.status ?? "n/a"} ·{" "}
-                        {(invoice.total / 100).toFixed(2)} {invoice.currency.toUpperCase()}
+                        {(invoice.total / 100).toFixed(2)}{" "}
+                        {invoice.currency.toUpperCase()}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -843,7 +878,9 @@ export function UserOperationsCard({
                   <Label>Type remboursement</Label>
                   <Select
                     value={refundType}
-                    onValueChange={(value) => setRefundType(value as "full" | "partial")}
+                    onValueChange={(value) =>
+                      setRefundType(value as "full" | "partial")
+                    }
                   >
                     <SelectTrigger className="w-full">
                       <SelectValue />
@@ -861,7 +898,9 @@ export function UserOperationsCard({
                     min={1}
                     disabled={refundType !== "partial"}
                     value={partialRefundAmount}
-                    onChange={(event) => setPartialRefundAmount(event.target.value)}
+                    onChange={(event) =>
+                      setPartialRefundAmount(event.target.value)
+                    }
                   />
                 </div>
                 <div className="space-y-1">
@@ -870,7 +909,10 @@ export function UserOperationsCard({
                     value={refundStripeReason}
                     onValueChange={(value) =>
                       setRefundStripeReason(
-                        value as "duplicate" | "fraudulent" | "requested_by_customer",
+                        value as
+                          | "duplicate"
+                          | "fraudulent"
+                          | "requested_by_customer",
                       )
                     }
                   >
@@ -894,7 +936,9 @@ export function UserOperationsCard({
                   rows={2}
                   value={invoiceActionReason}
                   placeholder="Ex: remboursement demandé par le client, erreur de facturation..."
-                  onChange={(event) => setInvoiceActionReason(event.target.value)}
+                  onChange={(event) =>
+                    setInvoiceActionReason(event.target.value)
+                  }
                 />
               </div>
 
@@ -902,14 +946,18 @@ export function UserOperationsCard({
                 <Button
                   variant="outline"
                   onClick={() => refundInvoiceMutation.mutate()}
-                  disabled={refundInvoiceMutation.isPending || !selectedInvoiceId}
+                  disabled={
+                    refundInvoiceMutation.isPending || !selectedInvoiceId
+                  }
                 >
                   Rembourser
                 </Button>
                 <Button
                   variant="outline"
                   onClick={() => resendInvoiceMutation.mutate()}
-                  disabled={resendInvoiceMutation.isPending || !selectedInvoiceId}
+                  disabled={
+                    resendInvoiceMutation.isPending || !selectedInvoiceId
+                  }
                 >
                   Renvoyer facture
                 </Button>
@@ -930,8 +978,8 @@ export function UserOperationsCard({
         <div className="space-y-3">
           <h3 className="text-sm font-semibold">Impersonation</h3>
           <p className="text-muted-foreground text-xs">
-            Ouvre une session en tant qu&apos;utilisateur pour reproduire un bug ou
-            valider un parcours.
+            Ouvre une session en tant qu&apos;utilisateur pour reproduire un bug
+            ou valider un parcours.
           </p>
           <ImpersonateUserButton userId={userId} userEmail={userEmail} />
         </div>

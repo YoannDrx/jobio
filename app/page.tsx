@@ -3,10 +3,7 @@ import { NewsletterSection } from "@/features/landing/newsletter-section";
 import { BeforeAfterSection } from "@/features/landing/sections/before-after-section";
 import { FeaturesSection } from "@/features/landing/sections/features-section";
 import { HeroSection } from "@/features/landing/sections/hero-section";
-import { MetricsSection } from "@/features/landing/sections/metrics-section";
-import { PlatformLogosSection } from "@/features/landing/sections/platform-logos-section";
 import { ProductSuitesSection } from "@/features/landing/sections/product-suites-section";
-import { TestimonialsSection } from "@/features/landing/sections/testimonials-section";
 import { TrustSection } from "@/features/landing/sections/trust-section";
 import { UseCasesSection } from "@/features/landing/sections/use-cases-section";
 import { WorkflowSection } from "@/features/landing/sections/workflow-section";
@@ -39,7 +36,7 @@ const organizationJsonLd = {
   logo: absoluteUrl("/images/logo-icon.svg"),
   contactPoint: {
     "@type": "ContactPoint",
-    email: "hello@jobio.fr",
+    email: SiteConfig.supportEmail,
     contactType: "customer support",
     availableLanguage: ["fr"],
   },
@@ -81,7 +78,7 @@ const faqs = [
   {
     question: "Est-ce que je peux commencer gratuitement ?",
     answer:
-      "Oui. Le plan Free te permet de tester le flux complet avec des limites de volume avant de passer en Pro ou Ultra.",
+      "Oui. Chaque nouveau compte bénéficie de 14 jours de Pro sans carte, puis repasse automatiquement sur le plan Free.",
   },
   {
     question: "Le scoring IA remplace mon jugement ?",
@@ -96,7 +93,7 @@ const faqs = [
   {
     question: "Comment Jobio protège mes données ?",
     answer:
-      "Tes données sont hébergées en Europe sur des serveurs conformes RGPD. Tu peux exporter ou supprimer tes données à tout moment depuis les paramètres.",
+      "Jobio applique des contrôles d’accès côté serveur et documente ses sous-traitants et transferts internationaux dans sa politique de confidentialité. Tu peux exporter ou supprimer tes données depuis les paramètres.",
   },
   {
     question: "Puis-je connecter Jobio à mes outils ?",
@@ -104,9 +101,9 @@ const faqs = [
       "Jobio fonctionne en standalone. Tu importes tes missions par URL ou copier-coller, sans intégration complexe à configurer.",
   },
   {
-    question: "Quelle différence entre Pro et Ultra ?",
+    question: "Quelle différence entre Free et Pro ?",
     answer:
-      "Pro couvre l'essentiel : pipeline étendu, séquences automatiques et analytics avancés. Ultra ajoute le coaching IA, les capacités illimitées et un support prioritaire.",
+      "Free permet de gérer un volume raisonnable. Pro ajoute le Coach CV, les automatisations, davantage d’IA, les analytics complets et la gestion d’activité sans limites usuelles.",
   },
   {
     question: "Y a-t-il un engagement ?",
@@ -153,49 +150,50 @@ export default function HomePage() {
         {/* 1. Hero */}
         <HeroSection />
 
-        {/* 2. Platform logos (marquee) */}
-        <PlatformLogosSection />
+        <div className="[contain-intrinsic-size:auto_900px] [content-visibility:auto]">
+          <FeaturesSection />
+        </div>
 
-        {/* 3. Features (4 piliers) */}
-        <FeaturesSection />
+        <div className="[contain-intrinsic-size:auto_900px] [content-visibility:auto]">
+          <BeforeAfterSection />
+        </div>
 
-        {/* 4. Avant / Après */}
-        <BeforeAfterSection />
+        <div className="[contain-intrinsic-size:auto_900px] [content-visibility:auto]">
+          <WorkflowSection />
+        </div>
 
-        {/* 5. Workflow (timeline) */}
-        <WorkflowSection />
+        <div className="[contain-intrinsic-size:auto_900px] [content-visibility:auto]">
+          <ProductSuitesSection />
+        </div>
 
-        {/* 6. Product Suites (tabs) */}
-        <ProductSuitesSection />
+        <div className="[contain-intrinsic-size:auto_900px] [content-visibility:auto]">
+          <UseCasesSection />
+        </div>
 
-        {/* 7. Métriques (compteurs animés) */}
-        <MetricsSection />
+        <div className="[contain-intrinsic-size:auto_600px] [content-visibility:auto]">
+          <TrustSection />
+        </div>
 
-        {/* 8. Use Cases */}
-        <UseCasesSection />
+        <div className="[contain-intrinsic-size:auto_1200px] [content-visibility:auto]">
+          <section id="pricing">
+            <Pricing entryPoint="landing" />
+            <div className="mx-auto w-full max-w-7xl px-4 pb-14 lg:px-8 lg:pb-20">
+              <PricingComparisonTable />
+            </div>
+          </section>
+        </div>
 
-        {/* 9. Témoignages */}
-        <TestimonialsSection />
+        <div className="[contain-intrinsic-size:auto_900px] [content-visibility:auto]">
+          <FaqSection faqs={faqs} />
+        </div>
 
-        {/* 10. Trust Badges */}
-        <TrustSection />
+        <div className="[contain-intrinsic-size:auto_600px] [content-visibility:auto]">
+          <NewsletterSection />
+        </div>
 
-        {/* 11. Pricing */}
-        <section id="pricing">
-          <Pricing entryPoint="landing" />
-          <div className="mx-auto w-full max-w-7xl px-4 pb-14 lg:px-8 lg:pb-20">
-            <PricingComparisonTable />
-          </div>
-        </section>
-
-        {/* 12. FAQ (split layout) */}
-        <FaqSection faqs={faqs} />
-
-        {/* 13. Newsletter */}
-        <NewsletterSection />
-
-        {/* 14. Final CTA */}
-        <FinalCtaSection />
+        <div className="[contain-intrinsic-size:auto_600px] [content-visibility:auto]">
+          <FinalCtaSection />
+        </div>
       </main>
 
       <Footer alignWithLandingHeader />

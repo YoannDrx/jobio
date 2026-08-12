@@ -140,7 +140,7 @@ export const blogPosts: BlogPost[] = [
 
 <h2>Relier relances, pipeline et conversion</h2>
 <p>Une cadence solide n'a de valeur que si elle est connectee au pipeline: prochaine action, date, statut, motif de blocage. C'est ce qui te permet d'identifier ou ca casse et corriger vite.</p>
-<p>Pour aligner process et outils, consulte <a href="/features">/features</a> et compare les capacites Free/Pro/Ultra sur <a href="/#pricing">/#pricing</a>.</p>
+<p>Pour aligner process et outils, consulte <a href="/features">/features</a> et compare les capacités Free/Pro sur <a href="/#pricing">/#pricing</a>.</p>
 
 <h2>Plan d'action en une semaine</h2>
 <p><strong>Jour 1:</strong> definir 3 templates de base.</p>

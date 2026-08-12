@@ -8,6 +8,7 @@ import {
   CardHeader,
 } from "@/components/ui/card";
 import { Form, useForm } from "@/features/form/tanstack-form";
+import { useHydrated } from "@/hooks/use-hydrated";
 import { authClient } from "@/lib/auth-client";
 import { unwrapSafePromise } from "@/lib/promises";
 import { useMutation } from "@tanstack/react-query";
@@ -24,14 +25,12 @@ type EmailFormType = z.infer<typeof EmailFormSchema>;
 
 export function ForgetPasswordPage() {
   const router = useRouter();
+  const isHydrated = useHydrated();
 
   const forgetPasswordMutation = useMutation({
     mutationFn: async (values: EmailFormType) => {
-      const forgetPassword = authClient.forgetPassword as unknown as (
-        params: Record<string, string>,
-      ) => Promise<{ data: unknown; error: Error }>;
       return unwrapSafePromise(
-        forgetPassword({
+        authClient.requestPasswordReset({
           email: values.email,
           redirectTo: "/auth/reset-password",
         }),
@@ -65,10 +64,10 @@ export function ForgetPasswordPage() {
             </AvatarFallback>
           </Avatar>
         </div>
-        <CardHeader className="text-center">Forget Password</CardHeader>
+        <CardHeader className="text-center">Mot de passe oublié</CardHeader>
 
         <CardDescription className="text-center">
-          Enter your email to reset your password
+          Saisis ton email pour recevoir un lien de réinitialisation.
         </CardDescription>
       </CardHeader>
 
@@ -86,8 +85,12 @@ export function ForgetPasswordPage() {
             )}
           </form.AppField>
 
-          <form.SubmitButton className="w-full">
-            Send Reset Link
+          <form.SubmitButton
+            className="w-full"
+            disabled={!isHydrated}
+            aria-busy={!isHydrated || forgetPasswordMutation.isPending}
+          >
+            Envoyer le lien
           </form.SubmitButton>
         </Form>
       </CardFooter>

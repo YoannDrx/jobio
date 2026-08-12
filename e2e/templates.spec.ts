@@ -1,24 +1,22 @@
 import { prisma } from "@/lib/prisma";
-import { test } from "@playwright/test";
+import { expect, test } from "@playwright/test";
 import { createTestAccount } from "./utils/auth-test";
 
 test.describe("templates", () => {
-  test("redirects hidden template deep links to the V1 today page", async ({
-    page,
-  }) => {
+  test("opens the public message templates module", async ({ page }) => {
     const userData = await createTestAccount({
       page,
       callbackURL: "/job",
     });
 
-    // Navigate to templates page
     await page.goto("/job/templates");
-    await page.waitForURL(
-      (url) =>
-        url.pathname === "/job" &&
-        url.searchParams.get("notice") === "feature-unavailable",
-      { timeout: 15000 },
-    );
+    await expect(page).toHaveURL(/\/job\/templates/);
+    await expect(
+      page.getByRole("heading", { name: "Templates" }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Nouveau template" }),
+    ).toBeVisible();
 
     // Clean up
     const user = await prisma.user.findUnique({

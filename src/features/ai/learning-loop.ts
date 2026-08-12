@@ -28,6 +28,15 @@ export async function computeRecommendations(
         workType: true,
         stack: true,
         createdAt: true,
+        activityEvents: {
+          where: {
+            type: "STATUS_CHANGE",
+            newValue: "POSTULE",
+          },
+          orderBy: { createdAt: "asc" },
+          take: 1,
+          select: { createdAt: true },
+        },
         platform: { select: { name: true } },
       },
     }),
@@ -45,7 +54,7 @@ export async function computeRecommendations(
   ]);
 
   const totalMissions = missions.length;
-  if (totalMissions < 3) return recommendations;
+  if (totalMissions < 5) return recommendations;
 
   const refused = missions.filter((m) => m.status === "REFUSE");
 
@@ -67,7 +76,7 @@ export async function computeRecommendations(
   }
 
   const platformEntries = [...platformStats.entries()]
-    .filter(([, s]) => s.total >= 2)
+    .filter(([, s]) => s.total >= 5)
     .sort((a, b) => b[1].won / b[1].total - a[1].won / a[1].total);
 
   if (platformEntries.length > 0) {
@@ -107,7 +116,7 @@ export async function computeRecommendations(
   }
 
   const sortedTemplates = [...templateWins.entries()]
-    .filter(([, s]) => s.total >= 2)
+    .filter(([, s]) => s.total >= 5)
     .sort((a, b) => b[1].wins / b[1].total - a[1].wins / a[1].total);
 
   if (sortedTemplates.length > 0) {
@@ -127,7 +136,9 @@ export async function computeRecommendations(
   // c. BEST_TIME
   const dayStats = new Map<number, { total: number; won: number }>();
   for (const m of missions) {
-    const day = m.createdAt.getDay();
+    const applicationEvent = m.activityEvents.at(0);
+    if (!applicationEvent) continue;
+    const day = applicationEvent.createdAt.getDay();
     const current = dayStats.get(day) ?? { total: 0, won: 0 };
     current.total++;
     if (m.status === "ACCEPTE") current.won++;
@@ -144,7 +155,7 @@ export async function computeRecommendations(
     "Samedi",
   ];
   const sortedDays = [...dayStats.entries()]
-    .filter(([, s]) => s.total >= 2 && s.won > 0)
+    .filter(([, s]) => s.total >= 5 && s.won > 0)
     .sort((a, b) => b[1].won / b[1].total - a[1].won / a[1].total);
 
   if (sortedDays.length > 0) {
@@ -152,8 +163,8 @@ export async function computeRecommendations(
     const rate = Math.round((stats.won / stats.total) * 100);
     recommendations.push({
       type: "BEST_TIME",
-      title: `Le ${dayNames[day]} est votre meilleur jour`,
-      description: `${rate}% de missions acceptees quand vous postulez le ${dayNames[day]} (${stats.won}/${stats.total}). Privilegiez ce jour.`,
+      title: `Vos candidatures du ${dayNames[day]} ont le meilleur taux observé`,
+      description: `${rate}% des candidatures datées du ${dayNames[day]} ont abouti sur cet échantillon (${stats.won}/${stats.total}). Cette corrélation ne prouve pas que le jour cause le résultat.`,
       score: Math.min(rate, 100),
       data: { day: dayNames[day], rate, won: stats.won, total: stats.total },
     });
@@ -214,7 +225,7 @@ export async function computeRecommendations(
   }
 
   const workTypeEntries = [...workTypeStats.entries()]
-    .filter(([, s]) => s.total >= 2)
+    .filter(([, s]) => s.total >= 5)
     .sort((a, b) => b[1].won / b[1].total - a[1].won / a[1].total);
 
   if (workTypeEntries.length > 0) {

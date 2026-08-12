@@ -28,7 +28,11 @@ export function RelatedResourcesSection({
   }
 
   return (
-    <PublicSection title={title} description={description} className={className}>
+    <PublicSection
+      title={title}
+      description={description}
+      className={className}
+    >
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {resources.map((resource) => (
           <div key={resource.href} className="rounded-xl border p-4">

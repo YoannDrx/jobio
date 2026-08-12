@@ -118,7 +118,10 @@ const featureSections: FeatureSection[] = [
     bullets: [
       "CV Master centralise par profil freelance",
       "CV Lab multi-documents avec versions",
-      withPlanBadge("ATS scoring et recommandations actionnables", "atsScoring"),
+      withPlanBadge(
+        "ATS scoring et recommandations actionnables",
+        "atsScoring",
+      ),
       withPlanBadge("Coach CV IA et export PDF", "cvCoachAI"),
     ],
   },
@@ -174,7 +177,7 @@ const relatedResources = [
     title: "Parcours par profil freelance",
     description:
       "Choisis un use case (développeur, data/IA, product/no-code) pour voir le workflow recommandé.",
-    ctaLabel: "Voir les use cases",
+    ctaLabel: "Voir les cas d’usage",
   },
   {
     href: "/docs" as const,
@@ -194,7 +197,7 @@ const relatedResources = [
     href: "/#pricing" as const,
     title: "Plans & limites",
     description:
-      "Compare Free, Pro et Ultra pour choisir les capacités adaptées à ton volume.",
+      "Compare Free et Pro pour choisir les capacités adaptées à ton volume.",
     ctaLabel: "Comparer les plans",
   },
 ];
@@ -216,7 +219,7 @@ const featureFaqs = [
     id: "cv-ats",
     question: "Le module CV couvre-t-il les besoins ATS en freelance ?",
     answer:
-      "Oui. CV Studio IA inclut un ATS scoring (plan Pro+) avec recommandations actionnables, la gestion de plusieurs versions de CV, et un Coach CV IA reserve au plan Ultra.",
+      "Oui. CV Studio IA inclut en Pro un scoring ATS avec recommandations actionnables, la gestion de plusieurs versions et le Coach CV IA.",
   },
   {
     id: "facturation",
@@ -228,7 +231,7 @@ const featureFaqs = [
     id: "plans",
     question: "Les fonctionnalites varient-elles selon le plan ?",
     answer:
-      "Oui. Les volumes et certaines capacites (IA, automatisation, modules avances) dependent du plan Free, Pro ou Ultra. La section pricing donne la matrice exacte a jour.",
+      "Oui. Les volumes et certaines capacités (IA et automatisation) dépendent du plan Free ou Pro. La section tarifaire reprend les droits réellement appliqués.",
   },
 ] as const;
 
@@ -272,7 +275,9 @@ export default function FeaturesPage() {
     <>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(featuresWebPageJsonLd) }}
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify(featuresWebPageJsonLd),
+        }}
       />
       <script
         type="application/ld+json"

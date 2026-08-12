@@ -14,8 +14,8 @@ export default function FreelanceClientsPage() {
       <LayoutHeader>
         <LayoutTitle>Clients</LayoutTitle>
         <LayoutDescription>
-          Base clients dédiée à la facturation avec identité légale, conditions de
-          paiement et historique documentaire.
+          Base clients dédiée à la facturation avec identité légale, conditions
+          de paiement et historique documentaire.
         </LayoutDescription>
       </LayoutHeader>
       <LayoutContent>

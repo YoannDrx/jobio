@@ -33,11 +33,13 @@ Date: 2026-02-22
 ## Mode opératoire recommandé
 
 Avant release pricing:
+
 ```bash
 pnpm pricing:verify --strict
 ```
 
 En CI:
+
 ```bash
 pnpm pricing:verify --strict --json
 ```

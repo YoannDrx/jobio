@@ -2,15 +2,19 @@
 
 ## Description
 
-Jobio est un cockpit commercial concu pour les freelances tech. Sa V1 aide a savoir quoi faire aujourd'hui pour signer la prochaine mission : suivre les opportunites, programmer les relances, adapter son CV et entretenir ses contacts.
+Jobio est le système d’exploitation commercial des freelances tech. Il relie la découverte d’une mission à sa qualification, la candidature, les relances, la signature puis au pilotage du revenu.
 
-Le produit assume un perimetre resserre. Les anciens modules de facturation avancee, programmes, plateformes, profil public et assistant IA generaliste sont conserves temporairement dans le code mais bloques par le manifeste serveur.
+La suite complète est la destination produit, avec une **GA progressive par module**. Le statut `beta` du manifeste signifie qu’un parcours existe mais que ses preuves staging/live, accessibilité, observabilité et cas limites ne sont pas encore toutes réunies. Un module ne passe en `ga` qu’avec un dossier de preuve lié à l’audit de production.
+
+Le suivi opérationnel de ce qui est livré, vérifié et encore bloquant est tenu
+dans le [roadbook produit et production](docs/production-readiness/roadbook.md).
 
 Le modele de validation repose sur **Free** et un seul plan **Pro**. Ultra n'est plus propose aux nouveaux utilisateurs ; aucun abonnement historique n'est modifie sans audit Stripe.
 
 ## Fonctionnalites
 
 - **Pipeline de missions** : Kanban de suivi des opportunites avec scoring IA et parsing automatique des offres
+- **Radar Missions** : veilles sur des sources autorisées, import d’alertes transférées, déduplication, score explicable et conversion humaine vers le pipeline
 - **CV Lab** : Editeur de CV avec master CV, variantes par mission, analyse de compatibilite ATS et generation IA
 - **Contacts / CRM** : Gestion des contacts professionnels avec score relationnel et historique d'interactions
 - **Relances** : liste, calendrier, snooze et prevention de sur-sollicitation
@@ -19,6 +23,9 @@ Le modele de validation repose sur **Free** et un seul plan **Pro**. Ultra n'est
 - **CV Lab** : profil maitre, variante par mission, apercu A4 et export ATS
 - **Notifications push** : Rappels et alertes pour les actions importantes via Web Push (VAPID)
 - **Profil public** : Partage de CV via lien unique avec token securise
+- **Gestion freelance** : passage de la mission au devis, à la facture, au paiement et à la prévision de revenu ; ce module reste soumis aux gates comptables et juridiques documentés
+
+Radar Missions n’effectue aucun scraping LinkedIn, aucune injection dans ses pages et aucune candidature automatique. Les alertes LinkedIn peuvent uniquement être transférées par l’utilisateur vers son adresse Jobio ; toute communication et toute création de mission exigent une validation humaine.
 
 ## Stack technique
 
@@ -85,28 +92,34 @@ L'application sera accessible sur `http://localhost:3000`.
 
 Toutes les variables sont definies dans le fichier `.env-template`. Voici les principales :
 
-| Variable                                    | Description                                                | Requis |
-| ------------------------------------------- | ---------------------------------------------------------- | ------ |
-| `DATABASE_URL`                              | URL de connexion PostgreSQL                                | Oui    |
-| `DATABASE_URL_UNPOOLED`                     | URL PostgreSQL sans pooling (migrations)                   | Non    |
-| `REDIS_URL`                                 | URL de connexion Redis                                     | Oui    |
-| `BETTER_AUTH_URL`                           | URL de base de l'application (ex: `http://localhost:3000`) | Oui    |
-| `BETTER_AUTH_SECRET`                        | Secret pour Better Auth                                    | Oui    |
-| `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET` | OAuth GitHub                                               | Non    |
-| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | OAuth Google                                               | Non    |
-| `RESEND_API_KEY`                            | Cle API Resend                                             | Oui    |
-| `EMAIL_FROM`                                | Adresse email d'expedition                                 | Oui    |
-| `NEXT_PUBLIC_EMAIL_CONTACT`                 | Email de contact public                                    | Oui    |
-| `STRIPE_SECRET_KEY`                         | Cle secrete Stripe                                         | Oui    |
-| `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`        | Cle publique Stripe                                        | Oui    |
-| `STRIPE_WEBHOOK_SECRET`                     | Secret webhook Stripe                                      | Non    |
-| `STRIPE_PRO_PLAN_ID`                        | ID du plan Pro Stripe (mensuel)                            | Oui    |
-| `STRIPE_PRO_YEARLY_PLAN_ID`                 | ID du plan Pro Stripe (annuel)                             | Oui    |
-| `STRIPE_ULTRA_PLAN_ID`                      | ID du plan Ultra Stripe (mensuel)                          | Oui    |
-| `STRIPE_ULTRA_YEARLY_PLAN_ID`               | ID du plan Ultra Stripe (annuel)                           | Oui    |
-| `OPENAI_API_KEY`                            | Cle API OpenAI                                             | Oui    |
-| `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY`    | Cles VAPID pour les notifications push                     | Non    |
-| `NEXT_PUBLIC_POSTHOG_KEY`                   | Cle PostHog (analytics)                                    | Non    |
+| Variable                                                    | Description                                                | Requis                  |
+| ----------------------------------------------------------- | ---------------------------------------------------------- | ----------------------- |
+| `DATABASE_URL`                                              | URL de connexion PostgreSQL                                | Oui                     |
+| `DATABASE_URL_UNPOOLED`                                     | URL PostgreSQL sans pooling (migrations)                   | Non                     |
+| `REDIS_URL`                                                 | URL de connexion Redis                                     | Oui                     |
+| `BETTER_AUTH_URL`                                           | URL de base de l'application (ex: `http://localhost:3000`) | Oui                     |
+| `BETTER_AUTH_SECRET`                                        | Secret pour Better Auth                                    | Oui                     |
+| `GITHUB_CLIENT_ID` / `GITHUB_CLIENT_SECRET`                 | OAuth GitHub                                               | Non                     |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET`                 | OAuth Google                                               | Non                     |
+| `RESEND_API_KEY`                                            | Cle API Resend                                             | Oui                     |
+| `RESEND_WEBHOOK_SECRET`                                     | Signature des webhooks Resend, dont `email.received`       | Oui en production       |
+| `OPPORTUNITY_INBOUND_DOMAIN`                                | Sous-domaine MX dédié aux alertes transférées              | Pour l’inbound Radar    |
+| `EMAIL_FROM`                                                | Adresse email d'expedition                                 | Oui                     |
+| `NEXT_PUBLIC_EMAIL_CONTACT`                                 | Email de contact public                                    | Oui                     |
+| `STRIPE_SECRET_KEY`                                         | Cle secrete Stripe                                         | Oui                     |
+| `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`                        | Cle publique Stripe                                        | Oui                     |
+| `STRIPE_WEBHOOK_SECRET`                                     | Secret webhook Stripe                                      | Non                     |
+| `STRIPE_PRO_PLAN_ID`                                        | ID du plan Pro Stripe (mensuel)                            | Oui                     |
+| `STRIPE_PRO_YEARLY_PLAN_ID`                                 | ID du plan Pro Stripe (annuel)                             | Oui                     |
+| `STRIPE_PROGRAM_ATTIRER_PRICE_ID`                           | ID du programme Attirer des clients                        | Oui                     |
+| `STRIPE_PROGRAM_BRANDING_PRICE_ID`                          | ID du programme Personal branding                          | Oui                     |
+| `STRIPE_PROGRAM_CROISSANCE_PRICE_ID`                        | ID du programme Croissance                                 | Oui                     |
+| `OPENAI_API_KEY`                                            | Cle API OpenAI                                             | Oui                     |
+| `FRANCE_TRAVAIL_CLIENT_ID` / `FRANCE_TRAVAIL_CLIENT_SECRET` | OAuth API Offres d’emploi France Travail                   | Pour cette source Radar |
+| `ADZUNA_APP_ID` / `ADZUNA_APP_KEY`                          | Identifiants Adzuna après validation de licence            | Pour cette source Radar |
+| `JOOBLE_API_KEY`                                            | Clé Jooble après validation de licence                     | Pour cette source Radar |
+| `VAPID_PUBLIC_KEY` / `VAPID_PRIVATE_KEY`                    | Cles VAPID pour les notifications push                     | Non                     |
+| `NEXT_PUBLIC_POSTHOG_KEY`                                   | Cle PostHog (analytics)                                    | Non                     |
 
 ## Commandes
 

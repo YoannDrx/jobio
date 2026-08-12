@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { logSystemError } from "@/lib/monitoring/log-system-error";
+import { enforceRateLimit } from "@/lib/security/rate-limit";
+import { route } from "@/lib/zod-route";
+import { createHash } from "node:crypto";
 
 const clientErrorSchema = z.object({
   source: z.string().min(2).max(100),
@@ -11,22 +14,40 @@ const clientErrorSchema = z.object({
   context: z.record(z.string(), z.unknown()).optional(),
 });
 
-export async function POST(request: Request) {
-  const body = await request.json().catch(() => null);
-  const parsed = clientErrorSchema.safeParse(body);
+export const POST = route
+  .body(clientErrorSchema)
+  .handler(async (request, { body }) => {
+    const clientAddress =
+      request.headers.get("x-forwarded-for")?.split(",").at(0)?.trim() ??
+      request.headers.get("x-real-ip") ??
+      "unknown";
+    const fingerprint = createHash("sha256")
+      .update(clientAddress)
+      .digest("hex")
+      .slice(0, 24);
+    const limit = await enforceRateLimit({
+      key: `client-errors:${fingerprint}`,
+      limit: 20,
+      windowSeconds: 300,
+    });
+    if (!limit.allowed) {
+      return NextResponse.json(
+        { error: "rate_limited" },
+        {
+          status: 429,
+          headers: { "Retry-After": String(limit.retryAfterSeconds) },
+        },
+      );
+    }
 
-  if (!parsed.success) {
-    return NextResponse.json({ error: "invalid_payload" }, { status: 400 });
-  }
+    logSystemError({
+      source: body.source,
+      message: body.message,
+      stack: body.stack,
+      route: body.route,
+      severity: body.severity ?? "ERROR",
+      context: body.context,
+    });
 
-  logSystemError({
-    source: parsed.data.source,
-    message: parsed.data.message,
-    stack: parsed.data.stack,
-    route: parsed.data.route,
-    severity: parsed.data.severity ?? "ERROR",
-    context: parsed.data.context,
+    return new NextResponse(null, { status: 204 });
   });
-
-  return new NextResponse(null, { status: 204 });
-}

@@ -6,7 +6,7 @@ import { prisma } from "@/lib/prisma";
 import { generateText } from "ai";
 import { z } from "zod";
 import { AI_MODELS } from "./ai-config";
-import { checkAndIncrementAIQuota } from "./ai-quota";
+import { runTrackedAI } from "./ai-usage";
 
 const generateNegotiationScriptInputSchema = z.object({
   missionId: z.string(),
@@ -15,8 +15,6 @@ const generateNegotiationScriptInputSchema = z.object({
 export const generateNegotiationScriptAction = authAction
   .inputSchema(generateNegotiationScriptInputSchema)
   .action(async ({ parsedInput: { missionId }, ctx: { user } }) => {
-    await checkAndIncrementAIQuota(user.id);
-
     const mission = await prisma.mission.findFirst({
       where: { id: missionId, userId: user.id, deletedAt: null },
     });
@@ -56,10 +54,15 @@ Génère un script de négociation court (5-8 phrases) pour obtenir un TJM plus 
 
 Réponds en français, format professionnel mais direct.`;
 
-    const { text } = await generateText({
-      model: AI_MODELS.fast,
-      prompt,
-    });
+    const { text } = await runTrackedAI(
+      {
+        userId: user.id,
+        feature: "OFFER_SCORING",
+        modelId: AI_MODELS.fast.modelId,
+        context: { surface: "negotiation" },
+      },
+      async () => generateText({ model: AI_MODELS.fast, prompt }),
+    );
 
     return { script: text, tjm: mission.tjm, avgTjm };
   });

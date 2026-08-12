@@ -16,7 +16,8 @@ type GetSystemErrorOptions = {
 };
 
 const isMissingSystemErrorTable = (error: unknown) =>
-  error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2021";
+  error instanceof Prisma.PrismaClientKnownRequestError &&
+  error.code === "P2021";
 
 export const getSystemErrorLogs = async ({
   page,

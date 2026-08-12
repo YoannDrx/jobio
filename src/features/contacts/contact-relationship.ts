@@ -52,7 +52,11 @@ export function computeContactRelationship(params: {
   const recencyPoints = getRecencyPoints(daysSinceLastInteraction);
   const interactionPoints = clamp(params.interactionCount * 3, 0, 30);
   const missionPoints = clamp(params.missionCount * 6, 0, 20);
-  const score = clamp(recencyPoints + interactionPoints + missionPoints, 0, 100);
+  const score = clamp(
+    recencyPoints + interactionPoints + missionPoints,
+    0,
+    100,
+  );
 
   return {
     score,

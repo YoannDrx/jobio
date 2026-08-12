@@ -11,13 +11,7 @@ describe("robots metadata route", () => {
     expect(rule).toBeDefined();
     expect(rule.userAgent).toBe("*");
     expect(rule.disallow).toEqual(
-      expect.arrayContaining([
-        "/admin",
-        "/api",
-        "/auth",
-        "/job",
-        "/freelance",
-      ]),
+      expect.arrayContaining(["/admin", "/api", "/auth", "/job", "/freelance"]),
     );
     expect(metadata.sitemap).toBe("https://jobio.fr/sitemap.xml");
     expect(metadata.host).toBe("https://jobio.fr");

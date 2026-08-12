@@ -48,8 +48,9 @@ jobs:
       STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
       STRIPE_PRO_PLAN_ID: ${{ secrets.STRIPE_PRO_PLAN_ID }}
       STRIPE_PRO_YEARLY_PLAN_ID: ${{ secrets.STRIPE_PRO_YEARLY_PLAN_ID }}
-      STRIPE_ULTRA_PLAN_ID: ${{ secrets.STRIPE_ULTRA_PLAN_ID }}
-      STRIPE_ULTRA_YEARLY_PLAN_ID: ${{ secrets.STRIPE_ULTRA_YEARLY_PLAN_ID }}
+      STRIPE_PROGRAM_ATTIRER_PRICE_ID: ${{ secrets.STRIPE_PROGRAM_ATTIRER_PRICE_ID }}
+      STRIPE_PROGRAM_BRANDING_PRICE_ID: ${{ secrets.STRIPE_PROGRAM_BRANDING_PRICE_ID }}
+      STRIPE_PROGRAM_CROISSANCE_PRICE_ID: ${{ secrets.STRIPE_PROGRAM_CROISSANCE_PRICE_ID }}
       # OAuth
       GITHUB_CLIENT_ID: ${{ secrets.OAUTH_GITHUB_CLIENT_ID }}
       GITHUB_CLIENT_SECRET: ${{ secrets.OAUTH_GITHUB_CLIENT_SECRET }}
@@ -65,6 +66,7 @@ jobs:
       HEADLESS: "true"
       CI: "true"
       PORT: 3000
+      CRON_SECRET: "ci-cron-secret-for-jobio-tests-only"
 
     services:
       postgres:
@@ -96,14 +98,14 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Setup pnpm
-        uses: pnpm/action-setup@v2
+        uses: pnpm/action-setup@v4
         with:
-          version: 9
+          version: 10.14.0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: lts/*
+          node-version: 24.x
           cache: "pnpm"
 
       - name: Cache Next.js build
@@ -117,10 +119,12 @@ jobs:
             ${{ runner.os }}-nextjs-${{ hashFiles('**/pnpm-lock.yaml') }}-
 
       - name: Install dependencies
-        run: pnpm install --prod=false
+        run: pnpm install --frozen-lockfile
 
       - name: Generate Prisma client
-        run: pnpm prisma generate
+        # Use the project script so the generated client receives the
+        # Turbopack tracing guards before the production build.
+        run: pnpm prisma:generate
 
       - name: Deploy database migrations
         run: pnpm prisma migrate deploy
@@ -132,7 +136,7 @@ jobs:
         run: pnpm build
 
       - name: Install Playwright browsers
-        run: pnpm exec playwright install chromium --with-deps
+        run: pnpm exec playwright install chromium firefox webkit --with-deps
 
       - name: Start application
         run: pnpm start &

@@ -17,7 +17,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { BillingEntityType } from "@/generated/prisma";
+import type { BillingEntityType } from "@/generated/prisma";
 import { getBillingAuditEventsAction } from "@/features/freelance/billing-documents.action";
 import {
   auditEventLabel,
@@ -40,20 +40,22 @@ type AuditRow = {
 
 const ENTITY_FILTERS: { label: string; value: BillingEntityType | "ALL" }[] = [
   { label: "Tous", value: "ALL" },
-  { label: "Profil", value: BillingEntityType.PROFILE },
-  { label: "Clients", value: BillingEntityType.CLIENT },
-  { label: "Devis", value: BillingEntityType.QUOTE },
-  { label: "Factures", value: BillingEntityType.INVOICE },
-  { label: "Paiements", value: BillingEntityType.PAYMENT },
-  { label: "Dépenses factures", value: BillingEntityType.EXPENSE_INVOICE },
-  { label: "Notes de frais", value: BillingEntityType.EXPENSE_NOTE },
-  { label: "Trajets", value: BillingEntityType.EXPENSE_TRIP },
+  { label: "Profil", value: "PROFILE" },
+  { label: "Clients", value: "CLIENT" },
+  { label: "Devis", value: "QUOTE" },
+  { label: "Factures", value: "INVOICE" },
+  { label: "Paiements", value: "PAYMENT" },
+  { label: "Dépenses factures", value: "EXPENSE_INVOICE" },
+  { label: "Notes de frais", value: "EXPENSE_NOTE" },
+  { label: "Trajets", value: "EXPENSE_TRIP" },
 ];
 
 export function FreelanceAuditLogList() {
   const [events, setEvents] = useState<AuditRow[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [entityType, setEntityType] = useState<BillingEntityType | "ALL">("ALL");
+  const [entityType, setEntityType] = useState<BillingEntityType | "ALL">(
+    "ALL",
+  );
 
   const loadEvents = useCallback(async () => {
     try {
@@ -69,7 +71,9 @@ export function FreelanceAuditLogList() {
       setEvents(result.events as AuditRow[]);
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Impossible de charger les logs",
+        error instanceof Error
+          ? error.message
+          : "Impossible de charger les logs",
       );
     } finally {
       setIsLoading(false);
@@ -109,7 +113,9 @@ export function FreelanceAuditLogList() {
             Chargement des logs...
           </div>
         ) : events.length === 0 ? (
-          <p className="text-muted-foreground text-sm">Aucun événement trouvé.</p>
+          <p className="text-muted-foreground text-sm">
+            Aucun événement trouvé.
+          </p>
         ) : (
           <Table>
             <TableHeader>
@@ -126,13 +132,17 @@ export function FreelanceAuditLogList() {
                 <TableRow key={event.id}>
                   <TableCell>{formatDate(event.createdAt)}</TableCell>
                   <TableCell>
-                    <Badge variant="outline">{entityLabel[event.entityType]}</Badge>
+                    <Badge variant="outline">
+                      {entityLabel[event.entityType]}
+                    </Badge>
                   </TableCell>
                   <TableCell>{auditEventLabel[event.eventType]}</TableCell>
                   <TableCell className="max-w-[420px] truncate">
                     {event.message ?? "-"}
                   </TableCell>
-                  <TableCell className="font-mono text-xs">{event.entityId}</TableCell>
+                  <TableCell className="font-mono text-xs">
+                    {event.entityId}
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>

@@ -24,7 +24,7 @@ describe("BreadcrumbStructuredData", () => {
     const script = container.querySelector("script");
 
     expect(script).not.toBeNull();
-    expect(script?.textContent).toContain("\"@type\":\"BreadcrumbList\"");
+    expect(script?.textContent).toContain('"@type":"BreadcrumbList"');
     expect(script?.textContent).toContain("https://jobio.fr/features");
   });
 });

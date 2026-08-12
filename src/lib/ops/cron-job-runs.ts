@@ -5,7 +5,8 @@ import { logger } from "@/lib/logger";
 type CronRunStatus = "RUNNING" | "SUCCESS" | "FAILED" | "UNAUTHORIZED";
 
 const isMissingCronJobTable = (error: unknown) =>
-  error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2021";
+  error instanceof Prisma.PrismaClientKnownRequestError &&
+  error.code === "P2021";
 
 export async function findActiveCronJobRun(input: {
   jobNames: string[];
@@ -38,7 +39,10 @@ export async function findActiveCronJobRun(input: {
   }
 }
 
-export async function startCronJobRun(input: { jobName: string; route: string }) {
+export async function startCronJobRun(input: {
+  jobName: string;
+  route: string;
+}) {
   try {
     return await prisma.cronJobRun.create({
       data: {

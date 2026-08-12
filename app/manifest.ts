@@ -8,7 +8,7 @@ export default function manifest(): MetadataRoute.Manifest {
     description: SiteConfig.description,
     start_url: "/",
     display: "standalone",
-    background_color: "#fff",
+    background_color: "#07111F",
     theme_color: SiteConfig.brand.primary,
     icons: [
       {
@@ -17,15 +17,15 @@ export default function manifest(): MetadataRoute.Manifest {
         type: "image/svg+xml",
       },
       {
-        src: "/images/logo-icon.svg",
+        src: "/images/icon-192.png",
         sizes: "192x192",
-        type: "image/svg+xml",
-        purpose: "maskable",
+        type: "image/png",
+        purpose: "any",
       },
       {
-        src: "/images/logo-icon.svg",
+        src: "/images/icon-512.png",
         sizes: "512x512",
-        type: "image/svg+xml",
+        type: "image/png",
         purpose: "any",
       },
     ],

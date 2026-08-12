@@ -1,11 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { dialogManager } from "@/features/dialog-manager/dialog-manager";
 import { resolveActionResult } from "@/lib/actions/actions-utils";
 import { getProfilesAction } from "@/features/profiles/profiles.action";
-import { upfetch } from "@/lib/up-fetch";
 import { useFileUpload } from "@/hooks/use-file-upload";
 import {
   applyCvCoachToProfileAction,
@@ -100,6 +100,7 @@ export const toDateTimeLabel = (value: string | Date) =>
   });
 
 export function useCvCoachStudio() {
+  const router = useRouter();
   const [profiles, setProfiles] = useState<ProfileOption[]>([]);
   const [sessions, setSessions] = useState<CoachSessionListItem[]>([]);
   const [selectedSessionId, setSelectedSessionId] = useState<string | null>(
@@ -374,7 +375,8 @@ export function useCvCoachStudio() {
       });
 
       if (!response.ok) {
-        throw new Error("Erreur lors de l'envoi");
+        const message = await response.text();
+        throw new Error(message || "Erreur lors de l'envoi");
       }
 
       const reader = response.body?.getReader();
@@ -539,7 +541,7 @@ export function useCvCoachStudio() {
               action: {
                 label: "Voir",
                 onClick: () => {
-                  window.location.href = "/job/cv-studio?tab=editor";
+                  router.push("/job/cv-studio?tab=editor");
                 },
               },
             });
@@ -583,18 +585,12 @@ export function useCvCoachStudio() {
 
     try {
       setIsImporting(true);
-      await upfetch("/api/cv-lab/coach/import", {
-        method: "POST",
-        body: {
-          sessionId: activeSession.id,
-          text: importText.trim(),
-        },
-      });
+      const textToImport = importText.trim();
 
       setImportDialogOpen(false);
       setImportText("");
 
-      await handleSendMessage(importText.trim());
+      await handleSendMessage(`[CV IMPORTÉ]\n\n${textToImport}`);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Import impossible");
     } finally {

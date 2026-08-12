@@ -17,9 +17,8 @@ import { Suspense } from "react";
 import { SignUpCredentialsForm } from "./sign-up-credentials-form";
 
 export const metadata: Metadata = {
-  title: `Sign Up | ${SiteConfig.title}`,
-  description:
-    "Create your account to start collecting powerful testimonials for your projects.",
+  title: `Créer un compte | ${SiteConfig.title}`,
+  description: "Crée ton compte Jobio et démarre ton essai Pro de 14 jours.",
 };
 
 export default function Page() {
@@ -41,9 +40,9 @@ async function AuthSignInPage() {
     <Card className="mx-auto w-full max-w-md lg:max-w-lg lg:p-6">
       <CardHeader className="flex flex-col items-center justify-center gap-1">
         <LogoSvg size={40} className="mb-4" />
-        <CardTitle>Sign up to {SiteConfig.title}</CardTitle>
+        <CardTitle>Créer un compte {SiteConfig.title}</CardTitle>
         <CardDescription>
-          We just need a few details to get you started.
+          Quelques informations suffisent pour démarrer ton essai Pro.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -52,9 +51,9 @@ async function AuthSignInPage() {
         </Suspense>
 
         <Typography variant="muted" className="mt-4 text-xs">
-          You already have an account?{" "}
+          Tu as déjà un compte ?{" "}
           <Typography variant="link" as={Link} href="/auth/signin">
-            Sign in
+            Se connecter
           </Typography>
         </Typography>
       </CardContent>

@@ -9,13 +9,13 @@ fonctions de facturation du prototype ne sont pas importés.
 
 ## Tickets de consolidation
 
-| Ticket | Pattern retenu | État dans Jobio | Preuve d'implémentation |
-| --- | --- | --- | --- |
-| `AF-JB-001` | Prochaine action avant les métriques | Fermé | `TodayPriorities` agrège les relances et opportunités, les ordonne puis limite la surface à trois actions dans `src/features/missions/components/today/today-priorities.tsx`. |
-| `AF-JB-002` | Recherche transversale et accès rapide au contexte | Fermé | `AppCommand` filtre les routes avec le manifeste serveur, recherche missions et contacts, puis ouvre leurs deep-links dans `app/job/_navigation/app-command.tsx`. |
-| `AF-JB-003` | Fiche contact avec contexte humain et prochaine interaction | Fermé | `ContactDetailSheet` réunit relation, missions, interactions et prochaine action dans `src/features/contacts/components/contact-detail-sheet.tsx`. |
-| `AF-JB-004` | Statut accessible par texte et couleur | Fermé sur le cœur V1 | Les priorités, missions et contacts associent leurs couleurs à un libellé explicite ; la couleur seule n'est pas l'information. |
-| `AF-JB-005` | Devis, contrats et structure documentaire | Différé | `freelanceAdmin` reste `hidden` dans `src/config/product-features.ts`. Une réactivation exige des entretiens utilisateurs, un périmètre séparé et des tests d'autorisations ; elle ne fait pas partie de la V1. |
+| Ticket      | Pattern retenu                                              | État dans Jobio      | Preuve d'implémentation                                                                                                                                                                                         |
+| ----------- | ----------------------------------------------------------- | -------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `AF-JB-001` | Prochaine action avant les métriques                        | Fermé                | `TodayPriorities` agrège les relances et opportunités, les ordonne puis limite la surface à trois actions dans `src/features/missions/components/today/today-priorities.tsx`.                                   |
+| `AF-JB-002` | Recherche transversale et accès rapide au contexte          | Fermé                | `AppCommand` filtre les routes avec le manifeste serveur, recherche missions et contacts, puis ouvre leurs deep-links dans `app/job/_navigation/app-command.tsx`.                                               |
+| `AF-JB-003` | Fiche contact avec contexte humain et prochaine interaction | Fermé                | `ContactDetailSheet` réunit relation, missions, interactions et prochaine action dans `src/features/contacts/components/contact-detail-sheet.tsx`.                                                              |
+| `AF-JB-004` | Statut accessible par texte et couleur                      | Fermé sur le cœur V1 | Les priorités, missions et contacts associent leurs couleurs à un libellé explicite ; la couleur seule n'est pas l'information.                                                                                 |
+| `AF-JB-005` | Devis, contrats et structure documentaire                   | Différé              | `freelanceAdmin` reste `hidden` dans `src/config/product-features.ts`. Une réactivation exige des entretiens utilisateurs, un périmètre séparé et des tests d'autorisations ; elle ne fait pas partie de la V1. |
 
 ## Contrat de non-régression
 

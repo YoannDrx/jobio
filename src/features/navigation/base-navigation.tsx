@@ -29,7 +29,7 @@ export function BaseNavigation({ children }: PropsWithChildren) {
             <SidebarTrigger className="-ml-1" />
           </Layout>
         </header>
-        <div className="flex flex-1 flex-col gap-4 px-2 pb-4 pt-0 sm:px-3 lg:px-4">
+        <div className="flex flex-1 flex-col gap-4 px-2 pt-0 pb-4 sm:px-3 lg:px-4">
           {children}
         </div>
       </SidebarInset>

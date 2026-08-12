@@ -10,25 +10,25 @@ export function Header() {
         href="/features"
         className={buttonVariants({ variant: "ghost", size: "sm" })}
       >
-        Features
+        Fonctionnalités
       </Link>
       <Link
         href="/use-cases"
         className={buttonVariants({ variant: "ghost", size: "sm" })}
       >
-        Use cases
+        Cas d’usage
       </Link>
       <Link
         href="/docs"
         className={buttonVariants({ variant: "ghost", size: "sm" })}
       >
-        Docs
+        Documentation
       </Link>
       <Link
         href="/about"
         className={buttonVariants({ variant: "ghost", size: "sm" })}
       >
-        About
+        À propos
       </Link>
       <Link
         href="/blog"

@@ -24,7 +24,7 @@ export function generateCsv<T extends Record<string, unknown>>(
   );
 
   // BOM for Excel UTF-8 compatibility
-  return `\uFEFF${  [headerLine, ...dataLines].join("\n")}`;
+  return `\uFEFF${[headerLine, ...dataLines].join("\n")}`;
 }
 
 /**

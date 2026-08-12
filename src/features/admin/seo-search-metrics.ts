@@ -56,7 +56,9 @@ const seoSearchMetricsPayloadSchema = z.object({
 });
 
 export type SeoSearchSnapshot = z.infer<typeof seoSnapshotSchema>;
-export type SeoSearchMetricsPayload = z.infer<typeof seoSearchMetricsPayloadSchema>;
+export type SeoSearchMetricsPayload = z.infer<
+  typeof seoSearchMetricsPayloadSchema
+>;
 
 export type SeoSearchMetricsSource =
   | "env_json"
@@ -162,7 +164,8 @@ const loadFromEndpoint = async (
         status: "invalid",
         source: "endpoint",
         payload: null,
-        error: error instanceof Error ? error.message : "Payload endpoint invalide",
+        error:
+          error instanceof Error ? error.message : "Payload endpoint invalide",
       };
     }
   } catch (error) {
@@ -180,7 +183,9 @@ const loadFromEndpoint = async (
   }
 };
 
-const loadFromFile = async (filePath: string): Promise<SeoSearchMetricsState> => {
+const loadFromFile = async (
+  filePath: string,
+): Promise<SeoSearchMetricsState> => {
   try {
     const fileContent = await readFile(filePath, "utf-8");
     return {
@@ -194,98 +199,101 @@ const loadFromFile = async (filePath: string): Promise<SeoSearchMetricsState> =>
       status: "invalid",
       source: "file",
       payload: null,
-      error: error instanceof Error ? error.message : "Fichier métriques invalide",
+      error:
+        error instanceof Error ? error.message : "Fichier métriques invalide",
     };
   }
 };
 
-export const syncSeoSearchMetricsCacheFromEndpoint = async (): Promise<SeoSearchMetricsSyncResult> => {
-  const endpointUrl = env.SEO_SEARCH_METRICS_ENDPOINT?.trim();
+export const syncSeoSearchMetricsCacheFromEndpoint =
+  async (): Promise<SeoSearchMetricsSyncResult> => {
+    const endpointUrl = env.SEO_SEARCH_METRICS_ENDPOINT?.trim();
 
-  if (!endpointUrl) {
-    return {
-      success: false,
-      source: "endpoint",
-      payload: null,
-      error: "SEO_SEARCH_METRICS_ENDPOINT is not configured",
-    };
-  }
-
-  const endpointState = await loadFromEndpoint(endpointUrl);
-
-  if (endpointState.status !== "configured" || !endpointState.payload) {
-    return {
-      success: false,
-      source: "endpoint",
-      payload: null,
-      error: endpointState.error ?? "Unable to sync SEO metrics",
-    };
-  }
-
-  return {
-    success: true,
-    source: "endpoint",
-    payload: endpointState.payload,
-    error: null,
-  };
-};
-
-export const loadSeoSearchMetricsState = async (): Promise<SeoSearchMetricsState> => {
-  const fromEnv = env.SEO_SEARCH_METRICS_JSON?.trim();
-
-  if (fromEnv) {
-    try {
+    if (!endpointUrl) {
       return {
-        status: "configured",
-        source: "env_json",
-        payload: parsePayload(fromEnv),
-        error: null,
-      };
-    } catch (error) {
-      return {
-        status: "invalid",
-        source: "env_json",
+        success: false,
+        source: "endpoint",
         payload: null,
-        error: error instanceof Error ? error.message : "JSON invalide",
+        error: "SEO_SEARCH_METRICS_ENDPOINT is not configured",
       };
     }
-  }
 
-  const cachedState = await loadFromCache();
-  if (cachedState?.status === "configured") {
-    return cachedState;
-  }
+    const endpointState = await loadFromEndpoint(endpointUrl);
 
-  const fromEndpoint = env.SEO_SEARCH_METRICS_ENDPOINT?.trim();
+    if (endpointState.status !== "configured" || !endpointState.payload) {
+      return {
+        success: false,
+        source: "endpoint",
+        payload: null,
+        error: endpointState.error ?? "Unable to sync SEO metrics",
+      };
+    }
 
-  if (fromEndpoint) {
-    const endpointState = await loadFromEndpoint(fromEndpoint);
+    return {
+      success: true,
+      source: "endpoint",
+      payload: endpointState.payload,
+      error: null,
+    };
+  };
 
-    if (endpointState.status === "configured") {
+export const loadSeoSearchMetricsState =
+  async (): Promise<SeoSearchMetricsState> => {
+    const fromEnv = env.SEO_SEARCH_METRICS_JSON?.trim();
+
+    if (fromEnv) {
+      try {
+        return {
+          status: "configured",
+          source: "env_json",
+          payload: parsePayload(fromEnv),
+          error: null,
+        };
+      } catch (error) {
+        return {
+          status: "invalid",
+          source: "env_json",
+          payload: null,
+          error: error instanceof Error ? error.message : "JSON invalide",
+        };
+      }
+    }
+
+    const cachedState = await loadFromCache();
+    if (cachedState?.status === "configured") {
+      return cachedState;
+    }
+
+    const fromEndpoint = env.SEO_SEARCH_METRICS_ENDPOINT?.trim();
+
+    if (fromEndpoint) {
+      const endpointState = await loadFromEndpoint(fromEndpoint);
+
+      if (endpointState.status === "configured") {
+        return endpointState;
+      }
+
+      if (cachedState?.status === "invalid") {
+        return cachedState;
+      }
+
       return endpointState;
+    }
+
+    const fromFile = env.SEO_SEARCH_METRICS_FILE?.trim();
+
+    if (fromFile) {
+      return loadFromFile(fromFile);
     }
 
     if (cachedState?.status === "invalid") {
       return cachedState;
     }
 
-    return endpointState;
-  }
-
-  const fromFile = env.SEO_SEARCH_METRICS_FILE?.trim();
-
-  if (fromFile) {
-    return loadFromFile(fromFile);
-  }
-
-  if (cachedState?.status === "invalid") {
-    return cachedState;
-  }
-
-  return {
-    status: "not_configured",
-    source: "none",
-    payload: null,
-    error: null,
+    return {
+      status: "not_configured",
+      source: "none",
+      payload: null,
+      error: null,
+    };
   };
-};

@@ -25,20 +25,65 @@ type UserRowProps = {
   user: UserWithStats;
 };
 
-const formatDate = (value: Date) =>
-  new Intl.DateTimeFormat("fr-FR", {
-    day: "2-digit",
-    month: "short",
-    year: "numeric",
-  }).format(value);
+const FRENCH_SHORT_MONTHS = [
+  "janv.",
+  "févr.",
+  "mars",
+  "avr.",
+  "mai",
+  "juin",
+  "juil.",
+  "août",
+  "sept.",
+  "oct.",
+  "nov.",
+  "déc.",
+] as const;
 
-const formatDateTime = (value: Date) =>
-  new Intl.DateTimeFormat("fr-FR", {
-    day: "2-digit",
-    month: "short",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(value);
+const parisDatePartsFormatter = new Intl.DateTimeFormat("en-US", {
+  day: "2-digit",
+  hour: "2-digit",
+  hourCycle: "h23",
+  minute: "2-digit",
+  month: "2-digit",
+  timeZone: "Europe/Paris",
+  year: "numeric",
+});
+
+const getParisDateParts = (value: Date) => {
+  const parts = {
+    day: "--",
+    hour: "--",
+    minute: "--",
+    month: "1",
+    year: "----",
+  };
+
+  for (const part of parisDatePartsFormatter.formatToParts(value)) {
+    if (part.type in parts) {
+      parts[part.type as keyof typeof parts] = part.value;
+    }
+  }
+  const monthIndex = Number(parts.month) - 1;
+
+  return {
+    day: parts.day,
+    hour: parts.hour,
+    minute: parts.minute,
+    month: FRENCH_SHORT_MONTHS[monthIndex] ?? "--",
+    year: parts.year,
+  };
+};
+
+const formatDate = (value: Date) => {
+  const parts = getParisDateParts(value);
+  return `${parts.day} ${parts.month} ${parts.year}`;
+};
+
+const formatDateTime = (value: Date) => {
+  const parts = getParisDateParts(value);
+  return `${parts.day} ${parts.month} à ${parts.hour}:${parts.minute}`;
+};
 
 export const UserRow = ({ user }: UserRowProps) => {
   const router = useRouter();

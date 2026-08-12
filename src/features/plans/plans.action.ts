@@ -1,14 +1,16 @@
 "use server";
 
 import { PricingFunnelEventType } from "@/generated/prisma";
-import { authAction } from "@/lib/actions/safe-actions";
+import { rateLimitedAuthAction } from "@/lib/actions/safe-actions";
 import { AUTH_PLANS } from "@/lib/auth/stripe/auth-plans";
+import { linkStripeCustomerToTrialIdentity } from "@/lib/auth/stripe/pro-trial";
 import { isPlanAvailableForNewSubscription } from "@/config/product-features";
 import { ActionError } from "@/lib/errors/action-error";
 import { capturePricingFunnelEvent } from "@/lib/pricing/pricing-funnel-events";
 import { prisma } from "@/lib/prisma";
 import { getServerUrl } from "@/lib/server-url";
 import { stripe } from "@/lib/stripe";
+import { JOBIO_PRO_PRODUCT } from "@/lib/stripe/billing-catalog";
 import { z } from "zod";
 
 const internalPathSchema = z
@@ -21,7 +23,11 @@ const getCheckoutSuccessUrl = (path: string) => {
   return `${getServerUrl()}${path}${separator}session_id={CHECKOUT_SESSION_ID}`;
 };
 
-export const upgradeUserAction = authAction
+export const upgradeUserAction = rateLimitedAuthAction(
+  "stripe-checkout",
+  5,
+  300,
+)
   .inputSchema(
     z.object({
       plan: z.string(),
@@ -84,12 +90,19 @@ export const upgradeUserAction = authAction
       }
 
       const expectedInterval = annual ? "year" : "month";
+      const expectedCatalogPrice = annual
+        ? JOBIO_PRO_PRODUCT.prices.yearly
+        : JOBIO_PRO_PRODUCT.prices.monthly;
       const stripePrice = await stripe.prices.retrieve(priceId);
       if (
         !stripePrice.active ||
         stripePrice.type !== "recurring" ||
         stripePrice.recurring?.interval !== expectedInterval ||
-        stripePrice.metadata.plan !== plan
+        stripePrice.metadata.plan !== plan ||
+        stripePrice.lookup_key !== expectedCatalogPrice.lookupKey ||
+        stripePrice.unit_amount !== expectedCatalogPrice.unitAmount ||
+        stripePrice.currency !== expectedCatalogPrice.currency ||
+        stripePrice.tax_behavior !== "exclusive"
       ) {
         throw new ActionError(
           "Cette offre est temporairement indisponible. Réessaie plus tard.",
@@ -118,6 +131,28 @@ export const upgradeUserAction = authAction
         });
       }
 
+      await linkStripeCustomerToTrialIdentity({
+        userId: user.id,
+        email: dbUser.email,
+        stripeCustomerId: customerId,
+      });
+
+      const subscriptions = await stripe.subscriptions.list({
+        customer: customerId,
+        status: "all",
+        limit: 20,
+      });
+      const hasCurrentSubscription = subscriptions.data.some((subscription) =>
+        ["active", "trialing", "past_due", "unpaid", "paused"].includes(
+          subscription.status,
+        ),
+      );
+      if (hasCurrentSubscription) {
+        throw new ActionError(
+          "Un abonnement existe déjà pour ce compte. Gère-le depuis ton espace abonnement.",
+        );
+      }
+
       // Create checkout session
       const session = await stripe.checkout.sessions.create({
         customer: customerId,
@@ -128,6 +163,19 @@ export const upgradeUserAction = authAction
           },
         ],
         mode: "subscription",
+        automatic_tax: { enabled: true },
+        billing_address_collection: "required",
+        tax_id_collection: { enabled: true },
+        customer_update: {
+          address: "auto",
+          name: "auto",
+        },
+        custom_text: {
+          submit: {
+            message:
+              "Paiement sécurisé pour Jobio, service édité par Yodev — Yoann Andrieux. Prix hors taxes ; le total est confirmé avant paiement.",
+          },
+        },
         client_reference_id: user.id,
         success_url: getCheckoutSuccessUrl(successUrl),
         cancel_url: `${getServerUrl()}${cancelUrl}`,
@@ -145,13 +193,13 @@ export const upgradeUserAction = authAction
             entryPoint: entryPoint ?? "unknown",
             billingCycle: annual ? "yearly" : "monthly",
             experimentVariant: experimentVariant ?? "control",
+            catalogVersion: String(JOBIO_PRO_PRODUCT.metadata.catalog_version),
           },
-          trial_period_days: authPlan.freeTrial?.days,
         },
       });
 
       if (!session.url) {
-        throw new ActionError("Failed to create checkout session");
+        throw new ActionError("Impossible d’ouvrir la page de paiement.");
       }
 
       await capturePricingFunnelEvent({

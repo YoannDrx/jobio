@@ -18,11 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Sheet,
-  SheetDescription,
-  SheetTitle,
-} from "@/components/ui/sheet";
+import { Sheet, SheetDescription, SheetTitle } from "@/components/ui/sheet";
 import { Switch } from "@/components/ui/switch";
 import {
   Table,
@@ -33,7 +29,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
-import { BillingExpenseStatus } from "@/generated/prisma";
+import { BillingExpenseStatus } from "@/features/freelance/billing-client-enums";
 import {
   createExpenseInvoiceAction,
   deleteExpenseInvoiceAction,
@@ -48,7 +44,10 @@ import {
   FreelanceSideSheetFooter,
   FreelanceSideSheetHeader,
 } from "@/features/freelance/components/freelance-side-sheet";
-import { formatCents, formatDate } from "@/features/freelance/billing-presenter";
+import {
+  formatCents,
+  formatDate,
+} from "@/features/freelance/billing-presenter";
 import { resolveActionResult } from "@/lib/actions/actions-utils";
 import { downloadCsv } from "@/lib/csv-export";
 import { cn } from "@/lib/utils";
@@ -129,7 +128,8 @@ const INITIAL_FORM: ExpenseInvoiceForm = {
   notes: "",
 };
 
-const toCents = (value: string) => Math.max(0, Math.round(Number(value || 0) * 100));
+const toCents = (value: string) =>
+  Math.max(0, Math.round(Number(value || 0) * 100));
 const toEur = (value: number) => (value / 100).toFixed(2);
 
 const expenseStatusLabel: Record<BillingExpenseStatus, string> = {
@@ -140,7 +140,10 @@ const expenseStatusLabel: Record<BillingExpenseStatus, string> = {
   ARCHIVED: "Archivée",
 };
 
-const expenseStatusVariant: Record<BillingExpenseStatus, BadgeProps["variant"]> = {
+const expenseStatusVariant: Record<
+  BillingExpenseStatus,
+  BadgeProps["variant"]
+> = {
   DRAFT: "outline",
   SUBMITTED: "secondary",
   APPROVED: "default",
@@ -175,7 +178,9 @@ export function FreelanceExpenseInvoicesManager() {
       );
       setItems(result.items as ExpenseInvoiceRow[]);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Chargement impossible");
+      toast.error(
+        error instanceof Error ? error.message : "Chargement impossible",
+      );
     } finally {
       setIsLoading(false);
     }
@@ -186,7 +191,10 @@ export function FreelanceExpenseInvoicesManager() {
   }, [loadData]);
 
   const totalAmount = useMemo(() => {
-    return items.reduce((accumulator, item) => accumulator + item.totalInclTaxCents, 0);
+    return items.reduce(
+      (accumulator, item) => accumulator + item.totalInclTaxCents,
+      0,
+    );
   }, [items]);
 
   const resetForm = () => {
@@ -206,7 +214,9 @@ export function FreelanceExpenseInvoicesManager() {
       vendorVatNumber: item.vendorVatNumber ?? "",
       documentNumber: item.documentNumber ?? "",
       issueDate: new Date(item.issueDate).toISOString().slice(0, 10),
-      dueDate: item.dueDate ? new Date(item.dueDate).toISOString().slice(0, 10) : "",
+      dueDate: item.dueDate
+        ? new Date(item.dueDate).toISOString().slice(0, 10)
+        : "",
       currency: item.currency,
       category: item.category ?? "",
       status: item.status,
@@ -215,7 +225,9 @@ export function FreelanceExpenseInvoicesManager() {
       totalInclTaxEur: toEur(item.totalInclTaxCents),
       deductibleTaxEur: toEur(item.deductibleTaxCents),
       isPaid: item.isPaid,
-      paidAt: item.paidAt ? new Date(item.paidAt).toISOString().slice(0, 10) : "",
+      paidAt: item.paidAt
+        ? new Date(item.paidAt).toISOString().slice(0, 10)
+        : "",
       paymentReference: item.paymentReference ?? "",
       matchedRegisterRef: item.matchedRegisterRef ?? "",
       attachmentUrl: item.attachmentUrl ?? "",
@@ -224,11 +236,15 @@ export function FreelanceExpenseInvoicesManager() {
     setSheetOpen(true);
   };
 
-  const setField = <K extends keyof ExpenseInvoiceForm>(key: K, value: ExpenseInvoiceForm[K]) => {
+  const setField = <K extends keyof ExpenseInvoiceForm>(
+    key: K,
+    value: ExpenseInvoiceForm[K],
+  ) => {
     setForm((previous) => ({ ...previous, [key]: value }));
   };
 
-  const canSave = form.vendorName.trim().length > 0 && form.issueDate.length > 0;
+  const canSave =
+    form.vendorName.trim().length > 0 && form.issueDate.length > 0;
 
   const handleSave = async () => {
     if (!canSave) {
@@ -260,7 +276,9 @@ export function FreelanceExpenseInvoicesManager() {
       };
 
       if (isEditing && editingId) {
-        await resolveActionResult(updateExpenseInvoiceAction({ id: editingId, ...payload }));
+        await resolveActionResult(
+          updateExpenseInvoiceAction({ id: editingId, ...payload }),
+        );
         toast.success("Dépense facture mise à jour");
       } else {
         await resolveActionResult(createExpenseInvoiceAction(payload));
@@ -271,7 +289,9 @@ export function FreelanceExpenseInvoicesManager() {
       resetForm();
       await loadData();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Enregistrement impossible");
+      toast.error(
+        error instanceof Error ? error.message : "Enregistrement impossible",
+      );
     } finally {
       setIsSaving(false);
     }
@@ -284,7 +304,9 @@ export function FreelanceExpenseInvoicesManager() {
       toast.success("Dépense facture supprimée");
       await loadData();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Suppression impossible");
+      toast.error(
+        error instanceof Error ? error.message : "Suppression impossible",
+      );
     } finally {
       setDeletingId(null);
     }
@@ -299,7 +321,9 @@ export function FreelanceExpenseInvoicesManager() {
       downloadCsv(result.csv, result.filename);
       toast.success("Export CSV des dépenses fournisseurs téléchargé");
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Export CSV impossible");
+      toast.error(
+        error instanceof Error ? error.message : "Export CSV impossible",
+      );
     } finally {
       setIsExportingCsv(false);
     }
@@ -336,7 +360,9 @@ export function FreelanceExpenseInvoicesManager() {
         `Matching suggéré: ${recommended.registerRef} (${recommended.score} pts)`,
       );
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Suggestion impossible");
+      toast.error(
+        error instanceof Error ? error.message : "Suggestion impossible",
+      );
     } finally {
       setIsSuggestingMatch(false);
     }
@@ -357,7 +383,12 @@ export function FreelanceExpenseInvoicesManager() {
       </Button>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button type="button" variant="outline" size="icon" title="Plus d'actions">
+          <Button
+            type="button"
+            variant="outline"
+            size="icon"
+            title="Plus d'actions"
+          >
             <Ellipsis className="size-4" />
           </Button>
         </DropdownMenuTrigger>
@@ -377,7 +408,11 @@ export function FreelanceExpenseInvoicesManager() {
             }}
             disabled={deletingId === item.id}
           >
-            {deletingId === item.id ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
+            {deletingId === item.id ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : (
+              <Trash2 className="size-4" />
+            )}
             Supprimer
           </DropdownMenuItem>
         </DropdownMenuContent>
@@ -424,7 +459,11 @@ export function FreelanceExpenseInvoicesManager() {
                 void handleExportCsv();
               }}
             >
-              {isExportingCsv ? <Loader2 className="size-4 animate-spin" /> : <Download className="size-4" />}
+              {isExportingCsv ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Download className="size-4" />
+              )}
               Export CSV
             </Button>
           </div>
@@ -449,7 +488,9 @@ export function FreelanceExpenseInvoicesManager() {
               Chargement des dépenses...
             </div>
           ) : items.length === 0 ? (
-            <p className="text-muted-foreground text-sm">Aucune dépense facture pour le moment.</p>
+            <p className="text-muted-foreground text-sm">
+              Aucune dépense facture pour le moment.
+            </p>
           ) : viewMode === "table" ? (
             <Table>
               <TableHeader>
@@ -489,7 +530,9 @@ export function FreelanceExpenseInvoicesManager() {
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex items-center gap-2">
                         <Receipt className="text-muted-foreground size-4" />
-                        <CardTitle className="text-base">{item.vendorName}</CardTitle>
+                        <CardTitle className="text-base">
+                          {item.vendorName}
+                        </CardTitle>
                       </div>
                       <Badge variant={expenseStatusVariant[item.status]}>
                         {expenseStatusLabel[item.status]}
@@ -507,7 +550,9 @@ export function FreelanceExpenseInvoicesManager() {
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-muted-foreground">TTC</span>
-                      <span className="font-medium">{formatCents(item.totalInclTaxCents)}</span>
+                      <span className="font-medium">
+                        {formatCents(item.totalInclTaxCents)}
+                      </span>
                     </div>
                     <div className="flex items-center justify-between">
                       <span className="text-muted-foreground">Payée</span>
@@ -533,9 +578,14 @@ export function FreelanceExpenseInvoicesManager() {
       >
         <FreelanceSideSheetContent>
           <FreelanceSideSheetHeader>
-            <SheetTitle>{isEditing ? "Éditer la dépense facture" : "Nouvelle dépense facture"}</SheetTitle>
+            <SheetTitle>
+              {isEditing
+                ? "Éditer la dépense facture"
+                : "Nouvelle dépense facture"}
+            </SheetTitle>
             <SheetDescription>
-              Centralise tes factures fournisseurs, statuts, pièces et matching registre.
+              Centralise tes factures fournisseurs, statuts, pièces et matching
+              registre.
             </SheetDescription>
           </FreelanceSideSheetHeader>
           <FreelanceSideSheetBody className="grid gap-4">
@@ -618,7 +668,9 @@ export function FreelanceExpenseInvoicesManager() {
                     <SelectValue placeholder="Statut" />
                   </SelectTrigger>
                   <SelectContent>
-                    {(Object.keys(expenseStatusLabel) as BillingExpenseStatus[]).map((status) => (
+                    {(
+                      Object.keys(expenseStatusLabel) as BillingExpenseStatus[]
+                    ).map((status) => (
                       <SelectItem key={status} value={status}>
                         {expenseStatusLabel[status]}
                       </SelectItem>
@@ -729,7 +781,7 @@ export function FreelanceExpenseInvoicesManager() {
                   }}
                 />
               </div>
-              <div className="md:col-span-2 flex items-center justify-between rounded-md border px-3 py-2">
+              <div className="flex items-center justify-between rounded-md border px-3 py-2 md:col-span-2">
                 <Label htmlFor="expense-is-paid">Marquer comme payée</Label>
                 <Switch
                   id="expense-is-paid"
@@ -761,7 +813,11 @@ export function FreelanceExpenseInvoicesManager() {
             >
               Annuler
             </Button>
-            <Button type="button" disabled={isSaving || !canSave} onClick={() => void handleSave()}>
+            <Button
+              type="button"
+              disabled={isSaving || !canSave}
+              onClick={() => void handleSave()}
+            >
               {isSaving ? <Loader2 className="size-4 animate-spin" /> : null}
               {isEditing ? "Enregistrer" : "Créer"}
             </Button>

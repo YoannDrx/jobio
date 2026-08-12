@@ -1,21 +1,43 @@
 import { PricingFunnelEventType, Prisma } from "@/generated/prisma";
 import { AUTH_PLANS, type AppAuthPlan } from "@/lib/auth/stripe/auth-plans";
+import { markProTrialConsumed } from "@/lib/auth/stripe/pro-trial";
 import { env } from "@/lib/env";
 import { logger } from "@/lib/logger";
 import { capturePricingFunnelEvent } from "@/lib/pricing/pricing-funnel-events";
 import { prisma } from "@/lib/prisma";
 import { stripe } from "@/lib/stripe";
+import {
+  getProgramCatalogEntry,
+  PROGRAM_PRICE,
+} from "@/lib/stripe/billing-catalog";
+import {
+  isChargeFullyRefunded,
+  resolveProgramPurchaseStatus,
+  type ProgramPurchaseStatus,
+} from "@/lib/stripe/program-purchase-state";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import type Stripe from "stripe";
 
 export const maxDuration = 60;
 
+const MAX_STRIPE_WEBHOOK_BYTES = 1_000_000;
+
 const SUBSCRIPTION_EVENT_TYPES = new Set<Stripe.Event.Type>([
   "checkout.session.completed",
+  "checkout.session.async_payment_succeeded",
+  "checkout.session.async_payment_failed",
+  "checkout.session.expired",
   "customer.subscription.created",
   "customer.subscription.updated",
   "customer.subscription.deleted",
+  "customer.subscription.paused",
+  "customer.subscription.resumed",
+  "invoice.paid",
+  "invoice.payment_failed",
+  "invoice.payment_action_required",
+  "invoice.finalization_failed",
+  "charge.refunded",
 ]);
 
 type SubscriptionSyncResult = {
@@ -24,10 +46,6 @@ type SubscriptionSyncResult = {
   plan: AppAuthPlan;
   referenceId: string;
 };
-
-const isUniqueConstraintError = (error: unknown) =>
-  error instanceof Prisma.PrismaClientKnownRequestError &&
-  error.code === "P2002";
 
 const getPlanFromSubscription = (subscription: Stripe.Subscription) => {
   const planName = subscription.metadata.plan;
@@ -97,191 +115,170 @@ const syncSubscription = async (
   const eventCreatedAt = new Date(event.created * 1000);
   const { periodStart, periodEnd } = getSubscriptionPeriod(subscription);
 
-  try {
-    return await prisma.$transaction(async (tx) => {
-      await tx.stripeWebhookEvent.create({
-        data: {
-          id: event.id,
-          type: event.type,
-          livemode: event.livemode,
-        },
-      });
-
-      const current = await tx.subscription.findUnique({
-        where: { referenceId },
-      });
-      if (
-        current?.stripeEventCreatedAt &&
-        current.stripeEventCreatedAt > eventCreatedAt
-      ) {
-        return {
-          applied: false,
-          previousStatus: current.status,
-          plan,
-          referenceId,
-        };
-      }
-
-      await tx.user.update({
-        where: { id: referenceId },
-        data: { stripeCustomerId: customerId },
-      });
-
-      await tx.subscription.upsert({
-        where: { referenceId },
-        update: {
-          plan: plan.name,
-          stripeCustomerId: customerId,
-          stripeSubscriptionId: subscription.id,
-          status: subscription.status,
-          periodStart,
-          periodEnd,
-          cancelAtPeriodEnd: subscription.cancel_at_period_end,
-          stripeEventCreatedAt: eventCreatedAt,
-        },
-        create: {
-          id: subscription.id,
-          plan: plan.name,
-          referenceId,
-          stripeCustomerId: customerId,
-          stripeSubscriptionId: subscription.id,
-          status: subscription.status,
-          periodStart,
-          periodEnd,
-          cancelAtPeriodEnd: subscription.cancel_at_period_end,
-          stripeEventCreatedAt: eventCreatedAt,
-        },
-      });
-
+  return prisma.$transaction(async (tx) => {
+    const current = await tx.subscription.findUnique({
+      where: { referenceId },
+    });
+    if (
+      current?.stripeEventCreatedAt &&
+      current.stripeEventCreatedAt > eventCreatedAt
+    ) {
       return {
-        applied: true,
-        previousStatus: current?.status ?? null,
+        applied: false,
+        previousStatus: current.status,
         plan,
         referenceId,
       };
+    }
+
+    await tx.user.update({
+      where: { id: referenceId },
+      data: { stripeCustomerId: customerId },
     });
-  } catch (error) {
-    if (isUniqueConstraintError(error)) {
-      const duplicate = await prisma.stripeWebhookEvent.findUnique({
-        where: { id: event.id },
-        select: { id: true },
-      });
-      if (duplicate) {
-        return {
-          applied: false,
-          previousStatus: null,
-          plan,
-          referenceId,
-        };
-      }
-    }
-    throw error;
-  }
-};
 
-const runLifecycleCallbacks = async (
-  req: NextRequest,
-  subscription: Stripe.Subscription,
-  syncResult: SubscriptionSyncResult,
-) => {
-  if (!syncResult.applied) return;
+    await tx.subscription.upsert({
+      where: { referenceId },
+      update: {
+        plan: plan.name,
+        stripeCustomerId: customerId,
+        stripeSubscriptionId: subscription.id,
+        status: subscription.status,
+        periodStart,
+        periodEnd,
+        cancelAtPeriodEnd: subscription.cancel_at_period_end,
+        stripeEventCreatedAt: eventCreatedAt,
+      },
+      create: {
+        id: subscription.id,
+        plan: plan.name,
+        referenceId,
+        stripeCustomerId: customerId,
+        stripeSubscriptionId: subscription.id,
+        status: subscription.status,
+        periodStart,
+        periodEnd,
+        cancelAtPeriodEnd: subscription.cancel_at_period_end,
+        stripeEventCreatedAt: eventCreatedAt,
+      },
+    });
 
-  const dbSubscription = await prisma.subscription.findUnique({
-    where: { referenceId: syncResult.referenceId },
+    return {
+      applied: true,
+      previousStatus: current?.status ?? null,
+      plan,
+      referenceId,
+    };
   });
-  if (!dbSubscription) return;
-
-  const context = {
-    req,
-    userId: syncResult.referenceId,
-    stripeCustomerId: getCustomerId(subscription),
-    subscriptionId: subscription.id,
-  };
-
-  try {
-    if (
-      subscription.status === "trialing" &&
-      syncResult.previousStatus !== "trialing"
-    ) {
-      await syncResult.plan.freeTrial?.onTrialStart?.(dbSubscription, context);
-    } else if (
-      subscription.status === "active" &&
-      syncResult.previousStatus === "trialing"
-    ) {
-      await syncResult.plan.freeTrial?.onTrialEnd?.(
-        { subscription: dbSubscription },
-        context,
-      );
-    } else if (
-      subscription.status === "incomplete_expired" &&
-      syncResult.previousStatus === "trialing"
-    ) {
-      await syncResult.plan.freeTrial?.onTrialExpired?.(
-        dbSubscription,
-        context,
-      );
-    } else if (subscription.status === "canceled") {
-      await syncResult.plan.onSubscriptionCanceled?.(dbSubscription, context);
-    }
-  } catch (error) {
-    logger.error("Stripe lifecycle callback failed", error);
-  }
 };
 
 const processProgramPurchase = async (
   event: Stripe.Event,
   session: Stripe.Checkout.Session,
+  status: ProgramPurchaseStatus,
 ) => {
-  const programId = session.metadata?.programId;
-  const userId = session.metadata?.userId;
-  if (!programId || !userId) {
+  const metadata = session.metadata;
+  const programId = metadata?.programId;
+  const userId = metadata?.userId;
+  if (!metadata || !programId || !userId) {
     throw new Error("Missing programId or userId in program purchase metadata");
   }
 
-  try {
-    await prisma.$transaction(async (tx) => {
-      await tx.stripeWebhookEvent.create({
-        data: { id: event.id, type: event.type, livemode: event.livemode },
+  const program = await prisma.linkedInProgram.findUnique({
+    where: { id: programId },
+    select: { slug: true, isFree: true },
+  });
+  const catalogEntry = program ? getProgramCatalogEntry(program.slug) : null;
+  const amountTotal = session.amount_total;
+  const currency = session.currency;
+  if (
+    !program ||
+    program.isFree ||
+    !catalogEntry ||
+    metadata.slug !== program.slug ||
+    metadata.sku !== catalogEntry.sku ||
+    session.amount_subtotal !== PROGRAM_PRICE.unitAmount ||
+    amountTotal === null ||
+    currency !== PROGRAM_PRICE.currency
+  ) {
+    throw new Error(
+      `Invalid program catalog metadata for session ${session.id}`,
+    );
+  }
+
+  const eventCreatedAt = new Date(event.created * 1000);
+  await prisma.$transaction(
+    async (tx) => {
+      const current = await tx.programPurchase.findUnique({
+        where: { userId_programId: { userId, programId } },
+        select: { status: true, stripeEventCreatedAt: true },
       });
+      if (
+        current?.stripeEventCreatedAt &&
+        (current.stripeEventCreatedAt > eventCreatedAt ||
+          (current.stripeEventCreatedAt.getTime() ===
+            eventCreatedAt.getTime() &&
+            (current.status === "refunded" ||
+              (current.status === "completed" && status !== "completed"))))
+      ) {
+        return;
+      }
+
       await tx.programPurchase.upsert({
         where: { userId_programId: { userId, programId } },
         update: {
-          status: "completed",
+          status,
           stripeSessionId: session.id,
           stripePaymentIntentId:
             typeof session.payment_intent === "string"
               ? session.payment_intent
               : (session.payment_intent?.id ?? null),
+          stripeEventCreatedAt: eventCreatedAt,
+          amount: amountTotal,
+          currency,
         },
         create: {
           userId,
           programId,
-          status: "completed",
+          status,
           stripeSessionId: session.id,
           stripePaymentIntentId:
             typeof session.payment_intent === "string"
               ? session.payment_intent
               : (session.payment_intent?.id ?? null),
-          amount: session.amount_total ?? 0,
-          currency: session.currency ?? "eur",
+          stripeEventCreatedAt: eventCreatedAt,
+          amount: amountTotal,
+          currency,
         },
       });
-    });
-  } catch (error) {
-    if (!isUniqueConstraintError(error)) throw error;
-  }
+    },
+    { isolationLevel: Prisma.TransactionIsolationLevel.Serializable },
+  );
 };
 
 const processCheckoutCompleted = async (
   event: Stripe.Event,
   session: Stripe.Checkout.Session,
-  req: NextRequest,
 ) => {
   if (
     session.mode === "payment" &&
     session.metadata?.type === "linkedin_program"
   ) {
-    await processProgramPurchase(event, session);
+    await processProgramPurchase(
+      event,
+      session,
+      resolveProgramPurchaseStatus({
+        eventType: event.type as
+          | "checkout.session.completed"
+          | "checkout.session.async_payment_succeeded"
+          | "checkout.session.async_payment_failed"
+          | "checkout.session.expired",
+        paymentStatus: session.payment_status,
+      }),
+    );
+    return;
+  }
+
+  if (event.type !== "checkout.session.completed") {
     return;
   }
 
@@ -295,7 +292,19 @@ const processCheckoutCompleted = async (
 
   const subscription = await stripe.subscriptions.retrieve(subscriptionId);
   const result = await syncSubscription(event, subscription);
-  await runLifecycleCallbacks(req, subscription, result);
+
+  if (result.applied && subscription.status === "active") {
+    const user = await prisma.user.findUnique({
+      where: { id: result.referenceId },
+      select: { email: true },
+    });
+    if (user) {
+      await markProTrialConsumed({
+        userId: result.referenceId,
+        email: user.email,
+      });
+    }
+  }
 
   if (result.applied) {
     await capturePricingFunnelEvent({
@@ -320,6 +329,171 @@ const processCheckoutCompleted = async (
   }
 };
 
+const getEventObjectSummary = (event: Stripe.Event) => {
+  const object = event.data.object as { id?: string; object?: string };
+  return {
+    objectId: object.id ?? null,
+    payload: {
+      object: object.object ?? "unknown",
+      objectId: object.id ?? null,
+      requestId:
+        typeof event.request === "string"
+          ? event.request
+          : (event.request?.id ?? null),
+    } satisfies Prisma.InputJsonValue,
+  };
+};
+
+const beginWebhookEvent = async (event: Stripe.Event): Promise<boolean> => {
+  const existing = await prisma.stripeWebhookEvent.findUnique({
+    where: { id: event.id },
+    select: { status: true },
+  });
+
+  if (existing?.status === "PROCESSED") {
+    return false;
+  }
+
+  const summary = getEventObjectSummary(event);
+  if (existing) {
+    await prisma.stripeWebhookEvent.update({
+      where: { id: event.id },
+      data: {
+        status: "PROCESSING",
+        attempts: { increment: 1 },
+        lastError: null,
+        failedAt: null,
+        objectId: summary.objectId,
+        payload: summary.payload,
+      },
+    });
+    return true;
+  }
+
+  try {
+    await prisma.stripeWebhookEvent.create({
+      data: {
+        id: event.id,
+        type: event.type,
+        livemode: event.livemode,
+        status: "PROCESSING",
+        objectId: summary.objectId,
+        payload: summary.payload,
+      },
+    });
+  } catch (error) {
+    if (
+      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error.code === "P2002"
+    ) {
+      return false;
+    }
+    throw error;
+  }
+  return true;
+};
+
+const markWebhookProcessed = async (
+  eventId: string,
+  businessObjectId?: string | null,
+) => {
+  await prisma.stripeWebhookEvent.update({
+    where: { id: eventId },
+    data: {
+      status: "PROCESSED",
+      processedAt: new Date(),
+      businessObjectId: businessObjectId ?? undefined,
+      lastError: null,
+      failedAt: null,
+    },
+  });
+};
+
+const markWebhookFailed = async (eventId: string, error: unknown) => {
+  const message = error instanceof Error ? error.message : "Unknown error";
+  await prisma.stripeWebhookEvent.update({
+    where: { id: eventId },
+    data: {
+      status: "FAILED",
+      lastError: message.slice(0, 2000),
+      failedAt: new Date(),
+    },
+  });
+};
+
+type InvoiceWithLegacySubscription = Stripe.Invoice & {
+  subscription?: string | Stripe.Subscription | null;
+};
+
+const getInvoiceSubscriptionId = (invoice: Stripe.Invoice) => {
+  if (invoice.parent?.type === "subscription_details") {
+    const subscription = invoice.parent.subscription_details?.subscription;
+    return typeof subscription === "string"
+      ? subscription
+      : (subscription?.id ?? null);
+  }
+
+  const legacySubscription = (invoice as InvoiceWithLegacySubscription)
+    .subscription;
+  return typeof legacySubscription === "string"
+    ? legacySubscription
+    : (legacySubscription?.id ?? null);
+};
+
+const processInvoiceEvent = async (
+  event: Stripe.Event,
+  invoice: Stripe.Invoice,
+) => {
+  const subscriptionId = getInvoiceSubscriptionId(invoice);
+  if (!subscriptionId) {
+    return invoice.id;
+  }
+
+  const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+  const result = await syncSubscription(event, subscription);
+  return result.referenceId;
+};
+
+const processProgramRefund = async (
+  event: Stripe.Event,
+  charge: Stripe.Charge,
+) => {
+  if (
+    !isChargeFullyRefunded({
+      amount: charge.amount,
+      amountRefunded: charge.amount_refunded,
+      refunded: charge.refunded,
+    })
+  ) {
+    return charge.id;
+  }
+
+  const paymentIntentId =
+    typeof charge.payment_intent === "string"
+      ? charge.payment_intent
+      : charge.payment_intent?.id;
+  if (!paymentIntentId) return charge.id;
+
+  const purchase = await prisma.programPurchase.findFirst({
+    where: { stripePaymentIntentId: paymentIntentId },
+    select: { id: true },
+  });
+  if (!purchase) return charge.id;
+
+  const eventCreatedAt = new Date(event.created * 1000);
+  await prisma.programPurchase.updateMany({
+    where: {
+      id: purchase.id,
+      OR: [
+        { stripeEventCreatedAt: null },
+        { stripeEventCreatedAt: { lte: eventCreatedAt } },
+      ],
+    },
+    data: { status: "refunded", stripeEventCreatedAt: eventCreatedAt },
+  });
+  return purchase.id;
+};
+
 export const POST = async (req: NextRequest) => {
   if (!env.STRIPE_WEBHOOK_SECRET) {
     return NextResponse.json(
@@ -336,7 +510,18 @@ export const POST = async (req: NextRequest) => {
     );
   }
 
+  const declaredLength = Number(req.headers.get("content-length") ?? 0);
+  if (
+    Number.isFinite(declaredLength) &&
+    declaredLength > MAX_STRIPE_WEBHOOK_BYTES
+  ) {
+    return NextResponse.json({ error: "Payload too large" }, { status: 413 });
+  }
+
   const body = await req.text();
+  if (Buffer.byteLength(body, "utf8") > MAX_STRIPE_WEBHOOK_BYTES) {
+    return NextResponse.json({ error: "Payload too large" }, { status: 413 });
+  }
   let event: Stripe.Event;
   try {
     event = stripe.webhooks.constructEvent(
@@ -353,16 +538,39 @@ export const POST = async (req: NextRequest) => {
     return NextResponse.json({ ok: true, ignored: true });
   }
 
+  const shouldProcess = await beginWebhookEvent(event);
+  if (!shouldProcess) {
+    return NextResponse.json({ ok: true, duplicate: true });
+  }
+
   try {
-    if (event.type === "checkout.session.completed") {
-      await processCheckoutCompleted(event, event.data.object, req);
-    } else {
+    let businessObjectId: string | null = null;
+    if (event.type.startsWith("checkout.session.")) {
+      const checkoutSession = event.data.object as Stripe.Checkout.Session;
+      await processCheckoutCompleted(event, checkoutSession);
+      businessObjectId = checkoutSession.id;
+    } else if (event.type.startsWith("customer.subscription.")) {
       const subscription = event.data.object as Stripe.Subscription;
       const result = await syncSubscription(event, subscription);
-      await runLifecycleCallbacks(req, subscription, result);
+      businessObjectId = result.referenceId;
+    } else if (event.type.startsWith("invoice.")) {
+      businessObjectId = await processInvoiceEvent(
+        event,
+        event.data.object as Stripe.Invoice,
+      );
+    } else if (event.type === "charge.refunded") {
+      businessObjectId = await processProgramRefund(event, event.data.object);
     }
+
+    await markWebhookProcessed(event.id, businessObjectId);
   } catch (error) {
     logger.error(`Stripe webhook failed for ${event.id}`, error);
+    await markWebhookFailed(event.id, error).catch((ledgerError: unknown) => {
+      logger.error(
+        `Unable to persist Stripe webhook failure ${event.id}`,
+        ledgerError,
+      );
+    });
     return NextResponse.json(
       { error: "Webhook handler failed" },
       { status: 500 },

@@ -5,10 +5,13 @@ export const SiteConfig = {
   prodUrl: "https://jobio.fr",
   appId: "jobio",
   domain: "jobio.fr",
+  // jobio.fr has no inbound MX yet. Keep a proven inbox here until the
+  // dedicated support mailbox is provisioned and tested end to end.
+  supportEmail: "hello@press-say.app",
   appIcon: "/images/logo-icon.svg",
   emailIcon: "/images/icon.png",
   company: {
-    name: "Jobio",
+    name: "Yodev",
     address: "",
   },
   brand: {

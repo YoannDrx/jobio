@@ -12,7 +12,7 @@ import {
 } from "@/lib/pricing/pricing-experiments";
 import { prisma } from "@/lib/prisma";
 
-type TrackedPlan = "pro" | "ultra";
+type TrackedPlan = "pro";
 
 export type PricingFunnelCaptureInput = {
   eventType: PricingFunnelEventType;
@@ -95,7 +95,8 @@ const isMissingPricingFunnelSchema = (error: unknown) =>
   (error.code === "P2021" || error.code === "P2022");
 
 const isDuplicateCheckoutSessionEvent = (error: unknown) =>
-  error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002";
+  error instanceof Prisma.PrismaClientKnownRequestError &&
+  error.code === "P2002";
 
 const toPercent = (value: number): number =>
   Number.isFinite(value) ? Math.round(value * 100) / 100 : 0;
@@ -146,7 +147,10 @@ const createEmptyByVariant = (): Record<
     {} as Record<PricingExperimentVariant, PricingFunnelVariantStats>,
   );
 
-const createEmptySummary = (periodDays: number, now: Date): PricingFunnelSummary => {
+const createEmptySummary = (
+  periodDays: number,
+  now: Date,
+): PricingFunnelSummary => {
   const fromDate = new Date(now);
   fromDate.setDate(fromDate.getDate() - periodDays);
 
@@ -163,12 +167,6 @@ const createEmptySummary = (periodDays: number, now: Date): PricingFunnelSummary
     },
     byPlan: {
       pro: {
-        planSelected: 0,
-        checkoutStarted: 0,
-        subscriptionCompleted: 0,
-        paywallHit: 0,
-      },
-      ultra: {
         planSelected: 0,
         checkoutStarted: 0,
         subscriptionCompleted: 0,
@@ -274,7 +272,7 @@ export const summarizePricingFunnelEvents = (
     }
 
     const plan = event.planTarget?.toLowerCase();
-    if (plan !== "pro" && plan !== "ultra") {
+    if (plan !== "pro") {
       continue;
     }
 
@@ -378,7 +376,9 @@ export async function capturePricingFunnelEvent(
         checkoutSessionId: input.checkoutSessionId ?? null,
         stripeSubscriptionId: input.stripeSubscriptionId ?? null,
         metadata: input.metadata
-          ? (JSON.parse(JSON.stringify(input.metadata)) as Prisma.InputJsonValue)
+          ? (JSON.parse(
+              JSON.stringify(input.metadata),
+            ) as Prisma.InputJsonValue)
           : undefined,
       },
     });

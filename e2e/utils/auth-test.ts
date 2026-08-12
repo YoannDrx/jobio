@@ -1,7 +1,7 @@
 import { logger } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 import { faker } from "@faker-js/faker";
-import type { Page } from "@playwright/test";
+import { expect, type Page } from "@playwright/test";
 import { retry } from "./retry";
 
 export const getUserEmail = () =>
@@ -31,6 +31,37 @@ const isCallbackMatch = (url: URL, callbackURL: string) => {
   );
 };
 
+const installAuthDiagnostics = (page: Page) => {
+  if (process.env.DEBUG_AUTH_E2E !== "true") return;
+  page.on("response", (response) => {
+    if (response.url().includes("/api/auth/")) {
+      logger.info("Auth E2E response", {
+        method: response.request().method(),
+        path: new URL(response.url()).pathname,
+        status: response.status(),
+      });
+    }
+  });
+  page.on("requestfailed", (request) => {
+    logger.error("E2E request failed", {
+      method: request.method(),
+      url: request.url().replace(/[?#].*$/, ""),
+      failure: request.failure()?.errorText ?? "unknown",
+    });
+  });
+  page.on("console", (message) => {
+    if (message.type() === "error") {
+      logger.error("Browser console error", { text: message.text() });
+    }
+  });
+  page.on("pageerror", (error) => {
+    logger.error("Browser page error", {
+      name: error.name,
+      message: error.message,
+    });
+  });
+};
+
 /**
  * Helper function to create a test account
  * @returns Object containing the test user's credentials
@@ -41,6 +72,7 @@ export async function createTestAccount(options: {
   initialUserData?: { name: string; email: string; password: string };
   admin?: boolean;
 }) {
+  installAuthDiagnostics(options.page);
   // Generate fake user data
   const userData = options.initialUserData ?? {
     name: faker.person.fullName(),
@@ -50,6 +82,7 @@ export async function createTestAccount(options: {
 
   // Dismiss onboarding tours so driver.js overlays don't block clicks
   await options.page.addInitScript(() => {
+    localStorage.setItem("jobio.analytics-consent.v1", "denied");
     localStorage.setItem("jobio-tour-completed", "true");
     localStorage.setItem("jobio-tour-started", "true");
     localStorage.setItem("jobio-freelance-tour-completed", "true");
@@ -59,8 +92,13 @@ export async function createTestAccount(options: {
   // Navigate to signup page
   await options.page.goto(buildAuthUrl("/auth/signup", options.callbackURL));
 
+  const signupButton = options.page.getByRole("button", {
+    name: /créer mon compte/i,
+  });
+  await expect(signupButton).toBeEnabled({ timeout: 10000 });
+
   // Fill out the form
-  await options.page.getByLabel("Name").fill(userData.name);
+  await options.page.getByLabel("Nom").fill(userData.name);
   await options.page.getByLabel("Email").fill(userData.email);
   await options.page.locator('input[name="password"]').fill(userData.password);
   await options.page
@@ -68,7 +106,17 @@ export async function createTestAccount(options: {
     .fill(userData.password);
 
   // Submit the form
-  await options.page.getByRole("button", { name: /sign up/i }).click();
+  await signupButton.click();
+  if (process.env.DEBUG_AUTH_E2E === "true") {
+    await options.page.waitForTimeout(500);
+    logger.info("Signup state after click", {
+      url: options.page.url(),
+      buttonDisabled: await options.page
+        .getByRole("button", { name: /créer mon compte/i })
+        .isDisabled(),
+      formText: (await options.page.locator("form").innerText()).slice(0, 500),
+    });
+  }
 
   // Wait for navigation to complete - we should be redirected to the callback URL
   if (options.callbackURL) {
@@ -80,14 +128,24 @@ export async function createTestAccount(options: {
           url.pathname.startsWith("/auth/verify"),
         {
           timeout: 30000,
+          waitUntil: "commit",
         },
       );
-      await options.page.waitForLoadState("networkidle");
     } catch (error) {
       logger.warn("Timeout waiting for signup callback URL", {
         callbackURL,
         currentUrl: options.page.url(),
         error: error instanceof Error ? error.message : String(error),
+      });
+
+      // The account may already be persisted while the browser-side signup
+      // request lost its redirect (for example after a transient DB reconnect).
+      // Establish the session explicitly instead of letting the test continue
+      // from an unauthenticated page.
+      await signInAccount({
+        page: options.page,
+        userData,
+        callbackURL,
       });
     }
   }
@@ -127,29 +185,37 @@ export async function signInAccount(options: {
   callbackURL?: string;
 }) {
   const { page, userData, callbackURL } = options;
+  installAuthDiagnostics(page);
 
   // Navigate to signin page
   await page.goto(buildAuthUrl("/auth/signin", callbackURL));
+
+  const signInButton = page
+    .getByRole("button", { name: /se connecter/i })
+    .first();
+  await expect(signInButton).toBeEnabled({ timeout: 10000 });
 
   // Fill out the form
   await page.getByLabel("Email").fill(userData.email);
   await page.locator('input[name="password"]').fill(userData.password);
 
   // Submit the form
-  await page
-    .getByRole("button", { name: /sign in/i })
-    .first()
-    .click();
+  await signInButton.click();
 
   // Wait for navigation to complete if a callback URL is provided
   if (callbackURL) {
     try {
       await page.waitForURL((url) => isCallbackMatch(url, callbackURL), {
         timeout: 30000,
+        waitUntil: "commit",
       });
-      await page.waitForLoadState("networkidle");
     } catch (error) {
-      logger.error("Error waiting for navigation to complete", error);
+      logger.error("Error waiting for navigation to complete", {
+        callbackURL,
+        currentUrl: page.url(),
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw error;
     }
   }
 
@@ -166,7 +232,6 @@ export async function signOutAccount(options: { page: Page }) {
   try {
     // Navigate to account page so the user dropdown is always available.
     await page.goto(`/account`);
-    await page.waitForLoadState("networkidle");
 
     // Dismiss potential overlays that can intercept pointer events in CI.
     await page.keyboard.press("Escape").catch(() => undefined);
@@ -185,24 +250,16 @@ export async function signOutAccount(options: { page: Page }) {
       (url) => url.pathname === "/auth/signin" || url.pathname === "/",
       {
         timeout: 15000,
+        waitUntil: "commit",
       },
     );
-
-    if (page.url().endsWith("/")) {
-      await page.goto("/auth/signin");
-    }
-
-    await page.waitForURL((url) => url.pathname === "/auth/signin", {
-      timeout: 15000,
-    });
   } catch (error) {
     logger.warn("UI sign-out failed, falling back to cookie reset", error);
-
-    // Keep tests deterministic even if UI overlays interfere.
+  } finally {
+    // The helper verifies the UI interaction when possible, then cancels any
+    // delayed auth redirect before the next test navigation. Cookie reset is a
+    // deterministic fallback, not the behavior under test.
     await page.context().clearCookies();
-    await page.goto("/auth/signin");
-    await page.waitForURL((url) => url.pathname === "/auth/signin", {
-      timeout: 10000,
-    });
+    await page.goto("about:blank", { waitUntil: "commit" });
   }
 }

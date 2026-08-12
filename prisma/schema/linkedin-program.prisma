@@ -49,7 +49,8 @@ model ProgramPurchase {
   program               LinkedInProgram @relation(fields: [programId], references: [id], onDelete: Cascade)
   stripeSessionId       String?         @unique
   stripePaymentIntentId String?
-  status                String          @default("pending") // pending, completed, failed
+  stripeEventCreatedAt  DateTime?
+  status                String          @default("pending") // pending, completed, failed, refunded
   amount                Int             @default(0) // in cents
   currency              String          @default("eur")
 

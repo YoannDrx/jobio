@@ -31,23 +31,43 @@ type CommandItemConfig = {
 };
 
 const NAV_ITEMS: CommandItemConfig[] = [
-  { label: "Dashboard", href: "/freelance", icon: BarChart3 },
-  { label: "Factures", href: "/freelance/invoices", icon: Receipt },
-  { label: "Devis", href: "/freelance/quotes", icon: FileClock },
-  { label: "Clients", href: "/freelance/clients", icon: Users },
-  { label: "Paiements", href: "/freelance/payments", icon: HandCoins },
-  { label: "Dépenses - Factures", href: "/freelance/expenses/invoices", icon: Receipt },
-  { label: "Dépenses - Notes de frais", href: "/freelance/expenses/expense-notes", icon: FileText },
-  { label: "Dépenses - Trajets", href: "/freelance/expenses/trips", icon: FileText },
-  { label: "Catalogue", href: "/freelance/catalog", icon: BookText },
-  { label: "Registres", href: "/freelance/registers", icon: FileText },
-  { label: "Logs", href: "/freelance/logs", icon: ClipboardList },
+  { label: "Dashboard", href: "/job/gestion", icon: BarChart3 },
+  { label: "Factures", href: "/job/gestion/invoices", icon: Receipt },
+  { label: "Devis", href: "/job/gestion/quotes", icon: FileClock },
+  { label: "Clients", href: "/job/gestion/clients", icon: Users },
+  { label: "Paiements", href: "/job/gestion/payments", icon: HandCoins },
+  {
+    label: "Dépenses - Factures",
+    href: "/job/gestion/expenses/invoices",
+    icon: Receipt,
+  },
+  {
+    label: "Dépenses - Notes de frais",
+    href: "/job/gestion/expenses/expense-notes",
+    icon: FileText,
+  },
+  {
+    label: "Dépenses - Trajets",
+    href: "/job/gestion/expenses/trips",
+    icon: FileText,
+  },
+  { label: "Catalogue", href: "/job/gestion/catalog", icon: BookText },
+  { label: "Registres", href: "/job/gestion/registers", icon: FileText },
+  { label: "Logs", href: "/job/gestion/logs", icon: ClipboardList },
 ];
 
 const QUICK_ACTIONS: CommandItemConfig[] = [
-  { label: "Créer une facture", href: "/freelance/invoices?create=1", icon: Plus },
-  { label: "Créer un devis", href: "/freelance/quotes?create=1", icon: Plus },
-  { label: "Ajouter un client", href: "/freelance/clients?create=1", icon: Plus },
+  {
+    label: "Créer une facture",
+    href: "/job/gestion/invoices?create=1",
+    icon: Plus,
+  },
+  { label: "Créer un devis", href: "/job/gestion/quotes?create=1", icon: Plus },
+  {
+    label: "Ajouter un client",
+    href: "/job/gestion/clients?create=1",
+    icon: Plus,
+  },
 ];
 
 export function FreelanceCommand() {
@@ -75,7 +95,7 @@ export function FreelanceCommand() {
         <Input
           type="search"
           placeholder="Recherche rapide..."
-          className="bg-background pl-8 pr-12"
+          className="bg-background pr-12 pl-8"
           onClick={() => {
             setOpen(true);
           }}

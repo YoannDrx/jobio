@@ -15,7 +15,7 @@ type UserTableProps = {
     search: string;
     role: "all" | "admin" | "user";
     status: "all" | "active" | "banned" | "unverified";
-    plan: "all" | "free" | "pro" | "ultra";
+    plan: "all" | "free" | "pro";
     sortBy:
       | "createdAt"
       | "name"

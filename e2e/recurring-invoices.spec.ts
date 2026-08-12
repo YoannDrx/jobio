@@ -4,13 +4,9 @@ import { createTestAccount } from "./utils/auth-test";
 
 test.describe("recurring-invoices", () => {
   test("create and manage recurring invoice", async ({ page }) => {
-    if (process.env.CI === "true" || process.env.GITHUB_ACTIONS === "true") {
-      test.skip();
-    }
-
     const userData = await createTestAccount({
       page,
-      callbackURL: "/freelance/recurring",
+      callbackURL: "/job/gestion/recurring",
     });
 
     try {
@@ -42,13 +38,11 @@ test.describe("recurring-invoices", () => {
         },
       });
 
-      await page.goto("/freelance/recurring");
-      await page.waitForLoadState("networkidle");
+      await page.goto("/job/gestion/recurring");
 
-      // Verify empty state or page loaded
-      await expect(page.locator("body")).toContainText(/récurr/i, {
-        timeout: 10000,
-      });
+      await expect(
+        page.getByText("Factures récurrentes", { exact: true }).first(),
+      ).toBeVisible({ timeout: 15000 });
     } finally {
       const user = await prisma.user.findUnique({
         where: { email: userData.email },

@@ -39,7 +39,10 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Textarea } from "@/components/ui/textarea";
-import { BillingInvoiceStatus, BillingPaymentMethod } from "@/generated/prisma";
+import {
+  BillingInvoiceStatus,
+  BillingPaymentMethod,
+} from "@/features/freelance/billing-client-enums";
 import { getCatalogItemsAction } from "@/features/freelance/billing-catalog.action";
 import {
   getBillingClientsAction,

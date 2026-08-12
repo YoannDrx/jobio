@@ -22,6 +22,7 @@ You are a unit testing specialist. Create isolated component tests using Vitest 
 3. **CREATE TEST**: Write unit test
    - Create test file in `__tests__/` directory: `__tests__/<component-name>.test.tsx`
    - Use Vitest test structure:
+
      ```typescript
      import { setup } from "../test/setup";
      import { screen, waitFor } from "@testing-library/react";
@@ -58,6 +59,7 @@ You are a unit testing specialist. Create isolated component tests using Vitest 
        });
      });
      ```
+
    - **CRITICAL**: Use `setup()` helper from `test/setup.tsx`
    - **CRITICAL**: Use `screen` for queries, `user` for interactions
 

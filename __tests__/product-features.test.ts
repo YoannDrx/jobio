@@ -6,7 +6,7 @@ import {
 import { describe, expect, it } from "vitest";
 
 describe("Jobio product feature manifest", () => {
-  it("keeps the five V1 destinations available", () => {
+  it("keeps the product destinations available", () => {
     expect(isProductPathAvailable("/job")).toBe(true);
     expect(isProductPathAvailable("/job/pipeline/mission-1")).toBe(true);
     expect(isProductPathAvailable("/job/follow-ups")).toBe(true);
@@ -14,12 +14,12 @@ describe("Jobio product feature manifest", () => {
     expect(isProductPathAvailable("/job/contacts")).toBe(true);
   });
 
-  it("blocks modules outside the V1 scope, including deep links", () => {
+  it("publishes the complete suite, including deep links", () => {
     expect(getProductFeatureForPath("/job/programmes/example")).toBe(
       "programmes",
     );
-    expect(isProductPathAvailable("/job/programmes/example")).toBe(false);
-    expect(isProductPathAvailable("/freelance/invoices")).toBe(false);
+    expect(isProductPathAvailable("/job/programmes/example")).toBe(true);
+    expect(isProductPathAvailable("/freelance/invoices")).toBe(true);
   });
 
   it("only sells Pro to new subscribers", () => {

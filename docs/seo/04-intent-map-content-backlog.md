@@ -11,14 +11,14 @@ Owner: Growth + Product Marketing
 
 ## 2) Intentions cibles (FR, freelance tech)
 
-| Cluster | Intention principale | Page cible | Statut |
-| --- | --- | --- | --- |
-| CRM freelance | "crm freelance tech" | `/features` | Active |
-| Prospection freelance | "organiser prospection freelance" | `/docs` + landing `/` | Active |
-| CV ATS freelance | "cv freelance ats" | `/features` + `/blog` | À renforcer |
-| Facturation freelance | "outil facturation freelance" | landing `/` (suite billing) + futur guide | À renforcer |
-| Relances & séquences | "relance client freelance" | `/features` | Active |
-| Performance commerciale | "analyser conversion prospection" | `/blog` + `/docs` | À renforcer |
+| Cluster                 | Intention principale              | Page cible                                | Statut      |
+| ----------------------- | --------------------------------- | ----------------------------------------- | ----------- |
+| CRM freelance           | "crm freelance tech"              | `/features`                               | Active      |
+| Prospection freelance   | "organiser prospection freelance" | `/docs` + landing `/`                     | Active      |
+| CV ATS freelance        | "cv freelance ats"                | `/features` + `/blog`                     | À renforcer |
+| Facturation freelance   | "outil facturation freelance"     | landing `/` (suite billing) + futur guide | À renforcer |
+| Relances & séquences    | "relance client freelance"        | `/features`                               | Active      |
+| Performance commerciale | "analyser conversion prospection" | `/blog` + `/docs`                         | À renforcer |
 
 ## 3) Gaps actuels
 
